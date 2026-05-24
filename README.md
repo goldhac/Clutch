@@ -1,0 +1,49 @@
+# CramSheet
+
+Upload your course materials, get an exam-calibrated **one-page reference sheet** that ranks what's most likely tested — with the formulas, traps, and likely questions your professor is most likely to use.
+
+> Marketing says "cheat sheet." The product and the PDF say **"Exam Reference Sheet."**
+
+## What this is
+
+A web app that turns an uploaded exam pack (slides, review guides, past exams, homework, notes) into a dense, print-first one-page study sheet. The differentiator is **prioritization with evidence**: every item is ranked by likely testability and carries a confidence label + a source citation.
+
+The hero artifact is the **MAX density** sheet — engineered density (4–5 columns, 5.5pt font floor) that a stressed student can scan in 5 seconds 48 hours before an exam.
+
+## Scope
+
+Building **Phase 0 + Phase 1 (v1)** only. Later phases (notes, flashcards, CLUTCH, course mode) are documented for context but deferred.
+
+## Docs
+
+The full spec lives in [`docs/`](docs/):
+
+| File | What it covers |
+|---|---|
+| [`docs/01-PRD.md`](docs/01-PRD.md) | Product vision, strategy, scope, pricing, success metrics |
+| [`docs/02-OUTPUT-SPEC.md`](docs/02-OUTPUT-SPEC.md) | The proven rendering + content standard — design tokens, density geometry, content patterns, prioritization rubric, render pipeline |
+| [`docs/03-ROADMAP.md`](docs/03-ROADMAP.md) | Phases and acceptance gates |
+| [`docs/04-CLAUDE-CODE-HANDOFF.md`](docs/04-CLAUDE-CODE-HANDOFF.md) | Stack, architecture, conventions, build order |
+
+## Architecture (the separation that matters)
+
+```
+upload → extract text (+ file tags)
+       → ENGINE:   model call → ranked content JSON (content + confidence + sources)
+       → RENDERER: deterministic JSON → HTML sheet (tokens + density geometry)
+       → PDF:      headless Chromium → verified one-page PDF
+       → (optional) TIGHTEN: critique pass on JSON → patched JSON → re-render
+```
+
+The model owns **content + ranking**; deterministic code owns **layout**. The one-page constraint is guaranteed, not hoped for.
+
+## Stack (recommended)
+
+- Next.js (App Router) + React + TypeScript
+- Anthropic API for content/ranking (structured JSON out)
+- Headless Chromium (Puppeteer/Playwright `printToPDF`) for PDF + page-count verification
+- PDF + plain-text parsing first; PPTX/DOCX deferred
+
+## Status
+
+Project scaffolding in progress. See the roadmap for the Phase 0 gate.
