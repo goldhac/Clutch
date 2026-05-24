@@ -24,6 +24,7 @@ The full spec lives in [`docs/`](docs/):
 | [`docs/02-OUTPUT-SPEC.md`](docs/02-OUTPUT-SPEC.md) | The proven rendering + content standard — design tokens, density geometry, content patterns, prioritization rubric, render pipeline |
 | [`docs/03-ROADMAP.md`](docs/03-ROADMAP.md) | Phases and acceptance gates |
 | [`docs/04-CLAUDE-CODE-HANDOFF.md`](docs/04-CLAUDE-CODE-HANDOFF.md) | Stack, architecture, conventions, build order |
+| [`docs/05-BUILD-PLAN.md`](docs/05-BUILD-PLAN.md) | The working phase document — locked decisions, data model, repo layout, phase tasks + gates |
 
 ## Architecture (the separation that matters)
 
@@ -37,12 +38,15 @@ upload → extract text (+ file tags)
 
 The model owns **content + ranking**; deterministic code owns **layout**. The one-page constraint is guaranteed, not hoped for.
 
-## Stack (recommended)
+## Stack
 
-- Next.js (App Router) + React + TypeScript
-- Anthropic API for content/ranking (structured JSON out)
-- Headless Chromium (Puppeteer/Playwright `printToPDF`) for PDF + page-count verification
-- PDF + plain-text parsing first; PPTX/DOCX deferred
+- Next.js (App Router) + React + TypeScript (Tailwind for chrome only)
+- Anthropic **Claude Sonnet** for content/ranking, behind a provider-agnostic `LLMClient` (structured JSON out, Zod-validated)
+- **Supabase** (Postgres + Auth + Storage + RLS) for backend; **Stripe** for transaction-first pricing
+- Headless Chromium via **Playwright** `page.pdf()` + in-process page-count verification
+- PDF + plain-text parsing first; PPTX/DOCX deferred (interface stubbed)
+
+See [`docs/05-BUILD-PLAN.md`](docs/05-BUILD-PLAN.md) for the full rationale and phase plan.
 
 ## Status
 

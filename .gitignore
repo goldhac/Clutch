@@ -47,3 +47,7 @@ Thumbs.db
 *.sqlite
 *.sqlite3
 *.db
+
+# Private reference / ground-truth test packs (never push student materials)
+/reference/
+/_private/
