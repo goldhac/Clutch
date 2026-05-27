@@ -25,6 +25,7 @@ The full spec lives in [`docs/`](docs/):
 | [`docs/03-ROADMAP.md`](docs/03-ROADMAP.md) | Phases and acceptance gates |
 | [`docs/04-CLAUDE-CODE-HANDOFF.md`](docs/04-CLAUDE-CODE-HANDOFF.md) | Stack, architecture, conventions, build order |
 | [`docs/05-BUILD-PLAN.md`](docs/05-BUILD-PLAN.md) | The working phase document — locked decisions, data model, repo layout, phase tasks + gates |
+| [`docs/06-V1-CHECKLIST.md`](docs/06-V1-CHECKLIST.md) | The single source of truth for v1 — every feature mapped to a step, per-step subtasks, always-on rules, explicit out-of-scope |
 
 ## Architecture (the separation that matters)
 
