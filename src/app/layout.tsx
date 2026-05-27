@@ -10,7 +10,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      {/* suppressHydrationWarning silences false positives from browser
+       * extensions that inject attributes onto <body> (Grammarly, etc.).
+       * Scope is one level deep — does NOT mask real hydration bugs in
+       * our own components. */}
+      <body suppressHydrationWarning>{children}</body>
     </html>
   );
 }
