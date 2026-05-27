@@ -1,0 +1,49 @@
+/* ──────────────────────────────────────────────────────────────────────
+ * tokens.css — the CramSheet design system
+ *
+ * Source of truth: docs/02-OUTPUT-SPEC.md §1–2.
+ * These tokens are the proven standard from the manual build. Reuse
+ * everywhere; do NOT redefine in component CSS.
+ * ────────────────────────────────────────────────────────────────────── */
+
+:root {
+  /* ── Brand / functional colors ───────────────────────────────────── */
+  --color-primary-indigo:   #3b3593;  /* h1/h2 banner default */
+  --color-primary-indigo-2: #6a5cff;  /* gradient pair for h1 */
+  --color-strong-red:       #b53756;  /* bold "must-know" text, danger callouts */
+  --color-emphasis-teal:    #0d8b8b;  /* emphasis / "watch out" — rendered bold, not italic */
+  --color-correct-green:    #1f7d3a;  /* ✓ marks, high confidence */
+  --color-warning-orange:   #b35c00;  /* trap callouts */
+  --color-exam-gold:        #a08200;  /* exam-verified / likely-question accents */
+
+  /* ── Surfaces ─────────────────────────────────────────────────────── */
+  --color-code-bg-dark:     #1c2030;
+  --color-code-fg-light:    #e6e9f0;
+  --color-light-fill:       #f1f3f8;  /* inline code bg */
+  --color-light-bg:         #f6f7fb;  /* zebra rows */
+
+  /* ── Lines ────────────────────────────────────────────────────────── */
+  --color-border-light:     #d8dbe4;  /* table border */
+  --color-border-mid:       #b8bbc4;  /* column rule, hr */
+
+  /* ── Topic palette (cycle through for multi-topic sheets) ─────────── */
+  --topic-blue:    #1e5fa3;
+  --topic-green:   #1f7d3a;
+  --topic-pink:    #c8336b;
+  --topic-maroon:  #8b1a1a;
+  --topic-teal:    #0d8b8b;
+  --topic-purple:  #6a3d9a;
+  --topic-orange:  #b35c00;
+  --topic-gold:    #a08200;
+  --topic-indigo:  #3b3593;
+  --topic-olive:   #5e5326;
+
+  /* ── Confidence dot colors (derived) ──────────────────────────────── */
+  --conf-high: var(--color-correct-green);
+  --conf-med:  var(--color-exam-gold);
+  --conf-low:  #9099a8;
+
+  /* ── Type stacks ─────────────────────────────────────────────────── */
+  --font-body: -apple-system, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Menlo", "Consolas", monospace;
+}

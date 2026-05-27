@@ -1,0 +1,151 @@
+/* ──────────────────────────────────────────────────────────────────────
+ * semantics.css — inline semantic conventions for every sheet
+ *
+ * Source: docs/02-OUTPUT-SPEC.md §2.
+ *   **bold**       → strong red (must-know fact)
+ *   *emphasis*     → teal, bold, non-italic (watch-out)
+ *   ★              → exam-verified prefix
+ *   ✓ / ✗          → correct / wrong option (✗ often strikethrough)
+ *   blockquote     → orange-tinted trap callout
+ *
+ * These styles scope under .sheet so they don't bleed into app chrome.
+ * ────────────────────────────────────────────────────────────────────── */
+
+.sheet strong {
+  color: var(--color-strong-red);
+  font-weight: 700;
+}
+
+.sheet em {
+  color: var(--color-emphasis-teal);
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* ★ exam-verified prefix — a glyph the eye finds fast. */
+.sheet .verified-star {
+  color: var(--color-exam-gold);
+  margin-right: 2pt;
+  font-weight: 700;
+}
+
+/* Correct / wrong option markers. */
+.sheet .ok {
+  color: var(--color-correct-green);
+  font-weight: 700;
+}
+.sheet .ko {
+  color: var(--color-strong-red);
+  text-decoration: line-through;
+  text-decoration-thickness: 0.6pt;
+}
+
+/* Confidence dots — emitted by the renderer per ranked item. */
+.sheet .conf-dot {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.55em;
+  border-radius: 50%;
+  margin-right: 2pt;
+  vertical-align: middle;
+}
+.sheet .conf-dot.conf-high { background: var(--conf-high); }
+.sheet .conf-dot.conf-med  { background: var(--conf-med); }
+.sheet .conf-dot.conf-low  { background: var(--conf-low); }
+
+/* Per-item source citation — small italic right after content. */
+.sheet .src {
+  color: #5a5f6b;
+  font-style: italic;
+  font-size: 0.88em;
+}
+
+/* Blockquote → orange-tinted trap callout. */
+.sheet blockquote,
+.sheet .trap-callout {
+  margin: 3pt 0;
+  padding: 3pt 6pt;
+  background: #fff1d8;
+  border-left: 2pt solid var(--color-warning-orange);
+  border-radius: 2pt;
+}
+.sheet blockquote::before,
+.sheet .trap-callout::before {
+  content: "⚠ TRAP ";
+  color: var(--color-warning-orange);
+  font-weight: 700;
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+}
+
+/* Formula box — the canonical shape in OutSpec §5. */
+.sheet .formula-block {
+  border: 0.4pt solid var(--color-border-light);
+  border-radius: 2pt;
+  padding: 3pt 5pt;
+}
+.sheet .formula-block .formula {
+  background: var(--color-code-bg-dark);
+  color: var(--color-code-fg-light);
+  font-family: var(--font-mono);
+  padding: 3pt 5pt;
+  border-radius: 2pt;
+  margin: 2pt 0;
+}
+
+/* Tables — zebra rows + tinted headers. */
+.sheet table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 2pt 0;
+}
+.sheet th {
+  background: var(--color-primary-indigo);
+  color: #fff;
+  font-weight: 600;
+  text-align: left;
+  padding: 2pt 4pt;
+}
+.sheet td {
+  padding: 2pt 4pt;
+  border-top: 0.3pt solid var(--color-border-light);
+  vertical-align: top;
+}
+.sheet tbody tr:nth-child(even) td {
+  background: var(--color-light-bg);
+}
+
+/* Headings — indigo banner default (OutSpec §2). */
+.sheet h1,
+.sheet h2 {
+  color: #fff;
+  background: var(--color-primary-indigo);
+  padding: 2pt 5pt;
+  border-radius: 2pt;
+  margin: 4pt 0 2pt;
+  font-weight: 700;
+}
+.sheet h1 {
+  background: linear-gradient(
+    90deg,
+    var(--color-primary-indigo),
+    var(--color-primary-indigo-2)
+  );
+}
+.sheet h3 {
+  color: var(--color-primary-indigo);
+  margin: 3pt 0 1pt;
+  font-weight: 700;
+}
+
+/* Topic-color modifiers for h2 — used by the multi-topic legend system. */
+.sheet h2.t-blue   { background: var(--topic-blue); }
+.sheet h2.t-green  { background: var(--topic-green); }
+.sheet h2.t-pink   { background: var(--topic-pink); }
+.sheet h2.t-maroon { background: var(--topic-maroon); }
+.sheet h2.t-teal   { background: var(--topic-teal); }
+.sheet h2.t-purple { background: var(--topic-purple); }
+.sheet h2.t-orange { background: var(--topic-orange); }
+.sheet h2.t-gold   { background: var(--topic-gold); }
+.sheet h2.t-indigo { background: var(--topic-indigo); }
+.sheet h2.t-olive  { background: var(--topic-olive); }

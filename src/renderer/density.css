@@ -1,0 +1,120 @@
+/* ──────────────────────────────────────────────────────────────────────
+ * density.css — the three render densities of identical ranked content
+ *
+ * Source of truth: docs/02-OUTPUT-SPEC.md §3.
+ * Density is a *rendering* choice; the underlying SheetContent is the
+ * same. CSS-driven, print-first.
+ *
+ * The hard rules:
+ *   - MAX font floor = 5.5pt (no exceptions)
+ *   - column-fill: auto on the multi-column sheet (see §3.1)
+ *   - MAX is engineered density, not max characters (see §3.2)
+ *
+ * Apply by wrapping the sheet in `.sheet.density-{minimal|standard|max}`.
+ * ────────────────────────────────────────────────────────────────────── */
+
+/* ── Shared base (all densities) ─────────────────────────────────────── */
+.sheet {
+  font-family: var(--font-body);
+  color: #1a1a1a;
+  margin: 0;
+  padding: 0;
+}
+
+.sheet code,
+.sheet pre {
+  font-family: var(--font-mono);
+}
+
+.sheet pre {
+  background: var(--color-code-bg-dark);
+  color: var(--color-code-fg-light);
+  padding: 4pt 6pt;
+  border-radius: 2pt;
+  margin: 2pt 0;
+  white-space: pre-wrap;
+}
+
+.sheet code {
+  background: var(--color-light-fill);
+  padding: 0 2pt;
+  border-radius: 2pt;
+}
+
+.sheet .cols {
+  column-rule: 0.4pt solid var(--color-border-mid);
+  column-fill: auto; /* CRITICAL — see OutSpec §3.1; never `balance` */
+}
+
+/* ── Minimal — 2 cols, 9pt, ~70% coverage ────────────────────────────── */
+.sheet.density-minimal {
+  font-size: 9pt;
+  line-height: 1.35;
+}
+.sheet.density-minimal .cols {
+  column-count: 2;
+  column-gap: 12pt;
+}
+.sheet.density-minimal h2 { font-size: 10pt; }
+.sheet.density-minimal table { font-size: 8.5pt; }
+.sheet.density-minimal pre,
+.sheet.density-minimal code { font-size: 8pt; }
+
+/* ── Standard — 3 cols, 7.5pt, ~85% coverage ────────────────────────── */
+.sheet.density-standard {
+  font-size: 7.5pt;
+  line-height: 1.25;
+}
+.sheet.density-standard .cols {
+  column-count: 3;
+  column-gap: 8pt;
+}
+.sheet.density-standard h2 { font-size: 8.2pt; }
+.sheet.density-standard table { font-size: 7pt; }
+.sheet.density-standard pre,
+.sheet.density-standard code { font-size: 6.8pt; }
+
+/* ── MAX — 4 cols (allow 5), 6.1pt body, 5pt code, 92–97% coverage ─── */
+/* The hero. Engineered density. Floor 5.5pt — never below. */
+.sheet.density-max {
+  font-size: 6.1pt;
+  line-height: 1.15;
+}
+.sheet.density-max .cols {
+  column-count: 4; /* allow 5 via .cols-5; never promise 7 on a one-page A4 */
+  column-gap: 5pt;
+}
+.sheet.density-max .cols.cols-5 {
+  column-count: 5;
+}
+.sheet.density-max h2 { font-size: 6.4pt; }
+.sheet.density-max table { font-size: 5.6pt; }
+.sheet.density-max pre,
+.sheet.density-max code { font-size: 5.2pt; }
+
+/* MAX engineered-density rules — keep structural whitespace around
+ * formula boxes and traps; the eye finds them faster than packed text. */
+.sheet.density-max .formula-block,
+.sheet.density-max .trap-callout {
+  margin: 3pt 0;
+}
+
+/* ── Print rules ─────────────────────────────────────────────────────── */
+/* MAX must print A4 landscape with tight margins. Minimal/Standard hold
+ * easily; keep them landscape too so all three exports look like one
+ * product family. */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 0.16in 0.14in;
+  }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: #fff;
+  }
+
+  /* Chrome doesn't let us reach into all column-fill quirks; the rule
+   * is set at the .cols level above and inherited at print time. */
+}

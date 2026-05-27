@@ -1,0 +1,23 @@
+/* Global app styles — Tailwind v4 + our shared design tokens.
+ *
+ * Tokens live in src/renderer/tokens.css so the renderer can import them
+ * directly without depending on the app shell. We re-import here so the
+ * app chrome can use them too.
+ */
+
+@import "tailwindcss";
+@import "../renderer/tokens.css";
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  color: #1a1a1a;
+  background: #fff;
+  margin: 0;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
