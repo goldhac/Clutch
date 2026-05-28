@@ -74,29 +74,37 @@
 .sheet.density-standard pre,
 .sheet.density-standard code { font-size: 6.8pt; }
 
-/* ── MAX — 4 cols (allow 5), 6.1pt body, 5pt code, 92–97% coverage ─── */
-/* The hero. Engineered density. Floor 5.5pt — never below. */
+/* ── MAX — 4 cols (allow 5), 5.7pt body, 92–97% coverage ────────────
+ * The hero. Engineered density. Floor 5.5pt — never below.
+ * Values tuned from the proven hand-built reference (BD final centerpiece
+ * @ reference/exam-prep/Big_Data_Exam/00-meta/cheatsheet-maxdensity.html).
+ * That sheet ran 7-col at 5.7pt; at 4-col on A4 we have a wider column
+ * and can hold the same body size comfortably. */
 .sheet.density-max {
-  font-size: 6.1pt;
-  line-height: 1.15;
+  font-size: 5.7pt;
+  line-height: 1.13;
 }
 .sheet.density-max .cols {
   column-count: 4; /* allow 5 via .cols-5; never promise 7 on a one-page A4 */
-  column-gap: 5pt;
+  column-gap: 4pt;
 }
 .sheet.density-max .cols.cols-5 {
   column-count: 5;
 }
-.sheet.density-max h2 { font-size: 6.4pt; }
-.sheet.density-max table { font-size: 5.6pt; }
-.sheet.density-max pre,
-.sheet.density-max code { font-size: 5.2pt; }
+.sheet.density-max h1 { font-size: 7pt; }
+.sheet.density-max h2 { font-size: 5.9pt; }
+.sheet.density-max h3 { font-size: 5.7pt; }
+.sheet.density-max table { font-size: 5pt; }
+.sheet.density-max th { font-size: 4.8pt; }
+.sheet.density-max code { font-size: 4.9pt; }
+.sheet.density-max pre  { font-size: 4.7pt; line-height: 1.07; }
 
-/* MAX engineered-density rules — keep structural whitespace around
+/* MAX engineered-density rules — small structural whitespace around
  * formula boxes and traps; the eye finds them faster than packed text. */
 .sheet.density-max .formula-block,
-.sheet.density-max .trap-callout {
-  margin: 3pt 0;
+.sheet.density-max .trap-callout,
+.sheet.density-max .box {
+  margin: 1.5pt 0;
 }
 
 /* ── Print rules ─────────────────────────────────────────────────────── */

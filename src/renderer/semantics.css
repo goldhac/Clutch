@@ -1,25 +1,92 @@
 /* ──────────────────────────────────────────────────────────────────────
- * semantics.css — inline semantic conventions for every sheet
+ * semantics.css — inline + small-block conventions for every sheet
  *
- * Source: docs/02-OUTPUT-SPEC.md §2.
+ * Aligned with the proven hand-built standard at
+ *   reference/exam-prep/Big_Data_Exam/00-meta/cheatsheet-maxdensity.html
+ * which was iterated against real exams. Where this file differs from
+ * the abstract output spec, prefer this — the spec is a summary;
+ * the proven HTML is the truth.
+ *
+ * Conventions:
  *   **bold**       → strong red (must-know fact)
  *   *emphasis*     → teal, bold, non-italic (watch-out)
  *   ★              → exam-verified prefix
  *   ✓ / ✗          → correct / wrong option (✗ often strikethrough)
- *   blockquote     → orange-tinted trap callout
+ *   blockquote     → orange-tinted "⚠ TRAP" callout
+ *   .box           → soft orange warning callout
+ *   .box.danger    → red "what NOT to do" callout (worked-example traps)
+ *   .box.ok        → green "do this" callout (correct technique)
+ *   .qq            → question box: indigo left rule, light-indigo bg
  *
- * These styles scope under .sheet so they don't bleed into app chrome.
+ * All selectors scoped under .sheet so app chrome stays untouched.
  * ────────────────────────────────────────────────────────────────────── */
 
+/* ── Scoped reset — kills user-agent margins inside the sheet so 0.3pt
+ * spacing values are honored. Does NOT affect the rest of the app. */
+.sheet,
+.sheet * {
+  box-sizing: border-box;
+}
+.sheet h1,
+.sheet h2,
+.sheet h3,
+.sheet h4,
+.sheet h5,
+.sheet h6,
+.sheet p,
+.sheet ul,
+.sheet ol,
+.sheet li,
+.sheet pre,
+.sheet figure,
+.sheet blockquote {
+  margin: 0;
+  padding: 0;
+}
+.sheet ul,
+.sheet ol {
+  padding-left: 7pt;
+  margin: 0 0 0.2pt 0;
+}
+.sheet li {
+  margin: 0 0 0.2pt 0;
+  list-style-position: outside;
+}
+.sheet hr {
+  display: none;
+}
+
+/* ── Inline emphasis ─────────────────────────────────────────────────── */
 .sheet strong {
   color: var(--color-strong-red);
   font-weight: 700;
 }
-
 .sheet em {
   color: var(--color-emphasis-teal);
   font-style: normal;
   font-weight: 600;
+}
+
+/* b.k = "keep / correct" green · b.r = "rejected / wrong" red.
+ * These are content-author helpers from the proven build, exposed so
+ * the engine prompt can use them when answer/distractor pairs occur. */
+.sheet b.k,
+.sheet .ans {
+  color: var(--color-correct-green);
+  font-weight: 700;
+}
+.sheet b.r,
+.sheet .ko {
+  color: var(--color-strong-red);
+  font-weight: 700;
+}
+.sheet .ko {
+  text-decoration: line-through;
+  text-decoration-thickness: 0.6pt;
+}
+.sheet .ok {
+  color: var(--color-correct-green);
+  font-weight: 700;
 }
 
 /* ★ exam-verified prefix — a glyph the eye finds fast. */
@@ -29,18 +96,7 @@
   font-weight: 700;
 }
 
-/* Correct / wrong option markers. */
-.sheet .ok {
-  color: var(--color-correct-green);
-  font-weight: 700;
-}
-.sheet .ko {
-  color: var(--color-strong-red);
-  text-decoration: line-through;
-  text-decoration-thickness: 0.6pt;
-}
-
-/* Confidence dots — emitted by the renderer per ranked item. */
+/* ── Confidence dots ─────────────────────────────────────────────────── */
 .sheet .conf-dot {
   display: inline-block;
   width: 0.55em;
@@ -53,90 +109,80 @@
 .sheet .conf-dot.conf-med  { background: var(--conf-med); }
 .sheet .conf-dot.conf-low  { background: var(--conf-low); }
 
-/* Per-item source citation — small italic right after content. */
+/* ── Per-item source citation — small italic right after content. ──── */
 .sheet .src {
   color: #5a5f6b;
   font-style: italic;
   font-size: 0.88em;
 }
 
-/* Blockquote → orange-tinted trap callout. */
-.sheet blockquote,
-.sheet .trap-callout {
-  margin: 3pt 0;
-  padding: 3pt 6pt;
-  background: #fff1d8;
-  border-left: 2pt solid var(--color-warning-orange);
-  border-radius: 2pt;
+/* ── Code + monospace ────────────────────────────────────────────────── */
+.sheet code,
+.sheet pre {
+  font-family: var(--font-mono);
 }
-.sheet blockquote::before,
-.sheet .trap-callout::before {
-  content: "⚠ TRAP ";
-  color: var(--color-warning-orange);
-  font-weight: 700;
-  font-size: 0.85em;
-  letter-spacing: 0.04em;
-}
-
-/* Formula box — the canonical shape in OutSpec §5. */
-.sheet .formula-block {
-  border: 0.4pt solid var(--color-border-light);
-  border-radius: 2pt;
-  padding: 3pt 5pt;
-}
-.sheet .formula-block .formula {
+.sheet pre {
   background: var(--color-code-bg-dark);
   color: var(--color-code-fg-light);
-  font-family: var(--font-mono);
-  padding: 3pt 5pt;
-  border-radius: 2pt;
-  margin: 2pt 0;
-  /* Long monospace formulas would otherwise refuse to wrap and blow
-   * out the column width (one of the most common multicol bugs).
-   * anywhere = break at any character if needed; preferred breaks
-   * (spaces, operators) still win. */
+  padding: 1pt 2pt;
+  border-radius: 1.5pt;
+  margin: 0.3pt 0;
+  white-space: pre-wrap;
+  /* Long monospace lines (formulas, code) must not blow out the column. */
   overflow-wrap: anywhere;
   word-break: break-word;
 }
-
-/* Same protection for any pre/code anywhere on the sheet. */
-.sheet pre,
 .sheet code {
+  background: var(--color-light-fill);
+  padding: 0 0.8pt;
+  border-radius: 1pt;
   overflow-wrap: anywhere;
   word-break: break-word;
 }
 
-/* Tables — zebra rows + tinted headers. */
+/* ── Tables — zebra rows + indigo headers ────────────────────────────── */
 .sheet table {
   border-collapse: collapse;
   width: 100%;
-  margin: 2pt 0;
+  margin: 0.3pt 0;
 }
 .sheet th {
   background: var(--color-primary-indigo);
   color: #fff;
-  font-weight: 600;
+  font-weight: 700;
   text-align: left;
-  padding: 2pt 4pt;
+  padding: 0.3pt 1pt;
 }
 .sheet td {
-  padding: 2pt 4pt;
-  border-top: 0.3pt solid var(--color-border-light);
+  padding: 0.25pt 1pt;
+  border-bottom: 0.25pt solid var(--color-border-light);
   vertical-align: top;
 }
 .sheet tbody tr:nth-child(even) td {
   background: var(--color-light-bg);
 }
 
-/* Headings — indigo banner default (OutSpec §2). */
+/* Key-value table — first column tinted indigo (memorize-cold lookup). */
+.sheet table.kvtable td {
+  padding: 0.15pt 1pt;
+}
+.sheet table.kvtable td:first-child {
+  color: var(--color-primary-indigo);
+  font-weight: 600;
+}
+
+/* ── Headings ────────────────────────────────────────────────────────── */
 .sheet h1,
 .sheet h2 {
   color: #fff;
   background: var(--color-primary-indigo);
-  padding: 2pt 5pt;
+  padding: 0.8pt 3pt;
   border-radius: 2pt;
-  margin: 4pt 0 2pt;
-  font-weight: 700;
+  margin: 1pt 0 0.3pt 0;
+  font-weight: 800;
+  letter-spacing: 0.15pt;
+  text-transform: uppercase;
+  break-after: avoid;
 }
 .sheet h1 {
   background: linear-gradient(
@@ -144,14 +190,19 @@
     var(--color-primary-indigo),
     var(--color-primary-indigo-2)
   );
+  margin-bottom: 0.8pt;
 }
 .sheet h3 {
   color: var(--color-primary-indigo);
-  margin: 3pt 0 1pt;
+  margin: 0.6pt 0 0.1pt 0;
   font-weight: 700;
+  break-after: avoid;
 }
 
-/* Topic-color modifiers for h2 — used by the multi-topic legend system. */
+/* Topic-color modifiers for h2 — emit `class="t-X"` to color-code per
+ * topic. Wired now even though the v1 contract doesn't carry topic IDs
+ * on every item; engine in Step 6 starts using them when content is
+ * topic-grouped. CSS being ready avoids a stylesheet change later. */
 .sheet h2.t-blue   { background: var(--topic-blue); }
 .sheet h2.t-green  { background: var(--topic-green); }
 .sheet h2.t-pink   { background: var(--topic-pink); }
@@ -159,6 +210,116 @@
 .sheet h2.t-teal   { background: var(--topic-teal); }
 .sheet h2.t-purple { background: var(--topic-purple); }
 .sheet h2.t-orange { background: var(--topic-orange); }
-.sheet h2.t-gold   { background: var(--topic-gold); }
+.sheet h2.t-gold   { background: var(--topic-gold); color: #fff; }
 .sheet h2.t-indigo { background: var(--topic-indigo); }
 .sheet h2.t-olive  { background: var(--topic-olive); }
+
+/* Topic tag chip embedded in an h2 banner (the "MLLIB" / "STREAM"
+ * letters at the front of the proven build's h2s). */
+.sheet h2 .ttag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.22);
+  padding: 0 2.4pt;
+  border-radius: 1pt;
+  margin-right: 2.5pt;
+  font-size: 0.92em;
+  letter-spacing: 0.4pt;
+  font-weight: 800;
+}
+
+/* ── Color-legend strip (spans all columns) ─────────────────────────── */
+.sheet .legend {
+  column-span: all;
+  font-size: 0.78em;
+  line-height: 1.1;
+  margin: 0.4pt 0 1pt 0;
+  text-align: center;
+  letter-spacing: 0.15pt;
+}
+.sheet .legend .chip {
+  display: inline-block;
+  color: #fff;
+  font-weight: 800;
+  padding: 0.4pt 2.2pt;
+  margin: 0 0.5pt;
+  border-radius: 1pt;
+  letter-spacing: 0.3pt;
+}
+
+/* ── Blockquote / .trap-callout = "⚠ TRAP X is FALSE because Y" ────── */
+.sheet blockquote,
+.sheet .trap-callout {
+  margin: 1pt 0;
+  padding: 1pt 3pt;
+  background: #fff1d8;
+  border-left: 1pt solid var(--color-warning-orange);
+  border-radius: 2pt;
+}
+.sheet blockquote::before,
+.sheet .trap-callout::before {
+  content: "⚠ TRAP ";
+  color: var(--color-warning-orange);
+  font-weight: 800;
+  font-size: 0.85em;
+  letter-spacing: 0.04em;
+}
+
+/* ── .box callouts (three semantic variants) ───────────────────────── */
+.sheet .box {
+  border-left: 1pt solid var(--color-warning-orange);
+  background: #fff1d8;
+  padding: 0.5pt 1.5pt;
+  margin: 0.4pt 0;
+  border-radius: 1pt;
+}
+.sheet .box.danger {
+  border-left-color: var(--color-strong-red);
+  background: #ffe0e7;
+}
+.sheet .box.ok {
+  border-left-color: var(--color-correct-green);
+  background: #dcf3e1;
+}
+
+/* ── .qq question box (indigo rule, light-indigo background) ──────── */
+.sheet .qq {
+  background: #eef0f8;
+  padding: 0.5pt 1.5pt;
+  border-left: 1pt solid var(--color-primary-indigo);
+  margin: 0.4pt 0;
+  border-radius: 1pt;
+  break-inside: avoid;
+}
+.sheet .qq .qa { color: var(--color-correct-green); font-weight: 700; }
+.sheet .qq .qx { color: var(--color-strong-red); }
+
+/* ── Formula block (canonical shape, OutSpec §5) ───────────────────── */
+.sheet .formula-block {
+  border: 0.4pt solid var(--color-border-light);
+  border-radius: 2pt;
+  padding: 1pt 2pt;
+}
+.sheet .formula-block .formula {
+  background: var(--color-code-bg-dark);
+  color: var(--color-code-fg-light);
+  font-family: var(--font-mono);
+  padding: 1pt 2pt;
+  border-radius: 1.5pt;
+  margin: 0.5pt 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* ── Topic wrapper — keeps a topic's content from splitting across cols.
+ * Ships even before the contract carries topic IDs because pattern
+ * renderers can still group related blocks defensively. */
+.sheet .topic {
+  break-inside: avoid;
+  margin-bottom: 0.5pt;
+}
+
+/* ── span-all utility — for elements that should span all columns
+ * (h1, exam-format strip, legend strip, verifiedPatterns block). */
+.sheet .span-all {
+  column-span: all;
+}

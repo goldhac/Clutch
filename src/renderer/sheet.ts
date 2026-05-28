@@ -57,19 +57,20 @@ export function renderSheet(content: SheetContent, opts: RenderOptions): string 
   const { density, cols5 = false } = opts;
   const colsClass = `cols${density === "max" && cols5 ? " cols-5" : ""}`;
 
-  // Order rationale: the prior-exam-derived patterns lead (highest leverage),
-  // then formulas (workhorse), then tables (decision guides), then concepts
-  // (memorize-cold), then traps (what NOT to do), then questions (drill set).
-  // Topics overview sits inside the columns to fill the first column nicely.
-  const header = `
-    <header class="sheet-header">
-      <h1>${escapeHtml(content.title)}</h1>
-      ${renderExamFormat(content.examFormat)}
-      ${renderVerifiedPatterns(content.verifiedPatterns)}
-    </header>
-  `;
-
-  const columnFlow = [
+  // Header elements (h1, exam-format strip, verifiedPatterns block) live
+  // INSIDE .cols and use column-span: all (via the .span-all class /
+  // explicit `column-span` in sheet.css). Matches the proven build —
+  // cleaner than wrapping a separate flex header above .cols, and the
+  // column-fill: auto + page-height arithmetic is unaffected.
+  //
+  // Order rationale (mirrors the proven build):
+  //   verifiedPatterns ▸ topics overview ▸ formulas (workhorse)
+  //   ▸ tables (decision guides) ▸ concepts (memorize-cold)
+  //   ▸ traps (what NOT to do) ▸ questions (drill set)
+  const flow = [
+    `<h1 class="span-all">${escapeHtml(content.title)}</h1>`,
+    renderExamFormat(content.examFormat),
+    renderVerifiedPatterns(content.verifiedPatterns),
     renderTopicsOverview(content.topics),
     renderFormulasList(content.formulas),
     renderTablesList(content.tables),
@@ -82,9 +83,8 @@ export function renderSheet(content: SheetContent, opts: RenderOptions): string 
 
   return `
     <div class="sheet density-${density}">
-      ${header}
       <div class="${colsClass}">
-        ${columnFlow}
+        ${flow}
       </div>
     </div>
   `;

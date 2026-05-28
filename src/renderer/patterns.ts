@@ -27,19 +27,27 @@ import type {
 } from "@/contract/sheet-content";
 import { cite, dot, escapeHtml, inlineFormat, noBreak, star } from "./primitives";
 
-/* ─── 1. Formula block (the workhorse) ─────────────────────────────── */
+/* ─── 1. Formula block (the workhorse) ───────────────────────────────
+ * Renders multi-line formulas (engine in Step 6 can emit `\n`-separated
+ * code-style formulas) as <pre>; single-line as the compact .formula
+ * box. Wrapped in .topic so the whole block stays together when columns
+ * break. Matches the proven build's <pre> + .topic technique. */
 export function renderFormulaBlock(f: Formula): string {
+  const isMultiline = f.formula.includes("\n");
+  const formulaHtml = isMultiline
+    ? `<pre class="formula">${escapeHtml(f.formula)}</pre>`
+    : `<div class="formula">${escapeHtml(f.formula)}</div>`;
   const inner = `
     <div class="title">
       ${star(f.verified)}<strong>${inlineFormat(f.name)}</strong>${dot(f.conf)}
     </div>
-    <div class="formula">${escapeHtml(f.formula)}</div>
+    ${formulaHtml}
     <div class="row"><span class="lbl">vars</span> ${inlineFormat(f.vars)}</div>
     <div class="row"><span class="lbl">use</span> ${inlineFormat(f.when)}</div>
     <div class="row trap-line"><span class="lbl">⚠ trap</span> ${inlineFormat(f.trap)}</div>
     <div class="row ex-line"><span class="lbl">Q</span> ${inlineFormat(f.ex)} ${cite(f.src)}</div>
   `.trim();
-  return noBreak(`<div class="formula-block">${inner}</div>`);
+  return `<div class="formula-block topic">${inner}</div>`;
 }
 
 /* ─── 2. Compact compare/contrast table ────────────────────────────── */
@@ -63,7 +71,9 @@ export function renderCompareTable(t: SheetTable): string {
   `);
 }
 
-/* ─── 3. Memorize-cold concepts table ──────────────────────────────── */
+/* ─── 3. Memorize-cold concepts table ────────────────────────────────
+ * Uses the .kvtable variant (indigo first column) — the proven
+ * memorize-cold style. */
 export function renderConceptsTable(concepts: Concept[]): string {
   if (concepts.length === 0) return "";
   const rows = concepts
@@ -77,15 +87,15 @@ export function renderConceptsTable(concepts: Concept[]): string {
       `,
     )
     .join("");
-  return noBreak(`
+  return `
     <section class="concepts">
       <h2>Memorize cold</h2>
-      <table>
+      <table class="kvtable">
         <thead><tr><th>Term</th><th>Def</th><th>·</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     </section>
-  `);
+  `;
 }
 
 /* ─── 5. TRAP callout ──────────────────────────────────────────────── */
@@ -97,9 +107,11 @@ export function renderTrapCallout(t: Trap): string {
 }
 
 /* ─── 6. Q&A bullet line ───────────────────────────────────────────── */
+/* Each question wrapped in .qq (indigo left rule, light-indigo bg) —
+ * the proven question-box style. break-inside: avoid stays in CSS. */
 export function renderQuestionLine(q: Question): string {
   return `
-    <li class="qa">
+    <li class="qq">
       ${star(q.verified)}<span class="kind">${escapeHtml(q.kind)}</span>
       ${inlineFormat(q.q)} ${dot(q.conf)}${cite(q.src)}
     </li>
@@ -108,14 +120,14 @@ export function renderQuestionLine(q: Question): string {
 
 export function renderQuestionsList(questions: Question[]): string {
   if (questions.length === 0) return "";
-  return noBreak(`
+  return `
     <section class="qa-section">
       <h2>Likely questions</h2>
       <ul class="qa-list">
         ${questions.map(renderQuestionLine).join("\n")}
       </ul>
     </section>
-  `);
+  `;
 }
 
 /* ─── Topics overview ──────────────────────────────────────────────── */
