@@ -26,6 +26,7 @@ The full spec lives in [`docs/`](docs/):
 | [`docs/04-CLAUDE-CODE-HANDOFF.md`](docs/04-CLAUDE-CODE-HANDOFF.md) | Stack, architecture, conventions, build order |
 | [`docs/05-BUILD-PLAN.md`](docs/05-BUILD-PLAN.md) | The working phase document — locked decisions, data model, repo layout, phase tasks + gates |
 | [`docs/06-V1-CHECKLIST.md`](docs/06-V1-CHECKLIST.md) | The single source of truth for v1 — every feature mapped to a step, per-step subtasks, always-on rules, explicit out-of-scope |
+| [`docs/07-ENGINE-PROMPT-PLAYBOOK.md`](docs/07-ENGINE-PROMPT-PLAYBOOK.md) | The proven patterns from Gold's hand-built reference sheets, extracted as the source of truth for the Step 6 engine prompt |
 
 ## Architecture (the separation that matters)
 

@@ -30,14 +30,15 @@ If a feature is not on this list, it is not in v1.
 | ☐ | Exam-format + professor-notes meta block (cheap, high-trust) | PRD §5 | **6** (engine emits) / **3** (renderer) |
 | ☐ | Most-likely-tested ranking view (its own surface) | PRD §5 | **7** (rail content) / **8** (UI placement) |
 
-### A.3 — Density geometry (Output Spec §3)
+### A.3 — Density + page-count geometry (Output Spec §3 + Playbook §9)
 | ✓ | Mode | CSS lock-ins | Step |
 |---|---|---|---|
 | ☐ | **Minimal** — 2 cols, 9pt body, ~70% coverage | OutSpec §3 | **5** |
 | ☐ | **Standard** — 3 cols, 7.5pt body, ~85% coverage | OutSpec §3 | **5** |
-| ☐ | **MAX** — 4 cols (allow 5), 6.1pt body (floor 5.5pt), 5pt code, `column-fill: auto`, A4 landscape margins 0.16/0.14in, 92–97% coverage | OutSpec §3, §3.1, §3.2 | **3** |
-| ☐ | Engineered density rules: no paragraphs, ≤3 bullet levels, structural whitespace around formula boxes | OutSpec §3.2 | **3** |
-| ☐ | Color-first scanning; legend strip if multi-topic | OutSpec §3.2 | **3** |
+| ☐ | **MAX** — 4 cols (allow 5), 5.7pt body (floor 5.5pt), 4.7pt pre, 4.9pt code, `column-fill: auto`, A4 landscape margins 0.16/0.14in, 92–97% coverage | OutSpec §3, §3.1, §3.2 | **3** (done) |
+| ☐ | Engineered density rules: no paragraphs, ≤3 bullet levels, structural whitespace around formula boxes | OutSpec §3.2 | **3** (done) |
+| ☐ | Color-first scanning; legend strip if multi-topic | OutSpec §3.2 / Playbook §9 | **3.5** (CSS ready) / **6** (engine wires up topic IDs) |
+| ☐ | **1-page OR 2-page front/back** — `pages: 1 \| 2` in RenderOptions; 2-page version has duplicated color legend on both pages + topic-split (FRONT = topic-anchored lookup, BACK = NoSQL/deep-dive + meta tools per Playbook §9) | Playbook §9 (proven 2-page Big Data MAX) | **5** (renderer) / **6** (engine emits `topicsByPage`) |
 
 ### A.4 — The six content patterns (Output Spec §4)
 Each pattern needs a renderer; the engine needs to emit content that maps to it.
