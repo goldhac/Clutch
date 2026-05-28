@@ -115,6 +115,10 @@
     background: #fff;
   }
 
-  /* Chrome doesn't let us reach into all column-fill quirks; the rule
-   * is set at the .cols level above and inherited at print time. */
+  /* In print mode, @page provides the page height; column-fill: auto
+   * uses that automatically. Nothing more to do here. */
 }
+
+/* Screen-mode page-simulation (so column-fill: auto actually splits
+ * content across columns in the browser) lives in sheet.css. This
+ * file is intentionally density-only: column counts + font sizes. */

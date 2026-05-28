@@ -91,6 +91,19 @@
   padding: 3pt 5pt;
   border-radius: 2pt;
   margin: 2pt 0;
+  /* Long monospace formulas would otherwise refuse to wrap and blow
+   * out the column width (one of the most common multicol bugs).
+   * anywhere = break at any character if needed; preferred breaks
+   * (spaces, operators) still win. */
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Same protection for any pre/code anywhere on the sheet. */
+.sheet pre,
+.sheet code {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 /* Tables — zebra rows + tinted headers. */
