@@ -59,7 +59,7 @@ export function OverflowMonitor() {
 
   if (!overflowing) {
     return (
-      <div className="fixed left-3 top-3 z-50 rounded border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-800 shadow">
+      <div className="print:hidden fixed left-3 top-3 z-50 rounded border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-800 shadow">
         ✓ fits on one A4 page · {m.contentW}×{m.contentH} / {m.pageW}×{m.pageH}px
       </div>
     );
@@ -69,7 +69,7 @@ export function OverflowMonitor() {
   if (m.vertOver > TOL) dirs.push(`${m.vertOver}px tall`);
   return (
     <div
-      className="fixed left-3 top-3 z-50 rounded border border-red-300 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-800 shadow"
+      className="print:hidden fixed left-3 top-3 z-50 rounded border border-red-300 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-800 shadow"
       title="In PDF print mode this content would be clipped. Engine Tighten pass (Step 7) will trim to fit; for now, the sample is too dense."
     >
       ⚠ PAGE OVERFLOW · {dirs.join(" + ")} · would clip in PDF
