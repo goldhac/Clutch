@@ -25,8 +25,8 @@ _private/
 .idea
 Thumbs.db
 
-# Docs we don't need at runtime (keep README so the image has it)
-samples/
+# Build-time-only excludes — samples/ is imported by /sheet so it MUST
+# ship. scripts/ + tests/ + docs/ are not imported at runtime.
 scripts/
 tests/
 docs/
