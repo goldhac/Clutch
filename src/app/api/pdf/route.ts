@@ -45,9 +45,14 @@ export async function GET(req: NextRequest) {
     return new Response(`pages must be 1 or 2; got "${pages}"`, { status: 400 });
   }
 
-  // We point Playwright at the same Next.js server we're running on.
-  // Same codepath as the in-browser /sheet preview.
-  const sheetUrl = new URL("/sheet", url.origin);
+  // We point Playwright at the SAME Next.js server that's handling this
+  // request — but via plain HTTP on 127.0.0.1, not the public URL. Behind
+  // a TLS-terminating proxy (Railway/Vercel/etc.) req.url's origin can
+  // come back as "https://localhost:PORT" and Chromium errors with
+  // ERR_SSL_PROTOCOL_ERROR. Same-process upstream is also faster — no
+  // edge round-trip.
+  const port = process.env.PORT ?? "3000";
+  const sheetUrl = new URL(`http://127.0.0.1:${port}/sheet`);
   sheetUrl.searchParams.set("density", density);
   if (cols5) sheetUrl.searchParams.set("cols", "5");
   sheetUrl.searchParams.set("print", "1"); // tells page to hide dev chrome
