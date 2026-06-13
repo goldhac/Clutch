@@ -37,6 +37,14 @@ export function renderFormulaBlock(f: Formula): string {
   const formulaHtml = isMultiline
     ? `<pre class="formula">${escapeHtml(f.formula)}</pre>`
     : `<div class="formula">${escapeHtml(f.formula)}</div>`;
+  // trap + ex are optional in the contract; skip the row entirely if
+  // the engine didn't supply one (cleaner than rendering an empty row).
+  const trapRow = f.trap
+    ? `<div class="row trap-line"><span class="lbl">⚠ trap</span> ${inlineFormat(f.trap)}</div>`
+    : "";
+  const exRow = f.ex
+    ? `<div class="row ex-line"><span class="lbl">Q</span> ${inlineFormat(f.ex)} ${cite(f.src)}</div>`
+    : `<div class="row ex-line">${cite(f.src)}</div>`;
   const inner = `
     <div class="title">
       ${star(f.verified)}<strong>${inlineFormat(f.name)}</strong>${dot(f.conf)}
@@ -44,8 +52,8 @@ export function renderFormulaBlock(f: Formula): string {
     ${formulaHtml}
     <div class="row"><span class="lbl">vars</span> ${inlineFormat(f.vars)}</div>
     <div class="row"><span class="lbl">use</span> ${inlineFormat(f.when)}</div>
-    <div class="row trap-line"><span class="lbl">⚠ trap</span> ${inlineFormat(f.trap)}</div>
-    <div class="row ex-line"><span class="lbl">Q</span> ${inlineFormat(f.ex)} ${cite(f.src)}</div>
+    ${trapRow}
+    ${exRow}
   `.trim();
   return `<div class="formula-block topic">${inner}</div>`;
 }

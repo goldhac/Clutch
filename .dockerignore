@@ -1,0 +1,38 @@
+# Match .gitignore mostly + a few container-specific excludes.
+.git
+.gitignore
+.github
+
+node_modules
+.next
+out
+build
+dist
+
+# Local dev artifacts
+.env
+.env.local
+.env*.local
+*.log
+.DS_Store
+
+# Private reference materials (already gitignored; never put in image)
+reference/
+_private/
+
+# Editor + OS
+.vscode
+.idea
+Thumbs.db
+
+# Docs we don't need at runtime (keep README so the image has it)
+samples/
+scripts/
+tests/
+docs/
+
+# Don't include any pre-built PDFs
+*.pdf
+
+# Don't ship the playwright local browser cache; image already has it
+.cache

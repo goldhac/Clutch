@@ -101,8 +101,12 @@ export const FormulaSchema = rankedItem({
   formula: z.string().min(1), // mono-rendered formula body
   vars: z.string().min(1), // variable definitions
   when: z.string().min(1), // when-to-use rule
-  trap: z.string().min(1), // one-line trap
-  ex: z.string().min(1), // micro example question
+  // trap + ex are optional — not every formula has a meaningful trap or
+  // worked example (a MongoDB shell command, say). Requiring them led
+  // to hallucinations under the "never invent" prompt rules; better to
+  // let the model omit than fabricate.
+  trap: z.string().min(1).optional(),
+  ex: z.string().min(1).optional(),
 });
 export type Formula = z.infer<typeof FormulaSchema>;
 
