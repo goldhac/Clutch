@@ -7,7 +7,7 @@
 # ────────────────────────────────────────────────────────────────────
 
 # ───── Stage 1: deps ─────
-FROM mcr.microsoft.com/playwright:v1.49.0-jammy AS deps
+FROM mcr.microsoft.com/playwright:v1.60.0-jammy AS deps
 WORKDIR /app
 
 # Copy lockfile + package.json only — better cache layer.
@@ -15,7 +15,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --no-audit --no-fund
 
 # ───── Stage 2: build ─────
-FROM mcr.microsoft.com/playwright:v1.49.0-jammy AS build
+FROM mcr.microsoft.com/playwright:v1.60.0-jammy AS build
 WORKDIR /app
 
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -28,7 +28,7 @@ COPY . .
 RUN npm run build
 
 # ───── Stage 3: runtime ─────
-FROM mcr.microsoft.com/playwright:v1.49.0-jammy AS runtime
+FROM mcr.microsoft.com/playwright:v1.60.0-jammy AS runtime
 WORKDIR /app
 
 ENV NODE_ENV=production
