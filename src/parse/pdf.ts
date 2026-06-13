@@ -6,9 +6,13 @@
  * only PDFs (no OCR) — those need the PPTX path or pdfjs-dist with a
  * dedicated extractor. We accept that tradeoff for v1.
  */
-// @ts-expect-error — @types/pdf-parse v1 mismatches the v2 runtime; the
-// .pdf() default export is correct at runtime.
-import pdfParse from "pdf-parse";
+// pdf-parse@1.1.1's index.js tries to open a hardcoded test PDF at
+// module-load time, which crashes `next build`'s page-data collection
+// (ENOENT on ./test/data/05-versions-space.pdf). The library's real
+// entry point is pdf-parse/lib/pdf-parse.js — importing it directly
+// skips the broken shim.
+// @ts-expect-error — pdf-parse ships no types for the inner module path.
+import pdfParse from "pdf-parse/lib/pdf-parse.js";
 
 export interface ExtractedPDF {
   text: string;
