@@ -33,7 +33,7 @@ import { readFile, writeFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { generateSheet, EngineError } from "@/engine/rank";
 import { extractPdfText } from "@/parse/pdf";
-import { type Density } from "@/renderer/sheet";
+import { type Density } from "@/components/sheet";
 import {
   type ExamType,
   type PriorityMode,

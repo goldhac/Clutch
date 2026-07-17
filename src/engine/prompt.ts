@@ -12,7 +12,7 @@
  * predictable.
  */
 
-import type { Density } from "@/renderer/sheet";
+import type { Density } from "@/components/sheet";
 
 export type ExamType = "conceptual" | "problem-solving" | "mixed";
 export type PriorityMode = "formulas" | "concepts" | "balanced";

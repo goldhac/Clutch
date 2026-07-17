@@ -3,8 +3,9 @@ import "@/renderer/semantics.css";
 import "@/renderer/sheet.css";
 
 import type { Metadata } from "next";
+import Link from "next/link";
 import { sampleContent } from "@samples/sample-content";
-import { type Density, renderSheet } from "@/renderer/sheet";
+import { Sheet, type Density } from "@/components/sheet";
 import { OverflowMonitor } from "./overflow-monitor";
 
 const DENSITIES: Density[] = ["minimal", "standard", "max"];
@@ -23,7 +24,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * /sheet — renders sample-content via the deterministic renderSheet().
+ * /sheet — renders sample-content via the <Sheet> React component.
  *
  *   ?density=max       (default — the hero)
  *   ?density=standard  (3 cols / 7.5pt)
@@ -42,16 +43,12 @@ export default async function SheetPage({
   const sp = await searchParams;
   const density = parseDensity(sp.density);
   const cols5 = sp.cols === "5";
-  const html = renderSheet(sampleContent, { density, cols5 });
 
   return (
     <div className="sheet-page">
-      {/* Dev-only chrome — `print:hidden` keeps it out of PDF; route
-       * additionally calls emulateMedia({media:"print"}) for defense
-       * in depth. */}
       <DevBar density={density} cols5={cols5} />
       <OverflowMonitor />
-      <div dangerouslySetInnerHTML={{ __html: html }} />
+      <Sheet content={sampleContent} density={density} cols5={cols5} />
     </div>
   );
 }
@@ -67,15 +64,14 @@ function DevBar({ density, cols5 }: { density: Density; cols5: boolean }) {
     href: string;
     active: boolean;
   }) => (
-    <a
+    <Link
       href={href}
       className={`rounded px-2 py-0.5 ${active ? "bg-black text-white" : "bg-white text-black hover:bg-neutral-200"}`}
     >
       {label}
-    </a>
+    </Link>
   );
 
-  // Build the matching /api/pdf URL so Export downloads the same density.
   const pdfHref = `/api/pdf?density=${density}${cols5 ? "&cols=5" : ""}`;
 
   return (

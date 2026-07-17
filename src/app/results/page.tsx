@@ -5,12 +5,12 @@ import "@/renderer/semantics.css";
 import "@/renderer/sheet.css";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import {
   safeParseSheetContent,
   type SheetContent,
 } from "@/contract/sheet-content";
-import { type Density, renderSheet } from "@/renderer/sheet";
+import { Sheet, type Density } from "@/components/sheet";
+import { Button, LinkButton, Callout } from "@/components/ui";
 
 interface Stash {
   content: unknown;
@@ -60,11 +60,6 @@ export default function ResultsPage() {
     return result.data;
   }, [stash]);
 
-  const sheetHtml = useMemo(() => {
-    if (!content) return "";
-    return renderSheet(content, { density });
-  }, [content, density]);
-
   if (error) {
     return (
       <main className="mx-auto max-w-2xl px-6 py-16">
@@ -72,12 +67,9 @@ export default function ResultsPage() {
           Something went wrong
         </h1>
         <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{error}</p>
-        <Link
-          href="/generate"
-          className="mt-6 inline-block rounded bg-[color:var(--color-primary-indigo)] px-4 py-2 text-sm font-semibold text-white"
-        >
+        <LinkButton href="/generate" className="mt-6">
           ← Back to generate
-        </Link>
+        </LinkButton>
       </main>
     );
   }
@@ -94,27 +86,24 @@ export default function ResultsPage() {
 
   return (
     <div className="sheet-page">
-      <DevBar
-        density={density}
-        setDensity={setDensity}
-        meta={stash.meta}
-      />
+      <DevBar density={density} setDensity={setDensity} meta={stash.meta} />
       {warnings.length > 0 && <WarningsStrip warnings={warnings} />}
-      <div dangerouslySetInnerHTML={{ __html: sheetHtml }} />
+      <Sheet content={content} density={density} />
     </div>
   );
 }
 
 function WarningsStrip({ warnings }: { warnings: string[] }) {
   return (
-    <div className="print:hidden fixed inset-x-0 top-0 z-40 border-b border-amber-300 bg-amber-50 px-4 py-2 text-xs text-amber-900 shadow-sm">
+    <div className="print:hidden fixed inset-x-0 top-0 z-40 border-b border-amber-300 bg-amber-50/95 px-4 py-2 text-xs text-amber-900 shadow-sm backdrop-blur">
       <div className="mx-auto max-w-5xl">
-        <strong>{warnings.length} engine warning{warnings.length === 1 ? "" : "s"}:</strong>
-        <ul className="mt-1 list-disc space-y-0.5 pl-5">
-          {warnings.map((w, i) => (
-            <li key={i}>{w}</li>
-          ))}
-        </ul>
+        <Callout variant="warn" title={`${warnings.length} engine warning${warnings.length === 1 ? "" : "s"}:`} className="border-0 bg-transparent p-0 text-inherit">
+          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+            {warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+          </ul>
+        </Callout>
       </div>
     </div>
   );
@@ -129,10 +118,8 @@ function DevBar({
   setDensity: (d: Density) => void;
   meta?: Stash["meta"];
 }) {
-  // For results from a real engine run, the PDF export uses the same
-  // sample-driven /api/pdf route — TODO Step 7 wires a /api/pdf-from-stash
-  // that pulls from the persisted SheetContent instead. For now, the
-  // density preview is enough to validate the engine output.
+  // Step 7 will wire a /api/pdf-from-stash that pulls from the
+  // persisted SheetContent — for now density preview validates output.
   return (
     <nav
       aria-label="Sheet dev bar"
@@ -140,22 +127,20 @@ function DevBar({
     >
       <span className="px-1 py-0.5 text-neutral-500">density:</span>
       {(["minimal", "standard", "max"] as Density[]).map((d) => (
-        <button
+        <Button
           key={d}
-          type="button"
+          size="sm"
+          variant={density === d ? "primary" : "ghost"}
           onClick={() => setDensity(d)}
-          className={`rounded px-2 py-0.5 ${density === d ? "bg-black text-white" : "bg-white text-black hover:bg-neutral-200"}`}
+          className={density === d ? "bg-black" : ""}
         >
           {d}
-        </button>
+        </Button>
       ))}
       <span className="mx-1 self-center text-neutral-300">|</span>
-      <Link
-        href="/generate"
-        className="rounded bg-neutral-100 px-2 py-0.5 text-black hover:bg-neutral-200"
-      >
+      <LinkButton href="/generate" size="sm" variant="secondary">
         ← New
-      </Link>
+      </LinkButton>
       {meta?.model && (
         <span
           className="ml-1 text-neutral-400"

@@ -27,7 +27,7 @@ import {
   type PackFile,
   type PriorityMode,
 } from "@/engine/prompt";
-import { type Density } from "@/renderer/sheet";
+import { type Density } from "@/components/sheet";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
