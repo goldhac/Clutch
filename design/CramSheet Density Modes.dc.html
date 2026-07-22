@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  .sheet table{width:100%;border-collapse:collapse}
+  .sheet td,.sheet th{border:1px solid #e7e7ea;padding:1px 4px;text-align:left;vertical-align:top}
+  .sheet th{background:#fafafa;font-weight:600}
+  .sheet pre{margin:0;white-space:pre-wrap;font-family:'Geist Mono',monospace;font-size:.94em;line-height:1.32;background:#f6f7fb;border:1px solid #ececf2;border-radius:3px;padding:3px 5px;color:#2a2a33;overflow:hidden}
+  .sheet code{font-family:'Geist Mono',monospace;background:#f0f0f4;border-radius:3px;padding:0 3px;font-size:.94em}
+  .sheet p{margin:0 0 3px}
+  .sheet b{color:#111}
+  .sheet .k{color:#3b3593;font-weight:600}
+  .sheet .g{color:#a08200;font-weight:700}
+  .sheet ul{margin:0;padding-left:1.1em}
+  .sheet li{margin-bottom:1.5px}
+</style>
+</helmet>
+<div style="font-family:'Geist',sans-serif;background:#eceef3;color:#0a0a0a;min-height:100vh;padding:48px 40px 100px;-webkit-font-smoothing:antialiased;">
+  <div style="max-width:1180px;margin:0 auto;">
+
+    <!-- INTRO -->
+    <div style="margin-bottom:32px;">
+      <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.14em;color:#6a5cff;font-weight:500;">EXAM REFERENCE SHEET · DENSITY MODES</div>
+      <h1 style="font-size:34px;font-weight:700;letter-spacing:-.02em;margin:10px 0 0;">One source. Three densities.</h1>
+      <p style="font-size:15px;color:#4a4a53;margin:12px 0 0;max-width:680px;line-height:1.55;">Same ranked, sourced content — the engine just decides how much fits. <b style="color:#0a0a0a;">MAX</b> packs everything (matching your reference: 5 columns, ~5.5pt, spans 2 pages). <b style="color:#0a0a0a;">Balanced</b> keeps the high-yield set. <b style="color:#0a0a0a;">Essentials</b> is the night-before glance. Every item still shows a confidence dot, a ★ if verified against a past exam, and its source.</p>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:18px;">
+        <sc-for list="{{ topics }}" as="t" hint-placeholder-count="11">
+          <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;color:#3a3a42;background:#fff;border:1px solid #e2e3ec;border-radius:99px;padding:3px 10px 3px 8px;"><span style="width:9px;height:9px;border-radius:3px;background:{{ t.color }};"></span>{{ t.name }}</span>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- ===== MAX ===== -->
+    <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px;">
+      <span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#fff;background:#0a0a0a;border-radius:6px;padding:5px 12px;">MAX</span>
+      <span style="font-size:14px;color:#4a4a53;">Everything · 5 columns · ~5.5pt · fits ~2 pages · {{ maxCount }} blocks</span>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:6px;margin-bottom:44px;">
+      <div class="sheet" style="width:1123px;height:794px;overflow:hidden;flex:none;background:#fff;border:1px solid #d7d8e0;box-shadow:0 12px 40px rgba(10,10,10,.14);border-radius:3px;padding:9px 11px;font-size:6.9px;line-height:1.24;color:#26262e;">
+        <div style="display:flex;align-items:center;gap:9px;border-bottom:1.5px solid #0a0a0a;padding-bottom:3px;margin-bottom:3px;">
+          <div style="font-size:12px;font-weight:700;letter-spacing:-.01em;color:#0a0a0a;line-height:1;white-space:nowrap;">Big Data Final <span style="color:#3b3593;">· CS 6360</span></div>
+          <div style="display:flex;flex-wrap:wrap;gap:2px 7px;flex:1;align-items:center;">
+            <sc-for list="{{ topics }}" as="t" hint-placeholder-count="8"><span style="display:inline-flex;align-items:center;gap:2.5px;font-size:6px;font-weight:600;color:#5a5a63;line-height:1;"><span style="width:6px;height:6px;border-radius:2px;background:{{ t.color }};flex:none;"></span>{{ t.name }}</span></sc-for>
+          </div>
+          <div style="text-align:right;font-family:'Geist Mono',monospace;font-size:6.5px;color:#8a8a94;white-space:nowrap;">MAX · <span style="color:#a08200;font-weight:600;">★ verified</span> · ● conf</div>
+        </div>
+        <div style="font-size:6.4px;color:#6a5a2a;background:#faf7ec;border:1px solid #f0e6c8;border-radius:3px;padding:2px 6px;margin-bottom:4px;line-height:1.3;"><span class="g">TRAPS ·</span> Read NOT/EXCEPT 2× · Select-all = each own T/F (mark fewer) · NoSQL→CAP · CA=single-node · HBase 3 keys · Cassandra needs partition key in WHERE · Stale iff W+R≤RF.</div>
+        <div style="column-count:{{ maxCols }};column-gap:{{ maxGap }}px;column-rule:1px solid #eef0f3;--mb:{{ maxBlockGap }}px;font-size:{{ maxFs }}px;">
+          <sc-for list="{{ blocksMax }}" as="b" hint-placeholder-count="19">
+            <div style="break-inside:avoid;margin-bottom:var(--mb,3px);border:1px solid #ececf1;border-radius:3px;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:3px;padding:2px 5px;background:{{ b.tint }};border-left:2px solid {{ b.color }};">
+                <span style="font-weight:700;font-size:.92em;color:{{ b.color }};letter-spacing:.02em;">{{ b.tag }}</span>
+                <span style="font-weight:600;color:#151519;flex:1;">{{ b.title }}</span>
+                <sc-if value="{{ b.star }}" hint-placeholder-val="{{ true }}"><span class="g" style="font-size:1em;">★</span></sc-if>
+                <span style="width:6px;height:6px;border-radius:50%;background:{{ b.dot }};flex:none;"></span>
+              </div>
+              <div style="padding:3px 5px;" dangerouslySetInnerHTML="{{ b.body }}"></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== BALANCED ===== -->
+    <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px;">
+      <span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#fff;background:#3b3593;border-radius:6px;padding:5px 12px;">BALANCED</span>
+      <span style="font-size:14px;color:#4a4a53;">High-yield set · 4 columns · ~7pt · one page · {{ balCount }} blocks</span>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:6px;margin-bottom:44px;">
+      <div class="sheet" style="width:1123px;height:794px;overflow:hidden;flex:none;background:#fff;border:1px solid #d7d8e0;box-shadow:0 12px 40px rgba(10,10,10,.14);border-radius:3px;padding:20px 24px;font-size:11px;line-height:1.4;color:#26262e;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #0a0a0a;padding-bottom:8px;margin-bottom:8px;">
+          <div><div style="font-family:'Geist',sans-serif;font-size:19px;font-weight:700;letter-spacing:-.01em;color:#0a0a0a;line-height:1;">Big Data Final <span style="color:#3b3593;">· CS 6360</span></div><div style="font-size:10px;color:#8a8a94;margin-top:3px;">The high-yield set — highest-likelihood topics, verified first</div></div>
+          <div style="text-align:right;font-family:'Geist Mono',monospace;font-size:9px;color:#8a8a94;">BALANCED<br><span style="color:#a08200;font-weight:600;">★ verified</span> · ● confidence</div>
+        </div>
+        <div style="column-count:3;column-gap:16px;column-rule:1px solid #eef0f3;">
+          <sc-for list="{{ blocksBal }}" as="b" hint-placeholder-count="12">
+            <div style="break-inside:avoid;margin-bottom:9px;border:1px solid #ececf1;border-radius:5px;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:5px;padding:4px 8px;background:{{ b.tint }};border-left:3px solid {{ b.color }};">
+                <span style="font-weight:700;font-size:.9em;color:{{ b.color }};letter-spacing:.02em;">{{ b.tag }}</span>
+                <span style="font-weight:600;color:#151519;flex:1;">{{ b.title }}</span>
+                <sc-if value="{{ b.star }}" hint-placeholder-val="{{ true }}"><span class="g">★</span></sc-if>
+                <span style="width:7px;height:7px;border-radius:50%;background:{{ b.dot }};flex:none;"></span>
+              </div>
+              <div style="padding:6px 8px;" dangerouslySetInnerHTML="{{ b.body }}"></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ESSENTIALS ===== -->
+    <div style="margin-bottom:18px;display:flex;align-items:center;gap:12px;">
+      <span style="font-family:'Geist Mono',monospace;font-size:13px;font-weight:600;color:#fff;background:#a08200;border-radius:6px;padding:5px 12px;">ESSENTIALS</span>
+      <span style="font-size:14px;color:#4a4a53;">Night-before glance · 3 columns · ~8.5pt · half a page · {{ essCount }} blocks</span>
+    </div>
+    <div style="overflow-x:auto;padding-bottom:6px;">
+      <div class="sheet" style="width:1123px;height:794px;overflow:hidden;flex:none;background:#fff;border:1px solid #d7d8e0;box-shadow:0 12px 40px rgba(10,10,10,.14);border-radius:3px;padding:26px 30px;font-size:13.5px;line-height:1.5;color:#26262e;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid #0a0a0a;padding-bottom:10px;margin-bottom:12px;">
+          <div><div style="font-family:'Geist',sans-serif;font-size:24px;font-weight:700;letter-spacing:-.015em;color:#0a0a0a;line-height:1;">Big Data Final <span style="color:#3b3593;">· CS 6360</span></div><div style="font-size:12px;color:#8a8a94;margin-top:4px;">The essentials — only what's most likely tested and verified</div></div>
+          <div style="text-align:right;font-family:'Geist Mono',monospace;font-size:10.5px;color:#8a8a94;">ESSENTIALS<br><span style="color:#a08200;font-weight:600;">★ verified</span> · ● high conf</div>
+        </div>
+        <div style="column-count:2;column-gap:26px;column-rule:1px solid #eef0f3;">
+          <sc-for list="{{ blocksEss }}" as="b" hint-placeholder-count="6">
+            <div style="break-inside:avoid;margin-bottom:12px;border:1px solid #e7e7ee;border-radius:6px;overflow:hidden;">
+              <div style="display:flex;align-items:center;gap:6px;padding:6px 11px;background:{{ b.tint }};border-left:3.5px solid {{ b.color }};">
+                <span style="font-weight:700;font-size:.86em;color:{{ b.color }};letter-spacing:.03em;">{{ b.tag }}</span>
+                <span style="font-weight:600;color:#151519;flex:1;">{{ b.title }}</span>
+                <sc-if value="{{ b.star }}" hint-placeholder-val="{{ true }}"><span class="g">★</span></sc-if>
+                <span style="width:8px;height:8px;border-radius:50%;background:{{ b.dot }};flex:none;"></span>
+              </div>
+              <div style="padding:9px 11px;" dangerouslySetInnerHTML="{{ b.body }}"></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1200,&quot;height&quot;:900},&quot;maxColumns&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:5,&quot;min&quot;:4,&quot;max&quot;:8,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;MAX density&quot;},&quot;maxColGap&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:1,&quot;min&quot;:1,&quot;max&quot;:16,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;MAX density&quot;},&quot;maxFontSize&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:5,&quot;min&quot;:5,&quot;max&quot;:9,&quot;step&quot;:0.1,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;MAX density&quot;},&quot;maxBlockGap&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;default&quot;:0,&quot;min&quot;:0,&quot;max&quot;:10,&quot;unit&quot;:&quot;px&quot;,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;MAX density&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const C = {
+      mllib:'#4f46e5', spark:'#ea7317', hdfs:'#15803d', nosql:'#be123c',
+      mongo:'#0d9488', hbase:'#7c3aed', cass:'#2563eb', exam:'#a08200',
+    };
+    const DOT = { core:'#1a7f4b', high:'#1a7f4b', med:'#b26a00', low:'#c0392b' };
+    const tint = (c) => `color-mix(in srgb, ${c} 9%, #fff)`;
+    const H = (s) => ({ __html: s });
+    // tier: core | high | med | low  → Essentials=core; Balanced=core+high; MAX=all
+    const B = (key, tag, title, star, tier, body) => ({
+      key, tag, title, star, tier, body: H(body),
+      color: C[key], tint: tint(C[key]), dot: DOT[tier],
+    });
+    const blocks = [
+      B('exam','EXAM','Universal rules', true, 'core',
+        `<ul><li>Read <b>NOT / EXCEPT</b> twice — they flip the answer.</li><li>Select-all = each option its own T/F; unsure → mark <b>fewer</b>.</li><li>Code order: imports → vars → calls. Imports reveal topic.</li><li>Trap: DF <b>has</b> Catalyst; RDD doesn't. Dataset = no Python.</li><li>Combiner must be assoc + commutative.</li></ul>`),
+      B('mllib','MLLIB','Estimator vs Transformer', false, 'core',
+        `<table><tr><th>Type</th><th>Call</th><th>Examples</th></tr><tr><td><b>Transformer</b></td><td><code>.transform()</code></td><td>Tokenizer, VectorAssembler, StringIndexer, OneHotEncoder, Bucketizer, Normalizer</td></tr><tr><td><b>Estimator</b></td><td><code>.fit()</code>→Model</td><td>LR, KMeans, ALS, IDF, StandardScaler, FPGrowth</td></tr></table><p style="margin-top:3px">A Model produced by an Estimator <b>is</b> a Transformer.</p>`),
+      B('exam','EXAM','Confusion matrix (worked)', true, 'core',
+        `<table><tr><th></th><th>Act +</th><th>Act −</th></tr><tr><td><b>Pred +</b></td><td>100 (TP)</td><td>200 (FP)</td></tr><tr><td><b>Pred −</b></td><td>200 (FN)</td><td>9500 (TN)</td></tr></table><p style="margin-top:3px"><b>P</b>=TP/(TP+FP)=<span class="k">33.3%</span> · <b>R</b>=TP/(TP+FN)=<span class="k">33.3%</span><br><b>Acc</b>=(TP+TN)/all=<span class="k">96%</span> · F1=2PR/(P+R)<br>FPR=FP/(FP+TN). ROC=plot(FPR,TPR); AUC=summary.</p>`),
+      B('nosql','NOSQL','CAP + ACID→BASE', true, 'core',
+        `<p><b>CAP</b> (Brewer): {Consistency, Availability, Partition-tol} — pick 2. P is <b>mandatory</b> when distributed → choose <b>CP</b> or <b>AP</b>. CA = single-node only.</p><table style="margin-top:3px"><tr><th>ACID</th><th>BASE</th></tr><tr><td>Atomicity</td><td>Basically Available</td></tr><tr><td>Consistency</td><td>Soft state</td></tr><tr><td>Isolation</td><td>Eventually consistent</td></tr></table>`),
+      B('mongo','MONGO','MongoDB core queries', false, 'core',
+        `<pre>db.coll.find({price:{$lt:500}})
+db.coll.find({$or:[{type:"A"},
+  {price:{$lt:100}}]},
+  {name:1,price:1,_id:0}).limit(10)
+db.coll.find().sort({price:-1})
+db.coll.aggregate([
+ {$match:{x:1}},
+ {$group:{_id:"$y",n:{$sum:1}}},
+ {$sort:{n:-1}}])</pre><p style="margin-top:3px"><b>Projection:</b> <code>{a:1}</code> include · <code>{a:1,_id:0}</code> include+hide id · <code>{a:0}</code> exclude only.</p>`),
+      B('cass','CASS','Consistency + stale read', true, 'core',
+        `<p>Levels: <b>ANY</b>(weakest, fastest) · <b>ONE</b> · <b>QUORUM</b>=RF/2+1 (best balance) · <b>ALL</b>(strictest).</p><p style="margin-top:2px"><b>Rule:</b> stale possible iff <span class="k">W+R ≤ RF</span>; safe iff W+R &gt; RF.</p><table style="margin-top:3px"><tr><th>RF</th><th>W</th><th>R</th><th>Stale?</th></tr><tr><td>3</td><td>ONE</td><td>ONE</td><td>Yes (2≤3)</td></tr><tr><td>3</td><td>QUO</td><td>QUO</td><td>No (4&gt;3)</td></tr><tr><td>5</td><td>QUO</td><td>ONE</td><td>Yes (4≤5)</td></tr></table>`),
+      // ---- high (Balanced) ----
+      B('mllib','MLLIB','KMeans (clustering)', true, 'high',
+        `<pre>from pyspark.ml.feature import VectorAssembler
+from pyspark.ml.clustering import KMeans
+va = VectorAssembler(inputCols=cols,
+  outputCol="features")
+feat = va.transform(df)
+km = KMeans().setK(5).setSeed(5)
+model = km.fit(feat)
+preds = model.transform(feat)</pre><p style="margin-top:3px">K = hyperparam (elbow / silhouette∈[-1,1], high=better). <b>KMeans() works with no params</b> (k defaults to 2).</p>`),
+      B('mllib','MLLIB','Evaluators', false, 'high',
+        `<table><tr><th>Task</th><th>Evaluator</th><th>Default</th></tr><tr><td>Binary</td><td>BinaryClassificationEvaluator</td><td>areaUnderROC</td></tr><tr><td>Multi</td><td>MulticlassClassificationEvaluator</td><td>accuracy/f1</td></tr><tr><td>Reg/ALS</td><td>RegressionEvaluator</td><td>rmse</td></tr><tr><td>Cluster</td><td>ClusteringEvaluator</td><td>silhouette</td></tr></table>`),
+      B('spark','SPARK','DataFrame ops', false, 'high',
+        `<pre>df.select(col("a"), col("b")*2)
+df.filter(df.age > 30)
+df.where("age>30 AND city='NY'")
+df.groupBy("city").agg(
+  count("*").alias("n"),
+  avg("salary"))
+df1.join(df2, "id", "inner")
+w = Window.partitionBy("city")
+  .orderBy("salary")</pre><p style="margin-top:3px">Joins: inner/left/right/outer/semi/anti. <code>sc</code>=RDD entry · <code>spark</code>=DF entry.</p>`),
+      B('hdfs','HDFS','HDFS architecture', false, 'high',
+        `<table><tr><th>Role</th><th>Note</th></tr><tr><td>NameNode</td><td>master · metadata · <b>SPoF</b></td></tr><tr><td>DataNode</td><td>stores blocks · heartbeat</td></tr><tr><td>Secondary NN</td><td>checkpoint · <b>not</b> failover</td></tr><tr><td>Standby NN</td><td>hot backup w/ ZK</td></tr></table><p style="margin-top:3px">Block 128 MB, replicated 3×. Rack-aware: local, remote rack, same remote rack. Client R/W goes <b>direct</b> to DataNodes.</p>`),
+      B('nosql','NOSQL','4 NoSQL families', false, 'high',
+        `<table><tr><th>Family</th><th>Examples</th></tr><tr><td>Key-Value</td><td>Redis, DynamoDB, S3</td></tr><tr><td>Document</td><td>MongoDB, CouchDB</td></tr><tr><td>Column</td><td>HBase, Cassandra</td></tr><tr><td>Graph</td><td>Neo4j, JanusGraph</td></tr></table><p style="margin-top:3px">Lose vs RDBMS: referential integrity, full joins, strict consistency, ≥1 ACID prop, SQL. 5 nines = 5.26 min/yr.</p>`),
+      B('hbase','HBASE','3-key model + shell', false, 'high',
+        `<p>Column-oriented on HDFS (Bigtable). <b>CP.</b> HMaster + RegionServers + ZooKeeper; HMaster ≠ data path. Cell key = <b>(row, family:qualifier, timestamp)</b>, default 1 version.</p><pre>create 'cust',{NAME=>'addr'},{NAME=>'order'}
+put 'cust','jsmith','addr:city','nash'
+get 'cust','jsmith'
+scan 'cust',{FILTER=>"PrefixFilter('j')"}</pre>`),
+      // ---- med / low (MAX only) ----
+      B('mllib','MLLIB','Feature engineering', false, 'med',
+        `<table><tr><td>VectorAssembler</td><td>cols → 1 vec</td></tr><tr><td>StringIndexer</td><td>cat → index</td></tr><tr><td>OneHotEncoder</td><td>idx → sparse OHE</td></tr><tr><td>HashingTF</td><td>words → TF vec</td></tr><tr><td>IDF</td><td>TF → TF·IDF (Est!)</td></tr><tr><td>StandardScaler</td><td>unit var</td></tr></table>`),
+      B('mllib','MLLIB','ALS (recommendation)', true, 'med',
+        `<pre>from pyspark.ml.recommendation import ALS
+als = ALS(maxIter=5, regParam=0.01,
+  userCol="userID", itemCol="movieID",
+  ratingCol="rating", rank=5,
+  coldStartStrategy="drop")
+model = als.fit(training)</pre><p style="margin-top:3px">rank = latent factors. R[p×q]≈U[p×k]·Vᵀ. cold-start "drop" removes NaN preds.</p>`),
+      B('mllib','MLLIB','LogReg + FeatureHasher', false, 'low',
+        `<pre>hasher = FeatureHasher()\\
+  .setInputCols(["mpg","hp","weight"])\\
+  .setOutputCol("features")
+lr = LogisticRegression(maxIter=10,
+  regParam=0.3, elasticNetParam=0.8)
+m = lr.fit(train)</pre><p style="margin-top:3px">elasticNet: 0=L2, 1=L1, 0.8=mix.</p>`),
+      B('mllib','MLLIB','FPGrowth · NaiveBayes', false, 'low',
+        `<pre>fp = FPGrowth(itemsCol="items",
+  minSupport=0.4, minConfidence=0.5)
+m.freqItemsets.show()
+m.associationRules.show()</pre><p style="margin-top:3px">Support(X)=count/N · Conf(A→B)=supp(A∪B)/supp(A). NaiveBayes(smoothing=1.0) = tiny-data winner.</p>`),
+      B('spark','SPARK','RDD ops + architecture', false, 'med',
+        `<p><b>Transforms</b> (lazy): map, filter, flatMap, reduceByKey, join, cache. <b>Actions</b> (eager): collect, count, take, reduce, saveAsTextFile. Wide = shuffle. <code>reduceByKey ≫ groupByKey</code> (map-side combine).</p><table style="margin-top:3px"><tr><td>Driver</td><td>builds DAG</td></tr><tr><td>Executor</td><td>runs tasks, caches</td></tr><tr><td>Stage</td><td>tasks w/o shuffle</td></tr><tr><td>Job</td><td>per action</td></tr></table>`),
+      B('mongo','MONGO','Operators', false, 'low',
+        `<table><tr><td>Compare</td><td>$lt $gt $lte $gte $eq $ne $in $nin</td></tr><tr><td>Logical</td><td>$and $or $not $nor</td></tr><tr><td>Array</td><td>$all $elemMatch $size</td></tr><tr><td>Update</td><td>$set $unset $inc $push $pull</td></tr><tr><td>Pipeline</td><td>$match $group $sort $unwind $lookup</td></tr></table>`),
+      B('cass','CASS','Partitioners + strategies', false, 'low',
+        `<table><tr><td>Murmur3</td><td>DEFAULT, uniform</td></tr><tr><td>Random</td><td>MD5, older</td></tr><tr><td>ByteOrdered</td><td>hot spots</td></tr></table><p style="margin-top:3px"><b>Strategies:</b> SimpleStrategy(1 DC) · NetworkTopology(multi-DC) · LocalStrategy(system). P2P, no master, no SPoF, token ring. WHERE must include partition key.</p>`),
+      B('gf','GF','GraphFrames', false, 'med',
+        `<p>GraphX=RDD; <b>GraphFrames</b>=DataFrame (Catalyst, motifs, Python). Vertices need <code>id</code>; edges need <code>src</code>,<code>dst</code>.</p><pre>g = GraphFrame(v, e)
+g.inDegrees.show()
+g.find("(a)-[e]->(b)")   # motif
+g.pageRank(resetProb=0.15, maxIter=10)</pre>`),
+      B('stream','STREAM','Structured streaming', false, 'med',
+        `<p>Unbounded-table model: readStream → transform → writeStream. <b>File sink = APPEND only.</b></p><pre>lines = spark.readStream.format("socket")\\
+  .option("port",9999).load()
+q = counts.writeStream\\
+  .outputMode("complete")\\
+  .format("console").start()</pre><p>Modes: append / complete / update. Watermarks handle late data.</p>`),
+      B('exam','EXAM','FPM worked (market basket)', true, 'low',
+        `<p>5 txns. Support(X)=count/N; Conf(A→B)=supp(A∪B)/supp(A).</p><p>{Bread}=4/5 · {Bread,Milk}=3/5.<br>Conf {Bread}→{Milk}=3/4=<span class="k">0.75</span><br>Conf {Cola}→{Diaper}=2/2=<span class="k">1.0</span><br>Supp {Milk,Diaper,Beer}=2/5=<span class="k">40%</span></p>`),
+      B('mllib','MLLIB','Decision Tree / RF', false, 'low',
+        `<pre>dt = DecisionTreeClassifier(maxDepth=5)
+rf = RandomForestClassifier(
+  numTrees=20, maxDepth=5)</pre><p>RF averages many trees → less overfit.</p>`),
+      B('mllib','MLLIB','Pipeline + CV', false, 'low',
+        `<pre>pipe = Pipeline(stages=[va,sc,lr])
+grid = ParamGridBuilder()\\
+ .addGrid(lr.regParam,[.01,.1]).build()
+cv = CrossValidator(estimator=pipe,
+ estimatorParamMaps=grid, numFolds=5)
+cv.fit(train).bestModel</pre>`),
+      B('nosql','NOSQL','Why NoSQL', false, 'low',
+        `<p>RDBMS doesn't scale horizontally; ACID hurts availability.</p><table><tr><td>Master/Slave</td><td>stale reads · SPoF</td></tr><tr><td>Sharding</td><td>partition-aware · no cross-shard joins</td></tr></table><p>Props: non-rel · schema-less · horiz scale · OSS · relaxed ACID · replication · no joins.</p>`),
+      B('mongo','MONGO','Insert / update / delete', false, 'low',
+        `<pre>db.test.insertOne({name:"Joe"})
+# auto-creates collection + _id
+db.coll.updateOne({x:1},{$set:{y:2}})
+db.coll.deleteMany({x:1})</pre><p>3 query types: find · aggregate · mapReduce.</p>`),
+      B('cass','CASS','Gossip + data model', false, 'low',
+        `<p><b>Gossip:</b> P2P state exchange — each node periodically messages a random node; seed nodes bootstrap topology.</p><p>Topology: Cluster → DC → Rack → Node. Token ring; any node coordinates. RF set at keyspace creation.</p>`),
+      B('hive','HIVE','HiveQL basics', false, 'low',
+        `<p>SQL over HDFS → MapReduce/Tez. Schema-on-read. Metastore holds schema.</p><pre>CREATE TABLE t (id INT, name STRING)
+ ROW FORMAT DELIMITED
+ FIELDS TERMINATED BY ',';
+LOAD DATA INPATH '/d/f.csv' INTO TABLE t;
+SELECT name,count(*) FROM t GROUP BY name;</pre><p>Partitioned/bucketed tables prune scans. Managed vs external (DROP keeps data).</p>`),
+      B('hdfs','HDFS','HDFS shell', false, 'low',
+        `<pre>hdfs dfs -ls /
+hdfs dfs -put f.txt /data/
+hdfs dfs -get /data/f.txt .
+hdfs dfs -cat /data/f.txt
+hdfs dfsadmin -report</pre><p>Client R/W goes direct to DataNodes; NameNode only serves metadata.</p>`),
+      B('spark','SPARK','spark-submit + config', false, 'low',
+        `<pre>spark-submit --master yarn \\
+  --executor-memory 4G \\
+  --num-executors 10 app.py</pre><p>Managers: Standalone / YARN / Mesos / K8s. <code>--packages</code> pulls deps (e.g. graphframes).</p>`),
+      B('mllib','MLLIB','Text features', false, 'low',
+        `<table><tr><td>Tokenizer</td><td>text → words</td></tr><tr><td>n-gram</td><td>n consecutive tokens</td></tr><tr><td>Word2Vec</td><td>word → dense vec</td></tr><tr><td>CountVectorizer</td><td>text → count vec</td></tr></table>`),
+      B('exam','EXAM','Evaluation methods', false, 'low',
+        `<table><tr><td>Hold-out</td><td>80/20 split</td></tr><tr><td>K-fold CV</td><td>k folds, each test 1×</td></tr><tr><td>Stratified</td><td>fold keeps class dist</td></tr><tr><td>Bootstrap</td><td>sample w/ replacement</td></tr></table><p>Threshold = hyperparam. Grid vs random search.</p>`),
+      B('mllib','MLLIB','Recommenders', false, 'low',
+        `<table><tr><th>Strategy</th><th>Profile?</th></tr><tr><td>Content-based</td><td>YES required</td></tr><tr><td>Collaborative</td><td>NO needed</td></tr></table><p>MF: R[p×q] ≈ U[p×k]·Vᵀ. k=latent factors. Solvers: SVD (analytic) · SGD · Spark uses ALS.</p>`),
+      B('cass','CASS','CQL + replication', false, 'low',
+        `<pre>CREATE KEYSPACE ks WITH REPLICATION=
+ {'class':'SimpleStrategy',
+  'replication_factor':3};
+USE ks;</pre><p>Strategies: SimpleStrategy (1 DC) · NetworkTopologyStrategy (multi-DC) · LocalStrategy (system).</p>`),
+      B('hbase','HBASE','HBase vs Cassandra', false, 'low',
+        `<table><tr><th></th><th>HBase</th><th>Cass</th></tr><tr><td>CAP</td><td>CP</td><td>AP</td></tr><tr><td>Arch</td><td>master/slave</td><td>P2P</td></tr><tr><td>SPoF</td><td>yes (NN+HMaster)</td><td>none</td></tr></table><p>Both column-oriented. ZooKeeper: coord, leader election, sync.</p>`),
+      B('spark','SPARK','RDD lineage + persist', false, 'low',
+        `<p>RDDs are immutable + lazy; lineage (DAG) enables fault recovery by recompute. <code>cache()</code>=MEMORY_ONLY; <code>persist(level)</code> for disk/ser. Checkpoint truncates lineage to HDFS.</p>`),
+      B('gf','GF','GraphFrames algorithms', false, 'low',
+        `<pre>g.pageRank(resetProb=.15, maxIter=10)
+g.connectedComponents()
+g.labelPropagation(maxIter=5)
+g.shortestPaths(landmarks=["a"])
+g.triangleCount()</pre><p>Motif find: <code>g.find("(a)-[e]->(b)")</code>.</p>`),
+      B('spark','SPARK','RDD ops reference', false, 'low',
+        `<p><b>Transforms</b> (lazy): map, filter, flatMap, mapValues, distinct, union, join, reduceByKey, groupByKey, sortByKey, cache.</p><p><b>Actions</b> (eager): collect, count, take, first, reduce, foreach, countByKey, saveAsTextFile.</p><p><b>Wide</b>=shuffle. reduceByKey ≫ groupByKey.</p>`),
+      B('spark','SPARK','Shared variables', false, 'low',
+        `<pre>bc = sc.broadcast([1,2,3])   # read-only
+acc = sc.accumulator(0)      # write-only add
+rdd.foreach(lambda x: acc.add(x))</pre><p>Broadcast = ship once per node. Accumulator = driver-side aggregate.</p>`),
+      B('spark','SPARK','Partitions & shuffle', false, 'low',
+        `<p>Partition = unit of parallelism. <code>repartition(n)</code> full shuffle; <code>coalesce(n)</code> narrow (fewer). Shuffle writes to disk between stages — minimize wide ops. Combiner must be assoc + commut.</p>`),
+      B('mllib','MLLIB','Scaling & normalizing', false, 'low',
+        `<table><tr><td>StandardScaler</td><td>unit var (μ=0 if withMean)</td></tr><tr><td>Normalizer</td><td>L1/L2 per row</td></tr><tr><td>MinMaxScaler</td><td>rescale [0,1]</td></tr><tr><td>Bucketizer</td><td>continuous → bins</td></tr></table>`),
+      B('mllib','MLLIB','Metric formulas', false, 'low',
+        `<p>Precision=TP/(TP+FP) · Recall=TP/(TP+FN)<br>F1=2PR/(P+R) · Acc=(TP+TN)/N<br>FPR=FP/(FP+TN) · TPR=Recall<br>RMSE=√(Σ(ŷ−y)²/n) · R²=explained var.</p>`),
+      B('exam','EXAM','ROC / AUC / threshold', false, 'low',
+        `<p>Lower threshold → TPR↑ and FPR↑. ROC = plot(FPR, TPR). AUC = single-number summary (0.5=random, 1=perfect). Soft classifier = probability output; threshold is a hyperparameter.</p>`),
+      B('mongo','MONGO','Aggregation stages', false, 'low',
+        `<pre>db.c.aggregate([
+ {$match:{market:"MTL"}},
+ {$unwind:"$amenities"},
+ {$group:{_id:"$amenities",n:{$sum:1}}},
+ {$sort:{n:-1}},{$limit:10}])</pre><p>$lookup = left outer join across collections.</p>`),
+      B('mongo','MONGO','Indexes & _id', false, 'low',
+        `<p><code>_id</code> auto unique, always returned unless <code>{_id:0}</code>. Create index: <code>db.c.createIndex({price:1})</code> (1=asc, −1=desc). Compound indexes follow prefix rule.</p>`),
+      B('hbase','HBASE','Regions & compaction', false, 'low',
+        `<p>Region = contiguous sorted row-key range; auto-splits when large. RegionServer serves regions. Writes → MemStore → flush to HFile. Minor/major compaction merges HFiles. WAL for durability.</p>`),
+      B('cass','CASS','Read / write path', false, 'low',
+        `<p><b>Write:</b> commit log → memtable → SSTable (flush). <b>Read:</b> memtable + SSTables merged via timestamp (last-write-wins). Compaction merges SSTables. Tombstones mark deletes.</p>`),
+      B('hdfs','HDFS','Read / write path', false, 'low',
+        `<p><b>Write:</b> client asks NN for DataNodes → pipeline write to 3 replicas → ack. <b>Read:</b> NN returns block locations → client reads nearest DataNode directly. NN never touches data.</p>`),
+      B('hdfs','HDFS','YARN', false, 'low',
+        `<table><tr><td>ResourceManager</td><td>cluster scheduler</td></tr><tr><td>NodeManager</td><td>per-node agent</td></tr><tr><td>App Master</td><td>per-job coordinator</td></tr><tr><td>Container</td><td>resource bundle</td></tr></table>`),
+      B('nosql','NOSQL','BASE & 5 nines', false, 'low',
+        `<p><b>5 nines</b> = 99.999% = 5.26 min/yr downtime. NOT a reason for NoSQL: "improved consistency" (FALSE). 1B-user pick: P + A with eventual consistency.</p>`),
+      B('gf','GF','GraphX vs GraphFrames', false, 'low',
+        `<table><tr><th></th><th>GraphX</th><th>GraphFrames</th></tr><tr><td>API</td><td>RDD</td><td>DataFrame</td></tr><tr><td>Motifs</td><td>no</td><td>yes</td></tr><tr><td>Python</td><td>no</td><td>yes</td></tr></table>`),
+    ];
+    const max = blocks;
+    const bal = blocks.filter(b => b.tier === 'core' || b.tier === 'high');
+    const ess = blocks.filter(b => b.tier === 'core');
+    return {
+      topics: [
+        {name:'MLlib', color:C.mllib},{name:'Spark', color:C.spark},{name:'HDFS', color:C.hdfs},
+        {name:'NoSQL', color:C.nosql},{name:'MongoDB', color:C.mongo},{name:'HBase', color:C.hbase},
+        {name:'Cassandra', color:C.cass},{name:'Exam / traps', color:C.exam},
+      ],
+      blocksMax: max, blocksBal: bal, blocksEss: ess,
+      maxCount: max.length, balCount: bal.length, essCount: ess.length,
+      maxCols: this.props.maxColumns ?? 5,
+      maxGap: this.props.maxColGap ?? 6,
+      maxFs: this.props.maxFontSize ?? 5.7,
+      maxBlockGap: this.props.maxBlockGap ?? 1,
+    };
+  }
+}
+</script>
+</body>
+</html>

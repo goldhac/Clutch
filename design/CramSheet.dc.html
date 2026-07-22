@@ -1,0 +1,1725 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    /* ——— Ink / neutral scale (warm cool-gray) ——— */
+    --ink-900:#111114; --ink-800:#1c1c21; --ink-700:#2c2c33;
+    --ink-600:#4a4a53; --ink-500:#6b6b76; --ink-400:#909099;
+    --ink-300:#b8b8bf; --ink-200:#d9d9de; --ink-150:#e6e6ea;
+    --ink-100:#f0f0f2; --ink-50:#f7f7f8;
+    --paper:#fbfbfa; --paper-2:#f5f5f3; --white:#ffffff;
+    /* ——— Brand: ink primary + iris signal ——— */
+    --signal-700:#3a34b8; --signal-600:#4b45d6; --signal-500:#5b57e0; --signal-100:#ecebfb; --signal-50:#f5f4fe;
+    /* ——— Editorial salmon (FT nod) for proof surfaces ——— */
+    --salmon:#fdece4; --salmon-line:#f4d3c4;
+    /* ——— Confidence tiers ——— */
+    --conf-high:#1a7f4b; --conf-high-bg:#e6f4ec;
+    --conf-med:#b26a00; --conf-med-bg:#fbf0dd;
+    --conf-low:#c0392b; --conf-low-bg:#fbe9e7;
+    --verified:#a5790a; --verified-bg:#fbf3da;
+    /* ——— Functional ——— */
+    --info:#2f6db3; --info-bg:#e8f1fb;
+    --warn:#b26a00; --warn-bg:#fbf0dd;
+    --danger:#c0392b; --danger-bg:#fbe9e7;
+    --success:#1a7f4b; --success-bg:#e6f4ec;
+    /* ——— Topic palette (future multi-topic) ——— */
+    --topic-1:#5b57e0; --topic-2:#1a7f4b; --topic-3:#b26a00;
+    --topic-4:#2f6db3; --topic-5:#8e44ad; --topic-6:#c0392b;
+    /* ——— Radius ——— */
+    --r-xs:4px; --r-sm:6px; --r-md:8px; --r-lg:12px; --r-xl:18px; --r-full:999px;
+    /* ——— Shadow ——— */
+    --sh-xs:0 1px 2px rgba(17,17,20,.05);
+    --sh-sm:0 1px 3px rgba(17,17,20,.07), 0 1px 2px rgba(17,17,20,.04);
+    --sh-md:0 4px 12px rgba(17,17,20,.08), 0 2px 4px rgba(17,17,20,.04);
+    --sh-lg:0 12px 32px rgba(17,17,20,.10), 0 4px 8px rgba(17,17,20,.05);
+    --sh-xl:0 24px 60px rgba(17,17,20,.14), 0 8px 16px rgba(17,17,20,.06);
+    /* ——— Type ——— */
+    --sans:'Geist',-apple-system,BlinkMacSystemFont,sans-serif;
+    --serif:'Newsreader',Georgia,serif;
+    --mono:'Geist Mono',ui-monospace,SFMono-Regular,monospace;
+    /* ——— Motion ——— */
+    --ease:cubic-bezier(.2,.6,.2,1); --ease-out:cubic-bezier(.16,1,.3,1);
+    --dur-fast:120ms; --dur:200ms; --dur-slow:360ms;
+  }
+  *{box-sizing:border-box}
+  ::selection{background:var(--signal-100);color:var(--signal-700)}
+  a{color:var(--signal-600);text-decoration:none}
+  a:hover{color:var(--signal-700)}
+  html{scroll-behavior:smooth}
+  .ds-scroll::-webkit-scrollbar{width:10px;height:10px}
+  .ds-scroll::-webkit-scrollbar-thumb{background:var(--ink-200);border-radius:99px;border:2px solid var(--paper)}
+  .ds-scroll::-webkit-scrollbar-thumb:hover{background:var(--ink-300)}
+  @keyframes ds-climb{from{width:0}}
+  @keyframes ds-spin{to{transform:rotate(360deg)}}
+  @keyframes ds-pulse{0%,100%{opacity:.5}50%{opacity:1}}
+  @keyframes ds-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  @keyframes ds-shimmer{100%{background-position:200% 0}}
+</style>
+</helmet>
+<div class="ds-scroll" style="display:flex;font-family:var(--sans);color:var(--ink-800);background:var(--paper);min-height:100vh;-webkit-font-smoothing:antialiased;font-feature-settings:'ss01','cv01';">
+
+  <!-- ————— SIDEBAR ————— -->
+  <aside style="position:sticky;top:0;align-self:flex-start;height:100vh;width:248px;flex:0 0 248px;background:var(--white);border-right:1px solid var(--ink-150);display:flex;flex-direction:column;overflow-y:auto;">
+    <div style="padding:22px 22px 18px;border-bottom:1px solid var(--ink-100);">
+      <div style="display:flex;align-items:center;gap:9px;">
+        <div style="width:26px;height:26px;border-radius:var(--r-sm);background:var(--ink-900);display:flex;align-items:center;justify-content:center;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11l5 5v11H4z"/><path d="M15 4v5h5"/><path d="M8 13h8M8 16.5h5"/></svg>
+        </div>
+        <span style="font-weight:600;font-size:15px;letter-spacing:-.01em;color:var(--ink-900);">CramSheet</span>
+      </div>
+      <div style="margin-top:9px;font-size:11px;color:var(--ink-400);font-family:var(--mono);letter-spacing:.02em;">DESIGN SYSTEM · v1.0</div>
+    </div>
+    <nav style="padding:14px 12px 40px;font-size:13px;">
+      <sc-for list="{{ nav }}" as="grp" hint-placeholder-count="6">
+        <div style="margin-bottom:16px;">
+          <div style="padding:4px 10px;font-size:10.5px;font-weight:600;letter-spacing:.08em;color:var(--ink-400);text-transform:uppercase;font-family:var(--mono);">{{ grp.label }}</div>
+          <sc-for list="{{ grp.items }}" as="it" hint-placeholder-count="4">
+            <a href="{{ it.href }}" style="display:block;padding:6px 10px;border-radius:var(--r-sm);color:var(--ink-600);font-weight:450;transition:background var(--dur-fast),color var(--dur-fast);" style-hover="background:var(--ink-50);color:var(--ink-900);">{{ it.name }}</a>
+          </sc-for>
+        </div>
+      </sc-for>
+    </nav>
+  </aside>
+
+  <!-- ————— MAIN ————— -->
+  <main class="ds-scroll" style="flex:1;min-width:0;">
+
+    <!-- ===== COVER ===== -->
+    <section id="cover" style="min-height:100vh;display:flex;flex-direction:column;justify-content:center;padding:80px 96px;position:relative;background:radial-gradient(120% 90% at 12% 0%, var(--white) 0%, var(--paper) 55%);border-bottom:1px solid var(--ink-150);overflow:hidden;">
+      <div style="position:absolute;inset:0;background-image:linear-gradient(var(--ink-100) 1px,transparent 1px),linear-gradient(90deg,var(--ink-100) 1px,transparent 1px);background-size:52px 52px;-webkit-mask-image:radial-gradient(70% 60% at 70% 40%,#000,transparent);mask-image:radial-gradient(70% 60% at 70% 40%,#000,transparent);opacity:.6;pointer-events:none;"></div>
+      <div style="position:relative;max-width:820px;">
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 8px;border:1px solid var(--ink-150);background:var(--white);border-radius:var(--r-full);font-size:12px;color:var(--ink-500);box-shadow:var(--sh-xs);margin-bottom:34px;">
+          <span style="width:20px;height:20px;border-radius:var(--r-xs);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h11l5 5v11H4z"/></svg></span>
+          The complete product design system
+        </div>
+        <h1 style="font-family:var(--serif);font-weight:400;font-size:76px;line-height:1.02;letter-spacing:-.025em;color:var(--ink-900);margin:0 0 24px;text-wrap:balance;">One page.<br>Print it.<br><span style="font-style:italic;color:var(--signal-600);">Take it.</span></h1>
+        <p style="font-size:20px;line-height:1.5;color:var(--ink-600);max-width:560px;margin:0 0 40px;text-wrap:pretty;">CramSheet turns your exam materials into a single dense, printable page that decides what's most likely tested — and proves every claim with a confidence score and a real citation.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <a href="#home" style="display:inline-flex;align-items:center;gap:8px;background:var(--ink-900);color:var(--white);padding:12px 20px;border-radius:var(--r-md);font-weight:500;font-size:14px;box-shadow:var(--sh-sm);">Walk the product <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a>
+          <a href="#foundations" style="display:inline-flex;align-items:center;gap:8px;background:var(--white);color:var(--ink-800);padding:12px 20px;border-radius:var(--r-md);font-weight:500;font-size:14px;border:1px solid var(--ink-200);">See the tokens</a>
+        </div>
+      </div>
+      <div style="position:absolute;right:-90px;bottom:-70px;width:460px;transform:rotate(4deg);box-shadow:var(--sh-xl);border-radius:var(--r-md);overflow:hidden;border:1px solid var(--ink-150);opacity:.94;pointer-events:none;">
+        <div style="background:var(--white);padding:18px 20px;filter:blur(.4px);">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink-900);padding-bottom:8px;margin-bottom:10px;">
+            <div style="font-family:var(--serif);font-size:19px;font-weight:500;color:var(--ink-900);">Intro Statistics — Exam Reference</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--ink-400);">MAX · A4</div>
+          </div>
+          <div style="columns:2;column-gap:16px;font-size:7.5px;line-height:1.5;color:var(--ink-400);">
+            <div style="break-inside:avoid;margin-bottom:8px;"><div style="height:6px;background:var(--ink-200);width:60%;border-radius:2px;margin-bottom:4px;"></div><div style="height:4px;background:var(--ink-100);margin-bottom:3px;"></div><div style="height:4px;background:var(--ink-100);width:88%;margin-bottom:3px;"></div><div style="height:4px;background:var(--ink-100);width:72%;"></div></div>
+            <div style="break-inside:avoid;margin-bottom:8px;"><div style="height:6px;background:var(--signal-500);width:50%;border-radius:2px;margin-bottom:4px;"></div><div style="height:4px;background:var(--ink-100);margin-bottom:3px;"></div><div style="height:4px;background:var(--ink-100);width:80%;"></div></div>
+            <div style="break-inside:avoid;margin-bottom:8px;"><div style="height:6px;background:var(--ink-200);width:66%;border-radius:2px;margin-bottom:4px;"></div><div style="height:4px;background:var(--ink-100);margin-bottom:3px;"></div><div style="height:4px;background:var(--ink-100);width:76%;margin-bottom:3px;"></div><div style="height:4px;background:var(--ink-100);width:90%;"></div></div>
+            <div style="break-inside:avoid;"><div style="height:6px;background:var(--ink-200);width:54%;border-radius:2px;margin-bottom:4px;"></div><div style="height:4px;background:var(--ink-100);margin-bottom:3px;"></div><div style="height:4px;background:var(--ink-100);width:84%;"></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PHILOSOPHY ===== -->
+    <section id="philosophy" style="padding:84px 96px;border-bottom:1px solid var(--ink-150);max-width:1100px;">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:14px;">01 — PHILOSOPHY</div>
+      <h2 style="font-family:var(--serif);font-weight:400;font-size:44px;line-height:1.1;letter-spacing:-.02em;color:var(--ink-900);margin:0 0 28px;max-width:720px;text-wrap:balance;">Design for 2am, 48 hours out, stress at its peak.</h2>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:44px;max-width:860px;font-size:16px;line-height:1.62;color:var(--ink-600);">
+        <p style="margin:0;text-wrap:pretty;">Every surface answers one question and offers one obvious next action. The polish comes from restraint — spacing, hierarchy, and type quality — not from decoration. This should feel like a professional tool a student is happy to pay for because it visibly respects their time and their intelligence.</p>
+        <p style="margin:0;text-wrap:pretty;">The moat is trust. When the sheet claims a topic is likely tested, it shows a confidence dot, a ★ if the pattern is verified against a real past exam, and a citation back to the source. That evidence layer is never hidden for the sake of a cleaner-looking page — it <em>is</em> the product.</p>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:40px;">
+        <sc-for list="{{ values }}" as="v" hint-placeholder-count="5">
+          <div style="display:flex;align-items:center;gap:9px;padding:9px 15px 9px 12px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);box-shadow:var(--sh-xs);">
+            <span style="width:22px;height:22px;border-radius:var(--r-full);background:var(--signal-50);color:var(--signal-600);font-family:var(--mono);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center;">{{ v.n }}</span>
+            <span style="font-weight:550;font-size:13.5px;color:var(--ink-800);">{{ v.name }}</span>
+            <span style="font-size:13px;color:var(--ink-400);">{{ v.note }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== FOUNDATIONS: COLOR ===== -->
+    <section id="foundations" style="padding:72px 96px 0;">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:14px;">02 — FOUNDATIONS</div>
+      <h2 style="font-family:var(--serif);font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-.02em;color:var(--ink-900);margin:0 0 8px;">Tokens</h2>
+      <p style="font-size:16px;color:var(--ink-500);margin:0 0 8px;max-width:560px;">Every value below is a CSS custom property. Light mode only — the sheet lives on paper.</p>
+    </section>
+
+    <section id="color" style="padding:44px 96px 8px;">
+      <h3 style="font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin:0 0 20px;">Color</h3>
+
+      <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 12px;">Ink & neutral scale</div>
+      <div style="display:grid;grid-template-columns:repeat(12,1fr);gap:6px;max-width:1000px;margin-bottom:36px;border:1px solid var(--ink-150);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);">
+        <sc-for list="{{ inkScale }}" as="c" hint-placeholder-count="12">
+          <div style="display:flex;flex-direction:column;">
+            <div style="height:64px;background:{{ c.v }};"></div>
+            <div style="padding:7px 6px;background:var(--white);font-family:var(--mono);font-size:10px;color:var(--ink-500);text-align:center;">{{ c.n }}</div>
+          </div>
+        </sc-for>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;max-width:1000px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 12px;">Brand — ink primary + iris signal</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+            <sc-for list="{{ brand }}" as="c" hint-placeholder-count="6">
+              <div style="border:1px solid var(--ink-150);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--sh-xs);">
+                <div style="height:56px;background:{{ c.v }};color:{{ c.ink }};display:flex;align-items:flex-end;padding:7px 9px;font-family:var(--mono);font-size:10px;">{{ c.v }}</div>
+                <div style="padding:7px 9px;background:var(--white);font-size:11.5px;color:var(--ink-600);font-weight:500;">{{ c.name }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 12px;">Functional</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+            <sc-for list="{{ func }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:10px;border:1px solid var(--ink-150);border-radius:var(--r-md);padding:10px;background:{{ c.bg }};">
+                <span style="width:26px;height:26px;border-radius:var(--r-sm);background:{{ c.v }};flex:none;"></span>
+                <div><div style="font-size:12.5px;font-weight:600;color:var(--ink-800);">{{ c.name }}</div><div style="font-family:var(--mono);font-size:10px;color:var(--ink-500);">{{ c.v }}</div></div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.3fr 1fr;gap:32px;max-width:1000px;margin-top:32px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 4px;">Confidence tiers <span style="font-weight:400;color:var(--ink-400);">— the trust layer</span></div>
+          <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px;">
+            <sc-for list="{{ conf }}" as="c" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:12px;border:1px solid var(--ink-150);border-radius:var(--r-md);padding:11px 14px;background:var(--white);">
+                <span style="width:11px;height:11px;border-radius:var(--r-full);background:{{ c.dot }};flex:none;box-shadow:0 0 0 3px {{ c.bg }};"></span>
+                <div style="flex:1;"><span style="font-size:13px;font-weight:600;color:{{ c.ink }};">{{ c.name }}</span></div>
+                <span style="font-size:12px;color:var(--ink-500);">{{ c.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 4px;">Topic palette <span style="font-weight:400;color:var(--ink-400);">— multi-topic sheets</span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;">
+            <sc-for list="{{ topic }}" as="c" hint-placeholder-count="6">
+              <div style="border:1px solid var(--ink-150);border-radius:var(--r-md);overflow:hidden;">
+                <div style="height:44px;background:{{ c.v }};"></div>
+                <div style="padding:6px 8px;font-size:11px;color:var(--ink-600);background:var(--white);">{{ c.name }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== TYPOGRAPHY ===== -->
+    <section id="type" style="padding:52px 96px 8px;border-top:1px solid var(--ink-100);margin-top:52px;">
+      <h3 style="font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin:0 0 6px;">Typography</h3>
+      <p style="font-size:14px;color:var(--ink-500);margin:0 0 24px;max-width:600px;">Newsreader for editorial display, Geist for the interface, Geist Mono for citations, formulas and metadata.</p>
+      <div style="border:1px solid var(--ink-150);border-radius:var(--r-lg);overflow:hidden;max-width:1000px;box-shadow:var(--sh-xs);">
+        <sc-for list="{{ typeScale }}" as="t" hint-placeholder-count="8">
+          <div style="display:grid;grid-template-columns:180px 1fr;gap:28px;align-items:baseline;padding:20px 24px;border-bottom:1px solid var(--ink-100);background:var(--white);">
+            <div style="padding-top:4px;">
+              <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);font-weight:500;">{{ t.role }}</div>
+              <div style="font-family:var(--mono);font-size:10px;color:var(--ink-400);margin-top:5px;line-height:1.4;">{{ t.spec }}</div>
+            </div>
+            <div style="font-family:{{ t.font }};font-size:{{ t.size }};font-weight:{{ t.weight }};font-style:{{ t.style }};line-height:{{ t.lh }};color:var(--ink-900);letter-spacing:-.01em;text-wrap:balance;">{{ t.sample }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== SPACING & RADIUS ===== -->
+    <section id="spacing" style="padding:52px 96px 8px;border-top:1px solid var(--ink-100);margin-top:52px;">
+      <h3 style="font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin:0 0 24px;">Spacing & radius</h3>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:48px;max-width:1000px;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 16px;">Spacing — 4px base</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="8">
+              <div style="display:flex;align-items:center;gap:14px;">
+                <span style="width:52px;font-family:var(--mono);font-size:11px;color:var(--ink-500);">{{ s.n }} · {{ s.px }}</span>
+                <span style="height:14px;width:{{ s.px }}px;background:var(--signal-500);border-radius:2px;"></span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 16px;">Radius</div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+            <sc-for list="{{ radii }}" as="r" hint-placeholder-count="6">
+              <div style="text-align:center;">
+                <div style="height:62px;background:var(--white);border:1.5px solid var(--signal-500);border-bottom:none;border-right:none;border-radius:{{ r.r }} 0 0 0;"></div>
+                <div style="font-family:var(--mono);font-size:10.5px;color:var(--ink-500);margin-top:8px;">{{ r.n }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SHADOW & MOTION ===== -->
+    <section id="shadow" style="padding:52px 96px 8px;border-top:1px solid var(--ink-100);margin-top:52px;">
+      <h3 style="font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin:0 0 24px;">Shadow & motion</h3>
+      <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:48px;max-width:1000px;align-items:start;">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 20px;">Elevation</div>
+          <div style="display:flex;gap:26px;flex-wrap:wrap;">
+            <sc-for list="{{ shadows }}" as="s" hint-placeholder-count="5">
+              <div style="text-align:center;">
+                <div style="width:96px;height:66px;background:var(--white);border-radius:var(--r-md);box-shadow:{{ s.v }};border:1px solid var(--ink-100);"></div>
+                <div style="font-family:var(--mono);font-size:11px;color:var(--ink-600);margin-top:14px;font-weight:500;">{{ s.n }}</div>
+                <div style="font-size:11px;color:var(--ink-400);margin-top:2px;">{{ s.use }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin:0 0 20px;">Motion</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <sc-for list="{{ motion }}" as="m" hint-placeholder-count="3">
+              <div style="border:1px solid var(--ink-150);border-radius:var(--r-md);padding:12px 14px;background:var(--white);">
+                <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);font-weight:500;">{{ m.n }}</div>
+                <div style="font-size:12.5px;color:var(--ink-500);margin-top:3px;">{{ m.use }}</div>
+              </div>
+            </sc-for>
+            <div style="font-size:12px;color:var(--ink-400);line-height:1.5;margin-top:2px;">Default easing <span style="font-family:var(--mono);color:var(--ink-600);">cubic-bezier(.2,.6,.2,1)</span>. Entrances use <span style="font-family:var(--mono);color:var(--ink-600);">(.16,1,.3,1)</span>. Nothing bounces. Respect <span style="font-family:var(--mono);color:var(--ink-600);">prefers-reduced-motion</span>.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ICONOGRAPHY ===== -->
+    <section id="icons" style="padding:52px 96px 72px;border-top:1px solid var(--ink-100);margin-top:52px;">
+      <h3 style="font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin:0 0 6px;">Iconography</h3>
+      <p style="font-size:14px;color:var(--ink-500);margin:0 0 24px;max-width:620px;"><strong style="color:var(--ink-700);font-weight:600;">Lucide, 1.5px stroke, 24px grid, round caps &amp; joins.</strong> Line-only — never filled, except the confidence dot and the verified ★ which are the two intentional exceptions that carry meaning.</p>
+      <div style="display:grid;grid-template-columns:repeat(9,1fr);gap:10px;max-width:1000px;">
+        <sc-for list="{{ icons }}" as="ic" hint-placeholder-count="18">
+          <div title="{{ ic.name }}" style="aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;border:1px solid var(--ink-150);border-radius:var(--r-md);background:var(--white);color:var(--ink-700);transition:color var(--dur-fast),border-color var(--dur-fast);" style-hover="color:var(--signal-600);border-color:var(--signal-500);">
+            <span style="display:flex;" dangerouslySetInnerHTML="{{ ic.svg }}"></span>
+            <span style="font-family:var(--mono);font-size:9.5px;color:var(--ink-400);">{{ ic.name }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== PRIMITIVES ===== -->
+    <section id="primitives" style="padding:72px 96px 8px;border-top:1px solid var(--ink-150);background:var(--paper-2);">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:14px;">03 — COMPONENTS</div>
+      <h2 style="font-family:var(--serif);font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-.02em;color:var(--ink-900);margin:0 0 8px;">Primitives</h2>
+      <p style="font-size:16px;color:var(--ink-500);margin:0 0 40px;max-width:600px;">The parts every screen is built from. States shown side-by-side; hover the live ones.</p>
+
+      <!-- BUTTONS -->
+      <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);max-width:1000px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Buttons</div>
+        <div style="display:flex;flex-direction:column;gap:18px;">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="width:96px;font-size:12px;color:var(--ink-400);font-family:var(--mono);">primary</span>
+            <button style="cursor:pointer;border:none;background:var(--ink-900);color:#fff;padding:10px 18px;border-radius:var(--r-md);font:500 14px var(--sans);box-shadow:var(--sh-sm);transition:transform var(--dur-fast),background var(--dur-fast);" style-hover="background:var(--ink-800);transform:translateY(-1px)" style-active="transform:translateY(0)">Generate my sheet</button>
+            <button style="cursor:pointer;border:none;background:var(--ink-900);color:#fff;padding:8px 14px;border-radius:var(--r-sm);font:500 13px var(--sans);">Small</button>
+            <button style="cursor:pointer;border:none;background:var(--ink-900);color:#fff;padding:13px 24px;border-radius:var(--r-md);font:500 15px var(--sans);">Large</button>
+            <button disabled style="border:none;background:var(--ink-200);color:var(--ink-400);padding:10px 18px;border-radius:var(--r-md);font:500 14px var(--sans);cursor:not-allowed;">Disabled</button>
+            <button style="cursor:wait;border:none;background:var(--ink-900);color:#fff;padding:10px 18px;border-radius:var(--r-md);font:500 14px var(--sans);display:inline-flex;align-items:center;gap:9px;"><span style="width:13px;height:13px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;display:inline-block;animation:ds-spin .7s linear infinite;"></span>Working</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="width:96px;font-size:12px;color:var(--ink-400);font-family:var(--mono);">signal</span>
+            <button style="cursor:pointer;border:none;background:var(--signal-600);color:#fff;padding:10px 18px;border-radius:var(--r-md);font:500 14px var(--sans);box-shadow:var(--sh-sm);transition:background var(--dur-fast);" style-hover="background:var(--signal-700)">Upgrade to 3-Pack</button>
+            <button style="cursor:pointer;border:1px solid var(--signal-500);background:var(--signal-50);color:var(--signal-700);padding:10px 18px;border-radius:var(--r-md);font:500 14px var(--sans);" style-hover="background:var(--signal-100)">Soft signal</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="width:96px;font-size:12px;color:var(--ink-400);font-family:var(--mono);">secondary</span>
+            <button style="cursor:pointer;border:1px solid var(--ink-200);background:var(--white);color:var(--ink-800);padding:10px 18px;border-radius:var(--r-md);font:500 14px var(--sans);box-shadow:var(--sh-xs);transition:border-color var(--dur-fast),background var(--dur-fast);" style-hover="border-color:var(--ink-300);background:var(--ink-50)">Make another</button>
+            <button style="cursor:pointer;border:none;background:transparent;color:var(--ink-600);padding:10px 14px;border-radius:var(--r-md);font:500 14px var(--sans);transition:background var(--dur-fast);" style-hover="background:var(--ink-100)">Ghost</button>
+            <button style="cursor:pointer;border:1px solid var(--danger);background:var(--white);color:var(--danger);padding:10px 18px;border-radius:var(--r-md);font:500 14px var(--sans);" style-hover="background:var(--danger-bg)">Delete sheet</button>
+            <button style="cursor:pointer;border:1px solid var(--ink-200);background:var(--white);color:var(--ink-800);padding:10px 14px;border-radius:var(--r-md);font:500 14px var(--sans);display:inline-flex;align-items:center;gap:8px;" style-hover="background:var(--ink-50)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>Export PDF</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- INPUTS + CHIPS + BADGES -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px;margin-bottom:20px;">
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Inputs</div>
+          <div style="display:flex;flex-direction:column;gap:16px;">
+            <div>
+              <label style="display:block;font-size:13px;font-weight:550;color:var(--ink-700);margin-bottom:7px;">Email</label>
+              <input value="ada@university.edu" style="width:100%;border:1px solid var(--ink-200);border-radius:var(--r-md);padding:10px 12px;font:400 14px var(--sans);color:var(--ink-800);background:var(--white);box-shadow:var(--sh-xs);outline:none;" style-focus="border-color:var(--signal-500);box-shadow:0 0 0 3px var(--signal-100)"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:550;color:var(--ink-700);margin-bottom:7px;">Focused</label>
+              <input value="STAT 200" style="width:100%;border:1px solid var(--signal-500);border-radius:var(--r-md);padding:10px 12px;font:400 14px var(--sans);color:var(--ink-800);background:var(--white);box-shadow:0 0 0 3px var(--signal-100);outline:none;"/>
+            </div>
+            <div>
+              <label style="display:block;font-size:13px;font-weight:550;color:var(--ink-700);margin-bottom:7px;">Error <span style="color:var(--danger);font-weight:400;">· file exceeds 40&nbsp;MB</span></label>
+              <input value="past-exam-2019.pdf" style="width:100%;border:1px solid var(--danger);border-radius:var(--r-md);padding:10px 12px;font:400 14px var(--sans);color:var(--ink-800);background:var(--white);box-shadow:0 0 0 3px var(--danger-bg);outline:none;"/>
+            </div>
+            <div>
+              <span style="font-size:13px;font-weight:550;color:var(--ink-700);display:block;margin-bottom:7px;">Search</span>
+              <div style="display:flex;align-items:center;gap:8px;border:1px solid var(--ink-200);border-radius:var(--r-md);padding:9px 12px;background:var(--white);box-shadow:var(--sh-xs);">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                <input placeholder="Search your sheets" style="border:none;outline:none;flex:1;font:400 14px var(--sans);color:var(--ink-800);background:transparent;"/>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Chips & badges</div>
+          <div style="font-size:12px;color:var(--ink-400);margin-bottom:10px;">File tag chips</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;">
+            <span style="display:inline-flex;align-items:center;gap:7px;background:var(--ink-50);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:5px 6px 5px 11px;font-size:12.5px;font-weight:500;color:var(--ink-700);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--signal-600)" stroke-width="1.8"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/></svg>Lecture 08.pdf<button style="cursor:pointer;border:none;background:var(--ink-150);width:16px;height:16px;border-radius:50%;color:var(--ink-500);display:flex;align-items:center;justify-content:center;padding:0;" style-hover="background:var(--ink-200)"><svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span>
+            <span style="display:inline-flex;align-items:center;gap:7px;background:var(--salmon);border:1px solid var(--salmon-line);border-radius:var(--r-full);padding:5px 12px;font-size:12.5px;font-weight:600;color:#8a4a2f;">★ past exam · high weight</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;background:var(--white);border:1px dashed var(--ink-300);border-radius:var(--r-full);padding:5px 12px;font-size:12.5px;font-weight:500;color:var(--ink-500);">+ add tag</span>
+          </div>
+          <div style="font-size:12px;color:var(--ink-400);margin-bottom:10px;">Status badges</div>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <span style="background:var(--conf-high-bg);color:var(--conf-high);border-radius:var(--r-full);padding:3px 10px;font-size:11.5px;font-weight:600;">Verified</span>
+            <span style="background:var(--signal-100);color:var(--signal-700);border-radius:var(--r-full);padding:3px 10px;font-size:11.5px;font-weight:600;">MAX density</span>
+            <span style="background:var(--warn-bg);color:var(--warn);border-radius:var(--r-full);padding:3px 10px;font-size:11.5px;font-weight:600;">2 credits left</span>
+            <span style="background:var(--ink-100);color:var(--ink-600);border-radius:var(--r-full);padding:3px 10px;font-size:11.5px;font-weight:600;">Draft</span>
+            <span style="background:var(--ink-900);color:#fff;border-radius:var(--r-full);padding:3px 10px;font-size:11.5px;font-weight:600;">PRO</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DROPDOWN + FILE DROP -->
+      <div style="display:grid;grid-template-columns:1fr 1.3fr;gap:20px;max-width:1000px;margin-bottom:20px;align-items:start;">
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Dropdown & select</div>
+          <label style="display:block;font-size:13px;font-weight:550;color:var(--ink-700);margin-bottom:7px;">Density</label>
+          <div style="border:1px solid var(--signal-500);border-radius:var(--r-md);background:var(--white);box-shadow:0 0 0 3px var(--signal-100);overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;font-size:14px;color:var(--ink-800);font-weight:500;border-bottom:1px solid var(--ink-100);">MAX — fit everything <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div>
+            <div style="padding:5px;">
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 9px;border-radius:var(--r-sm);background:var(--signal-50);font-size:13.5px;color:var(--signal-700);font-weight:500;">MAX — fit everything <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M20 6 9 17l-5-5"/></svg></div>
+              <div style="padding:8px 9px;border-radius:var(--r-sm);font-size:13.5px;color:var(--ink-700);" style-hover="background:var(--ink-50)">Balanced</div>
+              <div style="padding:8px 9px;border-radius:var(--r-sm);font-size:13.5px;color:var(--ink-700);" style-hover="background:var(--ink-50)">Essentials only</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">File-drop zone</div>
+          <div style="border:1.5px dashed var(--signal-500);border-radius:var(--r-lg);background:var(--signal-50);padding:34px 24px;text-align:center;">
+            <div style="width:46px;height:46px;border-radius:var(--r-md);background:var(--white);border:1px solid var(--signal-100);display:flex;align-items:center;justify-content:center;margin:0 auto 14px;box-shadow:var(--sh-sm);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--signal-600)" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg>
+            </div>
+            <div style="font-size:15px;font-weight:600;color:var(--ink-900);">Drop your files</div>
+            <div style="font-size:13px;color:var(--ink-500);margin-top:4px;">Slides, review guides, past exams, notes — PDF, PPTX, DOCX, up to 40&nbsp;MB each</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CALLOUTS -->
+      <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);max-width:1000px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Callouts</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <sc-for list="{{ callouts }}" as="c" hint-placeholder-count="4">
+            <div style="display:flex;gap:12px;background:{{ c.bg }};border:1px solid {{ c.line }};border-left:3px solid {{ c.accent }};border-radius:var(--r-md);padding:14px 16px;">
+              <span style="flex:none;color:{{ c.accent }};display:flex;" dangerouslySetInnerHTML="{{ c.icon }}"></span>
+              <div><div style="font-size:13.5px;font-weight:600;color:{{ c.titleColor }};">{{ c.title }}</div><div style="font-size:13px;color:var(--ink-600);margin-top:2px;line-height:1.5;">{{ c.body }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- TOASTS + PROGRESS -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px;margin-bottom:20px;">
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Toasts</div>
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;gap:12px;background:var(--ink-900);color:#fff;border-radius:var(--r-md);padding:12px 14px;box-shadow:var(--sh-lg);">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#6ee7a8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+              <span style="font-size:13.5px;font-weight:500;flex:1;">Sheet exported — check your downloads</span>
+              <span style="font-size:12px;color:var(--ink-300);cursor:pointer;">Undo</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;background:var(--white);border:1px solid var(--ink-150);color:var(--ink-800);border-radius:var(--r-md);padding:12px 14px;box-shadow:var(--sh-md);">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17h.01"/></svg>
+              <span style="font-size:13.5px;font-weight:500;flex:1;">One file was image-only — we OCR'd it</span>
+            </div>
+          </div>
+        </div>
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Progress</div>
+          <div style="font-size:12px;color:var(--ink-500);margin-bottom:7px;display:flex;justify-content:space-between;"><span>Confidence in this result</span><span style="font-family:var(--mono);color:var(--conf-high);font-weight:600;">86%</span></div>
+          <div style="height:8px;background:var(--ink-100);border-radius:99px;overflow:hidden;margin-bottom:22px;"><div style="height:100%;width:86%;background:linear-gradient(90deg,var(--conf-med),var(--conf-high));border-radius:99px;animation:ds-climb 1s var(--ease-out);"></div></div>
+          <div style="font-size:12px;color:var(--ink-500);margin-bottom:7px;">Generation — verifying page fit</div>
+          <div style="height:6px;background:var(--ink-100);border-radius:99px;overflow:hidden;margin-bottom:22px;"><div style="height:100%;width:72%;background:var(--signal-600);border-radius:99px;"></div></div>
+          <div style="font-size:12px;color:var(--ink-500);margin-bottom:9px;">Indeterminate</div>
+          <div style="height:4px;background:var(--ink-100);border-radius:99px;overflow:hidden;"><div style="height:100%;width:40%;background:var(--ink-800);border-radius:99px;animation:ds-pulse 1.4s var(--ease) infinite;"></div></div>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px 30px;box-shadow:var(--sh-xs);max-width:1000px;margin-bottom:20px;">
+        <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Table</div>
+        <div style="border:1px solid var(--ink-150);border-radius:var(--r-md);overflow:hidden;">
+          <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr;background:var(--ink-50);border-bottom:1px solid var(--ink-150);font-size:11.5px;font-weight:600;color:var(--ink-500);text-transform:uppercase;letter-spacing:.04em;font-family:var(--mono);">
+            <div style="padding:10px 14px;">Topic</div><div style="padding:10px 14px;">Weight</div><div style="padding:10px 14px;">Conf.</div><div style="padding:10px 14px;">Source</div>
+          </div>
+          <sc-for list="{{ tableRows }}" as="r" hint-placeholder-count="3">
+            <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1.4fr;border-bottom:1px solid var(--ink-100);font-size:13.5px;color:var(--ink-800);align-items:center;" style-hover="background:var(--ink-50)">
+              <div style="padding:11px 14px;font-weight:500;display:flex;align-items:center;gap:7px;"><sc-if value="{{ r.verified }}" hint-placeholder-val="{{ true }}"><span style="color:var(--verified);">★</span></sc-if>{{ r.topic }}</div>
+              <div style="padding:11px 14px;color:var(--ink-500);">{{ r.weight }}</div>
+              <div style="padding:11px 14px;"><span style="display:inline-flex;align-items:center;gap:6px;"><span style="width:9px;height:9px;border-radius:50%;background:{{ r.dot }};"></span><span style="font-family:var(--mono);font-size:12px;color:var(--ink-600);">{{ r.conf }}</span></span></div>
+              <div style="padding:11px 14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-500);">{{ r.source }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <!-- CARDS + NAV + MODAL -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;max-width:1000px;margin-bottom:20px;align-items:start;">
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+          <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Card</div>
+          <div style="border:1px solid var(--ink-150);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-sm);transition:box-shadow var(--dur),transform var(--dur);" style-hover="box-shadow:var(--sh-lg);transform:translateY(-2px)">
+            <div style="aspect-ratio:1.414;background:var(--paper-2);border-bottom:1px solid var(--ink-100);padding:16px;position:relative;">
+              <div style="columns:2;column-gap:10px;font-size:5px;color:var(--ink-300);">
+                <div style="height:5px;background:var(--ink-900);width:70%;margin-bottom:5px;border-radius:1px;"></div>
+                <div style="height:3px;background:var(--ink-150);margin-bottom:2px;"></div><div style="height:3px;background:var(--ink-150);width:80%;margin-bottom:2px;"></div><div style="height:3px;background:var(--ink-150);width:60%;margin-bottom:8px;"></div>
+                <div style="height:4px;background:var(--signal-500);width:50%;margin-bottom:4px;border-radius:1px;"></div>
+                <div style="height:3px;background:var(--ink-150);margin-bottom:2px;"></div><div style="height:3px;background:var(--ink-150);width:75%;"></div>
+              </div>
+              <span style="position:absolute;top:12px;right:12px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:2px 8px;font-size:10px;font-weight:600;color:var(--ink-600);box-shadow:var(--sh-xs);">MAX</span>
+            </div>
+            <div style="padding:14px 16px;">
+              <div style="font-size:14.5px;font-weight:600;color:var(--ink-900);">Intro Statistics</div>
+              <div style="font-size:12.5px;color:var(--ink-500);margin-top:2px;">STAT 200 · Final · Mar 14</div>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+            <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:20px;">Nav bar</div>
+            <div style="border:1px solid var(--ink-150);border-radius:var(--r-md);padding:10px 14px;display:flex;align-items:center;gap:16px;box-shadow:var(--sh-xs);">
+              <span style="display:flex;align-items:center;gap:7px;font-weight:600;font-size:14px;color:var(--ink-900);"><span style="width:20px;height:20px;border-radius:var(--r-xs);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+              <span style="font-size:13.5px;color:var(--ink-500);">Pricing</span>
+              <span style="font-size:13.5px;color:var(--ink-900);font-weight:500;">How it works</span>
+              <span style="flex:1;"></span>
+              <span style="font-size:13.5px;color:var(--ink-600);">Sign in</span>
+              <button style="border:none;background:var(--ink-900);color:#fff;padding:7px 13px;border-radius:var(--r-sm);font:500 13px var(--sans);cursor:pointer;">Start free</button>
+            </div>
+          </div>
+          <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px;box-shadow:var(--sh-xs);">
+            <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:20px;">Segmented / tabs</div>
+            <div style="display:inline-flex;background:var(--ink-100);border-radius:var(--r-md);padding:3px;gap:2px;">
+              <span style="padding:6px 14px;border-radius:var(--r-sm);background:var(--white);color:var(--ink-900);font-size:13px;font-weight:600;box-shadow:var(--sh-xs);">MAX</span>
+              <span style="padding:6px 14px;border-radius:var(--r-sm);color:var(--ink-500);font-size:13px;font-weight:500;">Balanced</span>
+              <span style="padding:6px 14px;border-radius:var(--r-sm);color:var(--ink-500);font-size:13px;font-weight:500;">Essentials</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MODAL -->
+      <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:28px 30px 34px;box-shadow:var(--sh-xs);max-width:1000px;margin-bottom:72px;">
+        <div style="font-size:13px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:22px;">Modal</div>
+        <div style="background:var(--paper-2);border-radius:var(--r-lg);padding:40px;display:flex;justify-content:center;">
+          <div style="width:420px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);box-shadow:var(--sh-xl);overflow:hidden;animation:ds-rise var(--dur-slow) var(--ease-out);">
+            <div style="padding:24px 26px 0;">
+              <div style="font-family:var(--serif);font-size:22px;color:var(--ink-900);">You're out of credits</div>
+              <p style="font-size:14px;color:var(--ink-600);line-height:1.55;margin:10px 0 0;">Your last sheet used your final credit. Grab a 3-Pack to keep going — no subscription, credits never expire.</p>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;padding:22px 26px 24px;">
+              <button style="cursor:pointer;border:1px solid var(--ink-200);background:var(--white);color:var(--ink-700);padding:9px 16px;border-radius:var(--r-md);font:500 13.5px var(--sans);">Maybe later</button>
+              <button style="cursor:pointer;border:none;background:var(--ink-900);color:#fff;padding:9px 16px;border-radius:var(--r-md);font:500 13.5px var(--sans);">Get 3-Pack · $9.99</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== PATTERNS ===== -->
+    <section id="patterns" style="padding:72px 96px;border-top:1px solid var(--ink-150);">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:14px;">SIGNATURE PATTERNS</div>
+      <h2 style="font-family:var(--serif);font-weight:400;font-size:34px;line-height:1.1;letter-spacing:-.02em;color:var(--ink-900);margin:0 0 8px;">The trust layer</h2>
+      <p style="font-size:16px;color:var(--ink-500);margin:0 0 36px;max-width:600px;">Composed from primitives, these carry the product's core promise: every claim is scored and sourced.</p>
+
+      <div style="display:grid;grid-template-columns:1.5fr 1fr;gap:20px;max-width:1000px;align-items:start;">
+        <!-- ranked topic row -->
+        <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:26px 28px;box-shadow:var(--sh-xs);">
+          <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:18px;">Ranked topic row — conf dot · ★ verified · citation</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <sc-for list="{{ rankRows }}" as="r" hint-placeholder-count="3">
+              <div style="display:flex;align-items:flex-start;gap:12px;padding:13px 14px;border:1px solid var(--ink-100);border-radius:var(--r-md);background:var(--paper);">
+                <span style="width:10px;height:10px;border-radius:50%;background:{{ r.dot }};margin-top:5px;flex:none;box-shadow:0 0 0 3px {{ r.ring }};"></span>
+                <div style="flex:1;min-width:0;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <sc-if value="{{ r.verified }}" hint-placeholder-val="{{ true }}"><span style="color:var(--verified);font-size:14px;line-height:1;">★</span></sc-if>
+                    <span style="font-size:14.5px;font-weight:600;color:var(--ink-900);">{{ r.topic }}</span>
+                  </div>
+                  <div style="font-family:var(--mono);font-size:11px;color:var(--ink-500);margin-top:5px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+                    <span style="color:{{ r.dot }};font-weight:600;">conf {{ r.conf }}</span><span style="color:var(--ink-300);">·</span><span>{{ r.cite }}</span>
+                  </div>
+                </div>
+                <span style="font-family:var(--mono);font-size:11px;color:var(--ink-400);background:var(--ink-50);border-radius:var(--r-full);padding:3px 8px;flex:none;">{{ r.rank }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:20px;">
+          <!-- climbing meter -->
+          <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:26px 28px;box-shadow:var(--sh-xs);">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:16px;">Confidence meter</div>
+            <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;"><span style="font-size:13px;color:var(--ink-600);">Confidence in this result</span><span style="font-family:var(--mono);font-size:15px;font-weight:600;color:var(--conf-high);">86%</span></div>
+            <div style="height:10px;background:var(--ink-100);border-radius:99px;overflow:hidden;"><div style="height:100%;width:86%;background:linear-gradient(90deg,var(--conf-med),var(--conf-high));border-radius:99px;animation:ds-climb 1.1s var(--ease-out);"></div></div>
+            <div style="font-size:12px;color:var(--ink-500);margin-top:10px;line-height:1.5;">Climbs as you add higher-weight files. Past exams push it hardest.</div>
+          </div>
+          <!-- source citation inline -->
+          <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:26px 28px;box-shadow:var(--sh-xs);">
+            <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:16px;">Inline citation</div>
+            <p style="font-size:13.5px;color:var(--ink-700);line-height:1.6;margin:0;">A 95% CI is <span style="background:var(--signal-50);border-bottom:1.5px solid var(--signal-500);padding:1px 3px;border-radius:3px;">x̄ ± t*·(s/√n)</span><sup style="font-family:var(--mono);font-size:9px;color:var(--signal-600);font-weight:600;margin-left:2px;">[L08·s23]</sup>, not z unless σ is known.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- warning strip -->
+      <div style="max-width:1000px;margin-top:20px;">
+        <div style="font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;font-family:var(--mono);color:var(--ink-400);margin-bottom:12px;">Warnings strip</div>
+        <div style="display:flex;align-items:center;gap:14px;background:var(--warn-bg);border:1px solid #f0dcb8;border-radius:var(--r-md);padding:12px 16px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17h.01"/></svg>
+          <div style="flex:1;font-size:13.5px;color:var(--ink-700);"><strong style="color:var(--warn);">3 topics trimmed to fit one page.</strong> They scored below the density cut-off — switch to Balanced to see them, or keep MAX for the highest-yield set.</div>
+          <button style="cursor:pointer;border:1px solid #e0c088;background:var(--white);color:var(--warn);padding:6px 12px;border-radius:var(--r-sm);font:600 12.5px var(--sans);white-space:nowrap;">Review trimmed</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREENS INTRO ===== -->
+    <section style="padding:72px 96px 40px;border-top:1px solid var(--ink-150);background:var(--paper-2);">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:14px;">04 — SCREEN WALKTHROUGH</div>
+      <h2 style="font-family:var(--serif);font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-.02em;color:var(--ink-900);margin:0 0 8px;">Marketing → app → sheet</h2>
+      <p style="font-size:16px;color:var(--ink-500);margin:0;max-width:600px;">Every surface, in the order a student meets it. Each frame is one screen — scroll through them like a prototype.</p>
+    </section>
+
+    <!-- ===== HOME ===== -->
+    <div id="home" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">Marketing · Home</span>
+        <span style="font-size:13px;color:var(--ink-400);">public · unauthenticated</span>
+      </div>
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);">
+        <!-- browser chrome -->
+        <div style="display:flex;align-items:center;gap:14px;padding:11px 16px;background:var(--ink-50);border-bottom:1px solid var(--ink-150);">
+          <div style="display:flex;gap:7px;"><span style="width:11px;height:11px;border-radius:50%;background:#e5544a;"></span><span style="width:11px;height:11px;border-radius:50%;background:#e5b23a;"></span><span style="width:11px;height:11px;border-radius:50%;background:#4caf50;"></span></div>
+          <div style="flex:1;max-width:340px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:5px 14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-500);">cramsheet.com</div>
+        </div>
+        <!-- page -->
+        <div style="background:var(--paper);">
+          <!-- nav -->
+          <div style="display:flex;align-items:center;gap:20px;padding:18px 40px;border-bottom:1px solid var(--ink-100);">
+            <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px;color:var(--ink-900);"><span style="width:24px;height:24px;border-radius:var(--r-sm);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.3"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+            <span style="flex:1;"></span>
+            <span style="font-size:14px;color:var(--ink-600);">Pricing</span>
+            <span style="font-size:14px;color:var(--ink-600);">How it works</span>
+            <span style="font-size:14px;color:var(--ink-600);">Sign in</span>
+            <button style="border:none;background:var(--ink-900);color:#fff;padding:9px 16px;border-radius:var(--r-md);font:500 14px var(--sans);cursor:pointer;box-shadow:var(--sh-sm);">Make a cheat sheet</button>
+          </div>
+          <!-- hero -->
+          <div style="padding:76px 40px 56px;text-align:center;position:relative;overflow:hidden;">
+            <div style="position:absolute;inset:0;background-image:linear-gradient(var(--ink-100) 1px,transparent 1px),linear-gradient(90deg,var(--ink-100) 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(60% 70% at 50% 0%,#000,transparent);mask-image:radial-gradient(60% 70% at 50% 0%,#000,transparent);opacity:.5;"></div>
+            <div style="position:relative;">
+              <div style="display:inline-flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:5px 14px;font-size:13px;color:var(--ink-600);box-shadow:var(--sh-xs);margin-bottom:26px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--conf-high);"></span>Every claim scored &amp; sourced</div>
+              <h1 style="font-family:var(--serif);font-weight:400;font-size:60px;line-height:1.04;letter-spacing:-.025em;color:var(--ink-900);margin:0 auto 22px;max-width:760px;text-wrap:balance;">The one-page cheat sheet that knows what's on the exam.</h1>
+              <p style="font-size:19px;line-height:1.5;color:var(--ink-600);max-width:560px;margin:0 auto 32px;text-wrap:pretty;">Upload your slides, notes and past exams. Get back a single dense page that ranks what's most likely tested — and proves it.</p>
+              <div style="display:flex;gap:12px;justify-content:center;margin-bottom:14px;">
+                <button style="border:none;background:var(--ink-900);color:#fff;padding:14px 26px;border-radius:var(--r-md);font:500 15px var(--sans);cursor:pointer;box-shadow:var(--sh-md);display:inline-flex;align-items:center;gap:9px;">Drop your files <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+                <button style="border:1px solid var(--ink-200);background:var(--white);color:var(--ink-800);padding:14px 24px;border-radius:var(--r-md);font:500 15px var(--sans);cursor:pointer;">See a sample sheet</button>
+              </div>
+              <div style="font-size:13px;color:var(--ink-400);">Free preview, always · No subscription · $4.99 to unlock a sheet</div>
+            </div>
+          </div>
+          <!-- hero proof: blurred MAX sheet -->
+          <div style="padding:0 40px 64px;position:relative;">
+            <div style="max-width:820px;margin:0 auto;position:relative;">
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-md);overflow:hidden;box-shadow:var(--sh-xl);background:var(--white);aspect-ratio:1.414;position:relative;">
+                <div style="padding:26px 30px;filter:blur(2.2px);opacity:.92;">
+                  <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink-900);padding-bottom:9px;margin-bottom:12px;"><div style="font-family:var(--serif);font-size:22px;font-weight:500;color:var(--ink-900);">Intro Statistics — Exam Reference Sheet</div><div style="font-family:var(--mono);font-size:11px;color:var(--ink-400);">MAX · A4</div></div>
+                  <div style="columns:3;column-gap:20px;">
+                    <sc-for list="{{ blurCols }}" as="b" hint-placeholder-count="9">
+                      <div style="break-inside:avoid;margin-bottom:13px;">
+                        <div style="height:8px;background:{{ b.head }};width:{{ b.hw }};border-radius:2px;margin-bottom:6px;"></div>
+                        <div style="height:5px;background:var(--ink-100);margin-bottom:4px;"></div><div style="height:5px;background:var(--ink-100);width:88%;margin-bottom:4px;"></div><div style="height:5px;background:var(--ink-100);width:72%;"></div>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+                <!-- unblurred proof callout floating -->
+                <div style="position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-lg);box-shadow:var(--sh-xl);padding:16px 18px;width:300px;">
+                  <div style="display:flex;align-items:flex-start;gap:11px;">
+                    <span style="width:10px;height:10px;border-radius:50%;background:var(--conf-high);margin-top:4px;box-shadow:0 0 0 3px var(--conf-high-bg);flex:none;"></span>
+                    <div><div style="display:flex;align-items:center;gap:6px;"><span style="color:var(--verified);">★</span><span style="font-size:13.5px;font-weight:600;color:var(--ink-900);">Confidence intervals</span></div><div style="font-family:var(--mono);font-size:10.5px;color:var(--ink-500);margin-top:5px;"><span style="color:var(--conf-high);font-weight:600;">conf .91</span> · L08 s23 · Final '19 Q3</div></div>
+                  </div>
+                </div>
+              </div>
+              <div style="text-align:center;font-size:13px;color:var(--ink-400);margin-top:16px;">A real MAX-density sheet. Every ranked item shows confidence and a source.</div>
+            </div>
+          </div>
+          <!-- how it works -->
+          <div style="padding:64px 40px;background:var(--white);border-top:1px solid var(--ink-100);border-bottom:1px solid var(--ink-100);">
+            <div style="text-align:center;margin-bottom:44px;"><div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:12px;">HOW IT WORKS</div><h2 style="font-family:var(--serif);font-weight:400;font-size:34px;color:var(--ink-900);margin:0;letter-spacing:-.02em;">Three steps. Ninety seconds.</h2></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:24px;max-width:860px;margin:0 auto;">
+              <sc-for list="{{ steps3 }}" as="s" hint-placeholder-count="3">
+                <div style="text-align:left;">
+                  <div style="width:40px;height:40px;border-radius:var(--r-md);background:var(--ink-900);color:#fff;display:flex;align-items:center;justify-content:center;margin-bottom:16px;" dangerouslySetInnerHTML="{{ s.icon }}"></div>
+                  <div style="font-family:var(--mono);font-size:11px;color:var(--ink-400);margin-bottom:6px;">STEP {{ s.n }}</div>
+                  <div style="font-size:17px;font-weight:600;color:var(--ink-900);margin-bottom:6px;">{{ s.title }}</div>
+                  <div style="font-size:14px;color:var(--ink-600);line-height:1.55;">{{ s.body }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <!-- why different -->
+          <div style="padding:64px 40px;">
+            <div style="max-width:860px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;">
+              <div>
+                <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:14px;">WHY WE'RE DIFFERENT</div>
+                <h2 style="font-family:var(--serif);font-weight:400;font-size:32px;color:var(--ink-900);margin:0 0 16px;letter-spacing:-.02em;line-height:1.15;">Other tools summarize. We predict — and show our work.</h2>
+                <p style="font-size:15px;color:var(--ink-600);line-height:1.6;margin:0 0 20px;">Anyone can shorten your notes. CramSheet ranks topics by how likely they are to appear, then backs each one with a confidence score and a citation to the exact slide or past-exam question it came from.</p>
+                <div style="display:flex;flex-direction:column;gap:12px;">
+                  <sc-for list="{{ whyPoints }}" as="w" hint-placeholder-count="3">
+                    <div style="display:flex;align-items:flex-start;gap:11px;"><span style="width:20px;height:20px;border-radius:50%;background:var(--conf-high-bg);color:var(--conf-high);display:flex;align-items:center;justify-content:center;flex:none;margin-top:1px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg></span><span style="font-size:14.5px;color:var(--ink-700);"><strong style="color:var(--ink-900);">{{ w.h }}</strong> {{ w.b }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="background:var(--salmon);border:1px solid var(--salmon-line);border-radius:var(--r-lg);padding:28px;">
+                <div style="font-size:13px;font-weight:600;color:#8a4a2f;margin-bottom:16px;">The evidence layer, up close</div>
+                <div style="background:var(--white);border-radius:var(--r-md);padding:16px;box-shadow:var(--sh-sm);">
+                  <div style="display:flex;align-items:flex-start;gap:11px;margin-bottom:14px;padding-bottom:14px;border-bottom:1px solid var(--ink-100);"><span style="width:10px;height:10px;border-radius:50%;background:var(--conf-high);margin-top:4px;box-shadow:0 0 0 3px var(--conf-high-bg);flex:none;"></span><div><div style="display:flex;align-items:center;gap:6px;"><span style="color:var(--verified);">★</span><span style="font-size:13.5px;font-weight:600;">Sampling distributions</span></div><div style="font-family:var(--mono);font-size:10.5px;color:var(--ink-500);margin-top:4px;">conf .88 · L06 s11 · Midterm Q4</div></div></div>
+                  <div style="display:flex;align-items:flex-start;gap:11px;"><span style="width:10px;height:10px;border-radius:50%;background:var(--conf-med);margin-top:4px;box-shadow:0 0 0 3px var(--conf-med-bg);flex:none;"></span><div><div style="font-size:13.5px;font-weight:600;">p-value interpretation</div><div style="font-family:var(--mono);font-size:10.5px;color:var(--ink-500);margin-top:4px;">conf .64 · L11 s8</div></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- pricing preview -->
+          <div style="padding:64px 40px;background:var(--white);border-top:1px solid var(--ink-100);">
+            <div style="text-align:center;margin-bottom:40px;"><div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:12px;">PRICING</div><h2 style="font-family:var(--serif);font-weight:400;font-size:34px;color:var(--ink-900);margin:0 0 8px;letter-spacing:-.02em;">Pay once. No subscription. Ever.</h2><p style="font-size:15px;color:var(--ink-500);margin:0;">Free preview on every sheet. Unlock the full page when you're ready.</p></div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;max-width:760px;margin:0 auto;">
+              <sc-for list="{{ tiers }}" as="t" hint-placeholder-count="3">
+                <div style="border:1px solid {{ t.borderColor }};border-radius:var(--r-lg);padding:24px;background:var(--white);position:relative;box-shadow:{{ t.shadow }};">
+                  <sc-if value="{{ t.featured }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:-10px;left:24px;background:var(--ink-900);color:#fff;font-size:11px;font-weight:600;border-radius:var(--r-full);padding:3px 10px;">Most popular</span></sc-if>
+                  <div style="font-size:15px;font-weight:600;color:var(--ink-900);">{{ t.name }}</div>
+                  <div style="margin:10px 0 4px;"><span style="font-family:var(--serif);font-size:34px;color:var(--ink-900);">{{ t.price }}</span></div>
+                  <div style="font-size:13px;color:var(--ink-500);margin-bottom:16px;">{{ t.sub }}</div>
+                  <button style="width:100%;border:{{ t.btnBorder }};background:{{ t.btnBg }};color:{{ t.btnColor }};padding:10px;border-radius:var(--r-md);font:500 14px var(--sans);cursor:pointer;">{{ t.cta }}</button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <!-- footer -->
+          <div style="padding:48px 40px 40px;background:var(--ink-900);color:var(--ink-300);">
+            <div style="max-width:860px;margin:0 auto;display:flex;justify-content:space-between;flex-wrap:wrap;gap:32px;">
+              <div style="max-width:280px;">
+                <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:#fff;margin-bottom:12px;"><span style="width:22px;height:22px;border-radius:var(--r-sm);background:#fff;display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--ink-900)" stroke-width="2.4"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+                <p style="font-size:13px;line-height:1.6;color:var(--ink-400);margin:0;">One page. Print it. Take it. Built for the 2am study session.</p>
+              </div>
+              <div style="display:flex;gap:48px;font-size:13px;">
+                <div style="display:flex;flex-direction:column;gap:9px;"><span style="color:var(--ink-500);font-weight:600;margin-bottom:2px;">Product</span><span style="color:var(--ink-300);">How it works</span><span style="color:var(--ink-300);">Pricing</span><span style="color:var(--ink-300);">Sample sheet</span></div>
+                <div style="display:flex;flex-direction:column;gap:9px;"><span style="color:var(--ink-500);font-weight:600;margin-bottom:2px;">Company</span><span style="color:var(--ink-300);">About</span><span style="color:var(--ink-300);">Privacy</span><span style="color:var(--ink-300);">Contact</span></div>
+              </div>
+            </div>
+            <div style="max-width:860px;margin:32px auto 0;padding-top:20px;border-top:1px solid var(--ink-700);font-size:12px;color:var(--ink-500);">© 2026 CramSheet · Made for students, not subscriptions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== PRICING (marketing) ===== -->
+    <div id="pricing" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">Marketing · Pricing</span>
+        <span style="font-size:13px;color:var(--ink-400);">three tiers · free preview always · no subscription</span>
+      </div>
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);">
+        <div style="display:flex;align-items:center;gap:14px;padding:11px 16px;background:var(--ink-50);border-bottom:1px solid var(--ink-150);">
+          <div style="display:flex;gap:7px;"><span style="width:11px;height:11px;border-radius:50%;background:#e5544a;"></span><span style="width:11px;height:11px;border-radius:50%;background:#e5b23a;"></span><span style="width:11px;height:11px;border-radius:50%;background:#4caf50;"></span></div>
+          <div style="flex:1;max-width:340px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:5px 14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-500);">cramsheet.com/pricing</div>
+        </div>
+        <div style="background:var(--paper);padding:64px 48px;">
+          <div style="text-align:center;max-width:640px;margin:0 auto 48px;">
+            <h1 style="font-family:var(--serif);font-weight:400;font-size:46px;color:var(--ink-900);margin:0 0 14px;letter-spacing:-.025em;line-height:1.08;">Pay for the sheet, not a subscription.</h1>
+            <p style="font-size:17px;color:var(--ink-600);margin:0;line-height:1.5;">Every sheet starts with a free preview. Credits never expire. Cancel nothing — there's nothing to cancel.</p>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;max-width:960px;margin:0 auto;">
+            <sc-for list="{{ pricingFull }}" as="t" hint-placeholder-count="3">
+              <div style="border:1px solid {{ t.borderColor }};border-radius:var(--r-xl);padding:32px 28px;background:var(--white);position:relative;box-shadow:{{ t.shadow }};display:flex;flex-direction:column;">
+                <sc-if value="{{ t.featured }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:-11px;left:50%;transform:translateX(-50%);background:var(--ink-900);color:#fff;font-size:11.5px;font-weight:600;border-radius:var(--r-full);padding:4px 14px;white-space:nowrap;">Best value · $3.33 a sheet</span></sc-if>
+                <div style="font-size:16px;font-weight:600;color:var(--ink-900);">{{ t.name }}</div>
+                <div style="font-size:13.5px;color:var(--ink-500);margin-top:4px;min-height:20px;">{{ t.tagline }}</div>
+                <div style="margin:20px 0 6px;display:flex;align-items:baseline;gap:4px;"><span style="font-family:var(--serif);font-size:48px;color:var(--ink-900);line-height:1;">{{ t.price }}</span><span style="font-size:14px;color:var(--ink-400);">{{ t.unit }}</span></div>
+                <div style="font-size:13px;color:var(--ink-500);margin-bottom:22px;">{{ t.sub }}</div>
+                <div style="display:flex;flex-direction:column;gap:11px;margin-bottom:26px;flex:1;">
+                  <sc-for list="{{ t.features }}" as="f" hint-placeholder-count="4">
+                    <div style="display:flex;align-items:flex-start;gap:10px;font-size:13.5px;color:var(--ink-700);"><span style="color:var(--conf-high);flex:none;margin-top:1px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M20 6 9 17l-5-5"/></svg></span>{{ f }}</div>
+                  </sc-for>
+                </div>
+                <button style="width:100%;border:{{ t.btnBorder }};background:{{ t.btnBg }};color:{{ t.btnColor }};padding:12px;border-radius:var(--r-md);font:600 14.5px var(--sans);cursor:pointer;box-shadow:{{ t.btnShadow }};">{{ t.cta }}</button>
+              </div>
+            </sc-for>
+          </div>
+          <div style="max-width:960px;margin:40px auto 0;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:16px 22px;box-shadow:var(--sh-xs);">
+            <span style="width:34px;height:34px;border-radius:var(--r-md);background:var(--conf-high-bg);color:var(--conf-high);display:flex;align-items:center;justify-content:center;flex:none;"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/></svg></span>
+            <div style="font-size:14px;color:var(--ink-700);"><strong style="color:var(--ink-900);">Free preview on every sheet.</strong> See the ranked topics and confidence scores before you pay a cent. Only unlock the full page if it's worth it.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FAQ ===== -->
+    <div id="faq" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">Marketing · FAQ</span>
+        <span style="font-size:13px;color:var(--ink-400);">short · one-column read</span>
+      </div>
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);">
+        <div style="display:flex;align-items:center;gap:14px;padding:11px 16px;background:var(--ink-50);border-bottom:1px solid var(--ink-150);">
+          <div style="display:flex;gap:7px;"><span style="width:11px;height:11px;border-radius:50%;background:#e5544a;"></span><span style="width:11px;height:11px;border-radius:50%;background:#e5b23a;"></span><span style="width:11px;height:11px;border-radius:50%;background:#4caf50;"></span></div>
+          <div style="flex:1;max-width:340px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:5px 14px;font-family:var(--mono);font-size:11.5px;color:var(--ink-500);">cramsheet.com/faq</div>
+        </div>
+        <div style="background:var(--paper);padding:64px 48px;">
+          <div style="max-width:620px;margin:0 auto;">
+            <h1 style="font-family:var(--serif);font-weight:400;font-size:40px;color:var(--ink-900);margin:0 0 40px;letter-spacing:-.02em;">Questions, answered fast.</h1>
+            <div style="display:flex;flex-direction:column;">
+              <sc-for list="{{ faqs }}" as="q" hint-placeholder-count="6">
+                <div style="padding:22px 0;border-top:1px solid var(--ink-150);">
+                  <div style="font-size:16.5px;font-weight:600;color:var(--ink-900);margin-bottom:8px;">{{ q.q }}</div>
+                  <div style="font-size:14.5px;color:var(--ink-600);line-height:1.6;">{{ q.a }}</div>
+                </div>
+              </sc-for>
+            </div>
+            <div style="margin-top:40px;background:var(--ink-900);border-radius:var(--r-lg);padding:28px 30px;display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;">
+              <div><div style="font-family:var(--serif);font-size:22px;color:#fff;">Still deciding?</div><div style="font-size:14px;color:var(--ink-300);margin-top:4px;">The preview is free. You'll know in 90 seconds.</div></div>
+              <button style="border:none;background:#fff;color:var(--ink-900);padding:12px 22px;border-radius:var(--r-md);font:600 14.5px var(--sans);cursor:pointer;white-space:nowrap;">Make a cheat sheet</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== AUTH ===== -->
+    <div id="auth" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">Auth · Sign in / up</span>
+        <span style="font-size:13px;color:var(--ink-400);">minimal · one-column · email + Google</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;">
+        <!-- sign in -->
+        <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-md);background:var(--paper);">
+          <div style="padding:56px 48px;display:flex;flex-direction:column;align-items:center;min-height:520px;justify-content:center;">
+            <span style="width:36px;height:36px;border-radius:var(--r-md);background:var(--ink-900);display:flex;align-items:center;justify-content:center;margin-bottom:22px;"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2"><path d="M4 4h11l5 5v11H4z"/></svg></span>
+            <h1 style="font-family:var(--serif);font-weight:400;font-size:30px;color:var(--ink-900);margin:0 0 6px;letter-spacing:-.02em;">Welcome back</h1>
+            <p style="font-size:14px;color:var(--ink-500);margin:0 0 30px;text-align:center;">Sign in to your sheets. No password needed.</p>
+            <div style="width:100%;max-width:320px;display:flex;flex-direction:column;gap:12px;">
+              <button style="display:flex;align-items:center;justify-content:center;gap:10px;border:1px solid var(--ink-200);background:var(--white);color:var(--ink-800);padding:11px;border-radius:var(--r-md);font:500 14px var(--sans);cursor:pointer;box-shadow:var(--sh-xs);" style-hover="background:var(--ink-50)">
+                <svg width="17" height="17" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.5 12.2c0-.7-.1-1.4-.2-2H12v3.8h5.9a5 5 0 0 1-2.2 3.3v2.7h3.6c2.1-1.9 3.2-4.8 3.2-7.8z"/><path fill="#34A853" d="M12 23c2.9 0 5.4-1 7.2-2.6l-3.6-2.7c-1 .7-2.3 1.1-3.6 1.1-2.8 0-5.1-1.9-6-4.4H2.3v2.8A11 11 0 0 0 12 23z"/><path fill="#FBBC05" d="M6 14.4a6.6 6.6 0 0 1 0-4.2V7.4H2.3a11 11 0 0 0 0 9.8z"/><path fill="#EA4335" d="M12 5.4c1.6 0 3 .5 4.1 1.6l3.1-3.1A11 11 0 0 0 2.3 7.4L6 10.2c.9-2.6 3.2-4.8 6-4.8z"/></svg>
+                Continue with Google
+              </button>
+              <div style="display:flex;align-items:center;gap:12px;margin:4px 0;"><span style="flex:1;height:1px;background:var(--ink-150);"></span><span style="font-size:12px;color:var(--ink-400);">or</span><span style="flex:1;height:1px;background:var(--ink-150);"></span></div>
+              <div><label style="display:block;font-size:13px;font-weight:550;color:var(--ink-700);margin-bottom:7px;">Email</label><input placeholder="you@university.edu" style="width:100%;border:1px solid var(--ink-200);border-radius:var(--r-md);padding:11px 12px;font:400 14px var(--sans);color:var(--ink-800);box-shadow:var(--sh-xs);outline:none;"/></div>
+              <button style="border:none;background:var(--ink-900);color:#fff;padding:12px;border-radius:var(--r-md);font:600 14px var(--sans);cursor:pointer;box-shadow:var(--sh-sm);">Email me a magic link</button>
+              <p style="font-size:12px;color:var(--ink-400);text-align:center;line-height:1.5;margin:6px 0 0;">New here? A link creates your account.<br>By continuing you agree to the Terms &amp; Privacy.</p>
+            </div>
+          </div>
+        </div>
+        <!-- magic link sent -->
+        <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-md);background:var(--paper);">
+          <div style="padding:56px 48px;display:flex;flex-direction:column;align-items:center;min-height:520px;justify-content:center;text-align:center;">
+            <div style="position:relative;margin-bottom:24px;">
+              <span style="width:56px;height:56px;border-radius:var(--r-lg);background:var(--signal-50);border:1px solid var(--signal-100);display:flex;align-items:center;justify-content:center;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--signal-600)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg></span>
+              <span style="position:absolute;top:-6px;right:-6px;width:22px;height:22px;border-radius:50%;background:var(--conf-high);border:2px solid var(--paper);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3"><path d="M20 6 9 17l-5-5"/></svg></span>
+            </div>
+            <h1 style="font-family:var(--serif);font-weight:400;font-size:30px;color:var(--ink-900);margin:0 0 10px;letter-spacing:-.02em;">Check your email</h1>
+            <p style="font-size:15px;color:var(--ink-600);margin:0 0 4px;line-height:1.55;max-width:300px;">We sent a magic link to</p>
+            <p style="font-family:var(--mono);font-size:14px;color:var(--ink-900);font-weight:500;margin:0 0 24px;">ada@university.edu</p>
+            <p style="font-size:13.5px;color:var(--ink-500);line-height:1.6;max-width:320px;margin:0 0 26px;">Click it and you're in — the link works for 15 minutes. You can close this tab.</p>
+            <div style="display:flex;gap:10px;">
+              <button style="border:1px solid var(--ink-200);background:var(--white);color:var(--ink-700);padding:9px 16px;border-radius:var(--r-md);font:500 13.5px var(--sans);cursor:pointer;">Resend link</button>
+              <button style="border:none;background:transparent;color:var(--ink-500);padding:9px 16px;border-radius:var(--r-md);font:500 13.5px var(--sans);cursor:pointer;">Use a different email</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GENERATE ===== -->
+    <div id="generate" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">App · /generate</span>
+        <span style="font-size:13px;color:var(--ink-400);">two states — empty & files loaded</span>
+      </div>
+
+      <!-- EMPTY STATE -->
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);margin-bottom:22px;">
+        <div style="display:flex;align-items:center;gap:16px;row-gap:10px;flex-wrap:wrap;padding:12px 24px;background:var(--white);border-bottom:1px solid var(--ink-150);">
+          <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:var(--ink-900);"><span style="width:22px;height:22px;border-radius:var(--r-xs);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+          <div style="display:flex;gap:2px;background:var(--ink-100);border-radius:var(--r-md);padding:3px;margin-left:8px;"><span style="padding:6px 14px;border-radius:var(--r-sm);background:var(--white);color:var(--ink-900);font-size:13px;font-weight:600;box-shadow:var(--sh-xs);">Generate</span><span style="padding:6px 14px;border-radius:var(--r-sm);color:var(--ink-500);font-size:13px;font-weight:500;">My Sheets</span></div>
+          <span style="flex:1;"></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);border-radius:var(--r-full);padding:4px 11px;font-size:12px;font-weight:600;"><span style="width:6px;height:6px;border-radius:50%;background:var(--warn);"></span>2 credits</span>
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--signal-100);color:var(--signal-700);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">AD</span>
+        </div>
+        <div style="background:var(--paper);display:grid;grid-template-columns:1.6fr 1fr;min-height:520px;">
+          <div style="padding:36px 40px;border-right:1px solid var(--ink-100);display:flex;flex-direction:column;">
+            <h1 style="font-family:var(--serif);font-weight:400;font-size:30px;color:var(--ink-900);margin:0 0 4px;letter-spacing:-.02em;">Drop your files</h1>
+            <p style="font-size:14.5px;color:var(--ink-500);margin:0 0 26px;">The more you give us — slides, notes, past exams — the sharper the sheet.</p>
+            <div style="flex:1;border:1.5px dashed var(--ink-300);border-radius:var(--r-xl);background:linear-gradient(180deg,var(--white),var(--paper-2));display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;">
+              <div style="width:64px;height:64px;border-radius:var(--r-lg);background:var(--white);border:1px solid var(--ink-150);display:flex;align-items:center;justify-content:center;margin-bottom:20px;box-shadow:var(--sh-md);"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--signal-600)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/></svg></div>
+              <div style="font-size:18px;font-weight:600;color:var(--ink-900);margin-bottom:6px;">Drag files here, or browse</div>
+              <div style="font-size:13.5px;color:var(--ink-500);max-width:340px;line-height:1.55;margin-bottom:20px;">PDF, PPTX, DOCX · up to 40&nbsp;MB each. Your files stay private and are deleted after 30 days.</div>
+              <button style="border:none;background:var(--ink-900);color:#fff;padding:11px 20px;border-radius:var(--r-md);font:500 14px var(--sans);cursor:pointer;box-shadow:var(--sh-sm);">Browse files</button>
+              <div style="display:flex;gap:8px;margin-top:22px;">
+                <span style="font-size:11.5px;color:var(--ink-400);background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:4px 10px;">★ Past exams help most</span>
+                <span style="font-size:11.5px;color:var(--ink-400);background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:4px 10px;">No account limits on file count</span>
+              </div>
+            </div>
+          </div>
+          <div style="padding:36px 34px;display:flex;flex-direction:column;background:var(--white);">
+            <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin-bottom:18px;">Sheet settings</div>
+            <div style="display:flex;flex-direction:column;gap:18px;opacity:.5;pointer-events:none;">
+              <div><label style="display:block;font-size:12.5px;font-weight:550;color:var(--ink-600);margin-bottom:7px;">Exam type</label><div style="border:1px solid var(--ink-200);border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;color:var(--ink-400);display:flex;justify-content:space-between;">Multiple choice + short answer<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+              <div><label style="display:block;font-size:12.5px;font-weight:550;color:var(--ink-600);margin-bottom:7px;">Density</label><div style="display:flex;background:var(--ink-100);border-radius:var(--r-md);padding:3px;gap:2px;"><span style="flex:1;text-align:center;padding:7px;border-radius:var(--r-sm);background:var(--white);font-size:12.5px;font-weight:600;color:var(--ink-700);box-shadow:var(--sh-xs);">MAX</span><span style="flex:1;text-align:center;padding:7px;font-size:12.5px;color:var(--ink-500);">Balanced</span><span style="flex:1;text-align:center;padding:7px;font-size:12.5px;color:var(--ink-500);">Essentials</span></div></div>
+              <div><label style="display:block;font-size:12.5px;font-weight:550;color:var(--ink-600);margin-bottom:7px;">Priority</label><div style="border:1px solid var(--ink-200);border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;color:var(--ink-400);display:flex;justify-content:space-between;">Balance breadth &amp; depth<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            </div>
+            <div style="margin-top:auto;padding-top:24px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;"><span style="font-size:12.5px;color:var(--ink-500);">Confidence in result</span><span style="font-family:var(--mono);font-size:13px;color:var(--ink-400);font-weight:600;">—</span></div>
+              <div style="height:8px;background:var(--ink-100);border-radius:99px;margin-bottom:16px;"></div>
+              <button disabled style="width:100%;border:none;background:var(--ink-200);color:var(--ink-400);padding:13px;border-radius:var(--r-md);font:600 15px var(--sans);cursor:not-allowed;">Add files to generate</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LOADED STATE -->
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);">
+        <div style="display:flex;align-items:center;gap:16px;row-gap:10px;flex-wrap:wrap;padding:12px 24px;background:var(--white);border-bottom:1px solid var(--ink-150);">
+          <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:var(--ink-900);"><span style="width:22px;height:22px;border-radius:var(--r-xs);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+          <div style="display:flex;gap:2px;background:var(--ink-100);border-radius:var(--r-md);padding:3px;margin-left:8px;"><span style="padding:6px 14px;border-radius:var(--r-sm);background:var(--white);color:var(--ink-900);font-size:13px;font-weight:600;box-shadow:var(--sh-xs);">Generate</span><span style="padding:6px 14px;border-radius:var(--r-sm);color:var(--ink-500);font-size:13px;font-weight:500;">My Sheets</span></div>
+          <span style="flex:1;"></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);border-radius:var(--r-full);padding:4px 11px;font-size:12px;font-weight:600;"><span style="width:6px;height:6px;border-radius:50%;background:var(--warn);"></span>2 credits</span>
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--signal-100);color:var(--signal-700);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">AD</span>
+        </div>
+        <div style="background:var(--paper);display:grid;grid-template-columns:1.6fr 1fr;min-height:520px;">
+          <div style="padding:36px 40px;border-right:1px solid var(--ink-100);display:flex;flex-direction:column;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+              <div><h1 style="font-family:var(--serif);font-weight:400;font-size:26px;color:var(--ink-900);margin:0;letter-spacing:-.02em;">4 files ready</h1><p style="font-size:13.5px;color:var(--ink-500);margin:4px 0 0;">Tag each file so we weight it correctly.</p></div>
+              <button style="border:1px dashed var(--ink-300);background:var(--white);color:var(--ink-600);padding:8px 14px;border-radius:var(--r-md);font:500 13px var(--sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>Add more</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px;">
+              <sc-for list="{{ genFiles }}" as="f" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:14px;border:1px solid var(--ink-150);border-radius:var(--r-md);padding:13px 15px;background:var(--white);box-shadow:var(--sh-xs);">
+                  <span style="width:34px;height:34px;border-radius:var(--r-sm);background:{{ f.iconBg }};color:{{ f.iconColor }};display:flex;align-items:center;justify-content:center;flex:none;font-family:var(--mono);font-size:10px;font-weight:600;">{{ f.ext }}</span>
+                  <div style="flex:1;min-width:0;"><div style="font-size:13.5px;font-weight:500;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ f.name }}</div><div style="font-size:11.5px;color:var(--ink-400);margin-top:2px;">{{ f.size }}</div></div>
+                  <span style="display:inline-flex;align-items:center;gap:5px;background:{{ f.tagBg }};color:{{ f.tagColor }};border:1px solid {{ f.tagLine }};border-radius:var(--r-full);padding:4px 11px;font-size:12px;font-weight:600;white-space:nowrap;">{{ f.tag }}<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></span>
+                  <button style="border:none;background:transparent;color:var(--ink-300);cursor:pointer;padding:4px;display:flex;" style-hover="color:var(--danger)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6 6 18"/></svg></button>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="padding:36px 34px;display:flex;flex-direction:column;background:var(--white);">
+            <div style="font-size:13px;font-weight:600;color:var(--ink-700);margin-bottom:18px;">Sheet settings</div>
+            <div style="display:flex;flex-direction:column;gap:18px;">
+              <div><label style="display:block;font-size:12.5px;font-weight:550;color:var(--ink-600);margin-bottom:7px;">Exam type</label><div style="border:1px solid var(--ink-200);border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;color:var(--ink-800);display:flex;justify-content:space-between;box-shadow:var(--sh-xs);">Multiple choice + short answer<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+              <div><label style="display:block;font-size:12.5px;font-weight:550;color:var(--ink-600);margin-bottom:7px;">Density</label><div style="display:flex;background:var(--ink-100);border-radius:var(--r-md);padding:3px;gap:2px;"><span style="flex:1;text-align:center;padding:7px;border-radius:var(--r-sm);background:var(--ink-900);font-size:12.5px;font-weight:600;color:#fff;box-shadow:var(--sh-xs);">MAX</span><span style="flex:1;text-align:center;padding:7px;font-size:12.5px;color:var(--ink-500);">Balanced</span><span style="flex:1;text-align:center;padding:7px;font-size:12.5px;color:var(--ink-500);">Essentials</span></div></div>
+              <div><label style="display:block;font-size:12.5px;font-weight:550;color:var(--ink-600);margin-bottom:7px;">Priority</label><div style="border:1px solid var(--ink-200);border-radius:var(--r-md);padding:10px 12px;font-size:13.5px;color:var(--ink-800);display:flex;justify-content:space-between;box-shadow:var(--sh-xs);">Favor likely-tested topics<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg></div></div>
+            </div>
+            <div style="margin-top:auto;padding-top:24px;">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;"><span style="font-size:12.5px;color:var(--ink-500);">Confidence in result</span><span style="font-family:var(--mono);font-size:14px;color:var(--conf-med);font-weight:600;">72%</span></div>
+              <div style="height:8px;background:var(--ink-100);border-radius:99px;overflow:hidden;margin-bottom:8px;"><div style="height:100%;width:72%;background:linear-gradient(90deg,var(--conf-med),var(--conf-high));border-radius:99px;animation:ds-climb 1s var(--ease-out);"></div></div>
+              <div style="font-size:11.5px;color:var(--ink-400);margin-bottom:16px;line-height:1.5;">Add a past exam to push confidence past 85%.</div>
+              <button style="width:100%;border:none;background:var(--ink-900);color:#fff;padding:13px;border-radius:var(--r-md);font:600 15px var(--sans);cursor:pointer;box-shadow:var(--sh-md);display:flex;align-items:center;justify-content:center;gap:9px;" style-hover="background:var(--ink-800)"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 4v4M10 6h4"/><path d="M12 12l1.6 3.4L17 17l-3.4 1.6L12 22l-1.6-3.4L7 17l3.4-1.6z"/></svg>Generate my sheet · 1 credit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LOADING ===== -->
+    <div id="loading" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">App · Generating</span>
+        <span style="font-size:13px;color:var(--ink-400);">30–90s · progress narrative</span>
+      </div>
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);">
+        <div style="background:var(--ink-900);color:#fff;min-height:520px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px 40px;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:40px 40px;-webkit-mask-image:radial-gradient(60% 60% at 50% 40%,#000,transparent);mask-image:radial-gradient(60% 60% at 50% 40%,#000,transparent);"></div>
+          <div style="position:relative;width:100%;max-width:440px;">
+            <div style="text-align:center;margin-bottom:40px;">
+              <div style="width:52px;height:52px;border-radius:var(--r-lg);background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6"><path d="M12 4v4M10 6h4"/><path d="M12 12l1.6 3.4L17 17l-3.4 1.6L12 22l-1.6-3.4L7 17l3.4-1.6z"/></svg></div>
+              <h1 style="font-family:var(--serif);font-weight:400;font-size:28px;color:#fff;margin:0 0 6px;letter-spacing:-.02em;">Building your sheet</h1>
+              <p style="font-size:14px;color:var(--ink-400);margin:0;">Usually done in under a minute. Hang tight.</p>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:28px;">
+              <sc-for list="{{ loadSteps }}" as="s" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--r-md);background:{{ s.rowBg }};">
+                  <span style="width:26px;height:26px;border-radius:50%;background:{{ s.dotBg }};border:1px solid {{ s.dotLine }};display:flex;align-items:center;justify-content:center;flex:none;" dangerouslySetInnerHTML="{{ s.icon }}"></span>
+                  <span style="flex:1;font-size:14.5px;font-weight:500;color:{{ s.textColor }};">{{ s.label }}</span>
+                  <span style="font-family:var(--mono);font-size:11px;color:{{ s.metaColor }};">{{ s.meta }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height:5px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden;"><div style="height:100%;width:68%;background:#fff;border-radius:99px;"></div></div>
+            <div style="text-align:center;font-size:12px;color:var(--ink-500);margin-top:14px;">Reading 4 files · 235 pages · verifying against 1 past exam</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESULTS ===== -->
+    <div id="results" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">App · /results</span>
+        <span style="font-size:13px;color:var(--ink-400);">two variants — with & without warnings</span>
+      </div>
+
+      <!-- Variant A: clean -->
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);margin-bottom:22px;">
+        <div style="display:flex;align-items:center;gap:12px;row-gap:10px;flex-wrap:wrap;padding:12px 24px;background:var(--white);border-bottom:1px solid var(--ink-150);">
+          <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:var(--ink-900);"><span style="width:22px;height:22px;border-radius:var(--r-xs);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+          <span style="color:var(--ink-200);">/</span>
+          <span style="font-size:14px;color:var(--ink-700);font-weight:500;">Intro Statistics — Final</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--conf-high-bg);color:var(--conf-high);border-radius:var(--r-full);padding:3px 10px;font-size:11.5px;font-weight:600;">Fits at MAX</span>
+          <span style="flex:1;"></span>
+          <div style="display:inline-flex;background:var(--ink-100);border-radius:var(--r-md);padding:3px;gap:2px;"><span style="padding:5px 12px;border-radius:var(--r-sm);background:var(--ink-900);color:#fff;font-size:12.5px;font-weight:600;">MAX</span><span style="padding:5px 12px;border-radius:var(--r-sm);color:var(--ink-500);font-size:12.5px;">Balanced</span><span style="padding:5px 12px;border-radius:var(--r-sm);color:var(--ink-500);font-size:12.5px;">Essentials</span></div>
+          <button style="border:1px solid var(--ink-200);background:var(--white);color:var(--ink-700);padding:8px 14px;border-radius:var(--r-md);font:500 13px var(--sans);cursor:pointer;">Make another</button>
+          <button style="border:none;background:var(--ink-900);color:#fff;padding:8px 16px;border-radius:var(--r-md);font:600 13px var(--sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:var(--sh-sm);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>Export PDF</button>
+        </div>
+        <div style="background:var(--paper-2);padding:36px;display:flex;justify-content:center;">
+          <div style="width:100%;max-width:660px;background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-sm);box-shadow:var(--sh-xl);padding:20px 22px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink-900);padding-bottom:8px;margin-bottom:10px;"><div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink-900);">Intro Statistics — Exam Reference Sheet</div><div style="font-family:var(--mono);font-size:9px;color:var(--ink-400);">MAX · A4 · STAT&nbsp;200</div></div>
+            <div style="display:flex;gap:6px;margin-bottom:12px;">
+              <sc-for list="{{ resVerified }}" as="v" hint-placeholder-count="3">
+                <div style="flex:1;background:var(--salmon);border:1px solid var(--salmon-line);border-radius:var(--r-xs);padding:5px 8px;"><div style="font-size:8px;color:#8a4a2f;font-weight:700;display:flex;align-items:center;gap:3px;">★ {{ v.tag }}</div><div style="font-size:8.5px;color:var(--ink-700);margin-top:2px;line-height:1.3;">{{ v.text }}</div></div>
+              </sc-for>
+            </div>
+            <div style="columns:3;column-gap:14px;">
+              <sc-for list="{{ resStats }}" as="r" hint-placeholder-count="9">
+                <div style="break-inside:avoid;margin-bottom:9px;display:flex;gap:6px;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{ r.dot }};margin-top:3px;flex:none;"></span>
+                  <div style="min-width:0;"><div style="font-size:9px;font-weight:700;color:var(--ink-900);line-height:1.3;"><sc-if value="{{ r.verified }}" hint-placeholder-val="{{ true }}"><span style="color:var(--verified);">★ </span></sc-if>{{ r.topic }}</div><div style="font-size:8px;color:var(--ink-500);line-height:1.35;margin-top:1px;">{{ r.detail }}</div><div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:2px;">{{ r.cite }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variant B: with warnings -->
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);">
+        <div style="display:flex;align-items:center;gap:12px;row-gap:10px;flex-wrap:wrap;padding:12px 24px;background:var(--white);border-bottom:1px solid var(--ink-150);">
+          <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:var(--ink-900);"><span style="width:22px;height:22px;border-radius:var(--r-xs);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+          <span style="color:var(--ink-200);">/</span>
+          <span style="font-size:14px;color:var(--ink-700);font-weight:500;">Organic Chemistry — Midterm 2</span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);border-radius:var(--r-full);padding:3px 10px;font-size:11.5px;font-weight:600;">2 warnings</span>
+          <span style="flex:1;"></span>
+          <div style="display:inline-flex;background:var(--ink-100);border-radius:var(--r-md);padding:3px;gap:2px;"><span style="padding:5px 12px;border-radius:var(--r-sm);background:var(--ink-900);color:#fff;font-size:12.5px;font-weight:600;">MAX</span><span style="padding:5px 12px;border-radius:var(--r-sm);color:var(--ink-500);font-size:12.5px;">Balanced</span><span style="padding:5px 12px;border-radius:var(--r-sm);color:var(--ink-500);font-size:12.5px;">Essentials</span></div>
+          <button style="border:1px solid var(--ink-200);background:var(--white);color:var(--ink-700);padding:8px 14px;border-radius:var(--r-md);font:500 13px var(--sans);cursor:pointer;">Make another</button>
+          <button style="border:none;background:var(--ink-900);color:#fff;padding:8px 16px;border-radius:var(--r-md);font:600 13px var(--sans);cursor:pointer;display:inline-flex;align-items:center;gap:7px;box-shadow:var(--sh-sm);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M12 4v11M8 11l4 4 4-4"/><path d="M4 19h16"/></svg>Export PDF</button>
+        </div>
+        <!-- warnings strip -->
+        <div style="display:flex;flex-direction:column;gap:1px;background:var(--warn-bg);border-bottom:1px solid #f0dcb8;">
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 24px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17h.01"/></svg>
+            <div style="flex:1;font-size:13px;color:var(--ink-700);"><strong style="color:var(--warn);">5 topics trimmed to fit one page.</strong> They scored below the MAX cut-off — switch to Balanced to see them.</div>
+            <button style="border:1px solid #e0c088;background:var(--white);color:var(--warn);padding:5px 11px;border-radius:var(--r-sm);font:600 12px var(--sans);cursor:pointer;white-space:nowrap;">Review trimmed</button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;padding:11px 24px;border-top:1px solid #f0dcb8;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="flex:none;"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+            <div style="flex:1;font-size:13px;color:var(--ink-700);"><strong style="color:var(--warn);">1 file was image-only.</strong> We OCR'd "lab-notes-scan.pdf" — text uploads would score higher.</div>
+            <button style="border:none;background:transparent;color:var(--ink-500);padding:5px 8px;font:500 12px var(--sans);cursor:pointer;">Dismiss</button>
+          </div>
+        </div>
+        <div style="background:var(--paper-2);padding:36px;display:flex;justify-content:center;">
+          <div style="width:100%;max-width:660px;background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-sm);box-shadow:var(--sh-xl);padding:20px 22px;">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;border-bottom:2px solid var(--ink-900);padding-bottom:8px;margin-bottom:10px;"><div style="font-family:var(--serif);font-size:17px;font-weight:500;color:var(--ink-900);">Organic Chemistry — Exam Reference Sheet</div><div style="font-family:var(--mono);font-size:9px;color:var(--ink-400);">MAX · A4 · CHEM&nbsp;210</div></div>
+            <div style="columns:3;column-gap:14px;">
+              <sc-for list="{{ resChem }}" as="r" hint-placeholder-count="9">
+                <div style="break-inside:avoid;margin-bottom:9px;display:flex;gap:6px;">
+                  <span style="width:6px;height:6px;border-radius:50%;background:{{ r.dot }};margin-top:3px;flex:none;"></span>
+                  <div style="min-width:0;"><div style="font-size:9px;font-weight:700;color:var(--ink-900);line-height:1.3;"><sc-if value="{{ r.verified }}" hint-placeholder-val="{{ true }}"><span style="color:var(--verified);">★ </span></sc-if>{{ r.topic }}</div><div style="font-size:8px;color:var(--ink-500);line-height:1.35;margin-top:1px;">{{ r.detail }}</div><div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:2px;">{{ r.cite }}</div></div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== LIBRARY ===== -->
+    <div id="library" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">App · /library</span>
+        <span style="font-size:13px;color:var(--ink-400);">My Sheets</span>
+      </div>
+      <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-lg);background:var(--white);">
+        <div style="display:flex;align-items:center;gap:16px;row-gap:10px;flex-wrap:wrap;padding:12px 24px;background:var(--white);border-bottom:1px solid var(--ink-150);">
+          <span style="display:flex;align-items:center;gap:8px;font-weight:600;font-size:15px;color:var(--ink-900);"><span style="width:22px;height:22px;border-radius:var(--r-xs);background:var(--ink-900);display:flex;align-items:center;justify-content:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4"><path d="M4 4h11l5 5v11H4z"/></svg></span>CramSheet</span>
+          <div style="display:flex;gap:2px;background:var(--ink-100);border-radius:var(--r-md);padding:3px;margin-left:8px;"><span style="padding:6px 14px;border-radius:var(--r-sm);color:var(--ink-500);font-size:13px;font-weight:500;">Generate</span><span style="padding:6px 14px;border-radius:var(--r-sm);background:var(--white);color:var(--ink-900);font-size:13px;font-weight:600;box-shadow:var(--sh-xs);">My Sheets</span></div>
+          <span style="flex:1;"></span>
+          <span style="display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);border-radius:var(--r-full);padding:4px 11px;font-size:12px;font-weight:600;"><span style="width:6px;height:6px;border-radius:50%;background:var(--warn);"></span>2 credits</span>
+          <span style="width:30px;height:30px;border-radius:50%;background:var(--signal-100);color:var(--signal-700);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;">AD</span>
+        </div>
+        <div style="background:var(--paper);padding:32px 40px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
+            <div><h1 style="font-family:var(--serif);font-weight:400;font-size:28px;color:var(--ink-900);margin:0;letter-spacing:-.02em;">My Sheets</h1><p style="font-size:13.5px;color:var(--ink-500);margin:4px 0 0;">6 sheets · sorted by most recent</p></div>
+            <div style="display:flex;gap:10px;">
+              <div style="display:flex;align-items:center;gap:8px;border:1px solid var(--ink-200);border-radius:var(--r-md);padding:8px 12px;background:var(--white);box-shadow:var(--sh-xs);"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-400)" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input placeholder="Search sheets" style="border:none;outline:none;font:400 13.5px var(--sans);color:var(--ink-800);width:150px;background:transparent;"/></div>
+              <button style="border:none;background:var(--ink-900);color:#fff;padding:9px 16px;border-radius:var(--r-md);font:600 13.5px var(--sans);cursor:pointer;box-shadow:var(--sh-sm);display:inline-flex;align-items:center;gap:7px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>New sheet</button>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;">
+            <sc-for list="{{ library }}" as="s" hint-placeholder-count="6">
+              <div style="border:1px solid var(--ink-150);border-radius:var(--r-lg);overflow:hidden;background:var(--white);box-shadow:var(--sh-xs);transition:box-shadow var(--dur),transform var(--dur);cursor:pointer;" style-hover="box-shadow:var(--sh-lg);transform:translateY(-3px)">
+                <div style="aspect-ratio:1.414;background:var(--paper-2);border-bottom:1px solid var(--ink-100);padding:12px 13px;position:relative;">
+                  <div style="height:5px;background:var(--ink-900);width:80%;border-radius:1px;margin-bottom:6px;"></div>
+                  <div style="columns:2;column-gap:8px;">
+                    <sc-for list="{{ s.bars }}" as="b" hint-placeholder-count="6">
+                      <div style="break-inside:avoid;margin-bottom:5px;"><div style="height:3px;background:{{ b.c }};width:{{ b.w }};border-radius:1px;margin-bottom:2px;"></div><div style="height:2px;background:var(--ink-100);margin-bottom:1.5px;"></div><div style="height:2px;background:var(--ink-100);width:70%;"></div></div>
+                    </sc-for>
+                  </div>
+                  <span style="position:absolute;top:10px;right:10px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-full);padding:1px 7px;font-size:9px;font-weight:600;color:var(--ink-600);box-shadow:var(--sh-xs);">{{ s.density }}</span>
+                </div>
+                <div style="padding:13px 14px;">
+                  <div style="font-size:13.5px;font-weight:600;color:var(--ink-900);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ s.title }}</div>
+                  <div style="display:flex;align-items:center;gap:6px;margin-top:5px;"><span style="width:7px;height:7px;border-radius:50%;background:{{ s.topicColor }};"></span><span style="font-size:11.5px;color:var(--ink-500);">{{ s.course }} · {{ s.date }}</span></div>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STATES: UPGRADE + ERRORS ===== -->
+    <div id="states" style="background:var(--paper-2);padding:0 64px 56px;">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;padding-top:10px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:var(--ink-700);background:var(--white);border:1px solid var(--ink-200);border-radius:var(--r-full);padding:4px 11px;">App · Upgrade & errors</span>
+        <span style="font-size:13px;color:var(--ink-400);">the moments things go sideways</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr;gap:20px;align-items:start;">
+        <!-- in-app upgrade -->
+        <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-md);background:var(--paper-2);">
+          <div style="padding:28px;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:360px;">
+            <div style="width:440px;max-width:100%;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-xl);box-shadow:var(--sh-xl);overflow:hidden;">
+              <div style="padding:26px 28px 0;">
+                <div style="display:inline-flex;align-items:center;gap:6px;background:var(--warn-bg);color:var(--warn);border-radius:var(--r-full);padding:4px 11px;font-size:11.5px;font-weight:600;margin-bottom:16px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--warn);"></span>0 credits left</div>
+                <div style="font-family:var(--serif);font-size:24px;color:var(--ink-900);letter-spacing:-.01em;">Keep the momentum going</div>
+                <p style="font-size:14px;color:var(--ink-600);line-height:1.55;margin:10px 0 0;">You've used your last credit. Grab a 3-Pack — three more sheets, 33% cheaper, and they never expire.</p>
+              </div>
+              <div style="padding:20px 28px 0;">
+                <div style="display:flex;gap:10px;">
+                  <div style="flex:1;border:1px solid var(--ink-150);border-radius:var(--r-md);padding:14px;text-align:center;"><div style="font-size:13px;font-weight:600;color:var(--ink-800);">Single</div><div style="font-family:var(--serif);font-size:22px;color:var(--ink-900);margin-top:4px;">$4.99</div></div>
+                  <div style="flex:1;border:1.5px solid var(--ink-900);border-radius:var(--r-md);padding:14px;text-align:center;position:relative;background:var(--white);"><span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);background:var(--ink-900);color:#fff;font-size:9.5px;font-weight:600;border-radius:var(--r-full);padding:2px 8px;white-space:nowrap;">Best value</span><div style="font-size:13px;font-weight:600;color:var(--ink-900);">3-Pack</div><div style="font-family:var(--serif);font-size:22px;color:var(--ink-900);margin-top:4px;">$9.99</div></div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;justify-content:flex-end;padding:20px 28px 24px;">
+                <button style="border:1px solid var(--ink-200);background:var(--white);color:var(--ink-700);padding:9px 16px;border-radius:var(--r-md);font:500 13.5px var(--sans);cursor:pointer;">Not now</button>
+                <button style="border:none;background:var(--ink-900);color:#fff;padding:9px 18px;border-radius:var(--r-md);font:600 13.5px var(--sans);cursor:pointer;box-shadow:var(--sh-sm);">Get 3-Pack · $9.99</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- error states stack -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <sc-for list="{{ errorStates }}" as="e" hint-placeholder-count="3">
+            <div style="border:1px solid var(--ink-200);border-radius:var(--r-lg);background:var(--white);box-shadow:var(--sh-sm);padding:22px 24px;">
+              <div style="display:flex;align-items:flex-start;gap:14px;">
+                <span style="width:38px;height:38px;border-radius:var(--r-md);background:{{ e.bg }};color:{{ e.color }};display:flex;align-items:center;justify-content:center;flex:none;" dangerouslySetInnerHTML="{{ e.icon }}"></span>
+                <div style="flex:1;">
+                  <div style="font-size:15px;font-weight:600;color:var(--ink-900);">{{ e.title }}</div>
+                  <div style="font-size:13.5px;color:var(--ink-600);line-height:1.55;margin-top:4px;">{{ e.body }}</div>
+                  <div style="display:flex;gap:8px;margin-top:14px;">
+                    <button style="border:none;background:var(--ink-900);color:#fff;padding:7px 14px;border-radius:var(--r-sm);font:600 12.5px var(--sans);cursor:pointer;">{{ e.primary }}</button>
+                    <button style="border:1px solid var(--ink-200);background:var(--white);color:var(--ink-600);padding:7px 14px;border-radius:var(--r-sm);font:500 12.5px var(--sans);cursor:pointer;">{{ e.secondary }}</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== THE SHEET ===== -->
+    <div id="sheet" style="background:var(--ink-900);padding:56px 48px;border-top:1px solid var(--ink-150);">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+        <span style="font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:var(--r-full);padding:4px 12px;">THE ARTIFACT · Exam Reference Sheet</span>
+        <span style="font-size:13px;color:var(--ink-400);">A4 landscape · MAX density · print-first · every item scored &amp; sourced</span>
+      </div>
+      <div style="text-align:center;margin:24px 0 28px;">
+        <h2 style="font-family:var(--serif);font-weight:400;font-size:34px;color:#fff;margin:0;letter-spacing:-.02em;">One page. Everything that matters.</h2>
+        <p style="font-size:14px;color:var(--ink-400);margin:8px 0 0;">The whole product exists to produce this. Confidence dot, ★ if verified, and a citation on every claim.</p>
+      </div>
+      <div style="overflow-x:auto;padding-bottom:8px;display:flex;justify-content:center;">
+        <!-- A4 LANDSCAPE 1123 x 794 -->
+        <div style="width:1123px;height:794px;flex:none;background:#fff;box-shadow:0 30px 80px rgba(0,0,0,.5);border-radius:2px;padding:26px 30px;display:flex;flex-direction:column;color:var(--ink-900);font-family:var(--sans);">
+          <!-- header -->
+          <div style="display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2.5px solid var(--ink-900);padding-bottom:8px;margin-bottom:9px;">
+            <div>
+              <div style="font-family:var(--serif);font-size:23px;font-weight:600;letter-spacing:-.01em;line-height:1;">Intro Statistics — Exam Reference Sheet</div>
+              <div style="font-size:9.5px;color:var(--ink-500);margin-top:4px;">STAT 200 · Final · covers CI, hypothesis testing, distributions, regression</div>
+            </div>
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div style="display:flex;align-items:center;gap:10px;font-size:8px;color:var(--ink-500);">
+                <span style="display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--conf-high);"></span>high</span>
+                <span style="display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--conf-med);"></span>medium</span>
+                <span style="display:flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:50%;background:var(--conf-low);"></span>low</span>
+                <span style="display:flex;align-items:center;gap:3px;"><span style="color:var(--verified);">★</span>verified vs past exam</span>
+              </div>
+              <div style="font-family:var(--mono);font-size:8px;color:var(--ink-400);text-align:right;border-left:1px solid var(--ink-200);padding-left:12px;">MAX · A4<br>cramsheet.com</div>
+            </div>
+          </div>
+          <!-- verified Q-pattern strip -->
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:9px;">
+            <sc-for list="{{ sheetPatterns }}" as="p" hint-placeholder-count="3">
+              <div style="background:var(--salmon);border:1px solid var(--salmon-line);border-radius:var(--r-xs);padding:6px 9px;">
+                <div style="font-size:8px;font-weight:700;color:#8a4a2f;display:flex;align-items:center;gap:4px;letter-spacing:.02em;">★ VERIFIED Q-PATTERN <span style="font-family:var(--mono);font-weight:600;margin-left:auto;color:#a5790a;">{{ p.freq }}</span></div>
+                <div style="font-size:9.5px;color:var(--ink-900);font-weight:600;margin-top:3px;line-height:1.25;">{{ p.title }}</div>
+                <div style="font-family:var(--mono);font-size:6.5px;color:#8a4a2f;margin-top:3px;">{{ p.cite }}</div>
+              </div>
+            </sc-for>
+          </div>
+          <!-- body: 4 columns -->
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:11px;flex:1;min-height:0;font-size:8.5px;line-height:1.4;">
+
+            <!-- COL A -->
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">CONFIDENCE INTERVALS</div>
+                <div style="padding:7px 8px;">
+                  <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--conf-high);flex:none;"></span><span style="color:var(--verified);font-size:8px;">★</span><span style="font-weight:700;font-size:9px;">Mean, σ unknown</span></div>
+                  <div style="font-family:var(--mono);background:var(--signal-50);border:1px solid var(--signal-100);border-radius:3px;padding:4px 6px;font-size:9px;color:var(--ink-900);margin-bottom:4px;">x̄ ± t*<sub>(n−1)</sub> · (s / √n)</div>
+                  <div style="color:var(--ink-600);margin-bottom:5px;">Use t when σ unknown (almost always). df = n−1.</div>
+                  <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--conf-med);flex:none;"></span><span style="font-weight:700;font-size:9px;">Mean, σ known</span></div>
+                  <div style="font-family:var(--mono);background:var(--paper-2);border:1px solid var(--ink-150);border-radius:3px;padding:4px 6px;font-size:9px;margin-bottom:4px;">x̄ ± z* · (σ / √n)</div>
+                  <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--conf-med);flex:none;"></span><span style="font-weight:700;font-size:9px;">Proportion</span></div>
+                  <div style="font-family:var(--mono);background:var(--paper-2);border:1px solid var(--ink-150);border-radius:3px;padding:4px 6px;font-size:9px;margin-bottom:4px;">p̂ ± z* · √(p̂(1−p̂)/n)</div>
+                  <div style="color:var(--ink-500);font-size:7.5px;border-top:1px dashed var(--ink-200);padding-top:4px;">z*: 90%→1.645 · 95%→1.96 · 99%→2.576</div>
+                  <div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:4px;">L08 s21–24 · Final '19 Q3, '21 Q2</div>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;display:flex;justify-content:space-between;">z vs t — WHICH TEST? <span style="color:var(--verified);">★</span></div>
+                <div style="padding:0;">
+                  <sc-for list="{{ ztRows }}" as="z" hint-placeholder-count="4">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0;border-bottom:1px solid var(--ink-100);">
+                      <div style="padding:4px 8px;font-weight:600;border-right:1px solid var(--ink-100);color:var(--ink-700);">{{ z.cond }}</div>
+                      <div style="padding:4px 8px;font-family:var(--mono);color:{{ z.color }};">{{ z.use }}</div>
+                    </div>
+                  </sc-for>
+                  <div style="padding:4px 8px;color:var(--ink-500);font-size:7.5px;">Rule: σ known → z. σ unknown → t (df=n−1). n≥30 → t≈z.</div>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">REGRESSION & CORRELATION</div>
+                <div style="padding:7px 8px;">
+                  <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--conf-med);flex:none;"></span><b style="font-size:9px;">Least-squares line</b></div>
+                  <div style="font-family:var(--mono);background:var(--paper-2);border:1px solid var(--ink-150);border-radius:3px;padding:4px 6px;font-size:9px;margin-bottom:4px;">ŷ = b₀ + b₁x · b₁ = r(s_y/s_x)</div>
+                  <div style="color:var(--ink-600);">r ∈ [−1,1] measures linear strength; r² = variance explained.</div>
+                  <div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:4px;">L13 s2–7</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COL B -->
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;display:flex;justify-content:space-between;">HYPOTHESIS TESTING <span style="color:var(--verified);">★</span></div>
+                <div style="padding:7px 8px;">
+                  <div style="margin-bottom:4px;"><b>1.</b> State H₀ (=) and Hₐ (&lt;, &gt;, ≠).</div>
+                  <div style="margin-bottom:4px;"><b>2.</b> Pick α (0.05 default).</div>
+                  <div style="margin-bottom:4px;"><b>3.</b> Test stat <span style="font-family:var(--mono);">t = (x̄−μ₀)/(s/√n)</span></div>
+                  <div style="margin-bottom:4px;"><b>4.</b> Find p-value from the tail(s).</div>
+                  <div style="background:var(--conf-high-bg);border-radius:3px;padding:4px 6px;color:var(--conf-high);font-weight:700;">5. p &lt; α → reject H₀.</div>
+                  <div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:5px;">L10 s3–9 · every past final</div>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">p-VALUE &amp; ERROR TYPES</div>
+                <div style="padding:7px 8px;">
+                  <div style="display:flex;align-items:center;gap:5px;margin-bottom:3px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--conf-med);flex:none;"></span><b style="font-size:9px;">p-value</b></div>
+                  <div style="color:var(--ink-600);margin-bottom:5px;">P(data this extreme | H₀ true). <b>Not</b> P(H₀ true). Small p = evidence against H₀.</div>
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;">
+                    <div style="background:var(--conf-low-bg);border-radius:3px;padding:4px 6px;"><b style="color:var(--conf-low);">Type I (α)</b><br>Reject true H₀ · false positive</div>
+                    <div style="background:var(--conf-med-bg);border-radius:3px;padding:4px 6px;"><b style="color:var(--conf-med);">Type II (β)</b><br>Keep false H₀ · false negative</div>
+                  </div>
+                  <div style="font-family:var(--mono);margin-top:5px;background:var(--paper-2);border:1px solid var(--ink-150);border-radius:3px;padding:3px 6px;font-size:8.5px;">Power = 1 − β</div>
+                  <div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:4px;">L11 s6–14</div>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">DISTRIBUTIONS</div>
+                <div style="padding:7px 8px;">
+                  <div style="display:flex;align-items:center;gap:5px;"><span style="width:6px;height:6px;border-radius:50%;background:var(--conf-high);flex:none;"></span><span style="color:var(--verified);font-size:8px;">★</span><b>Sampling dist. of x̄</b></div>
+                  <div style="font-family:var(--mono);margin:3px 0;">SE = σ/√n</div>
+                  <div style="color:var(--ink-600);">CLT: for n ≥ 30, x̄ ≈ Normal regardless of population shape.</div>
+                  <div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:4px;">L06 s11–16 · Midterm Q4</div>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">CRITICAL VALUES</div>
+                <div style="padding:0;">
+                  <div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;background:var(--paper-2);border-bottom:1px solid var(--ink-150);font-weight:700;font-size:7.5px;"><div style="padding:3px 8px;">level</div><div style="padding:3px 8px;">z*</div><div style="padding:3px 8px;">t* approx</div></div>
+                  <sc-for list="{{ critValues }}" as="c" hint-placeholder-count="3">
+                    <div style="display:grid;grid-template-columns:1fr 1fr 1.3fr;border-bottom:1px solid var(--ink-100);font-family:var(--mono);font-size:8.5px;"><div style="padding:3px 8px;font-weight:600;">{{ c.lvl }}</div><div style="padding:3px 8px;">{{ c.z }}</div><div style="padding:3px 8px;color:var(--ink-500);">{{ c.t }}</div></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <!-- COL C -->
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <div style="border:1px solid var(--ink-900);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">MOST LIKELY QUESTIONS</div>
+                <div style="padding:6px 8px;display:flex;flex-direction:column;gap:6px;">
+                  <sc-for list="{{ sheetQuestions }}" as="q" hint-placeholder-count="6">
+                    <div style="display:flex;gap:6px;padding-bottom:6px;border-bottom:1px solid var(--ink-100);">
+                      <span style="width:6px;height:6px;border-radius:50%;background:{{ q.dot }};margin-top:2px;flex:none;"></span>
+                      <div style="min-width:0;">
+                        <div style="font-weight:600;line-height:1.3;"><sc-if value="{{ q.verified }}" hint-placeholder-val="{{ true }}"><span style="color:var(--verified);">★ </span></sc-if>{{ q.q }}</div>
+                        <div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);margin-top:2px;">conf {{ q.conf }} · {{ q.cite }}</div>
+                      </div>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="border:1px solid var(--signal-500);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--signal-600);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">WORKED EXAMPLE — 95% CI</div>
+                <div style="padding:7px 8px;">
+                  <div style="color:var(--ink-600);margin-bottom:4px;">n=40, x̄=52, s=8, 95% → t*<sub>39</sub>≈2.02</div>
+                  <div style="font-family:var(--mono);background:var(--signal-50);border:1px solid var(--signal-100);border-radius:3px;padding:4px 6px;font-size:8.5px;line-height:1.5;">SE = 8/√40 = 1.26<br>ME = 2.02 × 1.26 = 2.55<br><b>CI = 52 ± 2.55 = (49.5, 54.5)</b></div>
+                  <div style="color:var(--ink-600);margin-top:4px;">"We\u2019re 95% confident the true mean is between 49.5 and 54.5." Since 50 is inside, don\u2019t reject H₀: μ=50.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- COL D -->
+            <div style="display:flex;flex-direction:column;gap:9px;">
+              <div style="border:1px solid var(--conf-low);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--conf-low);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">⚠ COMMON TRAPS</div>
+                <div style="padding:6px 8px;display:flex;flex-direction:column;gap:5px;">
+                  <sc-for list="{{ sheetTraps }}" as="t" hint-placeholder-count="5">
+                    <div style="line-height:1.3;"><b style="color:var(--conf-low);">{{ t.h }}</b> {{ t.b }}</div>
+                  </sc-for>
+                  <div style="font-family:var(--mono);font-size:6.5px;color:var(--ink-400);border-top:1px dashed var(--ink-200);padding-top:4px;">from L08–L14 + past-exam misses</div>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">KEY FORMULAS</div>
+                <div style="padding:6px 8px;font-family:var(--mono);font-size:8.5px;display:flex;flex-direction:column;gap:4px;">
+                  <sc-for list="{{ sheetFormulas }}" as="f" hint-placeholder-count="6">
+                    <div style="display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid var(--ink-100);padding-bottom:3px;"><span style="color:var(--ink-500);font-family:var(--sans);">{{ f.name }}</span><span style="font-weight:600;">{{ f.eq }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="border:1px solid var(--ink-200);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--ink-900);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">DEFINITIONS</div>
+                <div style="padding:6px 8px;display:flex;flex-direction:column;gap:3px;">
+                  <sc-for list="{{ sheetDefs }}" as="d" hint-placeholder-count="5">
+                    <div style="line-height:1.3;"><b>{{ d.t }}:</b> <span style="color:var(--ink-600);">{{ d.d }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="border:1px solid var(--conf-high);border-radius:var(--r-xs);overflow:hidden;">
+                <div style="background:var(--conf-high);color:#fff;font-size:8.5px;font-weight:700;padding:4px 8px;letter-spacing:.04em;">✓ EXAM-DAY CHECKLIST</div>
+                <div style="padding:6px 8px;display:flex;flex-direction:column;gap:3px;">
+                  <sc-for list="{{ sheetChecklist }}" as="c" hint-placeholder-count="5">
+                    <div style="display:flex;gap:5px;line-height:1.3;"><span style="color:var(--conf-high);flex:none;">□</span><span style="color:var(--ink-700);">{{ c }}</span></div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- footer -->
+          <div style="display:flex;justify-content:space-between;align-items:center;border-top:1.5px solid var(--ink-900);padding-top:6px;margin-top:9px;font-size:7.5px;color:var(--ink-500);">
+            <span>Generated by CramSheet · ranked by likelihood, verified against your uploaded past exams · every claim traces to a source</span>
+            <span style="font-family:var(--mono);">4 files · 235 pp · 48 topics ranked · 12 verified · fit at MAX ✓</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;gap:10px;margin-top:24px;">
+        <button style="border:none;background:#fff;color:var(--ink-900);padding:11px 20px;border-radius:var(--r-md);font:600 14px var(--sans);cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:var(--sh-md);"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2"/><path d="M7 14h10v7H7z"/></svg>Print this sheet</button>
+        <button style="border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:#fff;padding:11px 20px;border-radius:var(--r-md);font:600 14px var(--sans);cursor:pointer;">Export PDF</button>
+      </div>
+    </div>
+
+    <!-- ===== VOICE ===== -->
+    <section id="voice" style="padding:80px 96px;border-top:1px solid var(--ink-150);background:var(--paper-2);">
+      <div style="font-family:var(--mono);font-size:12px;color:var(--signal-600);letter-spacing:.06em;margin-bottom:14px;">05 — VOICE &amp; TONE</div>
+      <h2 style="font-family:var(--serif);font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-.02em;color:var(--ink-900);margin:0 0 8px;">Talk like a sharp friend, not a chatbot.</h2>
+      <p style="font-size:16px;color:var(--ink-500);margin:0 0 40px;max-width:620px;">Imperative, short, specific. Respect the reader's time and intelligence. Never hedge, never pad, never cheer.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:40px;max-width:1000px;">
+        <sc-for list="{{ voicePrinciples }}" as="p" hint-placeholder-count="4">
+          <div style="flex:1;min-width:200px;background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);padding:20px 22px;box-shadow:var(--sh-xs);">
+            <div style="font-size:15px;font-weight:600;color:var(--ink-900);margin-bottom:6px;">{{ p.h }}</div>
+            <div style="font-size:13.5px;color:var(--ink-600);line-height:1.5;">{{ p.b }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:1000px;">
+        <sc-for list="{{ voicePairs }}" as="v" hint-placeholder-count="4">
+          <div style="background:var(--white);border:1px solid var(--ink-150);border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-xs);">
+            <div style="padding:12px 18px;background:var(--ink-50);border-bottom:1px solid var(--ink-100);font-size:12px;font-weight:600;color:var(--ink-500);font-family:var(--mono);letter-spacing:.03em;">{{ v.ctx }}</div>
+            <div style="padding:18px;display:flex;flex-direction:column;gap:14px;">
+              <div style="display:flex;gap:12px;align-items:flex-start;">
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--conf-high-bg);color:var(--conf-high);display:flex;align-items:center;justify-content:center;flex:none;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M20 6 9 17l-5-5"/></svg></span>
+                <div><div style="font-size:10px;font-weight:700;color:var(--conf-high);letter-spacing:.06em;margin-bottom:3px;">DO</div><div style="font-size:14.5px;color:var(--ink-900);font-weight:500;">{{ v.do }}</div></div>
+              </div>
+              <div style="display:flex;gap:12px;align-items:flex-start;border-top:1px dashed var(--ink-150);padding-top:14px;">
+                <span style="width:22px;height:22px;border-radius:50%;background:var(--danger-bg);color:var(--danger);display:flex;align-items:center;justify-content:center;flex:none;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M6 6l12 12M18 6 6 18"/></svg></span>
+                <div><div style="font-size:10px;font-weight:700;color:var(--danger);letter-spacing:.06em;margin-bottom:3px;">DON'T</div><div style="font-size:14.5px;color:var(--ink-500);text-decoration:line-through;text-decoration-color:var(--ink-300);">{{ v.dont }}</div></div>
+              </div>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <!-- ===== CLOSING ===== -->
+    <section id="closing" style="padding:96px 96px 120px;border-top:1px solid var(--ink-150);background:var(--ink-900);color:#fff;position:relative;overflow:hidden;">
+      <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.04) 1px,transparent 1px);background-size:52px 52px;-webkit-mask-image:radial-gradient(70% 80% at 30% 20%,#000,transparent);mask-image:radial-gradient(70% 80% at 30% 20%,#000,transparent);"></div>
+      <div style="position:relative;max-width:760px;">
+        <div style="font-family:var(--mono);font-size:12px;color:#8f8bf0;letter-spacing:.06em;margin-bottom:18px;">06 — IF YOU SHIP ONE THING</div>
+        <h2 style="font-family:var(--serif);font-weight:400;font-size:44px;line-height:1.12;letter-spacing:-.02em;margin:0 0 28px;text-wrap:balance;">Ship the sheet. Everything else is a doorway to it.</h2>
+        <p style="font-size:18px;line-height:1.62;color:var(--ink-300);margin:0 0 20px;text-wrap:pretty;">If you can only build one screen this week, build <a href="#results" style="color:#fff;border-bottom:1px solid rgba(255,255,255,.4);">/results</a> — the sheet on its soft-gray page, with the confidence dot, the ★, and the citation on every item. That single view <em>is</em> the product; it's what a student pays for and the only thing they'll remember. Fake the upload with a sample file, hard-code one great stats sheet, and let people feel the payoff first.</p>
+        <p style="font-size:18px;line-height:1.62;color:var(--ink-300);margin:0 0 44px;text-wrap:pretty;">The marketing home, the file-drop, the pricing tiers — all of it exists to walk someone to that page at 2am and make the moment feel effortless. Get the sheet undeniable, and the rest becomes worth building.</p>
+        <div style="display:flex;align-items:center;gap:14px;padding-top:32px;border-top:1px solid var(--ink-700);">
+          <span style="width:28px;height:28px;border-radius:var(--r-sm);background:#fff;display:flex;align-items:center;justify-content:center;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--ink-900)" stroke-width="2.3"><path d="M4 4h11l5 5v11H4z"/></svg></span>
+          <span style="font-size:15px;color:var(--ink-400);">CramSheet Design System · v1.0 · One page. Print it. Take it.</span>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1280,&quot;height&quot;:900},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;default&quot;:&quot;#4b45d6&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;,&quot;options&quot;:[&quot;#4b45d6&quot;,&quot;#2f6db3&quot;,&quot;#1a7f4b&quot;,&quot;#8e44ad&quot;,&quot;#b26a00&quot;]},&quot;paperTint&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;default&quot;:&quot;Warm&quot;,&quot;options&quot;:[&quot;Warm&quot;,&quot;Neutral&quot;,&quot;Cool&quot;],&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Theme&quot;}}">
+class Component extends DCLogic {
+  componentDidMount() { this.applyTheme(); }
+  componentDidUpdate() { this.applyTheme(); }
+  applyTheme() {
+    const root = document.documentElement.style;
+    const accent = this.props.accent || '#4b45d6';
+    root.setProperty('--signal-600', accent);
+    root.setProperty('--signal-500', accent);
+    root.setProperty('--signal-700', `color-mix(in srgb, ${accent} 78%, #000)`);
+    root.setProperty('--signal-100', `color-mix(in srgb, ${accent} 13%, #fff)`);
+    root.setProperty('--signal-50', `color-mix(in srgb, ${accent} 6%, #fff)`);
+    const tints = { Warm:['#fbfbfa','#f5f5f3'], Neutral:['#fafafa','#f4f4f5'], Cool:['#f8fafc','#f1f5f9'] };
+    const [p,p2] = tints[this.props.paperTint] || tints.Warm;
+    root.setProperty('--paper', p); root.setProperty('--paper-2', p2);
+  }
+  renderVals() {
+    return {
+      nav: [
+        { label: 'Overview', items: [
+          { name: 'Cover', href: '#cover' },
+          { name: 'Philosophy', href: '#philosophy' },
+        ]},
+        { label: 'Foundations', items: [
+          { name: 'Color', href: '#color' },
+          { name: 'Typography', href: '#type' },
+          { name: 'Spacing & radius', href: '#spacing' },
+          { name: 'Shadow & motion', href: '#shadow' },
+          { name: 'Iconography', href: '#icons' },
+        ]},
+        { label: 'Components', items: [
+          { name: 'Primitives', href: '#primitives' },
+          { name: 'Patterns', href: '#patterns' },
+        ]},
+        { label: 'Marketing', items: [
+          { name: 'Home', href: '#home' },
+          { name: 'Pricing', href: '#pricing' },
+          { name: 'FAQ', href: '#faq' },
+        ]},
+        { label: 'Auth', items: [
+          { name: 'Sign in / up', href: '#auth' },
+        ]},
+        { label: 'App', items: [
+          { name: 'Generate', href: '#generate' },
+          { name: 'Generating', href: '#loading' },
+          { name: 'Results', href: '#results' },
+          { name: 'Library', href: '#library' },
+          { name: 'Upgrade & errors', href: '#states' },
+        ]},
+        { label: 'The artifact', items: [
+          { name: 'The Sheet', href: '#sheet' },
+        ]},
+        { label: 'Guidelines', items: [
+          { name: 'Voice & tone', href: '#voice' },
+          { name: 'Ship first', href: '#closing' },
+        ]},
+      ],
+      values: [
+        { n: '1', name: 'Simple', note: 'one obvious action' },
+        { n: '2', name: 'Confident', note: 'imperative copy' },
+        { n: '3', name: 'Premium', note: 'restraint over flourish' },
+        { n: '4', name: 'Alive', note: 'tasteful motion' },
+        { n: '5', name: 'Trust visible', note: 'evidence never hidden' },
+      ],
+      inkScale: [
+        { n:'900', v:'#111114' },{ n:'800', v:'#1c1c21' },{ n:'700', v:'#2c2c33' },
+        { n:'600', v:'#4a4a53' },{ n:'500', v:'#6b6b76' },{ n:'400', v:'#909099' },
+        { n:'300', v:'#b8b8bf' },{ n:'200', v:'#d9d9de' },{ n:'150', v:'#e6e6ea' },
+        { n:'100', v:'#f0f0f2' },{ n:'50', v:'#f7f7f8' },{ n:'paper', v:'#fbfbfa' },
+      ],
+      brand: [
+        { name:'Signal 700', v:'#3a34b8', ink:'#fff' },{ name:'Signal 600', v:'#4b45d6', ink:'#fff' },
+        { name:'Signal 500', v:'#5b57e0', ink:'#fff' },{ name:'Signal 100', v:'#ecebfb', ink:'#3a34b8' },
+        { name:'Salmon', v:'#fdece4', ink:'#8a4a2f' },{ name:'Salmon line', v:'#f4d3c4', ink:'#8a4a2f' },
+      ],
+      conf: [
+        { name:'High confidence', dot:'#1a7f4b', bg:'#e6f4ec', ink:'#1a7f4b', note:'≥ 80% — safe to prioritise' },
+        { name:'Medium confidence', dot:'#b26a00', bg:'#fbf0dd', ink:'#b26a00', note:'50–79% — likely, verify' },
+        { name:'Low confidence', dot:'#c0392b', bg:'#fbe9e7', ink:'#c0392b', note:'< 50% — context only' },
+        { name:'Verified ★', dot:'#a5790a', bg:'#fbf3da', ink:'#a5790a', note:'matched to a real past exam' },
+      ],
+      func: [
+        { name:'Info', v:'#2f6db3', bg:'#e8f1fb' },{ name:'Warning', v:'#b26a00', bg:'#fbf0dd' },
+        { name:'Danger', v:'#c0392b', bg:'#fbe9e7' },{ name:'Success', v:'#1a7f4b', bg:'#e6f4ec' },
+      ],
+      topic: [
+        { name:'Topic 1', v:'#5b57e0' },{ name:'Topic 2', v:'#1a7f4b' },{ name:'Topic 3', v:'#b26a00' },
+        { name:'Topic 4', v:'#2f6db3' },{ name:'Topic 5', v:'#8e44ad' },{ name:'Topic 6', v:'#c0392b' },
+      ],
+      typeScale: [
+        { role:'Display', font:'var(--serif)', size:'56px', weight:'400', style:'normal', lh:'1.05', spec:'Newsreader · 56 / 1.05 / -.02em', sample:'What\u2019s most likely tested' },
+        { role:'H1', font:'var(--serif)', size:'40px', weight:'400', style:'normal', lh:'1.1', spec:'Newsreader · 40 / 1.1', sample:'Drop your files' },
+        { role:'H2', font:'var(--sans)', size:'28px', weight:'600', style:'normal', lh:'1.2', spec:'Geist SemiBold · 28 / 1.2', sample:'How it works' },
+        { role:'H3', font:'var(--sans)', size:'19px', weight:'600', style:'normal', lh:'1.3', spec:'Geist SemiBold · 19 / 1.3', sample:'Confidence in this result' },
+        { role:'Body L', font:'var(--sans)', size:'17px', weight:'400', style:'normal', lh:'1.55', spec:'Geist Regular · 17 / 1.55', sample:'One page. Print it. Take it. Everything else is friction you don\u2019t have time for.' },
+        { role:'Body', font:'var(--sans)', size:'14px', weight:'400', style:'normal', lh:'1.55', spec:'Geist Regular · 14 / 1.55', sample:'Upload slides, review guides, past exams and notes. We rank what matters.' },
+        { role:'Label', font:'var(--sans)', size:'13px', weight:'550', style:'normal', lh:'1.3', spec:'Geist Medium · 13', sample:'Exam type' },
+        { role:'Mono / cite', font:'var(--mono)', size:'12px', weight:'500', style:'normal', lh:'1.4', spec:'Geist Mono · 12', sample:'Lecture 08, slide 23 · conf .86' },
+      ],
+      radii: [
+        { n:'xs · 4', r:'4px' },{ n:'sm · 6', r:'6px' },{ n:'md · 8', r:'8px' },
+        { n:'lg · 12', r:'12px' },{ n:'xl · 18', r:'18px' },{ n:'full', r:'999px' },
+      ],
+      spaces: [
+        { n:'1', px:'4' },{ n:'2', px:'8' },{ n:'3', px:'12' },{ n:'4', px:'16' },
+        { n:'6', px:'24' },{ n:'8', px:'32' },{ n:'12', px:'48' },{ n:'16', px:'64' },
+      ],
+      shadows: [
+        { n:'xs', v:'var(--sh-xs)', use:'hairline lift, chips' },
+        { n:'sm', v:'var(--sh-sm)', use:'buttons, inputs' },
+        { n:'md', v:'var(--sh-md)', use:'cards, dropdowns' },
+        { n:'lg', v:'var(--sh-lg)', use:'popovers, toasts' },
+        { n:'xl', v:'var(--sh-xl)', use:'modals, the sheet' },
+      ],
+      motion: [
+        { n:'fast · 120ms', use:'hovers, color shifts, chip toggles' },
+        { n:'base · 200ms', use:'buttons, dropdowns, tab switches' },
+        { n:'slow · 360ms', use:'page & modal transitions, meter climb' },
+      ],
+      icons: this.icons(),
+      callouts: [
+        { title:'Info', body:'We rank topics by likelihood, then verify the top ones against your past exams.', bg:'var(--info-bg)', line:'#cfe0f4', accent:'var(--info)', titleColor:'var(--info)', icon:this.icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>') },
+        { title:'Warning', body:'One upload looks image-only. We ran OCR, but text uploads score higher.', bg:'var(--warn-bg)', line:'#f0dcb8', accent:'var(--warn)', titleColor:'var(--warn)', icon:this.icon('<path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17h.01"/>') },
+        { title:'Danger', body:'The engine couldn\u2019t finish. Your credit was refunded — try again in a moment.', bg:'var(--danger-bg)', line:'#f2cdc8', accent:'var(--danger)', titleColor:'var(--danger)', icon:this.icon('<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>') },
+        { title:'Success', body:'Everything fits on one page at MAX density. You\u2019re ready to print.', bg:'var(--success-bg)', line:'#c3e6d1', accent:'var(--success)', titleColor:'var(--success)', icon:this.icon('<circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5 4.5-5"/>') },
+      ],
+      blurCols: [
+        { head:'var(--ink-900)', hw:'70%' },{ head:'var(--signal-500)', hw:'55%' },{ head:'var(--ink-900)', hw:'64%' },
+        { head:'var(--ink-900)', hw:'50%' },{ head:'var(--ink-900)', hw:'72%' },{ head:'var(--signal-500)', hw:'48%' },
+        { head:'var(--ink-900)', hw:'60%' },{ head:'var(--ink-900)', hw:'66%' },{ head:'var(--ink-900)', hw:'54%' },
+      ],
+      steps3: [
+        { n:'1', title:'Drop your files', body:'Slides, review guides, past exams, notes. Tag the heavy hitters — past exams count most.', icon:this.icon('<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>') },
+        { n:'2', title:'We rank & verify', body:'The engine scores every topic by likelihood, then checks the top ones against your real past exams.', icon:this.icon('<path d="M12 4v4M10 6h4"/><path d="M12 12l1.6 3.4L17 17l-3.4 1.6L12 22l-1.6-3.4L7 17l3.4-1.6z"/>') },
+        { n:'3', title:'Print one page', body:'A single A4 sheet, dense and sourced. Export the PDF, print it, walk into the exam.', icon:this.icon('<path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2"/><path d="M7 14h10v7H7z"/>') },
+      ],
+      whyPoints: [
+        { h:'Confidence, not vibes.', b:'A calibrated score on every topic.' },
+        { h:'★ Verified patterns.', b:'Matched to questions on your real past exams.' },
+        { h:'Cited to the source.', b:'Jump from any claim to the slide it came from.' },
+      ],
+      tiers: [
+        { name:'Single', price:'$4.99', sub:'One full sheet', cta:'Start free', featured:false, borderColor:'#d9d9de', shadow:'var(--sh-xs)', btnBorder:'1px solid var(--ink-200)', btnBg:'var(--white)', btnColor:'var(--ink-800)' },
+        { name:'3-Pack', price:'$9.99', sub:'Three sheets · $3.33 each', cta:'Get 3-Pack', featured:true, borderColor:'var(--ink-900)', shadow:'var(--sh-md)', btnBorder:'none', btnBg:'var(--ink-900)', btnColor:'#fff' },
+        { name:'Sprint Pass', price:'$14.99', sub:'Unlimited · 7 days', cta:'Go Sprint', featured:false, borderColor:'#d9d9de', shadow:'var(--sh-xs)', btnBorder:'1px solid var(--ink-200)', btnBg:'var(--white)', btnColor:'var(--ink-800)' },
+      ],
+      pricingFull: [
+        { name:'Single', tagline:'One exam, one sheet', price:'$4.99', unit:'', sub:'One credit · never expires', featured:false, borderColor:'#d9d9de', shadow:'var(--sh-xs)', btnBorder:'1px solid var(--ink-200)', btnBg:'var(--white)', btnColor:'var(--ink-800)', btnShadow:'var(--sh-xs)', features:['One full MAX-density sheet','Every item scored & sourced','PDF export, print-ready','Free preview first'] },
+        { name:'3-Pack', tagline:'Finals week, sorted', price:'$9.99', unit:'', sub:'Three credits · never expire', featured:true, borderColor:'var(--ink-900)', shadow:'var(--sh-lg)', btnBorder:'none', btnBg:'var(--ink-900)', btnColor:'#fff', btnShadow:'var(--sh-sm)', features:['Three full sheets','Everything in Single','Save 33% per sheet','Reuse across courses'] },
+        { name:'Sprint Pass', tagline:'The whole exam season', price:'$14.99', unit:'/ 7 days', sub:'Unlimited sheets for a week', featured:false, borderColor:'#d9d9de', shadow:'var(--sh-xs)', btnBorder:'1px solid var(--ink-200)', btnBg:'var(--white)', btnColor:'var(--ink-800)', btnShadow:'var(--sh-xs)', features:['Unlimited sheets, 7 days','Everything in 3-Pack','Best for back-to-back exams','Priority generation'] },
+      ],
+      faqs: [
+        { q:'Is this actually a cheat sheet?', a:'It\u2019s an exam reference sheet — a single dense page you\u2019re allowed to bring when your professor permits notes. Check your exam rules; we make the page, you decide how to use it.' },
+        { q:'How does it know what\u2019s on the exam?', a:'It reads everything you upload, ranks each topic by how likely it is to be tested, then verifies the top items against patterns in your past exams. Every ranking shows its confidence and its source.' },
+        { q:'What files can I upload?', a:'PDF, PPTX and DOCX up to 40 MB each — slides, review guides, past exams, and notes. Past exams carry the most weight. Image-only PDFs get OCR\u2019d automatically.' },
+        { q:'Do credits expire?', a:'Never. Single and 3-Pack credits sit in your account until you use them. The Sprint Pass is the only time-boxed option — unlimited sheets for 7 days.' },
+        { q:'Is there a subscription?', a:'No. There is no monthly plan anywhere in CramSheet. You pay once for what you need, and that\u2019s it.' },
+        { q:'What if the sheet is wrong?', a:'Every claim is cited so you can check it against the source in one glance. If generation fails, your credit is refunded automatically.' },
+      ],
+      genFiles: [
+        { name:'Lecture 06–12 combined.pdf', ext:'PDF', size:'8.4 MB · 214 slides', iconBg:'var(--danger-bg)', iconColor:'var(--danger)', tag:'Slides', tagBg:'var(--ink-50)', tagColor:'var(--ink-700)', tagLine:'var(--ink-150)' },
+        { name:'Final review guide.docx', ext:'DOC', size:'640 KB · 12 pages', iconBg:'var(--info-bg)', iconColor:'var(--info)', tag:'Review guide', tagBg:'var(--ink-50)', tagColor:'var(--ink-700)', tagLine:'var(--ink-150)' },
+        { name:'Practice midterm 2021.pdf', ext:'PDF', size:'1.2 MB · 9 pages', iconBg:'var(--salmon)', iconColor:'#8a4a2f', tag:'★ Past exam', tagBg:'var(--salmon)', tagColor:'#8a4a2f', tagLine:'var(--salmon-line)' },
+        { name:'My handwritten notes.pdf', ext:'PDF', size:'3.1 MB · OCR\u2019d', iconBg:'var(--warn-bg)', iconColor:'var(--warn)', tag:'Notes', tagBg:'var(--ink-50)', tagColor:'var(--ink-700)', tagLine:'var(--ink-150)' },
+      ],
+      loadSteps: (() => {
+        const done = { rowBg:'transparent', dotBg:'rgba(110,231,168,.15)', dotLine:'rgba(110,231,168,.4)', textColor:'rgba(255,255,255,.85)', metaColor:'var(--ink-500)', icon:{__html:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#6ee7a8" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>'} };
+        const active = { rowBg:'rgba(255,255,255,.06)', dotBg:'rgba(255,255,255,.12)', dotLine:'rgba(255,255,255,.3)', textColor:'#fff', metaColor:'var(--ink-300)', icon:{__html:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" style="animation:ds-spin .8s linear infinite;transform-origin:center"><path d="M12 3a9 9 0 1 0 9 9" stroke-linecap="round"/></svg>'} };
+        const wait = { rowBg:'transparent', dotBg:'transparent', dotLine:'rgba(255,255,255,.15)', textColor:'rgba(255,255,255,.4)', metaColor:'rgba(255,255,255,.25)', icon:{__html:''} };
+        return [
+          { ...done, label:'Reading your files', meta:'235 pages' },
+          { ...done, label:'Ranking topics by likelihood', meta:'48 topics' },
+          { ...active, label:'Drafting the sheet', meta:'in progress' },
+          { ...wait, label:'Verifying page fit', meta:'' },
+        ];
+      })(),
+      resVerified: [
+        { tag:'Verified Q-pattern', text:'"Construct & interpret a 95% CI" — appeared 3 of last 4 finals.' },
+        { tag:'Verified Q-pattern', text:'Hypothesis test with p-value decision — every past final.' },
+        { tag:'Verified Q-pattern', text:'z vs t selection given σ known/unknown.' },
+      ],
+      resStats: [
+        { topic:'Confidence intervals', detail:'x̄ ± t*·(s/√n); z if σ known', cite:'L08 s23 · Final Q3', dot:'var(--conf-high)', verified:true },
+        { topic:'z vs t decision', detail:'σ known → z; unknown → t, df=n−1', cite:'Guide p.4 · Q2', dot:'var(--conf-high)', verified:true },
+        { topic:'Hypothesis testing', detail:'H0/Ha, α, reject if p<α', cite:'L10 s6 · Q5', dot:'var(--conf-high)', verified:true },
+        { topic:'p-value meaning', detail:'P(data|H0), not P(H0)', cite:'L11 s8', dot:'var(--conf-med)', verified:false },
+        { topic:'Type I / II error', detail:'α = FP; β = FN; power=1−β', cite:'L11 s12', dot:'var(--conf-med)', verified:false },
+        { topic:'Sampling distribution', detail:'SE = σ/√n; CLT n≥30', cite:'L06 s11', dot:'var(--conf-high)', verified:true },
+        { topic:'Central Limit Theorem', detail:'x̄ ~ Normal for large n', cite:'L06 s15', dot:'var(--conf-med)', verified:false },
+        { topic:'Regression slope', detail:'b = r·(sy/sx)', cite:'L13 s4', dot:'var(--conf-med)', verified:false },
+        { topic:'Bayes rule', detail:'P(A|B)=P(B|A)P(A)/P(B)', cite:'L14 s3', dot:'var(--conf-low)', verified:false },
+      ],
+      resChem: [
+        { topic:'SN1 vs SN2', detail:'1° → SN2; 3° → SN1; solvent effects', cite:'L04 s12 · MT1 Q4', dot:'var(--conf-high)', verified:true },
+        { topic:'E1 vs E2', detail:'Zaitsev vs Hofmann products', cite:'L05 s8', dot:'var(--conf-high)', verified:true },
+        { topic:'Stereochemistry', detail:'R/S, chirality, enantiomers', cite:'L02 s19 · MT1 Q2', dot:'var(--conf-high)', verified:true },
+        { topic:'Resonance structures', detail:'delocalization, major contributor', cite:'L03 s6', dot:'var(--conf-med)', verified:false },
+        { topic:'Acid–base (pKa)', detail:'lower pKa = stronger acid', cite:'L06 s3', dot:'var(--conf-med)', verified:false },
+        { topic:'Markovnikov addition', detail:'H to less-substituted C', cite:'L07 s11', dot:'var(--conf-med)', verified:false },
+        { topic:'Newman projections', detail:'gauche/anti, staggered', cite:'L02 s24', dot:'var(--conf-med)', verified:false },
+        { topic:'Reaction mechanisms', detail:'arrow-pushing, intermediates', cite:'L05 s2', dot:'var(--conf-high)', verified:false },
+        { topic:'Aromaticity', detail:'Hückel 4n+2 π electrons', cite:'L09 s7', dot:'var(--conf-low)', verified:false },
+      ],
+      library: (() => {
+        const bars = (arr) => arr.map(([c,w])=>({c,w}));
+        const H='var(--conf-high)', M='var(--conf-med)', S='var(--signal-500)', I='var(--ink-900)';
+        return [
+          { title:'Intro Statistics', course:'STAT 200 · Final', date:'Mar 14', density:'MAX', topicColor:'var(--topic-1)', bars:bars([[I,'70%'],[S,'55%'],[I,'64%'],[I,'50%'],[S,'60%'],[I,'46%']]) },
+          { title:'Organic Chemistry', course:'CHEM 210 · MT2', date:'Mar 11', density:'MAX', topicColor:'var(--topic-2)', bars:bars([[I,'62%'],[I,'70%'],[S,'48%'],[I,'58%'],[I,'66%'],[S,'52%']]) },
+          { title:'Microeconomics', course:'ECON 101 · Final', date:'Mar 9', density:'Balanced', topicColor:'var(--topic-3)', bars:bars([[I,'66%'],[S,'50%'],[I,'60%'],[I,'72%'],[S,'44%'],[I,'56%']]) },
+          { title:'Cell Biology', course:'BIOL 220 · MT1', date:'Feb 28', density:'MAX', topicColor:'var(--topic-4)', bars:bars([[I,'58%'],[I,'64%'],[S,'52%'],[I,'70%'],[I,'48%'],[S,'60%']]) },
+          { title:'Linear Algebra', course:'MATH 240 · Final', date:'Feb 22', density:'Essentials', topicColor:'var(--topic-5)', bars:bars([[I,'72%'],[S,'46%'],[I,'62%'],[I,'54%'],[S,'58%'],[I,'50%']]) },
+          { title:'US History 1865–', course:'HIST 108 · MT2', date:'Feb 15', density:'Balanced', topicColor:'var(--topic-6)', bars:bars([[I,'64%'],[I,'56%'],[S,'50%'],[I,'68%'],[S,'44%'],[I,'60%']]) },
+        ];
+      })(),
+      errorStates: [
+        { title:'Generation failed', body:'The engine hit a snag drafting your sheet. Your credit was refunded automatically — nothing lost. Try again in a moment.', bg:'var(--danger-bg)', color:'var(--danger)', icon:this.icon('<circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/>'), primary:'Try again', secondary:'Contact support' },
+        { title:'File too big', body:'"past-exams-bundle.pdf" is 62 MB — the limit is 40 MB per file. Split it, or upload the most relevant sections.', bg:'var(--warn-bg)', color:'var(--warn)', icon:this.icon('<path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17h.01"/>'), primary:'Choose another file', secondary:'How to split' },
+        { title:'Image-only PDF', body:'"lecture-scan.pdf" has no selectable text. We OCR\u2019d it, but accuracy is lower — a text export would score higher.', bg:'var(--info-bg)', color:'var(--info)', icon:this.icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>'), primary:'Keep with OCR', secondary:'Replace file' },
+      ],
+      sheetPatterns: [
+        { freq:'3 of 4 finals', title:'Construct & interpret a 95% CI for a mean; state it in context.', cite:'Final \u201918 Q3 · \u201920 Q3 · \u201921 Q2' },
+        { freq:'every final', title:'One-sample hypothesis test → p-value → reject/keep decision.', cite:'Final \u201919 Q5 · \u201920 Q4 · \u201921 Q5' },
+        { freq:'2 of 4 finals', title:'Choose z vs t given whether σ is known; justify the choice.', cite:'Final \u201920 Q2 · \u201918 Q1' },
+      ],
+      ztRows: [
+        { cond:'σ known', use:'z', color:'var(--conf-high)' },
+        { cond:'σ unknown', use:'t, df=n−1', color:'var(--conf-high)' },
+        { cond:'n < 30, non-normal', use:'t (caution)', color:'var(--conf-med)' },
+        { cond:'proportions', use:'z', color:'var(--conf-high)' },
+      ],
+      sheetQuestions: [
+        { q:'A sample of 40 has x̄=52, s=8. Build a 95% CI for μ.', conf:'.91', cite:'L08 s23 · Final \u201919 Q3', dot:'var(--conf-high)', verified:true },
+        { q:'Test H₀: μ=50 vs Hₐ: μ≠50 at α=.05; give the p-value decision.', conf:'.88', cite:'L10 s6 · Final \u201920 Q4', dot:'var(--conf-high)', verified:true },
+        { q:'σ is unknown, n=18 — which distribution and why?', conf:'.83', cite:'Guide p.4 · Final \u201920 Q2', dot:'var(--conf-high)', verified:true },
+        { q:'Interpret a p-value of 0.03 in plain language.', conf:'.66', cite:'L11 s8', dot:'var(--conf-med)', verified:false },
+        { q:'Distinguish Type I vs Type II error for a given test.', conf:'.61', cite:'L11 s12', dot:'var(--conf-med)', verified:false },
+        { q:'Given r and the SDs, find the regression slope b.', conf:'.54', cite:'L13 s4', dot:'var(--conf-med)', verified:false },
+        { q:'A 95% CI is (48.2, 55.8). Is μ=50 plausible at α=.05?', conf:'.58', cite:'L09 s2 · Final \u201921 Q6', dot:'var(--conf-med)', verified:true },
+        { q:'How does sample size n affect CI width and power?', conf:'.49', cite:'L08 s27', dot:'var(--conf-low)', verified:false },
+      ],
+      sheetDefs: [
+        { t:'Statistic', d:'number from a sample (x̄, s, p̂)' },
+        { t:'Parameter', d:'number from the population (μ, σ, p)' },
+        { t:'Confidence level', d:'% of intervals that capture the parameter' },
+        { t:'Margin of error', d:'critical value × standard error' },
+        { t:'Significance α', d:'threshold for rejecting H₀' },
+      ],
+      sheetChecklist: [
+        'Write H₀ / Hₐ before computing anything.',
+        'Confirm σ known? → z, else t.',
+        'State α and tail direction explicitly.',
+        'Interpret CI & p-value in context, with units.',
+        'Sanity-check: does the answer\u2019s sign/size make sense?',
+      ],
+      critValues: [
+        { lvl:'90%', z:'1.645', t:'1.66 (n=100)' },
+        { lvl:'95%', z:'1.960', t:'1.98 (n=100)' },
+        { lvl:'99%', z:'2.576', t:'2.63 (n=100)' },
+      ],
+      sheetTraps: [
+        { h:'z vs t.', b:'Using z when σ is unknown. Default to t unless σ is given.' },
+        { h:'p-value.', b:'p is P(data|H₀), not P(H₀ true) — a classic mis-statement.' },
+        { h:'CI meaning.', b:'"95% chance μ is in the interval" is wrong; 95% of such intervals capture μ.' },
+        { h:'One vs two-tail.', b:'≠ is two-tailed (split α); &lt; or &gt; is one-tailed.' },
+        { h:'Fail to reject.', b:'Not the same as accepting H₀ — you just lack evidence.' },
+      ],
+      sheetFormulas: [
+        { name:'CI mean (t)', eq:'x̄ ± t*·s/√n' },
+        { name:'Test stat', eq:'t=(x̄−μ₀)/(s/√n)' },
+        { name:'Std error', eq:'SE = σ/√n' },
+        { name:'CI proportion', eq:'p̂ ± z*√(p̂q̂/n)' },
+        { name:'Power', eq:'1 − β' },
+        { name:'Slope', eq:'b = r·(s_y/s_x)' },
+      ],
+      voicePrinciples: [
+        { h:'Imperative', b:'Tell people what to do. "Drop your files," not "You can upload files here."' },
+        { h:'Specific', b:'Numbers and nouns beat adjectives. "1 credit," "40 MB," "90 seconds."' },
+        { h:'Honest', b:'Show confidence and cite sources. Never overclaim what the engine knows.' },
+        { h:'Calm', b:'No exclamation marks, no hype, no emoji. The reader is already stressed.' },
+      ],
+      voicePairs: [
+        { ctx:'File-drop empty state', do:'Drop your files', dont:'Please upload your study materials to begin your journey!' },
+        { ctx:'Generate button', do:'Generate my sheet · 1 credit', dont:'Click here to start generating your amazing study guide' },
+        { ctx:'Out of credits', do:'You\u2019re out of credits. Grab a 3-Pack — they never expire.', dont:'Oops! Looks like you\u2019ve run out of credits. 😅 Upgrade now!' },
+        { ctx:'Generation failed', do:'That didn\u2019t work. Your credit\u2019s refunded — try again.', dont:'An unexpected error occurred. Please try again later or contact support.' },
+      ],
+      rankRows: [
+        { topic:'Confidence interval construction', conf:'.91', dot:'var(--conf-high)', ring:'var(--conf-high-bg)', cite:'Lecture 08 s23 · Final 2019 Q3', verified:true, rank:'#1' },
+        { topic:'Choosing z vs t', conf:'.84', dot:'var(--conf-high)', ring:'var(--conf-high-bg)', cite:'Review guide p.4 · Final 2021 Q2', verified:true, rank:'#2' },
+        { topic:'Type I vs Type II error', conf:'.63', dot:'var(--conf-med)', ring:'var(--conf-med-bg)', cite:'Lecture 11 s12', verified:false, rank:'#7' },
+      ],
+      tableRows: [
+        { topic:'Confidence intervals', weight:'0.94', conf:'.91', dot:'var(--conf-high)', source:'L08 · past exam Q3', verified:true },
+        { topic:'z vs t decision', weight:'0.88', conf:'.84', dot:'var(--conf-high)', source:'Review guide p.4', verified:true },
+        { topic:'Type I / II error', weight:'0.71', conf:'.63', dot:'var(--conf-med)', source:'L11 · slide 12', verified:false },
+        { topic:'Bayes rule', weight:'0.34', conf:'.41', dot:'var(--conf-low)', source:'L14 · slide 3', verified:false },
+      ],
+    };
+  }
+  icon(paths) {
+    return { __html: `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">${paths}</svg>` };
+  }
+  icons() {
+    const I = (name, paths) => ({ name, svg: this.icon(paths) });
+    return [
+      I('upload', '<path d="M12 16V4M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>'),
+      I('file', '<path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 16h4"/>'),
+      I('check', '<path d="M20 6 9 17l-5-5"/>'),
+      I('star', '<path d="m12 3 2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9 6.8 19.2l1-5.8L3.5 9.2l5.9-.9z"/>'),
+      I('sparkles', '<path d="M12 4v4M10 6h4"/><path d="M12 12l1.6 3.4L17 17l-3.4 1.6L12 22l-1.6-3.4L7 17l3.4-1.6z"/>'),
+      I('arrow', '<path d="M5 12h14M13 6l6 6-6 6"/>'),
+      I('warn', '<path d="M12 3 2 20h20z"/><path d="M12 9v5M12 17h.01"/>'),
+      I('close', '<path d="M6 6l12 12M18 6 6 18"/>'),
+      I('chevron', '<path d="m6 9 6 6 6-6"/>'),
+      I('search', '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>'),
+      I('download', '<path d="M12 4v11M8 11l4 4 4-4"/><path d="M4 19h16"/>'),
+      I('print', '<path d="M6 9V3h12v6"/><path d="M6 18H4a1 1 0 0 1-1-1v-5a1 1 0 0 1 1-1h16a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1h-2"/><path d="M7 14h10v7H7z"/>'),
+      I('grid', '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'),
+      I('folder', '<path d="M3 7a1 1 0 0 1 1-1h5l2 2h8a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>'),
+      I('clock', '<circle cx="12" cy="12" r="8"/><path d="M12 8v4l2.5 2"/>'),
+      I('zap', '<path d="M13 3 4 14h6l-1 7 9-11h-6z"/>'),
+      I('shield', '<path d="M12 3 5 6v5c0 4 3 7 7 9 4-2 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/>'),
+      I('list', '<path d="M8 6h12M8 12h12M8 18h12"/><path d="M4 6h.01M4 12h.01M4 18h.01"/>'),
+    ];
+  }
+}
+</script>
+</body>
+</html>

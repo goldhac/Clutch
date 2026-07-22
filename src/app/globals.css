@@ -1,12 +1,77 @@
-/* Global app styles — Tailwind v4 + our shared design tokens.
+/* Global app styles — Tailwind v4 + the CramSheet design system.
  *
- * Tokens live in src/renderer/tokens.css so the renderer can import them
- * directly without depending on the app shell. We re-import here so the
- * app chrome can use them too.
+ * Tokens live in src/renderer/tokens.css (the design handoff's :root
+ * block is the spec). The @theme block below maps them into Tailwind
+ * utilities so components can say `bg-ink-900`, `text-signal-600`,
+ * `shadow-ds-md`, `rounded-ds-lg`, `font-serif`, etc.
  */
 
 @import "tailwindcss";
 @import "../renderer/tokens.css";
+
+@theme inline {
+  /* Colors → bg-*, text-*, border-* utilities */
+  --color-ink-900: var(--ink-900);
+  --color-ink-800: var(--ink-800);
+  --color-ink-700: var(--ink-700);
+  --color-ink-600: var(--ink-600);
+  --color-ink-500: var(--ink-500);
+  --color-ink-400: var(--ink-400);
+  --color-ink-300: var(--ink-300);
+  --color-ink-200: var(--ink-200);
+  --color-ink-150: var(--ink-150);
+  --color-ink-100: var(--ink-100);
+  --color-ink-50: var(--ink-50);
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+
+  --color-signal-700: var(--signal-700);
+  --color-signal-600: var(--signal-600);
+  --color-signal-500: var(--signal-500);
+  --color-signal-100: var(--signal-100);
+  --color-signal-50: var(--signal-50);
+
+  --color-salmon: var(--salmon);
+  --color-salmon-line: var(--salmon-line);
+  --color-salmon-text: var(--salmon-text);
+
+  --color-conf-high: var(--conf-high);
+  --color-conf-high-bg: var(--conf-high-bg);
+  --color-conf-med: var(--conf-med);
+  --color-conf-med-bg: var(--conf-med-bg);
+  --color-conf-low: var(--conf-low);
+  --color-conf-low-bg: var(--conf-low-bg);
+  --color-verified: var(--verified);
+  --color-verified-bg: var(--verified-bg);
+
+  --color-info: var(--info);
+  --color-info-bg: var(--info-bg);
+  --color-warn: var(--warn);
+  --color-warn-bg: var(--warn-bg);
+  --color-danger: var(--danger);
+  --color-danger-bg: var(--danger-bg);
+  --color-success: var(--success);
+  --color-success-bg: var(--success-bg);
+
+  /* Type stacks → font-sans / font-serif / font-mono utilities */
+  --font-sans: var(--sans);
+  --font-serif: var(--serif);
+  --font-mono: var(--mono);
+
+  /* Radius → rounded-ds-* utilities */
+  --radius-ds-xs: var(--r-xs);
+  --radius-ds-sm: var(--r-sm);
+  --radius-ds-md: var(--r-md);
+  --radius-ds-lg: var(--r-lg);
+  --radius-ds-xl: var(--r-xl);
+
+  /* Shadows → shadow-ds-* utilities */
+  --shadow-ds-xs: var(--sh-xs);
+  --shadow-ds-sm: var(--sh-sm);
+  --shadow-ds-md: var(--sh-md);
+  --shadow-ds-lg: var(--sh-lg);
+  --shadow-ds-xl: var(--sh-xl);
+}
 
 html,
 body {
@@ -14,10 +79,16 @@ body {
 }
 
 body {
-  font-family: var(--font-body);
-  color: #1a1a1a;
-  background: #fff;
+  font-family: var(--sans);
+  color: var(--ink-800);
+  background: var(--paper);
   margin: 0;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv01";
+}
+
+::selection {
+  background: var(--signal-100);
+  color: var(--signal-700);
 }

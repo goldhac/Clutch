@@ -1,49 +1,148 @@
 /* ──────────────────────────────────────────────────────────────────────
- * tokens.css — the CramSheet design system
+ * tokens.css — the CramSheet design system (v2, from the product design
+ * handoff at design/CramSheet.dc.html — the :root block is the spec).
  *
- * Source of truth: docs/02-OUTPUT-SPEC.md §1–2.
- * These tokens are the proven standard from the manual build. Reuse
- * everywhere; do NOT redefine in component CSS.
+ * Light mode only. The sheet lives on paper.
+ *
+ * LEGACY ALIASES at the bottom keep the current sheet renderer
+ * (semantics.css / density.css / sheet.css) working unchanged until
+ * Phase D5 rewrites the sheet on the new tokens. Do not use legacy
+ * names in any NEW code.
  * ────────────────────────────────────────────────────────────────────── */
 
 :root {
-  /* ── Brand / functional colors ───────────────────────────────────── */
-  --color-primary-indigo:   #3b3593;  /* h1/h2 banner default */
-  --color-primary-indigo-2: #6a5cff;  /* gradient pair for h1 */
-  --color-strong-red:       #b53756;  /* bold "must-know" text, danger callouts */
-  --color-emphasis-teal:    #0d8b8b;  /* emphasis / "watch out" — rendered bold, not italic */
-  --color-correct-green:    #1f7d3a;  /* ✓ marks, high confidence */
-  --color-warning-orange:   #b35c00;  /* trap callouts */
-  --color-exam-gold:        #a08200;  /* exam-verified / likely-question accents */
+  /* ── Ink / neutral scale (warm cool-gray) ─────────────────────────── */
+  --ink-900: #111114;
+  --ink-800: #1c1c21;
+  --ink-700: #2c2c33;
+  --ink-600: #4a4a53;
+  --ink-500: #6b6b76;
+  --ink-400: #909099;
+  --ink-300: #b8b8bf;
+  --ink-200: #d9d9de;
+  --ink-150: #e6e6ea;
+  --ink-100: #f0f0f2;
+  --ink-50:  #f7f7f8;
+  --paper:   #fbfbfa;
+  --paper-2: #f5f5f3;
+  --white:   #ffffff;
 
-  /* ── Surfaces ─────────────────────────────────────────────────────── */
+  /* ── Brand: ink primary + iris "signal" ───────────────────────────── */
+  /* Primary CTAs are near-black ink. Signal = links, focus, highlights. */
+  --signal-700: #3a34b8;
+  --signal-600: #4b45d6;
+  --signal-500: #5b57e0;
+  --signal-100: #ecebfb;
+  --signal-50:  #f5f4fe;
+
+  /* ── Editorial salmon (FT nod) — proof / verified surfaces ────────── */
+  --salmon:      #fdece4;
+  --salmon-line: #f4d3c4;
+  --salmon-text: #8a4a2f;
+
+  /* ── Confidence tiers (THE trust layer) ───────────────────────────── */
+  --conf-high:    #1a7f4b;
+  --conf-high-bg: #e6f4ec;
+  --conf-med:     #b26a00;
+  --conf-med-bg:  #fbf0dd;
+  --conf-low:     #c0392b;
+  --conf-low-bg:  #fbe9e7;
+  --verified:     #a5790a;
+  --verified-bg:  #fbf3da;
+
+  /* ── Functional ───────────────────────────────────────────────────── */
+  --info:       #2f6db3;
+  --info-bg:    #e8f1fb;
+  --warn:       #b26a00;
+  --warn-bg:    #fbf0dd;
+  --danger:     #c0392b;
+  --danger-bg:  #fbe9e7;
+  --success:    #1a7f4b;
+  --success-bg: #e6f4ec;
+
+  /* ── Topic palette (multi-topic sheets) ───────────────────────────── */
+  --topic-1: #5b57e0;
+  --topic-2: #1a7f4b;
+  --topic-3: #b26a00;
+  --topic-4: #2f6db3;
+  --topic-5: #8e44ad;
+  --topic-6: #c0392b;
+
+  /* ── Radius ───────────────────────────────────────────────────────── */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 18px;
+  --r-full: 999px;
+
+  /* ── Shadow (elevation) ───────────────────────────────────────────── */
+  --sh-xs: 0 1px 2px rgba(17, 17, 20, 0.05);
+  --sh-sm: 0 1px 3px rgba(17, 17, 20, 0.07), 0 1px 2px rgba(17, 17, 20, 0.04);
+  --sh-md: 0 4px 12px rgba(17, 17, 20, 0.08), 0 2px 4px rgba(17, 17, 20, 0.04);
+  --sh-lg: 0 12px 32px rgba(17, 17, 20, 0.10), 0 4px 8px rgba(17, 17, 20, 0.05);
+  --sh-xl: 0 24px 60px rgba(17, 17, 20, 0.14), 0 8px 16px rgba(17, 17, 20, 0.06);
+
+  /* ── Type stacks (fonts loaded via next/font in layout.tsx) ───────── */
+  --sans:  var(--font-geist, "Geist"), -apple-system, BlinkMacSystemFont, sans-serif;
+  --serif: var(--font-newsreader, "Newsreader"), Georgia, serif;
+  --mono:  var(--font-geist-mono, "Geist Mono"), ui-monospace, SFMono-Regular, monospace;
+
+  /* ── Motion ───────────────────────────────────────────────────────── */
+  --ease:     cubic-bezier(0.2, 0.6, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 120ms;
+  --dur:      200ms;
+  --dur-slow: 360ms;
+
+  /* ══════════════════════════════════════════════════════════════════
+   * LEGACY ALIASES — sheet renderer only. Retired in Phase D5.
+   * Values frozen at pre-redesign state EXCEPT:
+   *   - conf dots adopt the new tier colors above (design is explicit;
+   *     low is now red — better signal than the old gray)
+   *   - font stacks point at the new faces (design renders the sheet
+   *     in Geist / Geist Mono)
+   * ══════════════════════════════════════════════════════════════════ */
+  --color-primary-indigo:   #3b3593;
+  --color-primary-indigo-2: #6a5cff;
+  --color-strong-red:       #b53756;
+  --color-emphasis-teal:    #0d8b8b;
+  --color-correct-green:    #1f7d3a;
+  --color-warning-orange:   #b35c00;
+  --color-exam-gold:        #a08200;
   --color-code-bg-dark:     #1c2030;
   --color-code-fg-light:    #e6e9f0;
-  --color-light-fill:       #f1f3f8;  /* inline code bg */
-  --color-light-bg:         #f6f7fb;  /* zebra rows */
+  --color-light-fill:       #f1f3f8;
+  --color-light-bg:         #f6f7fb;
+  --color-border-light:     #d8dbe4;
+  --color-border-mid:       #b8bbc4;
 
-  /* ── Lines ────────────────────────────────────────────────────────── */
-  --color-border-light:     #d8dbe4;  /* table border */
-  --color-border-mid:       #b8bbc4;  /* column rule, hr */
+  --topic-blue:   #1e5fa3;
+  --topic-green:  #1f7d3a;
+  --topic-pink:   #c8336b;
+  --topic-maroon: #8b1a1a;
+  --topic-teal:   #0d8b8b;
+  --topic-purple: #6a3d9a;
+  --topic-orange: #b35c00;
+  --topic-gold:   #a08200;
+  --topic-indigo: #3b3593;
+  --topic-olive:  #5e5326;
 
-  /* ── Topic palette (cycle through for multi-topic sheets) ─────────── */
-  --topic-blue:    #1e5fa3;
-  --topic-green:   #1f7d3a;
-  --topic-pink:    #c8336b;
-  --topic-maroon:  #8b1a1a;
-  --topic-teal:    #0d8b8b;
-  --topic-purple:  #6a3d9a;
-  --topic-orange:  #b35c00;
-  --topic-gold:    #a08200;
-  --topic-indigo:  #3b3593;
-  --topic-olive:   #5e5326;
+  --font-body: var(--sans);
+  --font-mono: var(--mono);
+}
 
-  /* ── Confidence dot colors (derived) ──────────────────────────────── */
-  --conf-high: var(--color-correct-green);
-  --conf-med:  var(--color-exam-gold);
-  --conf-low:  #9099a8;
+/* ── Keyframes (design-system motion vocabulary) ──────────────────── */
+@keyframes ds-climb  { from { width: 0; } }
+@keyframes ds-spin   { to { transform: rotate(360deg); } }
+@keyframes ds-pulse  { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
+@keyframes ds-rise   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes ds-shimmer { 100% { background-position: 200% 0; } }
 
-  /* ── Type stacks ─────────────────────────────────────────────────── */
-  --font-body: -apple-system, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: "Menlo", "Consolas", monospace;
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
