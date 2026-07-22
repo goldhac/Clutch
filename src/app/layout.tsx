@@ -33,9 +33,28 @@ const newsreader = Newsreader({
 });
 
 export const metadata: Metadata = {
-  title: "CramSheet",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_APP_URL ?? "https://cramsheet-production.up.railway.app",
+  ),
+  title: {
+    default: "CramSheet — the one-page cheat sheet that knows what's on the exam",
+    template: "%s · CramSheet",
+  },
   description:
-    "The one-page cheat sheet that knows what's on the exam. Upload your materials, get a ranked, sourced Exam Reference Sheet.",
+    "Upload your materials, get a ranked, sourced Exam Reference Sheet — every claim scored and cited. One page. Print it. Take it.",
+  applicationName: "CramSheet",
+  openGraph: {
+    title: "CramSheet — the one-page cheat sheet that knows what's on the exam",
+    description:
+      "Every claim scored and sourced. Upload your materials, get a ranked Exam Reference Sheet.",
+    type: "website",
+    siteName: "CramSheet",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CramSheet",
+    description: "The one-page cheat sheet that knows what's on the exam.",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

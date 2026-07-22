@@ -27,6 +27,12 @@ The full spec lives in [`docs/`](docs/):
 | [`docs/05-BUILD-PLAN.md`](docs/05-BUILD-PLAN.md) | The working phase document — locked decisions, data model, repo layout, phase tasks + gates |
 | [`docs/06-V1-CHECKLIST.md`](docs/06-V1-CHECKLIST.md) | The single source of truth for v1 — every feature mapped to a step, per-step subtasks, always-on rules, explicit out-of-scope |
 | [`docs/07-ENGINE-PROMPT-PLAYBOOK.md`](docs/07-ENGINE-PROMPT-PLAYBOOK.md) | The proven patterns from Gold's hand-built reference sheets, extracted as the source of truth for the Step 6 engine prompt |
+| [`docs/08-DESIGN-IMPLEMENTATION-PLAN.md`](docs/08-DESIGN-IMPLEMENTATION-PLAN.md) | The design-system implementation plan (D1–D6): tokens, primitives, marketing, app screens, the sheet redesign, brand + deploy |
+
+The production design system (tokens, type, primitives) is mirrored from the
+handoff in [`design/`](design/) (gitignored assets) and lives in code under
+`src/renderer/tokens.css` + `src/components/`. Live references: `/debug/tokens`
+(palette + type) and `/debug/primitives` (component gallery).
 
 ## Architecture (the separation that matters)
 
