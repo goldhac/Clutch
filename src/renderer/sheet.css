@@ -20,57 +20,50 @@
   --sheet-pad-x: 0.14in;
 }
 
-/* ── Screen-mode "page" simulation ──
- * For column-fill: auto to actually split content across columns in the
- * browser, .cols MUST have a fixed height. In print mode @page provides
- * it; on screen we simulate the A4 landscape canvas explicitly. */
+/* ── The sheet IS the page: a FIXED A4-landscape box, always ──────────
+ * width/height are locked to A4 landscape and overflow is clipped, in
+ * BOTH screen and print. So:
+ *   - nothing ever flows out of the page (screen or PDF)
+ *   - content OVERFILLS and clips at the boundary → no dead space
+ *   - the PDF is exactly one page (the box clips; it can't paginate)
+ * The engine targets slight overflow (OutSpec §3.1 "milk every inch"),
+ * so the page is always full. */
+.sheet {
+  box-sizing: border-box;
+  width: var(--sheet-w);
+  height: var(--sheet-h);
+  min-width: var(--sheet-w);
+  max-width: var(--sheet-w);
+  padding: var(--sheet-pad-y) var(--sheet-pad-x);
+  background: #fff;
+  overflow: hidden;
+  position: relative;
+  /* Flex column: fixed header, cols fill the middle (+ clip), pinned
+   * footer. Guarantees the footer is always visible and the columns
+   * fill every inch above it. */
+  display: flex;
+  flex-direction: column;
+}
+
+/* Header + footer take their natural height; .cols fills the rest and
+ * clips its overflow (the fill model — always full, never spills). */
+.sheet > .sheet-head { flex: none; }
+.sheet > .sheet-foot { flex: none; }
+.sheet > .cols {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Screen: sit the page on a soft-grey workspace with a lift. */
 @media screen {
   body {
     background: #e5e7eb;
   }
-
   .sheet {
-    box-sizing: border-box;
-    width: var(--sheet-w);
-    height: var(--sheet-h);
     margin: 1rem auto;
-    padding: var(--sheet-pad-y) var(--sheet-pad-x);
-    background: #fff;
     box-shadow: 0 1pt 6pt rgba(0, 0, 0, 0.18);
-    /* Overflow stays visible on screen so the OverflowMonitor (and the
-     * naked eye) can see clipping. Print mode is clipped by @page. */
-    overflow: visible;
-    position: relative;
   }
-
-  /* .cols fills the full sheet because header elements (h1, exam-format,
-   * legend, verifiedPatterns) live INSIDE .cols and use column-span:all
-   * to span horizontally. Cleaner than the previous flex-header hack —
-   * matches the proven build. */
-  .sheet .cols {
-    height: 100%;
-  }
-
-  /* Dashed line at the page bottom — anything below it is clipped in PDF. */
-  .sheet::after {
-    content: "← page boundary — anything past this line is clipped in PDF";
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: -1px;
-    border-bottom: 1px dashed #b53756;
-    color: #b53756;
-    font-size: 8pt;
-    font-family: var(--font-body);
-    text-align: right;
-    padding: 0 6pt 1pt 0;
-    pointer-events: none;
-  }
-}
-
-/* In print mode, hide the dev boundary marker. */
-@media print {
-  .sheet::after { display: none; }
 }
 
 /* ── No-break wrapper ─────────────────────────────────────────────────
@@ -93,37 +86,101 @@
   line-height: 1.2;
 }
 
-/* ── Verified-patterns block (gold-tinted, spans all columns) ──────── */
+/* ── Verified-patterns block (salmon proof strip, spans all columns) ─
+ * The design's signature: the highest-trust block sits on --salmon and
+ * leads the sheet. Renders as a row of boxes, one per pattern. */
 .sheet .verified-patterns {
   column-span: all;
-  border: 0.4pt solid var(--color-exam-gold);
-  background: #fff8e0;
-  padding: 1pt 2pt;
-  border-radius: 1.5pt;
-  margin: 0 0 1pt 0;
+  margin: 0 0 1.4pt 0;
   break-inside: avoid;
 }
 .sheet .verified-patterns h2 {
-  background: var(--color-exam-gold);
-  color: #fff;
-  padding: 0.4pt 2pt;
-  margin: 0 0 0.6pt 0;
+  background: transparent;
+  color: var(--salmon-text);
+  padding: 0;
+  margin: 0 0 0.8pt 0;
   font-size: inherit;
-  display: inline-block;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.sheet .verified-patterns h2 .verified-star {
+  color: var(--verified);
 }
 .sheet .verified-patterns h2 .hint {
-  color: #fff;
+  color: var(--ink-400);
   font-weight: 400;
-  opacity: 0.9;
+  text-transform: none;
+  letter-spacing: 0;
   font-size: 0.85em;
   margin-left: 4pt;
 }
 .sheet .verified-patterns ul {
-  margin: 0.4pt 0 0 9pt;
-  list-style: disc;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 3pt;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 .sheet .verified-patterns li {
-  margin: 0.2pt 0;
+  margin: 0;
+  background: var(--salmon);
+  border: 0.3pt solid var(--salmon-line);
+  border-radius: 1.5pt;
+  padding: 1.5pt 3pt;
+  line-height: 1.25;
+}
+.sheet .verified-patterns li .src {
+  color: var(--salmon-text);
+  opacity: 0.85;
+}
+/* Balanced/Essentials: fewer columns for the wider layout. */
+.sheet.density-balanced .verified-patterns ul { grid-template-columns: repeat(2, 1fr); gap: 5pt; }
+.sheet.density-essentials .verified-patterns ul { grid-template-columns: 1fr; gap: 5pt; }
+
+/* ── Sheet header: serif title + meta on the left, trust legend right ── */
+.sheet .sheet-head {
+  column-span: all;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8pt;
+  padding-bottom: 1.5pt;
+  margin-bottom: 1.5pt;
+  border-bottom: 0.4pt solid var(--ink-200);
+}
+.sheet .sheet-head .sheet-meta {
+  margin-top: 0.5pt;
+  color: var(--ink-500);
+  font-size: 0.9em;
+}
+.sheet .sheet-legend {
+  display: flex;
+  align-items: center;
+  gap: 5pt;
+  flex: none;
+  font-size: 0.82em;
+  color: var(--ink-500);
+  white-space: nowrap;
+}
+.sheet .sheet-legend .lg { display: inline-flex; align-items: center; gap: 1.5pt; }
+.sheet .sheet-legend .dot { width: 0.62em; height: 0.62em; border-radius: 50%; display: inline-block; }
+.sheet .sheet-legend .dot.conf-high { background: var(--conf-high); }
+.sheet .sheet-legend .dot.conf-med  { background: var(--conf-med); }
+.sheet .sheet-legend .dot.conf-low  { background: var(--conf-low); }
+.sheet .sheet-legend .vstar { color: var(--verified); font-weight: 700; }
+
+/* ── Provenance footer ──────────────────────────────────────────────── */
+.sheet .sheet-foot {
+  column-span: all;
+  margin-top: 2pt;
+  padding-top: 1.5pt;
+  border-top: 0.4pt solid var(--ink-200);
+  font-family: var(--mono);
+  font-size: 0.8em;
+  color: var(--ink-400);
+  text-align: center;
+  letter-spacing: 0.02em;
 }
 
 /* ── Topics overview ───────────────────────────────────────────────── */

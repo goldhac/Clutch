@@ -46,33 +46,52 @@
   column-fill: auto; /* CRITICAL — see OutSpec §3.1; never `balance` */
 }
 
-/* ── Minimal — 2 cols, 9pt, ~70% coverage ────────────────────────────── */
+/* ── ESSENTIALS — the walk-to-the-exam glance card ───────────────────
+ * Core tier only, 2 cols, big + glanceable. Read standing up in 90s.
+ * Our redesign: generous leading, larger type, breathing room around
+ * every block. Not a wall of text — a priority stack. */
 .sheet.density-essentials {
   font-size: 9pt;
-  line-height: 1.35;
+  line-height: 1.42;
 }
 .sheet.density-essentials .cols {
   column-count: 2;
-  column-gap: 12pt;
+  column-gap: 16pt;
 }
-.sheet.density-essentials h2 { font-size: 10pt; }
+.sheet.density-essentials h1 { font-size: 17pt; }
+.sheet.density-essentials h2 { font-size: 9.5pt; }
+.sheet.density-essentials h3 { font-size: 9pt; }
 .sheet.density-essentials table { font-size: 8.5pt; }
 .sheet.density-essentials pre,
 .sheet.density-essentials code { font-size: 8pt; }
+/* roomier blocks */
+.sheet.density-essentials .formula-block,
+.sheet.density-essentials .trap-callout,
+.sheet.density-essentials .box,
+.sheet.density-essentials .qq { margin: 4pt 0; }
+.sheet.density-essentials .formula-block { padding: 3pt 5pt; }
 
-/* ── Standard — 3 cols, 7.5pt, ~85% coverage ────────────────────────── */
+/* ── BALANCED — the day-before desk sheet ────────────────────────────
+ * Core + high tiers, 3 cols, ~10.5px. The sheet you write ON: tinted,
+ * room to annotate in the margins between blocks. */
 .sheet.density-balanced {
-  font-size: 7.5pt;
-  line-height: 1.25;
+  font-size: 8pt;
+  line-height: 1.32;
 }
 .sheet.density-balanced .cols {
   column-count: 3;
-  column-gap: 8pt;
+  column-gap: 11pt;
 }
-.sheet.density-balanced h2 { font-size: 8.2pt; }
-.sheet.density-balanced table { font-size: 7pt; }
+.sheet.density-balanced h1 { font-size: 13pt; }
+.sheet.density-balanced h2 { font-size: 8.4pt; }
+.sheet.density-balanced h3 { font-size: 8pt; }
+.sheet.density-balanced table { font-size: 7.4pt; }
 .sheet.density-balanced pre,
-.sheet.density-balanced code { font-size: 6.8pt; }
+.sheet.density-balanced code { font-size: 7pt; }
+.sheet.density-balanced .formula-block,
+.sheet.density-balanced .trap-callout,
+.sheet.density-balanced .box,
+.sheet.density-balanced .qq { margin: 2.5pt 0; }
 
 /* ── MAX — 4 cols (allow 5), 5.7pt body, 92–97% coverage ────────────
  * The hero. Engineered density. Floor 5.5pt — never below.
@@ -91,7 +110,7 @@
 .sheet.density-max .cols.cols-5 {
   column-count: 5;
 }
-.sheet.density-max h1 { font-size: 7pt; }
+.sheet.density-max h1 { font-size: 10pt; }
 .sheet.density-max h2 { font-size: 5.9pt; }
 .sheet.density-max h3 { font-size: 5.7pt; }
 .sheet.density-max table { font-size: 5pt; }
@@ -107,14 +126,15 @@
   margin: 1.5pt 0;
 }
 
-/* ── Print rules ─────────────────────────────────────────────────────── */
-/* MAX must print A4 landscape with tight margins. Minimal/Standard hold
- * easily; keep them landscape too so all three exports look like one
- * product family. */
+/* ── Print rules ─────────────────────────────────────────────────────
+ * The .sheet IS the page: a fixed A4-landscape box (its own padding)
+ * that clips at the boundary (overflow: hidden, set in sheet.css). So
+ * @page has ZERO margin — the sheet fills it exactly, content overfills
+ * and clips to one page, and there's never dead space. */
 @media print {
   @page {
     size: A4 landscape;
-    margin: 0.16in 0.14in;
+    margin: 0;
   }
 
   html, body {
@@ -122,9 +142,6 @@
     padding: 0;
     background: #fff;
   }
-
-  /* In print mode, @page provides the page height; column-fill: auto
-   * uses that automatically. Nothing more to do here. */
 }
 
 /* Screen-mode page-simulation (so column-fill: auto actually splits

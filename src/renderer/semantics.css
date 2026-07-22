@@ -171,29 +171,30 @@
   font-weight: 600;
 }
 
-/* ── Headings ────────────────────────────────────────────────────────── */
-.sheet h1,
+/* ── Headings (design system: serif title, ink section bars) ────────── */
+/* h1 is the serif sheet title, rendered inside .sheet-head (see sheet.css)
+ * — no banner. h2 = a compact section bar in near-black ink (not the old
+ * indigo banner). h3 = a small signal-tinted subhead. */
+.sheet h1 {
+  font-family: var(--serif);
+  font-weight: 600;
+  color: var(--ink-900);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
 .sheet h2 {
   color: #fff;
-  background: var(--color-primary-indigo);
-  padding: 0.8pt 3pt;
-  border-radius: 2pt;
-  margin: 1pt 0 0.3pt 0;
-  font-weight: 800;
-  letter-spacing: 0.15pt;
+  background: var(--ink-900);
+  padding: 0.6pt 3pt;
+  border-radius: 1.5pt;
+  margin: 2pt 0 0.6pt 0;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   break-after: avoid;
 }
-.sheet h1 {
-  background: linear-gradient(
-    90deg,
-    var(--color-primary-indigo),
-    var(--color-primary-indigo-2)
-  );
-  margin-bottom: 0.8pt;
-}
 .sheet h3 {
-  color: var(--color-primary-indigo);
+  color: var(--signal-600);
   margin: 0.6pt 0 0.1pt 0;
   font-weight: 700;
   break-after: avoid;

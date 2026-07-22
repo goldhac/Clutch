@@ -1,4 +1,5 @@
 import type { SheetContent } from "@/contract/sheet-content";
+import { filterForDensity } from "./tiers";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 import { TopicsOverview } from "./TopicsOverview";
@@ -57,12 +58,47 @@ export interface SheetProps {
  *   ▸ tables (decision guides) ▸ concepts (memorize-cold)
  *   ▸ traps (what NOT to do) ▸ questions (drill set)
  */
-export function Sheet({ content, density, cols5 = false }: SheetProps) {
+export function Sheet({ content: raw, density, cols5 = false }: SheetProps) {
+  // Same content, filtered to the tiers this density shows.
+  const content = filterForDensity(raw, density);
   const colsClass = `cols${density === "max" && cols5 ? " cols-5" : ""}`;
+
+  const counts = {
+    topics: content.topics.length,
+    formulas: content.formulas.length,
+    concepts: content.concepts.length,
+    traps: content.traps.length,
+    questions: content.questions.length,
+    verified:
+      [...content.topics, ...content.formulas, ...content.concepts, ...content.questions].filter(
+        (i) => i.verified,
+      ).length,
+  };
+  const totalRanked =
+    counts.topics + counts.formulas + counts.concepts + counts.questions;
+
   return (
     <div className={`sheet density-${density}`}>
+      {/* Fixed header pinned above the column flow. */}
+      <header className="sheet-head">
+        <div className="sheet-head-main">
+          <h1>{content.title}</h1>
+          <div className="sheet-meta">
+            {totalRanked} items ranked · {counts.verified} verified ·{" "}
+            {density.toUpperCase()}
+          </div>
+        </div>
+        <div className="sheet-legend">
+          <span className="lg"><i className="dot conf-high" /> high</span>
+          <span className="lg"><i className="dot conf-med" /> med</span>
+          <span className="lg"><i className="dot conf-low" /> low</span>
+          <span className="lg"><i className="vstar">★</i> verified</span>
+        </div>
+      </header>
+
+      {/* The column flow fills the space between header and footer and
+       * clips at the boundary — so the page is always full. */}
       <div className={colsClass}>
-        <h1 className="span-all">{content.title}</h1>
         <ExamFormatStrip format={content.examFormat} />
         <VerifiedPatternsBlock patterns={content.verifiedPatterns} />
         <TopicsOverview topics={content.topics} />
@@ -84,6 +120,13 @@ export function Sheet({ content, density, cols5 = false }: SheetProps) {
         <TrapsSection traps={content.traps} />
         <QuestionsSection questions={content.questions} />
       </div>
+
+      {/* Provenance footer pinned to the bottom (never clipped). */}
+      <footer className="sheet-foot">
+        {counts.formulas} formulas · {counts.concepts} concepts ·{" "}
+        {counts.traps} traps · {counts.questions} questions ·{" "}
+        {counts.verified} verified · {density.toUpperCase()}
+      </footer>
     </div>
   );
 }
