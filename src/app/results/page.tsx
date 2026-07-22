@@ -5,38 +5,47 @@ import "@/renderer/semantics.css";
 import "@/renderer/sheet.css";
 
 import { useEffect, useMemo, useState } from "react";
-import {
-  safeParseSheetContent,
-  type SheetContent,
-} from "@/contract/sheet-content";
+import Link from "next/link";
+import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 import { Sheet, type Density } from "@/components/sheet";
-import { Button, LinkButton, Callout } from "@/components/ui";
+import {
+  LinkButton,
+  Callout,
+  Chip,
+  SegmentedControl,
+  Wordmark,
+} from "@/components/ui";
 
 interface Stash {
   content: unknown;
   meta?: {
     model?: string;
+    retried?: boolean;
     inputTokens?: number;
     outputTokens?: number;
-    retried?: boolean;
-    sanitizedItems?: number;
-    droppedPatterns?: number;
   };
   warnings?: string[];
   density?: Density;
   savedAt?: string;
 }
 
+const DENSITY_OPTS = [
+  { value: "max" as const, label: "MAX" },
+  { value: "balanced" as const, label: "Balanced" },
+  { value: "essentials" as const, label: "Essentials" },
+];
+
 export default function ResultsPage() {
   const [stash, setStash] = useState<Stash | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [density, setDensity] = useState<Density>("max");
+  const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem("cramsheet:last");
       if (!raw) {
-        setError("No generated sheet found in this session. Go back and generate one.");
+        setError("No generated sheet found in this session. Generate one to see it here.");
         return;
       }
       const parsed = JSON.parse(raw) as Stash;
@@ -52,7 +61,7 @@ export default function ResultsPage() {
     const result = safeParseSheetContent(stash.content);
     if (!result.success) {
       setError(
-        "The engine output didn't pass the contract validator. " +
+        "The engine output didn't pass the contract validator: " +
           result.error.issues.map((i) => i.message).join("; "),
       );
       return null;
@@ -62,94 +71,104 @@ export default function ResultsPage() {
 
   if (error) {
     return (
-      <main className="mx-auto max-w-2xl px-6 py-16">
-        <h1 className="text-2xl font-bold text-[color:var(--color-strong-red)]">
-          Something went wrong
-        </h1>
-        <p className="mt-2 whitespace-pre-wrap text-sm text-neutral-700">{error}</p>
+      <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--paper)] px-6 text-center">
+        <Wordmark href="/" />
+        <h1 className="mt-8 font-serif text-3xl text-[var(--ink-900)]">Nothing to show yet</h1>
+        <p className="mt-2 max-w-sm text-[15px] text-[var(--ink-600)]">{error}</p>
         <LinkButton href="/generate" className="mt-6">
-          ← Back to generate
+          Make a sheet
         </LinkButton>
-      </main>
+      </div>
     );
   }
 
   if (!stash || !content) {
     return (
-      <main className="mx-auto max-w-2xl px-6 py-16">
-        <p className="text-sm text-neutral-500">Loading…</p>
-      </main>
+      <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]">
+        <p className="text-[14px] text-[var(--ink-500)]">Loading your sheet…</p>
+      </div>
     );
   }
 
   const warnings = stash.warnings ?? [];
+  const showWarnings = warnings.length > 0 && !dismissed;
 
   return (
-    <div className="sheet-page">
-      <DevBar density={density} setDensity={setDensity} meta={stash.meta} />
-      {warnings.length > 0 && <WarningsStrip warnings={warnings} />}
-      <Sheet content={content} density={density} />
-    </div>
-  );
-}
+    <div className="min-h-screen bg-[var(--paper-2)]">
+      {/* ── Results toolbar (sticky) ─────────────────────────────────── */}
+      <header className="print:hidden sticky top-0 z-[var(--z-sticky)] border-b border-[var(--ink-150)] bg-[color-mix(in_srgb,var(--paper)_88%,transparent)] backdrop-blur">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-5 py-2.5">
+          <Wordmark />
+          <span className="text-[var(--ink-300)]">/</span>
+          <span className="text-[14px] font-medium text-[var(--ink-700)]">{content.title}</span>
+          {warnings.length > 0 ? (
+            <Chip tone="warn">
+              {warnings.length} warning{warnings.length === 1 ? "" : "s"}
+            </Chip>
+          ) : (
+            <Chip tone="success">Fits at {density.toUpperCase()}</Chip>
+          )}
 
-function WarningsStrip({ warnings }: { warnings: string[] }) {
-  return (
-    <div className="print:hidden fixed inset-x-0 top-0 z-40 border-b border-amber-300 bg-amber-50/95 px-4 py-2 text-xs text-amber-900 shadow-sm backdrop-blur">
-      <div className="mx-auto max-w-5xl">
-        <Callout variant="warn" title={`${warnings.length} engine warning${warnings.length === 1 ? "" : "s"}:`} className="border-0 bg-transparent p-0 text-inherit">
-          <ul className="mt-1 list-disc space-y-0.5 pl-5">
+          <div className="ml-auto flex flex-wrap items-center gap-2">
+            <SegmentedControl
+              ariaLabel="Density"
+              size="sm"
+              value={density}
+              onChange={setDensity}
+              options={DENSITY_OPTS}
+            />
+            <LinkButton href="/generate" size="sm" variant="secondary">
+              Make another
+            </LinkButton>
+            <LinkButton
+              href={`/api/pdf?density=${density}`}
+              size="sm"
+              target="_blank"
+              rel="noopener"
+            >
+              <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+              </svg>
+              Export PDF
+            </LinkButton>
+          </div>
+        </div>
+
+        {showWarnings && (
+          <div className="mx-auto max-w-6xl space-y-2 px-5 pb-3">
             {warnings.map((w, i) => (
-              <li key={i}>{w}</li>
+              <Callout key={i} variant="warn">
+                {w}
+              </Callout>
             ))}
-          </ul>
-        </Callout>
-      </div>
-    </div>
-  );
-}
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              className="text-[12px] text-[var(--ink-500)] underline hover:text-[var(--ink-800)]"
+            >
+              Dismiss warnings
+            </button>
+          </div>
+        )}
+      </header>
 
-function DevBar({
-  density,
-  setDensity,
-  meta,
-}: {
-  density: Density;
-  setDensity: (d: Density) => void;
-  meta?: Stash["meta"];
-}) {
-  // Step 7 will wire a /api/pdf-from-stash that pulls from the
-  // persisted SheetContent — for now density preview validates output.
-  return (
-    <nav
-      aria-label="Sheet dev bar"
-      className="print:hidden fixed right-3 top-3 z-50 flex items-center gap-2 rounded border border-neutral-300 bg-white/95 p-1 text-xs shadow"
-    >
-      <span className="px-1 py-0.5 text-neutral-500">density:</span>
-      {(["minimal", "standard", "max"] as Density[]).map((d) => (
-        <Button
-          key={d}
-          size="sm"
-          variant={density === d ? "primary" : "ghost"}
-          onClick={() => setDensity(d)}
-          className={density === d ? "bg-black" : ""}
-        >
-          {d}
-        </Button>
-      ))}
-      <span className="mx-1 self-center text-neutral-300">|</span>
-      <LinkButton href="/generate" size="sm" variant="secondary">
-        ← New
-      </LinkButton>
-      {meta?.model && (
-        <span
-          className="ml-1 text-neutral-400"
-          title={`model: ${meta.model}${meta.retried ? " (retried)" : ""}${meta.inputTokens ? ` · ${meta.inputTokens} in / ${meta.outputTokens} out` : ""}`}
-        >
-          {meta.model.split("-").slice(0, 2).join("-")}
-          {meta.retried ? " ↺" : ""}
-        </span>
+      {/* ── The sheet, centered on the workspace ─────────────────────── */}
+      <div className="flex justify-center overflow-x-auto px-4 py-8">
+        <div className="rounded-[var(--r-lg)] shadow-[var(--sh-xl)]">
+          <Sheet content={content} density={density} />
+        </div>
+      </div>
+
+      {stash.meta?.model && (
+        <p className="print:hidden pb-10 text-center font-mono text-[11px] text-[var(--ink-400)]">
+          generated by {stash.meta.model}
+          {stash.meta.retried ? " (retried)" : ""}
+          {" · "}
+          <Link href="/library" className="underline">
+            My Sheets
+          </Link>
+        </p>
       )}
-    </nav>
+    </div>
   );
 }

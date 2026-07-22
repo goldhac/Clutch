@@ -3,7 +3,7 @@
  * Import { Sheet } for the whole thing, or individual blocks for
  * marketing previews / documentation snippets.
  */
-export { Sheet, type SheetProps, type Density } from "./Sheet";
+export { Sheet, type SheetProps, type Density, DENSITY_ALIASES, normalizeDensity } from "./Sheet";
 export { ExamFormatStrip } from "./ExamFormatStrip";
 export { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 export { TopicsOverview } from "./TopicsOverview";

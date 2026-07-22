@@ -31,7 +31,7 @@ export const runtime = "nodejs";
 // Avoid Next caching a stale rendering of the sheet.
 export const dynamic = "force-dynamic";
 
-const VALID_DENSITIES = new Set(["minimal", "standard", "max"]);
+const VALID_DENSITIES = new Set(["essentials", "balanced", "max", "minimal", "standard"]);
 
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);

@@ -139,13 +139,13 @@ G) verifiedPatterns: if the pack contains a past exam, distill the
 `.trim();
 
 const SYSTEM_DENSITY_TUNING = `
-DENSITY TUNING:
-- "max"      — densest output (4-col, 5.7pt). Emit 8–12 formulas,
-               6–10 concepts, 5–8 traps, 6–10 questions. Prefer terse.
-- "standard" — middle ground (3-col, 7.5pt). Emit 5–8 formulas,
-               4–7 concepts, 4–6 traps, 4–7 questions.
-- "minimal"  — readability over density (2-col, 9pt). Emit 3–6
-               formulas, 3–5 concepts, 3–5 traps, 3–5 questions.
+DENSITY TUNING (the exam-room weapon → the glance card):
+- "max"        — densest, everything (4–5 col). Emit 8–12 formulas,
+                 6–10 concepts, 5–8 traps, 6–10 questions. Prefer terse.
+- "balanced"   — the day-before desk sheet, high-yield set (3 col).
+                 Emit 5–8 formulas, 4–7 concepts, 4–6 traps, 4–7 questions.
+- "essentials" — the walk-to-the-exam glance card, core only (2 col).
+                 Emit 3–6 formulas, 3–5 concepts, 3–5 traps, 3–5 questions.
 
 EXAM TYPE WEIGHTING:
 - "conceptual"      — bias toward concepts + traps + likely-Q

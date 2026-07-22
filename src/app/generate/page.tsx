@@ -3,15 +3,17 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import {
+  AppChrome,
   Button,
   Callout,
   Card,
-  Field,
   FileDrop,
   Progress,
   Select,
   TextInput,
 } from "@/components/ui";
+import type { Density } from "@/components/sheet";
+import { GeneratingOverlay } from "./GeneratingOverlay";
 
 type FileTag =
   | "slides"
@@ -22,11 +24,11 @@ type FileTag =
   | "formula_sheet";
 
 const TAG_LABELS: Record<FileTag, string> = {
-  slides: "Lecture slides",
+  slides: "Slides",
   review: "Review guide",
-  past_exam: "★ Past exam (highest weight)",
+  past_exam: "★ Past exam",
   homework: "Homework",
-  notes: "Class notes",
+  notes: "Notes",
   formula_sheet: "Formula sheet",
 };
 
@@ -54,35 +56,34 @@ function guessTag(name: string): FileTag {
   return "slides";
 }
 
+function fileKind(name: string): string {
+  const ext = name.split(".").pop()?.toUpperCase() ?? "FILE";
+  return ext.length > 4 ? "FILE" : ext;
+}
+
 export default function GeneratePage() {
   const router = useRouter();
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [examType, setExamType] = useState<"conceptual" | "problem-solving" | "mixed">("mixed");
-  const [density, setDensity] = useState<"minimal" | "standard" | "max">("max");
+  const [density, setDensity] = useState<Density>("max");
   const [priority, setPriority] = useState<"formulas" | "concepts" | "balanced">("balanced");
   const [courseCode, setCourseCode] = useState("");
   const [professor, setProfessor] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const confidence = Math.min(
-    100,
-    files.reduce((s, f) => s + TAG_WEIGHTS[f.tag], 0),
-  );
+  const confidence = Math.min(100, files.reduce((s, f) => s + TAG_WEIGHTS[f.tag], 0));
+  const hasFiles = files.length > 0;
+  const hasPastExam = files.some((f) => f.tag === "past_exam");
 
   function addFiles(list: FileList) {
     const next: PendingFile[] = [];
-    for (let i = 0; i < list.length; i++) {
-      const f = list[i];
-      next.push({ file: f, tag: guessTag(f.name) });
-    }
+    for (let i = 0; i < list.length; i++) next.push({ file: list[i], tag: guessTag(list[i].name) });
     setFiles((prev) => [...prev, ...next]);
   }
-
   function updateTag(ix: number, tag: FileTag) {
     setFiles((prev) => prev.map((f, i) => (i === ix ? { ...f, tag } : f)));
   }
-
   function removeFile(ix: number) {
     setFiles((prev) => prev.filter((_, i) => i !== ix));
   }
@@ -90,11 +91,7 @@ export default function GeneratePage() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-
-    if (files.length === 0) {
-      setError("Drop at least one file before generating.");
-      return;
-    }
+    if (!hasFiles) return setError("Drop at least one file before generating.");
 
     setSubmitting(true);
     try {
@@ -110,171 +107,158 @@ export default function GeneratePage() {
       if (professor) fd.append("professor", professor);
 
       const res = await fetch("/api/generate", { method: "POST", body: fd });
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || `HTTP ${res.status}`);
-      }
-      const payload = (await res.json()) as {
-        content: unknown;
-        meta: unknown;
-        warnings?: string[];
-      };
-      const stash = {
-        content: payload.content,
-        meta: payload.meta,
-        warnings: payload.warnings ?? [],
-        density,
-        savedAt: new Date().toISOString(),
-      };
-      sessionStorage.setItem("cramsheet:last", JSON.stringify(stash));
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const payload = (await res.json()) as { content: unknown; meta: unknown; warnings?: string[] };
+      sessionStorage.setItem(
+        "cramsheet:last",
+        JSON.stringify({
+          content: payload.content,
+          meta: payload.meta,
+          warnings: payload.warnings ?? [],
+          density,
+          savedAt: new Date().toISOString(),
+        }),
+      );
       router.push("/results");
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
-    } finally {
       setSubmitting(false);
     }
   }
 
-  const noPastExam = files.length > 0 && !files.some((f) => f.tag === "past_exam");
-
   return (
-    <main className="mx-auto max-w-3xl px-6 py-10">
-      <header className="mb-6">
-        <h1 className="text-3xl font-bold text-[color:var(--color-primary-indigo)]">
-          Generate your Exam Reference Sheet
-        </h1>
-        <p className="mt-2 text-sm text-neutral-600">
-          Drop your slides, review guide, past exams, notes. Tag each file —
-          the engine weights past exams highest. Pick density, hit generate.
-        </p>
-      </header>
+    <AppChrome active="generate" credits={2} avatar="AD">
+      {submitting && (
+        <GeneratingOverlay
+          fileCount={files.length}
+          pastExamCount={files.filter((f) => f.tag === "past_exam").length}
+        />
+      )}
+      <form onSubmit={onSubmit} className="mx-auto max-w-6xl px-5 py-8">
+        <header className="mb-6">
+          <h1 className="font-serif text-[clamp(1.8rem,4vw,2.4rem)] tracking-[-0.02em] text-[var(--ink-900)]">
+            {hasFiles ? `${files.length} file${files.length === 1 ? "" : "s"} ready` : "Make a sheet"}
+          </h1>
+          <p className="mt-1 text-[15px] text-[var(--ink-500)]">
+            {hasFiles
+              ? "Tag each file so we weight it correctly — past exams count most."
+              : "Drop your slides, review guides, past exams, and notes to begin."}
+          </p>
+        </header>
 
-      <form onSubmit={onSubmit} className="space-y-6">
-        <section>
-          <FileDrop
-            onFiles={addFiles}
-            accept=".pdf,.txt,.md"
-            disabled={submitting}
-          />
+        <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
+          {/* ── Left: files ─────────────────────────────────────────── */}
+          <section className="space-y-4">
+            <FileDrop onFiles={addFiles} accept=".pdf,.txt,.md" disabled={submitting} />
 
-          {files.length > 0 && (
-            <ul className="mt-3 space-y-2">
-              {files.map((f, ix) => (
-                <li key={`${f.file.name}-${ix}`}>
-                  <Card className="flex items-center gap-2 !p-2 text-sm" bare>
-                    <div className="flex flex-1 items-center gap-2 pl-2">
-                      <span className="flex-1 truncate" title={f.file.name}>
-                        {f.file.name}
-                        <span className="ml-2 text-xs text-neutral-400">
-                          {Math.round(f.file.size / 1024)} kB
-                        </span>
-                      </span>
-                    </div>
-                    <Select
-                      value={f.tag}
-                      onChange={(e) => updateTag(ix, e.target.value as FileTag)}
-                      className="!w-auto !py-1 !text-xs"
-                    >
-                      {(Object.keys(TAG_LABELS) as FileTag[]).map((t) => (
-                        <option key={t} value={t}>
-                          {TAG_LABELS[t]}
-                        </option>
-                      ))}
-                    </Select>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => removeFile(ix)}
-                      aria-label={`remove ${f.file.name}`}
-                    >
-                      ✕
-                    </Button>
-                  </Card>
-                </li>
-              ))}
-            </ul>
-          )}
+            {files.map((f, ix) => (
+              <Card key={`${f.file.name}-${ix}`} className="flex items-center gap-3 !py-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--r-sm)] bg-[var(--ink-100)] font-mono text-[10px] font-semibold text-[var(--ink-500)]">
+                  {fileKind(f.file.name)}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-[14px] font-medium text-[var(--ink-900)]" title={f.file.name}>
+                    {f.file.name}
+                  </div>
+                  <div className="font-mono text-[11px] text-[var(--ink-400)]">
+                    {Math.round(f.file.size / 1024)} KB
+                  </div>
+                </div>
+                <Select
+                  value={f.tag}
+                  onChange={(e) => updateTag(ix, e.target.value as FileTag)}
+                  className="!h-8 !w-auto !text-[12px]"
+                >
+                  {(Object.keys(TAG_LABELS) as FileTag[]).map((t) => (
+                    <option key={t} value={t}>
+                      {TAG_LABELS[t]}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFile(ix)}
+                  aria-label={`remove ${f.file.name}`}
+                >
+                  ✕
+                </Button>
+              </Card>
+            ))}
+          </section>
 
-          {files.length > 0 && (
-            <Progress
-              className="mt-3"
-              value={confidence}
-              tone="confidence"
-              label="Confidence in result"
-              rightSide={`${confidence}%`}
-            />
-          )}
-          {noPastExam && (
-            <p className="mt-1 text-xs text-neutral-500">
-              Tip: tagging a past exam boosts confidence the most.
-            </p>
-          )}
-        </section>
+          {/* ── Right: settings ─────────────────────────────────────── */}
+          <aside className="space-y-5 lg:sticky lg:top-20 lg:self-start">
+            <Card className="space-y-4">
+              <Setting label="Exam type">
+                <Select value={examType} onChange={(e) => setExamType(e.target.value as typeof examType)} disabled={!hasFiles}>
+                  <option value="conceptual">Conceptual</option>
+                  <option value="problem-solving">Problem-solving</option>
+                  <option value="mixed">Mixed</option>
+                </Select>
+              </Setting>
+              <Setting label="Density">
+                <Select value={density} onChange={(e) => setDensity(e.target.value as Density)} disabled={!hasFiles}>
+                  <option value="max">MAX — fit everything</option>
+                  <option value="balanced">Balanced — high-yield</option>
+                  <option value="essentials">Essentials — core only</option>
+                </Select>
+              </Setting>
+              <Setting label="Priority">
+                <Select value={priority} onChange={(e) => setPriority(e.target.value as typeof priority)} disabled={!hasFiles}>
+                  <option value="balanced">Balanced</option>
+                  <option value="formulas">Formulas first</option>
+                  <option value="concepts">Concepts first</option>
+                </Select>
+              </Setting>
 
-        <section className="grid gap-4 sm:grid-cols-3">
-          <Field label="Exam type">
-            <Select
-              value={examType}
-              onChange={(e) => setExamType(e.target.value as typeof examType)}
-            >
-              <option value="conceptual">Conceptual</option>
-              <option value="problem-solving">Problem-solving</option>
-              <option value="mixed">Mixed</option>
-            </Select>
-          </Field>
-          <Field label="Density">
-            <Select
-              value={density}
-              onChange={(e) => setDensity(e.target.value as typeof density)}
-            >
-              <option value="minimal">Minimal (readable)</option>
-              <option value="standard">Standard</option>
-              <option value="max">MAX (the hero)</option>
-            </Select>
-          </Field>
-          <Field label="Priority">
-            <Select
-              value={priority}
-              onChange={(e) => setPriority(e.target.value as typeof priority)}
-            >
-              <option value="balanced">Balanced</option>
-              <option value="formulas">Formulas first</option>
-              <option value="concepts">Concepts first</option>
-            </Select>
-          </Field>
-        </section>
+              <div className="border-t border-[var(--ink-150)] pt-4">
+                <Progress
+                  value={hasFiles ? confidence : 0}
+                  tone="confidence"
+                  label="Confidence in result"
+                  rightSide={hasFiles ? `${confidence}%` : "—"}
+                />
+                {hasFiles && !hasPastExam && (
+                  <p className="mt-2 text-[12px] text-[var(--ink-500)]">
+                    Add a past exam to push confidence past 85%.
+                  </p>
+                )}
+              </div>
+            </Card>
 
-        <section className="grid gap-4 sm:grid-cols-2">
-          <Field label="Course code (optional)">
-            <TextInput
-              value={courseCode}
-              onChange={(e) => setCourseCode(e.target.value)}
-              placeholder="e.g. CS 6320"
-            />
-          </Field>
-          <Field label="Professor (optional)">
-            <TextInput
-              value={professor}
-              onChange={(e) => setProfessor(e.target.value)}
-              placeholder="e.g. Ouyang"
-            />
-          </Field>
-        </section>
+            <Card className="space-y-3">
+              <Setting label="Course code (optional)">
+                <TextInput value={courseCode} onChange={(e) => setCourseCode(e.target.value)} placeholder="e.g. CS 6320" />
+              </Setting>
+              <Setting label="Professor (optional)">
+                <TextInput value={professor} onChange={(e) => setProfessor(e.target.value)} placeholder="e.g. Ouyang" />
+              </Setting>
+            </Card>
 
-        {error && <Callout variant="danger">{error}</Callout>}
+            {error && <Callout variant="danger">{error}</Callout>}
 
-        <div className="space-y-1">
-          <Button type="submit" size="lg" disabled={submitting || files.length === 0}>
-            {submitting ? "Generating… (may take 30–90s on a big pack)" : "Generate"}
-          </Button>
-          {submitting && (
-            <p className="text-xs text-neutral-500">
-              Don&apos;t close this tab — the engine is reading every file.
-            </p>
-          )}
+            <Button type="submit" size="lg" className="w-full" disabled={!hasFiles} loading={submitting}>
+              {submitting ? "Generating…" : hasFiles ? "Generate my sheet · 1 credit" : "Add files to generate"}
+            </Button>
+            {submitting && (
+              <p className="text-center text-[12px] text-[var(--ink-400)]">
+                Don&apos;t close this tab — usually done in under a minute.
+              </p>
+            )}
+          </aside>
         </div>
       </form>
-    </main>
+    </AppChrome>
+  );
+}
+
+function Setting({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-1.5 block text-[12.5px] font-medium text-[var(--ink-600)]">{label}</span>
+      {children}
+    </label>
   );
 }

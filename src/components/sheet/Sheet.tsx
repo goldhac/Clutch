@@ -8,7 +8,30 @@ import { ConceptsTable } from "./ConceptsTable";
 import { TrapsSection } from "./TrapCallout";
 import { QuestionsSection } from "./QuestionBox";
 
-export type Density = "minimal" | "standard" | "max";
+/**
+ * Density modes — three renders of the same ranked content, one per
+ * moment in the final 48h:
+ *   max         — the exam-room weapon (all tiers, ~5 col, edge-to-edge)
+ *   balanced    — the day-before desk sheet (core+high, ~3 col, annotatable)
+ *   essentials  — the walk-to-the-exam glance card (core, ~2 col, big)
+ *
+ * (Renamed from minimal/standard in D4 — see docs/08.)
+ */
+export type Density = "essentials" | "balanced" | "max";
+
+/** Legacy URL/param aliases → current names. Keeps old links working. */
+export const DENSITY_ALIASES: Record<string, Density> = {
+  minimal: "essentials",
+  standard: "balanced",
+  essentials: "essentials",
+  balanced: "balanced",
+  max: "max",
+};
+
+export function normalizeDensity(raw: string | null | undefined): Density {
+  if (!raw) return "max";
+  return DENSITY_ALIASES[raw.toLowerCase()] ?? "max";
+}
 
 export interface SheetProps {
   content: SheetContent;

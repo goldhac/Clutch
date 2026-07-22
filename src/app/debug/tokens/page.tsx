@@ -226,7 +226,7 @@ export default function TokensDebugPage() {
       </Section>
 
       <Section title="Legacy sheet conventions (until D5 rewrite)">
-        <div className="sheet density-standard rounded-ds-md border border-ink-150 bg-white p-4">
+        <div className="sheet density-balanced rounded-ds-md border border-ink-150 bg-white p-4">
           <p>
             <strong>bold</strong> renders must-know · <em>emphasis</em> renders watch-out ·{" "}
             <span className="verified-star">★</span>exam-verified ·{" "}

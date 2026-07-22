@@ -5,14 +5,11 @@ import "@/renderer/sheet.css";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { sampleContent } from "@samples/sample-content";
-import { Sheet, type Density } from "@/components/sheet";
+import { Sheet, type Density, normalizeDensity } from "@/components/sheet";
 import { OverflowMonitor } from "./overflow-monitor";
 
-const DENSITIES: Density[] = ["minimal", "standard", "max"];
-
 function parseDensity(raw: string | string[] | undefined): Density {
-  const v = Array.isArray(raw) ? raw[0] : raw;
-  return DENSITIES.includes(v as Density) ? (v as Density) : "max";
+  return normalizeDensity(Array.isArray(raw) ? raw[0] : raw);
 }
 
 // PDF metadata title comes from the document title — both browser tab
@@ -80,8 +77,8 @@ function DevBar({ density, cols5 }: { density: Density; cols5: boolean }) {
       className="print:hidden fixed right-3 top-3 z-50 flex gap-1 rounded border border-neutral-300 bg-white/95 p-1 text-xs shadow"
     >
       <span className="px-1 py-0.5 text-neutral-500">density:</span>
-      <Item label="minimal" href={link("minimal")} active={density === "minimal"} />
-      <Item label="standard" href={link("standard")} active={density === "standard"} />
+      <Item label="essentials" href={link("essentials")} active={density === "essentials"} />
+      <Item label="balanced" href={link("balanced")} active={density === "balanced"} />
       <Item label="max" href={link("max")} active={density === "max" && !cols5} />
       <Item label="max ×5" href={link("max", "&cols=5")} active={density === "max" && cols5} />
       <span className="mx-1 self-center text-neutral-300">|</span>

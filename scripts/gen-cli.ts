@@ -9,7 +9,7 @@ loadDotenv({ path: ".env", quiet: true });
  * gen-cli.ts — drive the engine from a local pack of PDFs.
  *
  * Usage:
- *   npx tsx scripts/gen-cli.ts <pack-dir> [--density=max|standard|minimal]
+ *   npx tsx scripts/gen-cli.ts <pack-dir> [--density=max|balanced|essentials]
  *                                          [--exam=conceptual|problem-solving|mixed]
  *                                          [--priority=formulas|concepts|balanced]
  *                                          [--out=<output.json>]

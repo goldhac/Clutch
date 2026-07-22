@@ -35,7 +35,7 @@ export const dynamic = "force-dynamic";
 // is 30s on some runtimes — bump to 300s.
 export const maxDuration = 300;
 
-const VALID_DENSITIES = new Set<Density>(["minimal", "standard", "max"]);
+const VALID_DENSITIES = new Set<Density>(["essentials", "balanced", "max"]);
 const VALID_EXAM_TYPES = new Set<ExamType>([
   "conceptual",
   "problem-solving",
