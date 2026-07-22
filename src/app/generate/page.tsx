@@ -200,7 +200,7 @@ export default function GeneratePage() {
             <Progress
               className="mt-3"
               value={confidence}
-              tone="green"
+              tone="confidence"
               label="Confidence in result"
               rightSide={`${confidence}%`}
             />

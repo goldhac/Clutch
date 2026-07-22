@@ -95,6 +95,16 @@
   --dur:      200ms;
   --dur-slow: 360ms;
 
+  /* ── Semantic z-index scale (never arbitrary 999/9999) ────────────── */
+  --z-base:           0;
+  --z-sticky:        100;   /* sticky nav / app chrome */
+  --z-dropdown:      200;   /* selects, menus */
+  --z-overlay:       300;   /* generation loading overlay */
+  --z-modal-backdrop: 400;
+  --z-modal:         410;
+  --z-toast:         500;
+  --z-tooltip:       600;
+
   /* ══════════════════════════════════════════════════════════════════
    * LEGACY ALIASES — sheet renderer only. Retired in Phase D5.
    * Values frozen at pre-redesign state EXCEPT:

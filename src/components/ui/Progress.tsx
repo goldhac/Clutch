@@ -1,53 +1,66 @@
 /**
- * Progress — a simple determinate bar. Used for the "confidence in
- * result" meter on /generate, and generation progress on /results
- * (Step 7's Tighten loop).
+ * Progress — determinate bar. Two uses:
+ *   - the "confidence in result" meter on /generate (gradient med→high,
+ *     climbs with ds-climb)
+ *   - generation progress on the loading screen
  *
- * value: 0..100
- * tone:  green (default) | indigo | gold — matches the semantic message
+ * The confidence gradient (--conf-med → --conf-high) is a design
+ * signature: the bar literally warms toward green as trust rises.
  */
-export type ProgressTone = "green" | "indigo" | "gold";
+export type ProgressTone = "confidence" | "signal" | "ink";
 
 export interface ProgressProps {
-  value: number;
+  value: number; // 0..100
   tone?: ProgressTone;
   label?: string;
   rightSide?: string;
+  /** Animate the fill from 0 on mount (ds-climb). Default true. */
+  climb?: boolean;
   className?: string;
 }
 
-const TONES: Record<ProgressTone, string> = {
-  green: "bg-[color:var(--color-correct-green)]",
-  indigo: "bg-[color:var(--color-primary-indigo)]",
-  gold: "bg-[color:var(--color-exam-gold)]",
+const FILL: Record<ProgressTone, string> = {
+  confidence:
+    "bg-[linear-gradient(90deg,var(--conf-med),var(--conf-high))]",
+  signal: "bg-[var(--signal-500)]",
+  ink: "bg-[var(--ink-900)]",
 };
 
 export function Progress({
   value,
-  tone = "green",
+  tone = "confidence",
   label,
   rightSide,
+  climb = true,
   className,
 }: ProgressProps) {
   const pct = Math.max(0, Math.min(100, value));
   return (
     <div className={className}>
       {(label || rightSide) && (
-        <div className="mb-1 flex justify-between text-xs text-neutral-500">
-          {label && <span>{label}</span>}
-          {rightSide && <span>{rightSide}</span>}
+        <div className="mb-1.5 flex items-center justify-between text-[13px]">
+          {label && <span className="text-[var(--ink-600)]">{label}</span>}
+          {rightSide && (
+            <span className="font-mono text-[12px] font-medium text-[var(--ink-800)]">
+              {rightSide}
+            </span>
+          )}
         </div>
       )}
       <div
-        className="h-2 w-full overflow-hidden rounded bg-neutral-200"
+        className="h-2 w-full overflow-hidden rounded-[var(--r-full)] bg-[var(--ink-150)]"
         role="progressbar"
         aria-valuenow={pct}
         aria-valuemin={0}
         aria-valuemax={100}
       >
         <div
-          className={`h-full rounded transition-all ${TONES[tone]}`}
-          style={{ width: `${pct}%` }}
+          className={`h-full rounded-[var(--r-full)] ${FILL[tone]}`}
+          style={{
+            width: `${pct}%`,
+            transition: "width var(--dur-slow) var(--ease-out)",
+            animation: climb ? "ds-climb var(--dur-slow) var(--ease-out)" : undefined,
+          }}
         />
       </div>
     </div>

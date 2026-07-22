@@ -1,10 +1,9 @@
 import type { ReactNode, SelectHTMLAttributes } from "react";
 
 /**
- * Select — a styled native <select>. Native beats custom for a11y +
- * mobile ergonomics unless we need multi-select or search.
- *
- * Wrap in <Field> for a label.
+ * Select — styled native <select> with a custom chevron. Native beats
+ * custom for a11y + mobile ergonomics unless we need multi-select or
+ * search. Signal focus ring, danger border when invalid.
  */
 export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   invalid?: boolean;
@@ -12,20 +11,33 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export function Select({ className, invalid, children, ...rest }: SelectProps) {
-  const border = invalid
-    ? "border-[color:var(--color-strong-red)]"
-    : "border-neutral-300";
+  const border = invalid ? "border-[var(--danger)]" : "border-[var(--ink-200)]";
   return (
-    <select
-      className={
-        `w-full rounded border ${border} bg-white px-2 py-1 text-sm ` +
-        `outline-none focus:border-[color:var(--color-primary-indigo)] ` +
-        `focus:ring-1 focus:ring-[color:var(--color-primary-indigo)]` +
-        (className ? ` ${className}` : "")
-      }
-      {...rest}
-    >
-      {children}
-    </select>
+    <div className="relative">
+      <select
+        className={
+          `h-9 w-full appearance-none rounded-[var(--r-md)] border ${border} bg-white ` +
+          `pl-3 pr-8 text-[14px] text-[var(--ink-900)] outline-none transition-colors ` +
+          `duration-[var(--dur-fast)] focus:border-[var(--signal-500)] ` +
+          `focus:ring-2 focus:ring-[var(--signal-100)]` +
+          (className ? ` ${className}` : "")
+        }
+        {...rest}
+      >
+        {children}
+      </select>
+      <svg
+        className="pointer-events-none absolute right-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[var(--ink-400)]"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden
+      >
+        <path d="m6 9 6 6 6-6" />
+      </svg>
+    </div>
   );
 }
