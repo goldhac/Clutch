@@ -10,6 +10,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "check:contract": "tsx samples/verify.ts",
+    "check:relevance": "tsx scripts/check-relevance.ts",
     "gen:cli": "tsx scripts/gen-cli.ts",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md}\""
