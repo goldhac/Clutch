@@ -1,0 +1,302 @@
+{
+  "summary": "Three-lens adversarial review of the CramSheet relevance & fit spec",
+  "agentCount": 3,
+  "logs": [],
+  "result": {
+    "reviews": [
+      {
+        "lens": "student-ux",
+        "findings": [
+          {
+            "title": "The two user knobs barely change the sheet — multipliers can't move a mix that fixed shares control",
+            "severity": "blocker",
+            "section": "2.4 Control multipliers / 3.2 Section shares",
+            "problem": "The §2.4 multipliers are constant per section (e.g. examType=problem-solving → all formulas ×1.20). But within-section placement order is by score, and multiplying every item in a section by the same factor changes nothing about within-section order. Cross-section selection is driven by the §3.2 share table, which is static per density and NOT adjusted by examType/priority. So the scores the knobs modify are only ever compared cross-section in two marginal places: the remainder pass (the last ~2 inches) and FitController's hide order. Net effect of flipping examType from 'conceptual' to 'problem-solving': the same ~34–44% formulas / 12–18% concepts sheet, with maybe 1–3 different items at the edges, plus the per-kind question reordering (the only genuinely working piece, since ×1.15 problem vs ×0.95 others differs per item within the section). This directly fails owner contract #5 ('mix … adjusted by the user's controls') — a student toggling exam type at 2am gets a visually identical sheet and correctly concludes the control is fake.",
+            "fix": "Make the knobs move the §3.2 share targets, and keep multipliers only where they differ per item within a section. Concretely: examType=problem-solving → formulas +8pp, questions +3pp, concepts −6pp, tables −2pp (and mirror-image for conceptual: concepts +8pp, traps +3pp, formulas −8pp); priority=formulas/concepts → ±5pp between those two sections. Keep the per-kind question multipliers (problem vs MCQ/T-F) as within-section ordering. Delete the section-constant multipliers or keep them solely as remainder-pass tie-shapers, and say so explicitly."
+          },
+          {
+            "title": "Traps and tables have no conf/verified in the contract — the scorer's dominant term is undefined for them, and they die in every cross-section comparison",
+            "severity": "blocker",
+            "section": "2.1 Evidence base (vs src/contract/sheet-content.ts TrapSchema, TableSchema)",
+            "problem": "TrapSchema is {text, src} and TableSchema has no conf/verified either — §2.1's 50/35/20/8 table has no row for them. If they default to the missing-conf path (8 pts, as tiers.ts's tierOf does today), every trap scores ~8–30 while formulas/concepts score 35–72+. Consequences: (a) the §3.4 remainder pass ('scan ALL unplaced items by descending score') almost never places a trap; (b) FitController's clip pass hides 'from the lowest score upward' — traps are hidden FIRST when the estimate overruns, which it will (±10–15% stated error). This inverts the design's own intent: Essentials gives traps the second-largest share (20–25%) because named falsities are the highest-value glance content, yet the same spec makes them the first casualties of measurement. Within the traps section, ordering degenerates to authority-only (0–22) with mass ties broken by emission order.",
+            "fix": "Define evidence bases for conf-less types in §2.1: traps = 35 (the schema already enforces they are named falsities — 'inherently high-trust' per the contract's own comment), tables = 20; verified-style boost for traps whose src passes the exam-keyword test. Alternatively (better long-term) add conf/verified to TrapSchema in the contract and the engine prompt. Either way, state the rule in the spec — 'undefined' here means the implementer will pick 8 by copying tierOf."
+          },
+          {
+            "title": "Layer C's hide-by-global-score undoes Layer B's mix and can violate the floors",
+            "severity": "major",
+            "section": "4. Layer C, step 3",
+            "problem": "With the stated ±10–15% estimation error, at MAX (~2200pt of column budget) the fit pass may need to remove 4–6 items. Hiding strictly lowest-global-score-first removes items that cluster in whichever section is score-poorest (traps per the finding above, otherwise low-conf concepts), so the post-fit sheet drifts from the composed shares exactly at the density where the most correction happens. Nothing in Layer C respects the §3.3 floors — on a thin Essentials sheet the clip pass can hide both questions or both traps, recreating the 'single-section wall' the floors exist to prevent. Layer B's careful deficit-interleaving is only as good as what survives Layer C.",
+            "fix": "Make the hide order mix-aware: among currently-clipped-or-hideable items, always hide from the section with the highest allocated/target ratio (the mirror of water-filling), and skip floor-protected items (the last N per section) unless no other candidate clears the clip. This is the same comparator as the composer, so it's still deterministic and testable."
+          },
+          {
+            "title": "The convergence argument is wrong: unhiding a mid-flow bench item can create new clipping, and the failure path prints a clipped PDF",
+            "severity": "major",
+            "section": "4. Layer C, steps 4–6",
+            "problem": "Bench items sit at their score position inside their section, i.e. mid-flow. Unhiding one reflows everything after it; with break-inside:avoid blocks, a downstream block that no longer fits a column bottom jumps whole to the next column, changing effective column heights non-linearly. So 'unhide candidate strictly smaller than the gap' does NOT bound the effect to the gap — it can newly clip items at the page bottom, and hide→unhide→hide oscillation is possible within the 6-pass budget. The spec is silent on what happens when 6 passes elapse without convergence, while §4.6 lets the PDF route proceed on a 10s timeout — the composed failure mode is a shipped PDF with a half-clipped item, violating contract #3 in the one artifact that matters.",
+            "fix": "Two rules: (1) an unhide is only valid if the candidate's DOM position is after the last visible item (tail-fill only), OR re-measure after each unhide and revert it immediately if clipped count increased — both make progress monotone; (2) define the terminal state: when the pass budget is exhausted, run one final hide-only sweep (guaranteed to clear clipping since hiding monotonically reduces content) and then set data-fit='done'. The PDF route's timeout must return 422 (it already has PageCountError plumbing), never print an unverified render."
+          },
+          {
+            "title": "'No dead space' is only checked in the last column — fragmentation holes in other columns are invisible to Layer C, and the section-level no-break in current code makes them huge",
+            "severity": "major",
+            "section": "4. Layer C step 4 / 0. Contract #2",
+            "problem": "Every break-inside:avoid item that doesn't fit a column bottom jumps whole to the next column, leaving a gap of up to one item-height at that column's bottom. At Essentials (9pt, formula blocks ~1in tall) these gaps trivially exceed 2 line-heights, and a student absolutely notices a 1-inch hole at the bottom of column 1 on a sheet sold as 'always full'. Layer C's leftover detection ('gap in the last column') never sees them. Worse, current code makes this pathological: TrapsSection in TrapCallout.tsx puts no-break on the ENTIRE traps section (`<section className=\"traps no-break\">`), so a 5-trap block jumps columns as one unit, leaving a multi-inch hole — and hiding one trap via [data-fit-id] doesn't stop the wrapper from jumping.",
+            "fix": "(1) The spec must mandate removing section-level no-break (traps section today) — no-break lives on items only; the implementation map should list TrapCallout.tsx. (2) Layer C measures the gap below the last item in EVERY column, not just the last, and the bench must include the small items (topics, 1-row concepts, short traps) that can plug mid-flow gaps — inserted at flow positions before the jump, subject to the monotonicity rule from the convergence fix."
+          },
+          {
+            "title": "Pool target is ~1.4× MAX, not the claimed 2×, and cannot supply the promised front/back MAX sheet",
+            "severity": "major",
+            "section": "5. Engine supply-side / 6. Expected counts",
+            "problem": "§5's pool adds up to 45–65 items (12–16 + 10–14 + 8–12 + 10–14 + 4–6 + 1–3). §6 says MAX shows 30–45. That is ≈1.4×, not '≈2× what MAX fits'. A 2-page MAX sheet (contract #6) needs ~60–90 items; the pool as specified runs dry halfway down the back page, and the 'no dead space' rule then forces either an underfilled page 2 or padding — both prohibited. Even for one page, a 45-item MAX render of a 45-item pool leaves an empty bench for Layer C's gap-filling step.",
+            "fix": "Either raise the pool targets to genuinely 2× MAX (≈18–24 formulas, 14–18 concepts, 12–16 traps, 14–18 questions) — verifying Gemini can sustain citation quality at that volume on the Big Data pack before committing — or scope the claim honestly: state the BACK page renders at Balanced density (a defensible product choice: back-of-sheet as the annotation/desk layer) and size the pool for MAX-front + Balanced-back."
+          },
+          {
+            "title": "Essentials' dropped sections contradict the remainder pass — topics come back through the door §3.4 leaves open",
+            "severity": "major",
+            "section": "3.2 / 3.4 / 7 (sparse pool)",
+            "problem": "§3.2 sets topics and tables to 0 ('dropped') for Essentials, but §3.4 says the remainder pass 'scans ALL unplaced items by descending score, ignores shares'. Topic items are 1–2 lines tall and carry conf/src (they score normally) — they are the ideal remainder fillers, so essentially every Essentials sheet with a normal pool ends with topic entries in its last column, which §6 (topics = 0) says cannot happen. The two sections cannot both be true, and whichever the implementer picks silently breaks the other. Related: in a sparse pack, unconditionally dropping topics/tables while the page underfills is the wrong trade — dead space next to withheld real content.",
+            "fix": "Make exclusion explicit and conditional: sections with share 0 are excluded from water-fill AND the remainder pass, EXCEPT when the composer projects underfill (estimated placement < ~90% of budget), in which case dropped-section items re-enter the remainder pool. Update §6 Essentials to 'topics 0 (0–2 on sparse packs)'."
+          },
+          {
+            "title": "Front/back continuation from the ESTIMATED cutoff duplicates and drops items — the real cutoff is decided by Layer C",
+            "severity": "major",
+            "section": "7 (Front/back) / 0. Contract #6",
+            "problem": "§7 says page 2 'continues from the page-1 cutoff', but the composer's cutoff is an estimate; the actual page-1 content set is settled by FitController in the DOM (±several items). Items the composer placed on page 1 but Layer C hid never appear on page 2 (silently dropped — the exact failure this spec exists to kill), and bench items Layer C unhid on page 1 were also composed onto page 2 (printed twice on a front/back sheet — the kind of error that torches trust in every other item on the page).",
+            "fix": "Specify cross-page fit now, since contract #6 forbids one-page assumptions: FitController runs page 1 to data-fit='done' first; page 1's hidden items are prepended (in score order) to page 2's placement list and page 1's unhidden bench items are removed from it, then page 2 fits. Requires stable item identity — add the item-id/data-fit-id derivation (section + engine index) to §9's implementation map."
+          },
+          {
+            "title": "Fit granularity for table rows and section headers is unspecified — orphaned or clipped h2s violate the render rules",
+            "severity": "minor",
+            "section": "4. Layer C step 2–3",
+            "problem": "Concepts render as rows of one <table> (ConceptsTable.tsx) and tables as CompareTable blocks. If [data-fit-id] is the whole table, fixing a one-line clip hides 12–18% of the page; the spec never says it's per-row. Separately, section h2s ('Formulas', 'Traps') are neither items nor fixtures: if every item in a section gets hidden, the header remains as an orphan; and the h2 itself can be the element clipped at the page bottom — a half-clipped 'Likely questions' header breaks contract #3, and Layer C as written only hides items, so it can't fix it.",
+            "fix": "Specify: data-fit-id per concept <tr> (display:none on tr reflows correctly); section headers are bound to their sections — auto-hidden when the section's visible count is 0, and the clipped-element check must treat a clipped header as 'hide the section's lowest item' (pulling the header back up) rather than an unfixable state. Add both to the §8 integration assertions."
+          }
+        ],
+        "verdict": "The architecture is right and most of the contested product calls survive scrutiny: pool-once with deterministic re-selection, the A/B/C separation with a DOM truth pass, bench items pre-rendered for gap filling, the PDF route gating on data-fit=\"done\", honest underfill on sparse packs (padding filler would cost more trust than a short sheet), and dropping topics-TOC/tables from Essentials all serve the 2am student — and the §6 landing zones are plausible against the page geometry and the proven hand-built reference. The 50-vs-35 evidence spread is also defensible given the contract's trust rule already gates conf=high on exam-grade signal. But the spec fails its own two headline promises as written: the examType/priority knobs mathematically cannot move the mix because they're section-constant multipliers under a fixed share table (blocker 1), and traps — the section the design itself weights hardest at Essentials — have no confidence field in the contract and therefore no defined score, making them the first items sacrificed by the remainder and fit passes (blocker 2). The Layer C guarantees (\"converges in ≤6 passes\", \"no dead space\") don't hold against multicol reflow mechanics, the last-column-only gap check, the section-level no-break in current code, and a PDF timeout that prints anyway; and the front/back extension double-counts or drops items because page 2 continues from an estimated rather than measured cutoff. All are fixable within the existing three-layer structure — none require rethinking the pipeline, mostly making the fit pass mix-aware/monotone and moving knob influence from multipliers into the share targets."
+      },
+      {
+        "lens": "algorithm",
+        "findings": [
+          {
+            "title": "Layer C hide/unhide loop can oscillate; the 'strictly smaller than the gap' guard does not prevent it",
+            "severity": "blocker",
+            "section": "4. Layer C (steps 3-5)",
+            "problem": "The anti-oscillation guard assumes an unhidden bench item consumes only the last-column gap. It doesn't: bench items are emitted 'past the cutoff' inside their own sections, so unhiding one inserts height mid-flow (e.g. col 2 of 4). Because every block is break-inside:avoid, the insertion shifts break points non-linearly: a 20pt bench concept inserted mid-flow can push a 25pt question that had 22pt of space at the bottom of col 3 wholly into col 4, advancing the end of flow by ~45pt against a 30pt gap → new clip. Pass k+1 hides the lowest-scored visible item — which is that same bench item (bench items are by construction the lowest-scored placed content) — restoring the exact prior state: gap = 30pt, same candidate still 'strictly smaller than the gap' → unhide again. Infinite hide/unhide cycle; the 10s PDF timeout then ships whatever state the loop is in. Separately, the claim 'each pass strictly reduces clipped count or fills a gap' names two metrics, neither monotone across passes (hiding creates gaps, unhiding creates clips), so ≤6 passes is asserted, not proven. Worst case with per-hide passes at MAX and a 15% estimation undershoot is ~6-10 hides alone.",
+            "fix": "Make the loop monotone by construction: (a) gap-fill items are inserted at the END of the flow (a dedicated remainder slot after the last section), never mid-section — then an insertion consumes exactly the gap and cannot re-clip anything upstream; (b) an item hidden by the clip pass is permanently ineligible for unhide; (c) an unhide that causes any clip is reverted and that item is memoized as failed for the current gap size; (d) hard pass cap followed by a final hide-only sweep (hide-only is provably monotone: removing height only moves break points earlier) before setting data-fit=done. State the invariant ('visible set only shrinks after the last successful insertion') in the spec instead of the pass count."
+          },
+          {
+            "title": "Clip detection measures the wrong geometry for multicol: overflow is horizontal, and fragmented items return a useless union rect",
+            "severity": "blocker",
+            "section": "4. Layer C (steps 2-3) + edge case 'Oversized item'",
+            "problem": "In a fixed-height multicol container with column-fill:auto and overflow:hidden (exactly what sheet.css/density.css build), overflowing content does NOT cross the box bottom — it lays out in extra column boxes to the RIGHT of the content box and is clipped horizontally. A break-inside:avoid item never straddles the bottom; the D5 'half-clipped' artifact is an item whose first fragment sits in the last visible column and whose continuation is in an invisible overflow column. So the spec's primary predicate ('block's rect crosses the box's bottom') essentially never fires, and everything rides on the undefined 'or lies in overflow'. Worse: for any element that fragments across columns (data-fit-splittable items, the TrapsSection/QuestionsSection wrappers, ConceptsTable), getBoundingClientRect returns the UNION of its fragments — a box spanning multiple columns and nearly full column height — so a rect-based test yields false 'clipped' for perfectly placed fragmenting content, sending the hide loop into stripping healthy items.",
+            "fix": "Specify the measurement primitive: per-fragment rects via Range.getClientRects() (or per-item leaf measurement on non-fragmenting [data-fit-id] leaves only, never section wrappers). Clip predicate: any fragment's left edge ≥ content-box right edge (overflow column), or any fragment bottom > box bottom. Require [data-fit-id] to be attached only to break-inside:avoid leaves plus splittable items measured fragment-wise."
+          },
+          {
+            "title": "PDF timeout fallback ships a clipped sheet, and the page-count assert is vacuous under overflow:hidden",
+            "severity": "blocker",
+            "section": "4. Layer C (step 6) / 9. Implementation map (pdf route)",
+            "problem": "Spec: PDF route 'waits for [data-fit=done] (with a 10s timeout fallback)… The existing page-count assert remains the final guarantee.' Two problems. (1) On timeout (FitController crash, hydration failure, or the oscillation above), the route proceeds and prints whatever intermediate state exists — directly violating contract rule 3, silently, in the exported artifact students take into an exam. (2) The page-count assert guarantees nothing about the new failure mode: .sheet is a fixed A4 box with overflow:hidden, so page.pdf() produces exactly 1 page REGARDLESS of how much content is clipped. assertPageCount can never fail on clipping; calling it 'the final guarantee' is false security carried over from the old model.",
+            "fix": "On wait timeout, do not print: run a hide-only terminal sweep via page.evaluate (monotone, bounded) and re-check, or return 422 like PageCountError does. Add the real final guarantee to the route: a page.evaluate assertion that zero [data-fit-id] fragments lie in overflow columns (same predicate as Layer C), failing 422. Keep page-count as a secondary sanity check only, and say so in the spec."
+          },
+          {
+            "title": "Water-fill selection is non-deterministic: 0/0 targets, unpinned range targets, unspecified ties",
+            "severity": "major",
+            "section": "3.3 Placement + 3.2 Section shares",
+            "problem": "The loop picks 'the section with the lowest allocated/target ratio'. (a) In Essentials, topics and tables have target 0 → 0/0 = NaN; NaN comparisons are order-dependent, so which section wins depends on iteration order of the implementation — non-deterministic output for identical input, breaking the 'all deterministic' contract and the density-switch stability users will see. (b) At start every section is 0/target = 0 — an N-way tie with no specified tie-break, so the first several placements (which anchor the whole layout) are implementation-defined. (c) Targets are ranges ('34-44%') with no rule for picking the scalar, so 'allocated/target' isn't even well-defined. (d) The remainder pass sorts ALL unplaced items by score across sections; cross-section float ties (35×1.2 = 42.0 vs a raw 42) have no specified tie-break.",
+            "fix": "Pin scalar targets per density (e.g. range midpoints, published as constants); exclude zero-target sections from the ratio loop entirely; specify the deficit tie-break as fixed section order (formulas, concepts, traps, questions, topics, tables); specify the remainder-pass global order as (score desc, section order, engine emission index) with a stable sort. Add a determinism unit test: two runs, deep-equal placement lists."
+          },
+          {
+            "title": "Global lowest-score-first hiding lets Layer C destroy the mix and violate the §3.3 floors",
+            "severity": "major",
+            "section": "4. Layer C (step 3) vs 3.3 Floors",
+            "problem": "Layer B enforces floors (3 formulas / 2 traps / 2 concepts / 2 questions) and deficit-interleaved shares, but Layer C hides strictly by global score with no section awareness. Scores are systematically section-skewed (e.g. conceptual examType ×0.80 on formulas; traps have no conf field so their scoring baseline differs), so when estimation error is large — and §3.5 admits ±10-15%, concentrated wherever the estimator is worst — the hide pass strips one section preferentially. A conceptual-exam Essentials sheet that overfills by 4 items can lose all its scored-lowest formulas, dropping below the floor that rule 5 ('sheet must never be a single-section wall') exists to protect. The composed mix is exactly what the owner says matters, and the truth pass is allowed to undo it.",
+            "fix": "Make Layer C constraint-aware: hide the lowest-scored item FROM THE SECTION currently most over its target share, and never hide below a section's floor while any above-floor section has hideable items. This is the same deficit logic as 3.3 run in reverse — spec it as 'water-draining' so B and C share one mix invariant, and add an integration assertion that post-fit visible counts respect floors whenever the pool met them."
+          },
+          {
+            "title": "Height estimator is structurally wrong for multiline <pre> formulas and for table/def cells — error far beyond the stated ±10-15%",
+            "severity": "major",
+            "section": "3.5 Height estimation model",
+            "problem": "lines = Σ ceil(fieldChars / charsPerLine) has three concrete failures against the actual components. (1) FormulaBlock renders \\n-containing formulas as <pre> with pre-wrap: a 4-line cluster of 20-char lines (acc/prec/rec/F1) is 80 chars → estimated ceil(80/50)=2 lines vs 4 actual — a 2× undercount on exactly the tallest, most common block type. (2) ConceptsTable: term and meta cells are white-space:nowrap width:1%, so the def cell gets perhaps 50-60% of column width; estimating def against full colWidth undercounts its lines by up to ~2×. (3) charsPerLine uses bodyPt, but tables render at 5pt and code at 4.9pt vs 5.7pt body at MAX. All three bias the same direction (undercount → overfill), so the ±10-15% envelope that sizes the 0.97 safety factor and the bench is not credible; and in the opposite (overestimate) case, 'a few bench items' can be less than the real gap, leaving dead space with no candidates — violating contract rule 2 with no recovery path.",
+            "fix": "Fix the model: split mono formula fields on \\n and ceil each line separately; give each pattern an effective text width (def cell ≈ colWidth − measured term/meta reserve; rows with inline labels add the label chars); use per-field pt size. Then derive bench depth from the measured error distribution (e.g. bench ≥ estimated items in 1.5× the max observed error of a column's worth of content, per section), not 'a few'. Add the estimator-vs-Playwright-measured comparison to the integration tests with an explicit error budget the bench size is computed from."
+          },
+          {
+            "title": "Mid-column dead space is created by break-inside:avoid and is invisible to the last-column-only gap check",
+            "severity": "major",
+            "section": "4. Layer C (step 4) + 0. Contract rule 2",
+            "problem": "The gap detector only looks at 'gap in the last column'. But with break-inside:avoid on every block, any column can end with dead space up to (next block's height − ε): a 100pt question that doesn't fit the 60pt remainder of column 1 moves wholly to column 2, leaving a 60pt hole mid-page. On Essentials (2 wide columns, large blocks) this is routine and highly visible. The controller never detects it, never fixes it, and the integration test ('last-column gap < 2 line-heights') passes while the page has a hole — the exact 'dead space' outcome contract rule 2 forbids. The current TrapsSection additionally wraps the ENTIRE traps section in .no-break, so a multi-trap section moves to a fresh column as one unit, manufacturing the largest such holes; the spec's implementation map touches Sheet.tsx only for bench emission and would inherit this.",
+            "fix": "(a) Remove no-break from section wrappers (TrapsSection), keeping it per-item. (b) Measure per-column end gaps, not just the last column, and let the gap-filler target them: since mid-column gaps are caused by the following block, filling them means swapping in a smaller same-section item ahead of the oversized one — permit score-adjacent reordering within a section for this, or lower the data-fit-splittable threshold so big blocks fragment instead of jumping columns. (c) State the honest achievable bound in the contract: dead space per column ≤ smallest available unplaced item, and test that bound per column."
+          },
+          {
+            "title": "Front/back extension is broken as specified: page 2 composes from Layer B's estimated cutoff, but page 1's real contents are decided by Layer C",
+            "severity": "major",
+            "section": "7. Edge cases (Front/back) + 0. Contract rule 6",
+            "problem": "'Page 2 = fresh budget, placement continues from the page-1 cutoff.' Which cutoff? Layer B's estimated one differs from the truth by exactly the ±10-15% (or worse, per the estimator finding) that Layer C corrects. If page 2 continues from B's cutoff: every bench item C unhid onto page 1 is also placed on page 2 (duplicated in the student's hands), and every item C hid on page 1 falls in the gap between the two cutoffs and appears on NEITHER page (silently dropped, the spec's own forbidden outcome). There is no channel in the three-layer design for C's page-1 visible set to feed page 2's composition, yet contract rule 6 says nothing may assume one page.",
+            "fix": "Define the feedback edge now, since rule 6 forbids deferring it: Layer C exports the post-fit visible id set per page; page 2's composer input = pool minus page-1 visible ids, and page-2 fit runs after page-1 fit (sequential, or both pages in one DOM with page-1 hidden overflow items becoming the head of page 2's placement list). Add a 2-page invariant test: visible(page1) ∩ visible(page2) = ∅ and every item hidden by page-1 fit appears in page-2's candidate list."
+          },
+          {
+            "title": "Fixture (spanner) height estimation error is multiplied by column count in the budget",
+            "severity": "minor",
+            "section": "3.1 The budget",
+            "problem": "B = (usable − examFormat − verifiedPatterns) × cols is the right shape for top-of-flow column-span:all elements, but it means every point of error in a strip's height estimate costs cols× points of B: a 5pt misestimate of the verifiedPatterns strip (whose height depends on text wrap inside a 3-per-row grid — genuinely hard to estimate) is 25pt of phantom budget at 5-col MAX, i.e. roughly two items' worth of systematic overfill before any item estimation error. The spec never says where strip heights come from.",
+            "fix": "State that fixture heights are measured, not estimated: keep per-density measured constants for the header/footer/strips under test (the spec already does this for block chrome), or two-phase on density switch — render fixtures, read their real heights, then run Layer B. Cheap, and it removes the only ×cols-amplified error term."
+          },
+          {
+            "title": "Hiding all of a section's items leaves its header and chrome rendered",
+            "severity": "minor",
+            "section": "4. Layer C (step 3)",
+            "problem": "FitController hides [data-fit-id] item blocks, but section h2s and wrappers (Formulas, Traps, Likely questions, the concepts table's thead) are rendered whenever the SSR array was non-empty. If fit hides every visible item of a small section (plausible on Essentials where a section may hold 1-2 remainder-pass items), the sheet shows an orphan 'Traps' heading over nothing — wasted space and a visibly wrong sheet; the footer counts would even report 0 for a section whose header still shows.",
+            "fix": "Give section wrappers a derived hidden state: after each pass, FitController toggles a class on any section whose fit items are all hidden (and un-toggles on unhide), and the empty-section case gets a unit test. Reclaimed header height must feed back into the same pass's gap measurement."
+          }
+        ],
+        "verdict": "The architecture is right and worth keeping: pool-once with pure deterministic re-selection per density, score-then-compose-then-measure layering, deficit water-filling with floors plus a share-ignoring remainder pass, overfill-biased targets corrected by trimming, and pre-rendered display:none bench items (which, with column-fill:auto, genuinely don't disturb layout) are all sound decisions that fix D5's real disease. But the spec's correctness story rests on three claims that don't survive contact with the actual CSS geometry: the Layer C convergence guard is unsound (mid-section insertion under break-inside:avoid can consume more than the gap, producing a demonstrable hide/unhide cycle the 'smaller than the gap' rule doesn't break), the clip sensor measures the wrong thing (multicol overflow is horizontal into clipped extra columns, and fragmented elements return union rects, so the stated bottom-crossing predicate both misses real clips and false-positives on healthy content), and the safety net is vacuous (page-count can never fail under overflow:hidden, and the 10s timeout prints whatever half-converged state exists). Those three are blockers because they sit exactly on the owner's non-negotiables — always full, never half-clipped, deterministic. The remaining majors are fixable at spec level with modest changes: make Layer C mix-aware so it can't undo the composition it exists to protect, repair the estimator's <pre>/table-cell blind spots and size the bench from the real error budget, extend gap detection beyond the last column, pin the water-fill's targets and tie-breaks (0/0 NaN today), and define the C→B feedback edge that the front/back requirement already makes mandatory. With a monotone fit loop (end-of-flow insertion, no re-unhide, hide-only terminal sweep) the ≤6-pass claim should be replaced by a provable invariant plus a hard cap — at which point the whole system's guarantees become testable rather than asserted."
+      },
+      {
+        "lens": "codebase",
+        "findings": [
+          {
+            "title": "Scorer inputs (file tags, examType, priority) are never stored with the pool",
+            "severity": "blocker",
+            "section": "2. Layer A / 9. Implementation map",
+            "problem": "§2.2 scores source authority by matching each item's src against the pack's filenames+tags, and §2.4 applies examType/priority multipliers. But the stored pool is the sessionStorage stash written by src/app/generate/page.tsx (line 112), which persists only {content, meta, warnings, density, savedAt} — no file list, no tags, no examType, no priority. On /results (the only place density switching happens, §7) Layer A cannot compute §2.2 or §2.4 at all: every item silently gets +0 authority and ×1 multipliers, producing a different ranking than the spec defines and making the user's two knobs dead controls. §9's implementation map has no row for this.",
+            "fix": "Persist the scoring context with the pool: extend the stash (and the future Supabase row) to include files: [{name, tag}], examType, priority. Add a row to §9 (generate/page.tsx + the Stash interface in results/page.tsx). Layer A's signature should be score(item, section, ctx) where ctx is this stored object, so /results, /sheet and tests all feed the same inputs."
+          },
+          {
+            "title": "The PDF route can never render the user's pool — Playwright has no sessionStorage",
+            "severity": "blocker",
+            "section": "1. Pipeline / 4.6 PDF route",
+            "problem": "§1's VERIFY step and §4.6 assume /api/pdf prints the fitted user sheet. The route (src/app/api/pdf/route.ts) launches a fresh Chromium context and navigates to http://127.0.0.1/sheet — a page that renders the module-imported sampleContent. The user's pool exists only in their browser's sessionStorage ('cramsheet:last'), which the Playwright context cannot see. So waiting for [data-fit=done] there verifies the sample sheet forever; the exported PDF and the /results preview are unrelated documents. The spec never defines how the stored pool reaches the print surface.",
+            "fix": "Spec the pool transport explicitly: make /api/pdf accept POST with the stash (pool + scoring ctx + density), have the route stage it (temp id or page.addInitScript writing sessionStorage) and load a /print route that renders from that payload. Optionally also pass the fitted visible-id list from /results so the PDF reproduces the exact selection the student previewed instead of re-fitting."
+          },
+          {
+            "title": "Both named verifiers are vacuous: page-count can't fail and OverflowMonitor can't see inside .cols",
+            "severity": "major",
+            "section": "4.6 / 1. Pipeline VERIFY",
+            "problem": "§4.6 keeps 'the existing page-count assert as the final guarantee' and §1 lists 'OverflowMonitor + PDF page-count' as VERIFY. Neither can detect the failure this system exists to prevent. (a) .sheet is a fixed A4 box with overflow:hidden (sheet.css:31–56), so page.pdf() always emits exactly 1 page no matter how much content is clipped — assertPageCount can only fail on gross geometry bugs, never on clipped items. (b) OverflowMonitor measures .sheet's scrollWidth/scrollHeight, but .cols itself has overflow:hidden, so overflow columns inside it never propagate to the sheet's scroll size — it reads '✓ fits' while items are being clipped. (c) On the 10s data-fit timeout, §4.6 falls back to printing anyway — an unfitted, possibly clipped sheet ships silently.",
+            "fix": "Make the fit result the verifier: after [data-fit=done], page.evaluate that zero visible [data-fit-id] rects cross the .cols container's right/bottom edges and that data-fit='done' (not 'timeout'); return 422 otherwise, including on timeout. Retire or rewrite OverflowMonitor to measure inside .cols (it's superseded by FitController's own measurement). Keep page-count as a format sanity check only — stop calling it a guarantee."
+          },
+          {
+            "title": "§4.3's clip test measures the wrong axis for multicol overflow",
+            "severity": "major",
+            "section": "4. Layer C, step 3",
+            "problem": "With column-fill:auto in a fixed-height container, overflow content is laid out in extra columns to the RIGHT of the visible box — not below it. Blocks with break-inside:avoid (formula-block, .qq, trap-callout — semantics.css:292,318) are moved whole to the next column, so no item's rect ever 'crosses the box's bottom'. The primary test in §4.3 detects nothing; the parenthetical 'or lies in overflow' is the entire mechanism and is left undefined. There's also a fragment subtlety: for an unbroken element split across columns (e.g. the concepts <table>), getBoundingClientRect() returns the union of fragments, so 'wide rect' cannot distinguish legitimately-spanning-two-visible-columns from spilling-into-the-overflow-column.",
+            "fix": "Define clipped precisely: an item is clipped iff itemRect.right > colsRect.right + ε (covers both whole items placed in overflow columns and fragments extending past the last visible column, since the union rect crosses the container's right edge exactly when any fragment lives in overflow). Measure per-item [data-fit-id] at row/block granularity (concept = <tr>, question = <li>) so a section wrapper's union rect never triggers a whole-section hide."
+          },
+          {
+            "title": "Density switch on /results leaves stale .fit-hidden state — React won't clean up classList mutations",
+            "severity": "major",
+            "section": "4. Layer C / 7. Density switch",
+            "problem": "/results is a client page; on density switch React re-renders <Sheet> in place, and reconciliation preserves existing DOM nodes while only patching attributes React itself rendered. Classes added by FitController via classList (.fit-hidden) survive the re-render, so the new density's composition starts with an arbitrary subset of items already hidden from the previous fit — including items the new composer placed above the cutoff. Result: non-deterministic sheets that depend on the sequence of density switches, and a footer whose fit-mutated text gets overwritten by React on the next unrelated re-render (e.g. dismissing warnings) with pre-fit counts.",
+            "fix": "Don't mutate DOM state React owns across renders: either force a remount per composition (<Sheet key={`${density}-${poolHash}`}>) so every fit starts from clean SSR'd markup, or lift visibility into React state — FitController computes a hiddenIds/visibleIds set and Sheet renders .fit-hidden from that state. The state approach also gives you §4.7's counts and the page-2 handoff (finding below) for free."
+          },
+          {
+            "title": "The anti-oscillation rule in §4.5 doesn't actually prevent oscillation",
+            "severity": "major",
+            "section": "4. Layer C, step 5",
+            "problem": "'Unhide candidate strictly smaller than the gap' assumes the inserted item consumes only last-column space. But bench items un-hide at their DOM position within their section, which shifts every subsequent break point; a break-inside:avoid block pushed across a column boundary jumps whole, adding new whitespace mid-flow and pushing the tail into overflow. So an item smaller than the gap can still cause a clip, the next pass hides something, a gap reopens, and hide/unhide can alternate — the claimed invariant 'each pass strictly reduces clipped count or fills a gap' is false, and ≤6 passes is not a bound, it's a hope. If pass 6 ends after an unhide that clipped, the sheet ships with a clipped item and data-fit=done.",
+            "fix": "Use try-and-revert with monotone candidate exhaustion: unhide a candidate, force reflow, re-measure; if anything is clipped, revert and permanently disqualify that candidate for this fit run. Never re-hide an item unhidden in the same run or re-try a disqualified one. Termination is then provable (bounded by bench size + initially-clipped count) and the final state is always clip-free. Require the trim phase to fully converge (zero clipped) before the fill phase starts."
+          },
+          {
+            "title": "Traps and tables have no conf/verified fields — their score is undefined and the trim pass will gut them first",
+            "severity": "major",
+            "section": "2.1 Evidence base / 4.3 trim order",
+            "problem": "§2.1 scores from conf/verified, but TrapSchema is {text, src} and TableSchema has no conf either (src/contract/sheet-content.ts:130–167). The spec never defines their evidence base, so a literal implementation gives traps 0 base: max trap score ≈ (0+22+12)×1.1 ≈ 37 vs a verified formula's (50+22+12)×1.2 ≈ 101. Two concrete consequences: (a) §4.3 'hide from the lowest score upward' will systematically delete traps whenever the estimator overshoots — the exact section Essentials weights at 20–25% — and nothing says fit respects §3.3's floors; (b) §3.4's remainder pass ('scan ALL unplaced items by descending score') will hand the last inches to leftover formulas/questions and essentially never to a trap. Both violate the owner's 'mix matters' contract via the correction layers.",
+            "fix": "Define the evidence base for conf-less sections in §2.1 (traps: treat as med=20, +verified-equivalent when src matches a past_exam file — the schema calls them 'inherently high-trust'; tables: med=20). Make Layer C's trim deficit-aware: hide the lowest-scored item from the section currently MOST over its target share, and never trim a section below its §3.3 floor while any other section has hideable items."
+          },
+          {
+            "title": "The 2-page extension is contradicted by Layer C's drop semantics and by the pool arithmetic",
+            "severity": "major",
+            "section": "0.6 / 5 / 7 front-back",
+            "problem": "Two independent breaks of the owner's 'extends naturally to front/back' requirement. (a) Data flow: page 1's true cutoff exists only after FitController measures — items it hides are dropped at the DOM level. In 2-page mode those items must instead open page 2, so the page-2 composer consumes page-1 fit OUTPUT; but the spec makes Layer B pure/pre-render and Layer C DOM-only with no published result. The layering as drawn cannot express 'placement continues from the page-1 cutoff' (§7). (b) Arithmetic: §5's pool totals 45–65 items while §6 says one MAX page shows 30–45; two MAX pages need 60–90. The '≈2× what MAX fits, so the future BACK page always has surplus' claim is off by ~1.5×.",
+            "fix": "Have FitController emit its final visible/hidden id sets as state (see the React-state fix above); define page-2 composition input as pool minus page-1-visible, seeded with page-1's fit-hidden items. Either raise §5's pool targets to genuinely cover 2×MAX (e.g. 20–28 formulas, 16–22 concepts, …) or state that BACK composes at Balanced-equivalent shares — pick one and write it down now, since §0.6 forbids designs that assume one page."
+          },
+          {
+            "title": "Header meta lies after fit; only the footer is specced to update",
+            "severity": "minor",
+            "section": "4.7",
+            "problem": "Sheet.tsx renders both a header meta line ('N items ranked · M verified', line 87) and the footer from the FULL rendered set — which under the new design includes pre-hidden bench items, so the header will overstate counts on every sheet (e.g. '58 items ranked' while 34 are visible). §4.7 updates only the footer, and does so by DOM text mutation that React will overwrite (see the stale-state finding).",
+            "fix": "Render both header meta and footer counts from the fit result via React state; or scope the header line to the pool explicitly ('58 in pool · 34 shown · 12 verified') so it's truthful without waiting for fit."
+          },
+          {
+            "title": "Marketing home's <Sheet density=\"max\"> call site is unaddressed by the cutover",
+            "severity": "minor",
+            "section": "9. Implementation map",
+            "problem": "src/app/(marketing)/page.tsx:99 renders <Sheet content={sampleContent} density=\"max\"> server-side, cropped to 340px, scaled and blurred, with no FitController (correctly — §4 mounts it only on /sheet and /results). After tiers.ts is replaced, Sheet's render path runs Layer A+B, which per the new design needs scoring context (examType/priority/file tags) that this call site doesn't have; §9 doesn't mention it, so a literal cutover breaks the home page build or renders an unmixed sheet.",
+            "fix": "Give Sheet safe defaults (examType 'mixed', priority 'balanced', empty file context → §2.2 keyword fallback only) and note in §9 that estimator-only composition (no FitController) is the accepted mode for the cropped/blurred hero, where fit error is invisible."
+          }
+        ],
+        "verdict": "The spec's core architecture is sound and a real upgrade over tiers.ts: generate-once/store/re-select, the pure scorer+composer split, water-filling with floors, bench items, and the data-fit handshake are the right mechanisms for the owner's contract, and §2–3's scoring and mix design need no rework. But the spec fails at four boundaries with this codebase's reality. Data: the scorer's required inputs (file tags, examType, priority) are never persisted with the pool, and the PDF route physically cannot see the pool at all — both blockers that make the specced pipeline unimplementable as written. Geometry: §4's clip test checks the bottom edge when multicol overflow goes right, and both existing verifiers (page-count, OverflowMonitor) are vacuous under overflow:hidden, so the 'never half-clipped' guarantee currently has no working detector or enforcer. State: FitController's classList mutations don't survive React re-renders on /results, and the anti-oscillation rule doesn't hold under break-inside:avoid displacement — together these threaten determinism and convergence, the spec's two proudest claims. Mix: undefined scores for conf-less traps/tables make the correction layers systematically anti-trap. All are fixable within the existing three-layer design — the biggest single improvement is lifting fit visibility into React state, which simultaneously fixes the stale-DOM problem, the footer counts, and provides the page-1→page-2 handoff the front/back requirement needs."
+      }
+    ]
+  },
+  "workflowProgress": [
+    {
+      "type": "workflow_phase",
+      "index": 1,
+      "title": "Review"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 1,
+      "label": "review:student-ux",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "a3f16901b443ad495",
+      "model": "claude-fable-5",
+      "state": "done",
+      "startedAt": 1784750081301,
+      "queuedAt": 1784750081276,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "The architecture is right and most of the contested product…",
+      "promptPreview": "You are reviewing a spec for CramSheet, a web app that turns a student's uploaded exam materials into a one-page printable \"Exam Reference Sheet\". Read these files first:\n\n1. /Users/goldnwbou/Documents/Clutch/docs/09-RELEVANCE-AND-FIT.md  — THE SPEC UNDER REVIEW\n2. /Users/goldnwbou/Documents/Clutch/src/components/sheet/tiers.ts — current (to-be-replaced) selection logic\n3. /Users/goldnwbou/Documen…",
+      "lastProgressAt": 1784750374330,
+      "tokens": 73720,
+      "toolCalls": 15,
+      "durationMs": 293029,
+      "resultPreview": "{\"findings\":[{\"title\":\"The two user knobs barely change the sheet — multipliers can't move a mix that fixed shares control\",\"severity\":\"blocker\",\"section\":\"2.4 Control multipliers / 3.2 Section shares\",\"problem\":\"The §2.4 multipliers are constant per section (e.g. examType=problem-solving → all formulas ×1.20). But within-section placement order is by score, and multiplying every item in a section…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 2,
+      "label": "review:algorithm",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "ab4eccfa13eae5ef4",
+      "model": "claude-fable-5",
+      "state": "done",
+      "startedAt": 1784750081302,
+      "queuedAt": 1784750081276,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "The architecture is right and worth keeping: pool-once with…",
+      "promptPreview": "You are reviewing a spec for CramSheet, a web app that turns a student's uploaded exam materials into a one-page printable \"Exam Reference Sheet\". Read these files first:\n\n1. /Users/goldnwbou/Documents/Clutch/docs/09-RELEVANCE-AND-FIT.md  — THE SPEC UNDER REVIEW\n2. /Users/goldnwbou/Documents/Clutch/src/components/sheet/tiers.ts — current (to-be-replaced) selection logic\n3. /Users/goldnwbou/Documen…",
+      "lastProgressAt": 1784750406666,
+      "tokens": 65313,
+      "toolCalls": 10,
+      "durationMs": 325364,
+      "resultPreview": "{\"findings\":[{\"title\":\"Layer C hide/unhide loop can oscillate; the 'strictly smaller than the gap' guard does not prevent it\",\"severity\":\"blocker\",\"section\":\"4. Layer C (steps 3-5)\",\"problem\":\"The anti-oscillation guard assumes an unhidden bench item consumes only the last-column gap. It doesn't: bench items are emitted 'past the cutoff' inside their own sections, so unhiding one inserts height mi…"
+    },
+    {
+      "type": "workflow_agent",
+      "index": 3,
+      "label": "review:codebase",
+      "phaseIndex": 1,
+      "phaseTitle": "Review",
+      "agentId": "a3f22688a83b89d6c",
+      "model": "claude-fable-5",
+      "state": "done",
+      "startedAt": 1784750081303,
+      "queuedAt": 1784750081276,
+      "attempt": 1,
+      "lastToolName": "StructuredOutput",
+      "lastToolSummary": "The spec's core architecture is sound and a real upgrade ov…",
+      "promptPreview": "You are reviewing a spec for CramSheet, a web app that turns a student's uploaded exam materials into a one-page printable \"Exam Reference Sheet\". Read these files first:\n\n1. /Users/goldnwbou/Documents/Clutch/docs/09-RELEVANCE-AND-FIT.md  — THE SPEC UNDER REVIEW\n2. /Users/goldnwbou/Documents/Clutch/src/components/sheet/tiers.ts — current (to-be-replaced) selection logic\n3. /Users/goldnwbou/Documen…",
+      "lastProgressAt": 1784750413900,
+      "tokens": 84517,
+      "toolCalls": 22,
+      "durationMs": 332597,
+      "resultPreview": "{\"findings\":[{\"title\":\"Scorer inputs (file tags, examType, priority) are never stored with the pool\",\"severity\":\"blocker\",\"section\":\"2. Layer A / 9. Implementation map\",\"problem\":\"§2.2 scores source authority by matching each item's src against the pack's filenames+tags, and §2.4 applies examType/priority multipliers. But the stored pool is the sessionStorage stash written by src/app/generate/page…"
+    }
+  ],
+  "totalTokens": 223550,
+  "totalToolCalls": 47
+}
