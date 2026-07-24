@@ -4,6 +4,9 @@ Upload your course materials, get an exam-calibrated **one-page reference sheet*
 
 > Marketing says "cheat sheet." The product and the PDF say **"Exam Reference Sheet."**
 
+> ## ▶ New session? Start at [`docs/00-STATE.md`](docs/00-STATE.md)
+> It's the single **continue-here** handoff: current status, what's live, the exact next action, decisions locked, and every gotcha. Read it top-to-bottom, then go.
+
 ## What this is
 
 A web app that turns an uploaded exam pack (slides, review guides, past exams, homework, notes) into a dense, print-first one-page study sheet. The differentiator is **prioritization with evidence**: every item is ranked by likely testability and carries a confidence label + a source citation.
@@ -20,6 +23,7 @@ The full spec lives in [`docs/`](docs/):
 
 | File | What it covers |
 |---|---|
+| [**`docs/00-STATE.md`**](docs/00-STATE.md) | **The continue-here handoff — read first.** Current status, what's live, next action, decisions, gotchas |
 | [`docs/01-PRD.md`](docs/01-PRD.md) | Product vision, strategy, scope, pricing, success metrics |
 | [`docs/02-OUTPUT-SPEC.md`](docs/02-OUTPUT-SPEC.md) | The proven rendering + content standard — design tokens, density geometry, content patterns, prioritization rubric, render pipeline |
 | [`docs/03-ROADMAP.md`](docs/03-ROADMAP.md) | Phases and acceptance gates |
@@ -28,6 +32,7 @@ The full spec lives in [`docs/`](docs/):
 | [`docs/06-V1-CHECKLIST.md`](docs/06-V1-CHECKLIST.md) | The single source of truth for v1 — every feature mapped to a step, per-step subtasks, always-on rules, explicit out-of-scope |
 | [`docs/07-ENGINE-PROMPT-PLAYBOOK.md`](docs/07-ENGINE-PROMPT-PLAYBOOK.md) | The proven patterns from Gold's hand-built reference sheets, extracted as the source of truth for the Step 6 engine prompt |
 | [`docs/08-DESIGN-IMPLEMENTATION-PLAN.md`](docs/08-DESIGN-IMPLEMENTATION-PLAN.md) | The design-system implementation plan (D1–D6): tokens, primitives, marketing, app screens, the sheet redesign, brand + deploy |
+| [`docs/09-RELEVANCE-AND-FIT.md`](docs/09-RELEVANCE-AND-FIT.md) | **The current work** — the selection + fit algorithm (what shows on each sheet, how many, the mix, everything fully visible). Reviewed by a 3-lens panel (`docs/reviews/`) |
 
 The production design system (tokens, type, primitives) is mirrored from the
 handoff in [`design/`](design/) (gitignored assets) and lives in code under
