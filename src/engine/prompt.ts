@@ -92,7 +92,11 @@ TRUST LAYER (P0, non-negotiable):
    must read like "filename.pdf (filename only, no readable content)".
 
 NAMED TRAPS: write each as "X is FALSE because Y" — NOT "be careful
-about X". Vague traps will be REJECTED by the contract validator.
+about X". MECHANICAL CHECK: the validator regex-rejects any trap text
+that does not literally contain one of the words "FALSE", "incorrect",
+"wrong", or "not". Re-read EVERY traps[].text you emit and make sure
+one of those four words appears — rewrite "avoid using R² alone" as
+"Choosing a model on R² alone is WRONG because …".
 `.trim();
 
 const SYSTEM_PATTERNS = `
@@ -138,14 +142,35 @@ G) verifiedPatterns: if the pack contains a past exam, distill the
    FIRST on the rendered sheet.
 `.trim();
 
-const SYSTEM_DENSITY_TUNING = `
-DENSITY TUNING (the exam-room weapon → the glance card):
-- "max"        — densest, everything (4–5 col). Emit 8–12 formulas,
-                 6–10 concepts, 5–8 traps, 6–10 questions. Prefer terse.
-- "balanced"   — the day-before desk sheet, high-yield set (3 col).
-                 Emit 5–8 formulas, 4–7 concepts, 4–6 traps, 4–7 questions.
-- "essentials" — the walk-to-the-exam glance card, core only (2 col).
-                 Emit 3–6 formulas, 3–5 concepts, 3–5 traps, 3–5 questions.
+const SYSTEM_POOL_TARGET = `
+POOL TARGET (docs/09 §5 — you emit a RANKED POOL, not a page):
+You do NOT decide what fits on the sheet. A downstream composer scores,
+ranks, and places items to exactly fill 1 or 2 fixed A4 pages — items
+that don't fit are benched, never lost. Your job is SUPPLY: a deep,
+evidence-backed pool ~2× what one dense page holds, best-first within
+each section.
+
+Emit (hard minimums in parentheses — going under starves the layout):
+- topics:    4–6        (4)
+- formulas: 18–26      (12)  — every one with worked numbers in "ex"
+- concepts: 18–26      (12)
+- traps:    12–18       (8)
+- questions:18–28      (12)  — mirror the past exam's kind mix
+- tables:    4–7        (3)
+
+Rank order WITHIN each array matters: put the most exam-likely first.
+Do not pad with filler to hit counts — mine the pack deeper instead
+(worked examples in slides, regression output columns, chart-choice
+rules, definition sentences). If the pack is genuinely thin, emit less
+and let the composer handle it.
+
+COUNT CHECK (do this BEFORE emitting): count every array. If formulas,
+concepts, or questions is under its minimum and the pack still has
+unmined material — worked examples you summarized instead of itemizing,
+lecture definitions you skipped, exam questions you grouped instead of
+listing one-per-item — go back and split them out. A 25-page pack with
+a past exam ALWAYS supports the full target. Under-emitting starves
+the back page of the printed sheet.
 
 EXAM TYPE WEIGHTING:
 - "conceptual"      — bias toward concepts + traps + likely-Q
@@ -194,7 +219,7 @@ export function buildSystemPrompt(): string {
     SYSTEM_VOICE,
     SYSTEM_TRUST_RULES,
     SYSTEM_PATTERNS,
-    SYSTEM_DENSITY_TUNING,
+    SYSTEM_POOL_TARGET,
     SYSTEM_OUTPUT_SCHEMA,
   ].join("\n\n──────\n\n");
 }
@@ -215,7 +240,8 @@ export function buildUserPrompt(input: EnginePromptInput): string {
 
   const controlsLine = [
     `Exam type: ${input.examType}`,
-    `Density:   ${input.density}`,
+    // density is a LAYOUT control resolved by the composer, not a
+    // supply control — the POOL TARGET is the same at every density.
     `Priority:  ${input.priority}`,
   ].join("\n");
 

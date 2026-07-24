@@ -472,3 +472,71 @@ export function compose(
 
   return { placed, bench, overflow, counts, estFill: used / budget };
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Front/back split — the R6 prototype (docs/09 §7).
+ * FRONT = the dense weapon (MAX, optionally ×5). BACK = Balanced (the
+ * decided standard): composed from the pool MINUS the front's items.
+ * Estimated cutoffs for now; Layer C (FitController) refines later.
+ * ────────────────────────────────────────────────────────────────────── */
+
+/** Rebuild a SheetContent containing only the items whose ids are in `ids`
+ * (emission order preserved per section — the renderer flows sections in
+ * fixed order anyway). */
+function materialize(content: SheetContent, ids: Set<string>): SheetContent {
+  const keep = <T,>(arr: T[], section: Section): T[] =>
+    arr.filter((_, i) => ids.has(`${section}:${i}`));
+  return {
+    ...content,
+    topics: keep(content.topics, "topics"),
+    formulas: keep(content.formulas, "formulas"),
+    concepts: keep(content.concepts, "concepts"),
+    traps: keep(content.traps, "traps"),
+    questions: keep(content.questions, "questions"),
+    tables: content.tables ? keep(content.tables, "tables") : undefined,
+  };
+}
+
+export interface FrontBack {
+  front: SheetContent;
+  back: SheetContent;
+  frontCompose: ComposeResult;
+  backCompose: ComposeResult;
+}
+
+/**
+ * Split a pool into FRONT (max, cols5 by default) + BACK (balanced,
+ * composed from the remainder). Deterministic. Page 2's input is the
+ * pool minus page 1's placed set — the docs/09 §7 data flow with the
+ * estimated cutoff.
+ */
+export function splitFrontBack(
+  content: SheetContent,
+  ctx: ScoreCtx = EMPTY_CTX,
+  cols5 = true,
+): FrontBack {
+  const frontCompose = compose(content, "max", ctx, defaultBudget("max", cols5), cols5);
+  const frontIds = new Set(frontCompose.placed.map((p) => p.id));
+  const front = materialize(content, frontIds);
+
+  // Remainder pool = everything NOT placed on the front.
+  const remainder: SheetContent = {
+    ...content,
+    topics: content.topics.filter((_, i) => !frontIds.has(`topics:${i}`)),
+    formulas: content.formulas.filter((_, i) => !frontIds.has(`formulas:${i}`)),
+    concepts: content.concepts.filter((_, i) => !frontIds.has(`concepts:${i}`)),
+    traps: content.traps.filter((_, i) => !frontIds.has(`traps:${i}`)),
+    questions: content.questions.filter((_, i) => !frontIds.has(`questions:${i}`)),
+    tables: content.tables?.filter((_, i) => !frontIds.has(`tables:${i}`)),
+    // verified patterns lead the FRONT only; back gets a plain header.
+    verifiedPatterns: undefined,
+  };
+  const backCompose = compose(remainder, "balanced", ctx, defaultBudget("balanced"));
+  const backIds = new Set(backCompose.placed.map((p) => p.id));
+  const back = {
+    ...materialize(remainder, backIds),
+    title: `${content.title} — BACK`,
+  };
+
+  return { front, back, frontCompose, backCompose };
+}

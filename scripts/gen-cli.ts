@@ -31,8 +31,9 @@ loadDotenv({ path: ".env", quiet: true });
  */
 import { readFile, writeFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
-import { generateSheet, EngineError } from "@/engine/rank";
+import { generateSheet, deepenSheet, EngineError } from "@/engine/rank";
 import { extractPdfText } from "@/parse/pdf";
+import { extractText } from "@/parse/text";
 import { type Density } from "@/components/sheet";
 import {
   type ExamType,
@@ -62,6 +63,8 @@ interface CliArgs {
   examType: ExamType;
   priority: PriorityMode;
   outPath?: string;
+  /** Number of pool-deepening passes to run after the first call (0-3). */
+  topup: number;
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -80,10 +83,13 @@ function parseArgs(argv: string[]): CliArgs {
     examType: (get("exam") ?? "mixed") as ExamType,
     priority: (get("priority") ?? "balanced") as PriorityMode,
     outPath: get("out"),
+    topup: Math.min(3, Math.max(0, Number.parseInt(get("topup") ?? "0", 10) || 0)),
   };
 }
 
-async function findPdfs(dir: string, depth = 0): Promise<string[]> {
+const DOC_EXTS = [".pdf", ".txt", ".md"];
+
+async function findDocs(dir: string, depth = 0): Promise<string[]> {
   if (depth > 2) return []; // don't recurse too deeply
   const entries = await readdir(dir);
   const results: string[] = [];
@@ -92,8 +98,8 @@ async function findPdfs(dir: string, depth = 0): Promise<string[]> {
     const full = path.join(dir, e);
     const st = await stat(full);
     if (st.isDirectory()) {
-      results.push(...(await findPdfs(full, depth + 1)));
-    } else if (e.toLowerCase().endsWith(".pdf")) {
+      results.push(...(await findDocs(full, depth + 1)));
+    } else if (DOC_EXTS.some((x) => e.toLowerCase().endsWith(x))) {
       results.push(full);
     }
   }
@@ -105,36 +111,61 @@ async function main() {
   console.error(`[gen-cli] pack=${args.packDir}`);
   console.error(`[gen-cli] density=${args.density} exam=${args.examType} priority=${args.priority}`);
 
-  const pdfs = await findPdfs(args.packDir);
-  if (pdfs.length === 0) {
-    console.error(`[gen-cli] no PDFs found in ${args.packDir}`);
+  const docs = await findDocs(args.packDir);
+  if (docs.length === 0) {
+    console.error(`[gen-cli] no documents (.pdf/.txt/.md) found in ${args.packDir}`);
     process.exit(1);
   }
-  console.error(`[gen-cli] found ${pdfs.length} PDFs`);
+  console.error(`[gen-cli] found ${docs.length} documents`);
 
   const pack: PackFile[] = [];
-  for (const file of pdfs) {
+  for (const file of docs) {
     const buf = await readFile(file);
+    const filename = path.basename(file);
+    const tag = guessTag(filename);
     try {
-      const { text, charCount, pageCount } = await extractPdfText(buf);
-      const tag = guessTag(path.basename(file));
-      const filename = path.basename(file);
-      console.error(`[gen-cli]   ${tag.padEnd(12)} ${pageCount}p ${charCount}c  ${filename}`);
-      pack.push({ tag, filename, text });
+      if (filename.toLowerCase().endsWith(".pdf")) {
+        const { text, charCount, pageCount } = await extractPdfText(buf);
+        console.error(`[gen-cli]   ${tag.padEnd(12)} ${pageCount}p ${charCount}c  ${filename}`);
+        pack.push({ tag, filename, text });
+      } else {
+        const { text, charCount } = extractText(buf.toString("utf-8"));
+        console.error(`[gen-cli]   ${tag.padEnd(12)} txt ${charCount}c  ${filename}`);
+        pack.push({ tag, filename, text });
+      }
     } catch (e) {
-      console.error(`[gen-cli]   FAILED  ${path.basename(file)}: ${e instanceof Error ? e.message : e}`);
+      console.error(`[gen-cli]   FAILED  ${filename}: ${e instanceof Error ? e.message : e}`);
     }
   }
 
   console.error(`[gen-cli] running engine…`);
   const startedAt = Date.now();
   try {
-    const result = await generateSheet({
+    const input = {
       pack,
       examType: args.examType,
       density: args.density,
       priority: args.priority,
-    });
+    };
+    let result = await generateSheet(input);
+
+    // Pool-deepening passes (docs/09 §5): each pass shows the model the
+    // existing item names and asks for NEW items only, then merges.
+    for (let i = 0; i < args.topup; i++) {
+      console.error(`[gen-cli] top-up pass ${i + 1}/${args.topup}…`);
+      const before = result.content;
+      const deepened = await deepenSheet(input, before);
+      result = {
+        ...deepened,
+        meta: {
+          ...deepened.meta,
+          inputTokens: (result.meta.inputTokens ?? 0) + (deepened.meta.inputTokens ?? 0),
+          outputTokens: (result.meta.outputTokens ?? 0) + (deepened.meta.outputTokens ?? 0),
+        },
+        warnings: [...result.warnings, ...deepened.warnings],
+      };
+      console.error(`[gen-cli]   after top-up: ${itemSummary(result.content)}`);
+    }
 
     const audit = auditCitations(result.content, pack);
 

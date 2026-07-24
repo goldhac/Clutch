@@ -233,18 +233,23 @@
 }
 
 /* ── Concepts (memorize-cold) table ────────────────────────────────── */
+/* table-layout: FIXED — an auto-layout table with nowrap cells computes
+ * a min-content width wider than a max×5 column (~150pt) and bleeds
+ * horizontally into the neighbor column (text-on-text overlap). Fixed
+ * layout caps the table at 100% of its column no matter the content;
+ * long terms/citations wrap instead of pushing. */
 .sheet .concepts table {
-  table-layout: auto;
+  table-layout: fixed;
 }
 .sheet .concepts td.term {
-  white-space: nowrap;
-  width: 1%;
+  width: 30%;
   padding-right: 2pt;
+  overflow-wrap: break-word;
 }
 .sheet .concepts td.meta {
-  white-space: nowrap;
-  width: 1%;
+  width: 24%;
   text-align: right;
+  overflow-wrap: break-word;
 }
 .sheet .concepts td.meta .src {
   margin-left: 2pt;

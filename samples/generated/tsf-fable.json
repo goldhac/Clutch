@@ -1,0 +1,983 @@
+{
+  "title": "OPRE 3333 Exam 2 — Ch 1·3·8 Reference Sheet",
+  "examFormat": {
+    "mix": "~11 concept MCQs (Ch1 analytics + Ch3 charts + Ch8 definitions) · ~8 computation problems (accuracy measures, moving avg, exp smoothing, trend + seasonal regression)",
+    "time": "75 minutes",
+    "openBook": false,
+    "notes": "Review solutions give exact target numbers — every computation below is verified against them. Calculator work: error tables, k−1 dummy regressions."
+  },
+  "verifiedPatterns": [
+    {
+      "pattern": "Build the full error table (Forecast, e, |e|, e², |%e|) for a 5-year series under naive / average / moving-average / exp-smoothing, then compute MAE, MSE, MAPE + the year-6 forecast — four consecutive questions use the SAME series (234, 287, 255, 310, 298)",
+      "src": "exam-review-2.pdf Q12–Q15"
+    },
+    {
+      "pattern": "Given quarterly data, code k−1 dummies, run regression, write ŷ, forecast all 4 quarters of next year — with trend (add t) and without",
+      "src": "exam-review-2.pdf Q17–Q19; review-solutions-2.md"
+    },
+    {
+      "pattern": "Given a fitted trendline (ŷ = 78.291 + 3.035t), compute MSE over ALL periods (k=0) and forecast t=6",
+      "src": "exam-review-2.pdf Q16"
+    },
+    {
+      "pattern": "Definition MCQs lifted straight from lecture wording — pattern names, method↔pattern match, analytics types, when to use tables",
+      "src": "exam-review-2.pdf Q1–Q11"
+    }
+  ],
+  "topics": [
+    {
+      "name": "Forecast accuracy measures",
+      "why": "MFE/MAE/MSE/MAPE tables are 4 of the 8 computation questions. Know the n−k denominators cold.",
+      "src": "exam-review-2.pdf Q12–Q16; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Smoothing methods (naive · average · MA · exp smoothing)",
+      "why": "One shared 5-year series, four methods. Pattern-match the arithmetic, don't re-derive.",
+      "src": "exam-review-2.pdf Q12–Q15; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Seasonal dummy regression (± trend)",
+      "why": "Three full problems. Write ŷ from the coefficient table, plug quarters, read forecasts.",
+      "src": "exam-review-2.pdf Q17–Q19; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Time-series patterns → method choice",
+      "why": "Horizontal→MA/ES · trend→regression on t · seasonal→dummies. Several MCQs test exactly this mapping.",
+      "src": "exam-review-2.pdf Q9–Q11; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Ch1 analytics types + Ch3 chart choice",
+      "why": "Descriptive/predictive/prescriptive + which chart/table for which data — the first 5 review MCQs.",
+      "src": "exam-review-2.pdf Q1–Q5; lecture-04.pdf; lecture-05.pdf",
+      "conf": "high",
+      "verified": true
+    }
+  ],
+  "formulas": [
+    {
+      "name": "Forecast error",
+      "formula": "e_t = y_t − ŷ_t",
+      "vars": "y_t actual · ŷ_t forecast for period t",
+      "when": "The atom of every accuracy measure — sign matters (+ = under-forecast)",
+      "trap": "Order is actual MINUS forecast — flipping the sign flips MFE's bias reading",
+      "ex": "y=5, ŷ=7 → e = −2 (over-forecast)",
+      "src": "lecture-06.pdf; lecture-07.pdf",
+      "conf": "high"
+    },
+    {
+      "name": "MFE — bias, not accuracy",
+      "formula": "MFE = Σe_t / (n−k)",
+      "vars": "n periods · k = periods with no forecast",
+      "when": "Answers 'am I systematically over/under-forecasting?' ONLY",
+      "trap": "MFE ≈ 0 does NOT mean accurate — ± errors cancel (gasoline naive: MFE 0.45 but MAE 3.73)",
+      "ex": "Coffee shop: errors −10,5,−10,5,10 → MFE = 0 (unbiased), yet MAE = 8",
+      "src": "lecture-06.pdf; lecture-07.pdf",
+      "conf": "high"
+    },
+    {
+      "name": "MAE",
+      "formula": "MAE = Σ|e_t| / (n−k)",
+      "vars": "absolute errors — no cancellation",
+      "when": "Average miss in real units; the intuitive one",
+      "trap": "Compare methods on the SAME series only — MAE is scale-dependent",
+      "ex": "★ Q12 naive: Σ|e| = 152 over 4 errors → MAE = 38",
+      "src": "exam-review-2.pdf Q12; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "MSE",
+      "formula": "MSE = Σe_t² / (n−k)",
+      "vars": "squared errors",
+      "when": "Punishes big misses hardest; the tie-breaker the course uses to pick methods and α",
+      "trap": "Denominator is n−k, NOT n — a 3-yr MA on 5 years has only 2 errors → divide by 2",
+      "ex": "★ Q14 3-yr MA: e² = 2635.11 + 196 → MSE = 2831.11/2 = 1415.56",
+      "src": "exam-review-2.pdf Q14; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "MAPE — relative accuracy",
+      "formula": "MAPE = Σ|100·e_t/y_t| / (n−k)",
+      "vars": "percentage errors vs ACTUAL y_t",
+      "when": "Cross-scale comparison (small shop vs Starbucks)",
+      "trap": "Divide by actual y_t, NOT forecast ŷ_t",
+      "ex": "★ Q12 naive: MAPE = 13.20% · Coffee 7.5% vs Starbucks 7.0% though MAE 8 vs 76",
+      "src": "exam-review-2.pdf Q12; lecture-07.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Naive forecast",
+      "formula": "ŷ_{t+1} = y_t",
+      "vars": "most recent value carries forward",
+      "when": "Baseline method; k=1 (no forecast for period 1)",
+      "trap": "It is NOT 'the accurate simple method' — average beat it on all three measures (gasoline)",
+      "ex": "★ Q12: F6 = y5 = 298 · MAE 38 · MSE 1750.5 · MAPE 13.20%",
+      "src": "exam-review-2.pdf Q12; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Average-of-all forecast",
+      "formula": "ŷ_{t+1} = (y_1+…+y_t)/t",
+      "vars": "running mean of ALL history so far",
+      "when": "Stable horizontal series; each forecast uses a growing window",
+      "trap": "The forecast for year 3 averages years 1–2 only — not all 5 years",
+      "ex": "★ Q13: F6 = (234+287+255+310+298)/5 = 276.8 · MAE 34.08 · MSE 1544.15",
+      "src": "exam-review-2.pdf Q13; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Moving average (order k)",
+      "formula": "ŷ_{t+1} = (y_{t−k+1}+…+y_t)/k",
+      "vars": "k most recent values ONLY",
+      "when": "Horizontal pattern; small k tracks shifts fast, large k smooths noise",
+      "trap": "First forecastable period is t = k+1 — with k=3 on 5 years you get exactly 2 errors",
+      "ex": "★ Q14: F4=(234+287+255)/3=258.67 · F5=284 · F6=(255+310+298)/3=287.67",
+      "src": "exam-review-2.pdf Q14; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Exponential smoothing",
+      "formula": "ŷ_{t+1} = αy_t + (1−α)ŷ_t",
+      "vars": "α = weight on the LATEST actual · start ŷ_2 = y_1",
+      "when": "Horizontal pattern; all history weighted, decaying geometrically",
+      "trap": "ŷ_2 = y_1 (NOT 0, NOT an average) — the chain starts from the first actual",
+      "ex": "★ Q15 α=0.2: 234 → 244.6 → 246.68 → 259.344 → F6 = 267.08 · MSE 2105.22",
+      "src": "exam-review-2.pdf Q15; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Exp smoothing — error-correction form",
+      "formula": "ŷ_{t+1} = ŷ_t + α·e_t",
+      "vars": "new forecast = old forecast + α × latest miss",
+      "when": "Same formula rearranged — explains WHY α is a reaction speed",
+      "trap": "Noisy series → SMALL α (don't chase randomness); stable series → larger α; choose α that minimizes MSE",
+      "ex": "Gasoline α=0.2: Σe² = 98.80 over 11 → MSE 8.98",
+      "src": "lecture-06.pdf p14–15",
+      "conf": "med"
+    },
+    {
+      "name": "Linear trend projection",
+      "formula": "ŷ_t = b_0 + b_1·t",
+      "vars": "b_0 intercept · b_1 slope per period · t = time index",
+      "when": "TREND pattern (MA/ES are wrong here — they lag a trend)",
+      "trap": "Regression forecasts EVERY period → k = 0, MSE divides by all n",
+      "ex": "★ Q16: ŷ = 78.291 + 3.035t → F6 = 96.501 · MSE = 1.931 (÷5) · Bicycle: 20.4+1.1t → t=11: 32.5",
+      "src": "exam-review-2.pdf Q16; review-solutions-2.md; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Seasonality WITHOUT trend (dummy regression)",
+      "formula": "ŷ_t = b_0 + b_1Qtr1_t + b_2Qtr2_t + b_3Qtr3_t",
+      "vars": "k seasons → k−1 dummies · Q4 = all zeros = baseline b_0",
+      "when": "Seasonal pattern, flat plot (no t term)",
+      "trap": "Quarter 4's forecast is just b_0 — there is NO Q4 coefficient",
+      "ex": "★ Q18: ŷ = 77 −10Q1 −30Q2 −20Q3 → Y4: 67, 47, 57, 77 (R²=.90) · Umbrella: 95+29/57/26 → 124, 152, 121, 95",
+      "src": "exam-review-2.pdf Q18; review-solutions-2.md; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Seasonality WITH trend",
+      "formula": "ŷ_t = b_0 + b_1Qtr1 + b_2Qtr2 + b_3Qtr3 + b_4·t",
+      "vars": "dummies for season + t for growth · t keeps counting across years",
+      "when": "Plot shows recurring peaks AND upward drift",
+      "trap": "Next-year t values continue the index (year 4 of 3-yr quarterly data = t 13–16, NOT 1–4)",
+      "ex": "★ Q17: ŷ = 864.08 + 87.8Q1 + 137.98Q2 + 106.16Q3 + 28.16t → Y4: 1317.92, 1396.25, 1392.58, 1314.58",
+      "src": "exam-review-2.pdf Q17; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Q19 South Shore — the 5-year version",
+      "formula": "ŷ_t = −73.25 + 48.61Qtr1 + 145.275Qtr2 + 279.738Qtr3 + 12.138t",
+      "vars": "20 quarters of data → year 6 = t 21–24",
+      "when": "Same seasonal+trend recipe at scale — negative intercept is FINE",
+      "trap": "A negative b_0 does not mean negative forecasts — t·12.138 dominates by year 6",
+      "ex": "★ Y6 forecasts: Q1 230.25 · Q2 339.05 · Q3 485.65 · Q4 218.05 (R²=.958)",
+      "src": "exam-review-2.pdf Q19; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Smartphone seasonal+trend (lecture version)",
+      "formula": "ŷ_t = 6.07 − 1.36Qtr1 − 2.03Qtr2 − 0.304Qtr3 + 0.146t",
+      "vars": "slope 0.146 ≈ +146 phones/quarter, same for every quarter",
+      "when": "The lecture's worked template for Q17/Q19-style problems",
+      "trap": "Dummies shift the INTERCEPT only — all four quarterly lines share slope 0.146",
+      "ex": "t=17 (Y5Q1): 7.19 · t=18: 6.67",
+      "src": "lecture-06.pdf p22–23",
+      "conf": "med"
+    },
+    {
+      "name": "Coffee-shop worked set (all four measures)",
+      "formula": "errors: −10, 5, −10, 5, 10",
+      "vars": "5 days · actuals 100,120,130,125,110",
+      "when": "The lecture-7 template for 'compute all four measures'",
+      "trap": "MFE = 0 here yet MAE = 8 — unbiased is NOT accurate",
+      "ex": "MFE 0 · MAE 8 · MSE 70 · MPAE ≈ 7.5%",
+      "src": "lecture-07.pdf",
+      "conf": "med"
+    },
+    {
+      "name": "Umbrella seasonal (lecture worked)",
+      "formula": "ŷ_t = 95.0 + 29.0Qtr1 + 57.0Qtr2 + 26.0Qtr3",
+      "vars": "no t term — flat plot",
+      "when": "The lecture's Q18-style template",
+      "trap": "Q4 forecast = intercept 95 — no Q4 coefficient exists",
+      "ex": "Next year: Q1 124 · Q2 152 · Q3 121 · Q4 95",
+      "src": "lecture-06.pdf p20",
+      "conf": "med"
+    },
+    {
+      "name": "Bicycle trend (lecture worked)",
+      "formula": "ŷ_t = 20.4 + 1.1t",
+      "vars": "slope 1.1 = +1,100 bicycles/year",
+      "when": "The lecture's Q16-style template",
+      "trap": "Read slope in ORIGINAL units — sales are in 1000s",
+      "ex": "t=11 → 32.5 → forecast 32,500 bicycles",
+      "src": "lecture-06.pdf p17–18",
+      "conf": "med"
+    },
+    {
+      "name": "Average-of-all — the growing window (Q13 chain)",
+      "formula": "F3 = (234+287)/2 = 260.5 · F4 = 258.67 · F5 = 271.5",
+      "vars": "each forecast averages ALL prior years",
+      "when": "Show the chain, then the measures",
+      "trap": "F3 uses years 1–2 only — not the full series",
+      "ex": "★ MAE 34.08 · MSE 1544.15 · MAPE 11.52% · F6 = 276.8",
+      "src": "exam-review-2.pdf Q13; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "ES gasoline chain (lecture α=0.2)",
+      "formula": "17 → 17.00 → 17.80 → 18.04 → 19.03 → …",
+      "vars": "each step: ŷ + 0.2·(y − ŷ)",
+      "when": "Practice the recursion until it's mechanical",
+      "trap": "Round only at the END — chained rounding drifts the answer",
+      "ex": "Σe² = 98.80 over 11 errors → MSE 8.98",
+      "src": "lecture-06.pdf p13–14",
+      "conf": "med"
+    },
+    {
+      "name": "Notes workbook — naive on the 10-yr series",
+      "formula": "MFE 22.44 · MAE 72.44 · MSE 8263.11 · MPAE 23.53%",
+      "vars": "series 234, 287, 255, 310, 298, 250, 456, 412, 525, 436",
+      "when": "Longer drill of the exact Q12 mechanics",
+      "trap": "Year 7 alone: e = 206 → e² = 42,436 — one big miss dominates MSE",
+      "ex": "Same table shape as the exam: e, |e|, e², |%e| columns",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "name": "Linear trend — notes Q5 (full output)",
+      "formula": "ŷ_t = 80.458 + 2.3618t",
+      "vars": "IP series, 10 years · R² = 0.928",
+      "when": "Q16-style with real regression output attached",
+      "trap": "Forecasting MSE = ΣFE²/n = 35.62/10 = 3.56 — NOT the ANOVA MS (35.62/8 = 4.45)",
+      "ex": "Slope: IP rises ≈ 2.36/year · t-stat 10.17",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "name": "Seasonal WITHOUT trend — notes Q6",
+      "formula": "ŷ_t = 1089.33 + 3.33Qtr1 + 81.67Qtr2 + 78.00Qtr3",
+      "vars": "same 12 quarters as the with-trend fit",
+      "when": "Compare against the with-trend version to see why t matters",
+      "trap": "R² = 0.138 on trending data — dummies alone can't absorb growth",
+      "ex": "Add t → ŷ = 864.08 + 87.8Q1 + 137.98Q2 + 106.16Q3 + 28.16t · R² = 0.900",
+      "src": "chapter08-timeseries-notes.md Q6",
+      "conf": "med"
+    },
+    {
+      "name": "ES next-step forecast — notes Q4",
+      "formula": "F11 = 0.2·y₁₀ + 0.8·ŷ₁₀ = 0.2(336) + 0.8(261.37) = 276.30",
+      "vars": "α = 0.2 on the 10-yr series",
+      "when": "The 'one more step' ask after the error table",
+      "trap": "Use the LAST actual and the LAST forecast — not the last error row",
+      "ex": "MAE 38.36 · MSE 1981.95 over 9 errors",
+      "src": "chapter08-timeseries-notes.md Q4",
+      "conf": "med"
+    }
+  ],
+  "concepts": [
+    {
+      "term": "Descriptive analytics",
+      "def": "What HAPPENED — dashboards, summary tables, charts of past data.",
+      "src": "exam-review-2.pdf Q1; lecture-04.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Predictive analytics",
+      "def": "What WILL happen — regression, time series, data mining, simulation. 'Model from past data to predict future sales' = predictive.",
+      "src": "exam-review-2.pdf Q1; lecture-04.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Prescriptive analytics",
+      "def": "What SHOULD we do — optimization gives the best decision under constraints.",
+      "src": "exam-review-2.pdf Q2; lecture-04.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "When to use a TABLE",
+      "def": "Reader needs exact values · precise (not relative) comparisons · values with different units/magnitudes.",
+      "src": "exam-review-2.pdf Q3; lecture-05.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Crosstabulation",
+      "def": "THE table for two variables (any mix of qual/quant); margins define the classes.",
+      "src": "exam-review-2.pdf Q4; lecture-05.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Chart chooser",
+      "def": "categorical compare → bar/column · 2 quantitative → scatter (+trendline) · time series → line · 3 vars in 2-D → bubble · in-cell axis-less trend → sparkline · magnitude by color → heat map.",
+      "src": "exam-review-2.pdf Q5; lecture-05.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Time series",
+      "def": "Observations at successive points/periods of time. Objective: uncover the pattern, extrapolate it forward.",
+      "src": "exam-review-2.pdf Q7–Q8; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Qualitative forecasting — when",
+      "def": "Historical data unavailable OR not applicable. (Quantitative needs: data available, quantifiable, past-is-prologue.)",
+      "src": "exam-review-2.pdf Q6; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "The four patterns",
+      "def": "Horizontal (random around constant mean) · Trend (long-run drift) · Seasonal (recurring by period) · Trend+Seasonal. Plot FIRST, then pick the method.",
+      "src": "exam-review-2.pdf Q9; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "MA order k tradeoff",
+      "def": "Small k = tracks level shifts quickly · large k = smooths random noise. Adapts to a new level in k periods.",
+      "src": "lecture-06.pdf p10",
+      "conf": "med"
+    },
+    {
+      "term": "Choosing α",
+      "def": "Much random variability → small α (don't overreact) · stable series → larger α (react fast). Formally: pick α minimizing MSE.",
+      "src": "lecture-06.pdf p14–15",
+      "conf": "med"
+    },
+    {
+      "term": "k−1 dummy rule",
+      "def": "A categorical with k levels needs k−1 dummies — 4 quarters → 3 dummies, omitted level becomes the intercept.",
+      "src": "exam-review-2.pdf Q11; lecture-06.pdf p19",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Interval vs nominal data",
+      "def": "Interval = real numbers, all arithmetic meaningful. Nominal = labels/categories — calculations meaningless (marital status coded 1/2 is still nominal).",
+      "src": "lecture-05.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Sparkline",
+      "def": "Axis-less mini line chart living in a single cell; shows trend only, takes minimal space.",
+      "src": "lecture-05.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Heat map",
+      "def": "2-D grid where COLOR SHADE carries magnitude.",
+      "src": "lecture-05.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Bubble chart",
+      "def": "THREE variables in 2-D — the bubble size is the third variable; preferred over 3-D graphs.",
+      "src": "lecture-05.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Data dashboard",
+      "def": "Collection of tables/charts/maps + summary stats that UPDATE as new data arrive — descriptive analytics.",
+      "src": "lecture-04.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Simulation & data mining",
+      "def": "Both PREDICTIVE tools: mining finds patterns in large databases; simulation models uncertainty with probability.",
+      "src": "lecture-04.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Quantitative forecasting — 3 conditions",
+      "def": "Past data available · quantifiable · past is prologue (pattern continues).",
+      "src": "lecture-06.pdf p1",
+      "conf": "med"
+    },
+    {
+      "term": "Trendline (scatter)",
+      "def": "Line approximating the relationship between two quantitative variables on a scatter chart.",
+      "src": "lecture-05.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Adjusted R²",
+      "def": "R² penalized for extra predictors. Close to R² (0.919 vs 0.928) = stable model; big drop = junk variables.",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "Standard Error (regression)",
+      "def": "Average distance between actual and predicted y, in y's units — ±2.11 IP points typical miss.",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "Significance F",
+      "def": "p-value for the WHOLE model. < 0.05 → model beats random noise (7.5E-06 in notes Q5).",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "t-Stat rule of thumb",
+      "def": "|t| > ~2 → coefficient significantly ≠ 0. Year: t = 10.17 → strong; Qtr1 (no-trend fit): t = 0.03 → useless.",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "95% CI for a coefficient",
+      "def": "Range holding the true slope with 95% confidence — Year: [1.83, 2.90] per year.",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "Business analytics",
+      "def": "Scientific process of transforming data into insight for better decisions. Why needed: uncertainty + too many alternatives to evaluate.",
+      "src": "lecture-04.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Choosing MA order k",
+      "def": "Fit each k, compare MSE on the same series: k=3 MSE 1737.87 beat k=5's 1935.23 → pick k=3.",
+      "src": "chapter08-timeseries-notes.md Q3",
+      "conf": "med"
+    }
+  ],
+  "tables": [
+    {
+      "title": "Method ↔ pattern (the matching MCQs)",
+      "cols": [
+        "Pattern",
+        "Method",
+        "Why"
+      ],
+      "rows": [
+        [
+          "Horizontal",
+          "Naive · Average · MA · Exp smoothing",
+          "random around a constant mean"
+        ],
+        [
+          "Trend",
+          "Regression on t (ŷ=b0+b1t)",
+          "MA/ES lag a drifting series"
+        ],
+        [
+          "Seasonal, no trend",
+          "k−1 dummy regression",
+          "season IS the predictor"
+        ],
+        [
+          "Trend + seasonal",
+          "Dummies + t in one regression",
+          "intercept shifts + shared slope"
+        ]
+      ],
+      "src": "exam-review-2.pdf Q10–Q11; lecture-06.pdf"
+    },
+    {
+      "title": "Gasoline series — method shoot-out (12 weeks)",
+      "cols": [
+        "Measure",
+        "Naive",
+        "Average",
+        "3-wk MA"
+      ],
+      "rows": [
+        [
+          "MAE",
+          "3.73",
+          "2.44",
+          "2.67"
+        ],
+        [
+          "MSE",
+          "16.27",
+          "8.10",
+          "10.22"
+        ],
+        [
+          "MAPE",
+          "19.24%",
+          "12.85%",
+          "14.36%"
+        ]
+      ],
+      "src": "lecture-06.pdf p8–12"
+    },
+    {
+      "title": "What each accuracy measure tells you",
+      "cols": [
+        "Measure",
+        "Reads as",
+        "Watch for"
+      ],
+      "rows": [
+        [
+          "MFE",
+          "bias direction (± cancel)",
+          "0 ≠ accurate"
+        ],
+        [
+          "MAE",
+          "average miss, real units",
+          "scale-dependent"
+        ],
+        [
+          "MSE",
+          "big misses punished",
+          "method/α selection"
+        ],
+        [
+          "MAPE",
+          "relative %, cross-scale",
+          "divide by actual y"
+        ]
+      ],
+      "src": "lecture-07.pdf"
+    },
+    {
+      "title": "Chart chooser (Ch3 MCQs)",
+      "cols": [
+        "Data situation",
+        "Chart"
+      ],
+      "rows": [
+        [
+          "compare categorical",
+          "bar / column"
+        ],
+        [
+          "two quantitative",
+          "scatter (+trendline)"
+        ],
+        [
+          "time series",
+          "line"
+        ],
+        [
+          "3 variables in 2-D",
+          "bubble"
+        ],
+        [
+          "magnitude by color",
+          "heat map"
+        ],
+        [
+          "in-cell mini trend",
+          "sparkline"
+        ]
+      ],
+      "src": "lecture-05.pdf; exam-review-2.pdf Q5"
+    },
+    {
+      "title": "Analytics types (Ch1 MCQs)",
+      "cols": [
+        "Type",
+        "Question",
+        "Tools"
+      ],
+      "rows": [
+        [
+          "Descriptive",
+          "what happened?",
+          "dashboards, charts, tables"
+        ],
+        [
+          "Predictive",
+          "what will happen?",
+          "regression, time series, mining, simulation"
+        ],
+        [
+          "Prescriptive",
+          "what should we do?",
+          "optimization under constraints"
+        ]
+      ],
+      "src": "lecture-04.pdf; exam-review-2.pdf Q1–Q2"
+    },
+    {
+      "title": "Regression output decoder (notes Q5)",
+      "cols": [
+        "Stat",
+        "Read as",
+        "Notes value"
+      ],
+      "rows": [
+        [
+          "Multiple R",
+          "correlation strength",
+          "0.963 strong +"
+        ],
+        [
+          "R²",
+          "% of variation explained",
+          "0.928 → 92.8%"
+        ],
+        [
+          "Adj R²",
+          "R² penalized for predictors",
+          "0.919 ≈ stable"
+        ],
+        [
+          "Std Error",
+          "avg miss, y units",
+          "±2.11"
+        ],
+        [
+          "Significance F",
+          "whole-model p-value",
+          "7.5E-06 ✓"
+        ],
+        [
+          "t-Stat",
+          "|t|>2 → coeff matters",
+          "Year: 10.17"
+        ]
+      ],
+      "src": "chapter08-timeseries-notes.md"
+    },
+    {
+      "title": "MA order shoot-out — k=3 vs k=5",
+      "cols": [
+        "Measure",
+        "k=3",
+        "k=5"
+      ],
+      "rows": [
+        [
+          "MAE",
+          "36.38",
+          "38.56"
+        ],
+        [
+          "MSE",
+          "1737.87 ✓",
+          "1935.23"
+        ],
+        [
+          "MPAE",
+          "12.90%",
+          "14.19%"
+        ]
+      ],
+      "src": "chapter08-timeseries-notes.md Q3"
+    }
+  ],
+  "traps": [
+    {
+      "text": "\"Use moving averages or exponential smoothing on a trending series\" is FALSE — they are appropriate for a HORIZONTAL pattern only; a trend needs regression on t.",
+      "src": "exam-review-2.pdf Q10; lecture-06.pdf"
+    },
+    {
+      "text": "\"MFE near 0 means the forecasts are accurate\" is FALSE — positive and negative errors cancel; gasoline naive has MFE 0.45 with MAE 3.73. MFE reads bias only.",
+      "src": "lecture-06.pdf p8; lecture-07.pdf"
+    },
+    {
+      "text": "Dividing accuracy measures by n is WRONG when a method can't forecast early periods — divide by n−k (3-yr MA on 5 years: exactly 2 errors, so MSE = Σe²/2).",
+      "src": "exam-review-2.pdf Q14; review-solutions-2.md"
+    },
+    {
+      "text": "\"Drop period 1 for the trendline MSE too\" is FALSE — a fitted regression forecasts EVERY period, so k=0 and Q16's MSE divides by all 5.",
+      "src": "exam-review-2.pdf Q16; review-solutions-2.md"
+    },
+    {
+      "text": "\"4 quarters need 4 dummy variables\" is FALSE — k levels need k−1 dummies; the omitted quarter (Q4) is the baseline captured by the intercept.",
+      "src": "exam-review-2.pdf Q11; lecture-06.pdf p19"
+    },
+    {
+      "text": "\"Quarter 4 has a coefficient\" is FALSE — Q4's forecast is the intercept alone (Q18: Y4Q4 = 77; umbrella Q4 = 95).",
+      "src": "exam-review-2.pdf Q18; review-solutions-2.md"
+    },
+    {
+      "text": "\"The naive method is the best simple baseline\" is FALSE on the gasoline data — the average of history beat it on MAE, MSE, AND MAPE.",
+      "src": "lecture-06.pdf p9 Table 7"
+    },
+    {
+      "text": "\"Exponential smoothing starts at 0\" is FALSE — the chain starts ŷ2 = y1 (Q15: first forecast is 234, the first actual).",
+      "src": "exam-review-2.pdf Q15; review-solutions-2.md"
+    },
+    {
+      "text": "\"Bigger α always reacts better\" is FALSE — with heavy random variability a LARGE α chases noise; use small α, and formally pick α by minimum MSE.",
+      "src": "lecture-06.pdf p14–15"
+    },
+    {
+      "text": "\"MAPE and MAE always agree\" is FALSE — Starbucks has MAE 76 vs the coffee shop's 8, yet a LOWER MPAE (7.0% vs 7.5%): worse absolutely, better relatively.",
+      "src": "lecture-07.pdf"
+    },
+    {
+      "text": "\"Predictive analytics recommends the best action\" is FALSE — recommending the best decision under constraints is PRESCRIPTIVE (optimization).",
+      "src": "exam-review-2.pdf Q1–Q2; lecture-04.pdf"
+    },
+    {
+      "text": "On review Q3 the distractors read \"the reader need NOT…\" — three options are the LECTURE RULES NEGATED; only 'values with different units or magnitudes' survives.",
+      "src": "exam-review-2.pdf Q3; lecture-05.pdf"
+    },
+    {
+      "text": "\"A pie chart is best for precise comparisons\" is FALSE — bar/column charts compare categorical values; tables give precise values.",
+      "src": "lecture-05.pdf"
+    },
+    {
+      "text": "\"Crosstabulation only works when both variables are qualitative\" is FALSE — it works for any mix (qual×qual, qual×quant, quant×quant).",
+      "src": "lecture-05.pdf"
+    },
+    {
+      "text": "\"R² is the correlation coefficient\" is FALSE — Multiple R is; R² is its square (Q19: R = .979 → R² = .958, i.e. 95.8% of variation explained).",
+      "src": "review-solutions-2.md Q19"
+    },
+    {
+      "text": "\"Include a dummy for every season\" is FALSE — k dummies + intercept is perfect multicollinearity; that is WHY the rule is k−1.",
+      "src": "lecture-06.pdf p19"
+    },
+    {
+      "text": "\"Seasonal dummies alone handle trending data\" is FALSE — same 12 quarters: R² = 0.138 without t, 0.900 with t. Plot first; if it climbs, add the trend term.",
+      "src": "chapter08-timeseries-notes.md Q6"
+    },
+    {
+      "text": "\"The intercept is the value at time zero, so it's meaningful\" is FALSE when t = 0 lies outside the data range — b₀ = 80.46 is a mathematical anchor for the line, not a real year-zero prediction.",
+      "src": "chapter08-timeseries-notes.md"
+    },
+    {
+      "text": "\"Forecasting MSE and ANOVA's MS Residual are the same number\" is FALSE — the exam's forecasting MSE = ΣFE²/n = 35.62/10 = 3.56, while ANOVA MS = 35.62/8 = 4.45 (÷ n−p−1). Read which one is asked.",
+      "src": "chapter08-timeseries-notes.md Q5; exam-review-2.pdf Q16"
+    },
+    {
+      "text": "\"A dummy with p = 0.97 still belongs in the model\" is FALSE — no-trend fit: Qtr1 p = 0.974 → indistinguishable from zero. High p = no evidence of effect.",
+      "src": "chapter08-timeseries-notes.md Q6"
+    }
+  ],
+  "questions": [
+    {
+      "q": "\"Constructing a mathematical model to predict future sales from past data\" is which analytics type? → Predictive ✓ (prescriptive = best action, descriptive = past)",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Tables should be used when… → the values displayed have different units or very different magnitudes ✓ (the other options negate the lecture's rules)",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q3",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Best table for data on TWO variables? → crosstabulation ✓ (not scatter — that's a chart)",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q4",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Charts for comparing categorical variables? → bar charts AND column charts ✓ (scatter/line are for quantitative/time)",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q5",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Qualitative methods are used when… → historical data unavailable or not applicable ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q6",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "\"Data fluctuate randomly around a constant mean\" names which pattern? → horizontal ✓ · and MA/ES are appropriate for → horizontal ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q9–Q10",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "A seasonal series is modeled by treating the season as a → dummy variable ✓ (not 'categorical variable' — that's the distractor)",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q11",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Series 234, 287, 255, 310, 298 — naive method: build the error table, give MAE, MSE, MAPE, F6. → MAE 38 · MSE 1750.5 · MAPE 13.20% · F6 = 298",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q12; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Same series, 3-year moving average: MSE and F6? → errors only in yrs 4–5 → MSE (2635.11+196)/2 = 1415.56 · F6 = (255+310+298)/3 = 287.67",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q14; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Same series, exponential smoothing α = 0.2: F6? → chain 234 → 244.6 → 246.68 → 259.344 → 267.08 (MSE 2105.22)",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q15; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Given ŷ = 864.08 + 87.8Q1 + 137.98Q2 + 106.16Q3 + 28.16t on 3 yrs of quarterly data — forecast year 4 (t = 13…16). → 1317.92, 1396.25, 1392.58, 1314.58",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q17; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Quarterly series with seasonality only: fit dummies, forecast next year. → ŷ = 77 − 10Q1 − 30Q2 − 20Q3 → 67, 47, 57, 77 (Q4 = intercept)",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q18; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "T/F: MFE = 0 means the forecasting method is accurate. → FALSE — unbiased ≠ accurate; check MAE/MSE (coffee shop: MFE 0, MAE 8).",
+      "kind": "T/F",
+      "src": "lecture-07.pdf",
+      "conf": "med"
+    },
+    {
+      "q": "Why does Q18's model have no t term? → the time-series plot is flat (no trend) — season alone explains the variation; adding t would add nothing.",
+      "kind": "short",
+      "src": "exam-review-2.pdf Q18; lecture-06.pdf p18",
+      "conf": "med"
+    },
+    {
+      "q": "Optimization helps… → identifying the best decision under the constraints of the situation ✓ (that's prescriptive)",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q2",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "\"Observations measured at successive points in time\" → a time series ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q7",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Objective of time-series analysis? → uncover a pattern and extrapolate it into the future ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q8",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Series 234…298, average-of-all-history: MAE, MSE, MAPE, F6? → 34.08 · 1544.15 · 11.52% · F6 = 276.8",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q13; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Given fitted line IP = 78.291 + 3.035·Year on 5 years: MSE and F6? → k=0 so ÷5 → MSE 1.931 · F6 = 96.501",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q16; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "South Shore (5 yrs quarterly): fit seasonal+trend, forecast year 6 (t=21…24). → 230.25, 339.05, 485.65, 218.05",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q19; review-solutions-2.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Umbrella model ŷ = 95+29Q1+57Q2+26Q3 — forecast Q2 next year? → 95+57 = 152 (dummies off except Q2)",
+      "kind": "short",
+      "src": "lecture-06.pdf p20",
+      "conf": "med"
+    },
+    {
+      "q": "Smartphone model, forecast t=17 (Year-5 Q1)? → 6.07 −1.36(1) +0.146(17) = 7.19",
+      "kind": "short",
+      "src": "lecture-06.pdf p22",
+      "conf": "med"
+    },
+    {
+      "q": "T/F: With heavy random variability, choose a LARGE α to react faster. → FALSE — small α; large α chases noise.",
+      "kind": "T/F",
+      "src": "lecture-06.pdf p15",
+      "conf": "med"
+    },
+    {
+      "q": "Notes Q3: same 10-yr series, MA with k=3 vs k=5 — which wins? → k=3 (MSE 1737.87 vs 1935.23 · MAE 36.38 vs 38.56)",
+      "kind": "problem",
+      "src": "chapter08-timeseries-notes.md Q3",
+      "conf": "med"
+    },
+    {
+      "q": "Notes Q5 line ŷ = 80.458 + 2.362t — forecast year 11? → 80.458 + 2.362(11) = 106.44",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "q": "Pizza chain: optimization says schedule 12 drivers to minimize late deliveries — which analytics type? → prescriptive",
+      "kind": "MCQ",
+      "src": "lecture-04.pdf",
+      "conf": "med"
+    },
+    {
+      "q": "How do you check overall model significance from Excel output? → Significance F < 0.05 (notes Q5: 7.5E-06 ✓)",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "q": "Quarterly data climbs steadily; a dummies-only model gives R² = 0.14. Fix? → add the trend term t (R² → 0.90)",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md Q6",
+      "conf": "med"
+    }
+  ]
+}

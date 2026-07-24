@@ -56,6 +56,11 @@ export async function GET(req: NextRequest) {
   sheetUrl.searchParams.set("density", density);
   if (cols5) sheetUrl.searchParams.set("cols", "5");
   sheetUrl.searchParams.set("print", "1"); // tells page to hide dev chrome
+  // Dev loader passthrough: generated-pool name + front/back page.
+  const g = url.searchParams.get("g");
+  const pageParam = url.searchParams.get("page");
+  if (g && /^[a-z0-9-]+$/i.test(g)) sheetUrl.searchParams.set("g", g);
+  if (pageParam === "front" || pageParam === "back") sheetUrl.searchParams.set("page", pageParam);
 
   const browser = await chromium.launch();
   try {

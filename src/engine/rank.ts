@@ -144,6 +144,114 @@ explain or apologize — just emit the corrected JSON.`;
   };
 }
 
+/* ────────────────────────────────────────────────────────────────────
+ * Top-up pass (docs/09 §5) — deepen an under-supplied pool.
+ *
+ * Observed: gemini-2.5-pro plateaus at ~55 items per call regardless
+ * of the POOL TARGET counts. A 2-page (front/back) sheet needs ~100+.
+ * The fix is a SECOND engine call that sees the existing items' names
+ * and is told to mine ONLY new material. Merge = existing first (rank
+ * preserved), new items appended per section, name-level dedup.
+ * ──────────────────────────────────────────────────────────────────── */
+
+function poolInventory(c: SheetContent): string {
+  const lines: string[] = [];
+  const push = (label: string, names: string[]) => {
+    if (names.length) lines.push(`${label}: ${names.join(" | ")}`);
+  };
+  push("topics", c.topics.map((t) => t.name));
+  push("formulas", c.formulas.map((f) => f.name));
+  push("concepts", c.concepts.map((k) => k.term));
+  push("traps", c.traps.map((t) => t.text.slice(0, 60)));
+  push("questions", c.questions.map((q) => q.q.slice(0, 60)));
+  push("tables", (c.tables ?? []).map((t) => t.title));
+  return lines.join("\n");
+}
+
+const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
+function mergePools(base: SheetContent, extra: SheetContent): SheetContent {
+  const seen = {
+    topics: new Set(base.topics.map((t) => norm(t.name))),
+    formulas: new Set(base.formulas.map((f) => norm(f.name))),
+    concepts: new Set(base.concepts.map((k) => norm(k.term))),
+    traps: new Set(base.traps.map((t) => norm(t.text.slice(0, 60)))),
+    questions: new Set(base.questions.map((q) => norm(q.q.slice(0, 60)))),
+    tables: new Set((base.tables ?? []).map((t) => norm(t.title))),
+  };
+  return {
+    ...base,
+    topics: [...base.topics, ...extra.topics.filter((t) => !seen.topics.has(norm(t.name)))],
+    formulas: [...base.formulas, ...extra.formulas.filter((f) => !seen.formulas.has(norm(f.name)))],
+    concepts: [...base.concepts, ...extra.concepts.filter((k) => !seen.concepts.has(norm(k.term)))],
+    traps: [...base.traps, ...extra.traps.filter((t) => !seen.traps.has(norm(t.text.slice(0, 60))))],
+    questions: [...base.questions, ...extra.questions.filter((q) => !seen.questions.has(norm(q.q.slice(0, 60))))],
+    tables: [...(base.tables ?? []), ...(extra.tables ?? []).filter((t) => !seen.tables.has(norm(t.title)))],
+  };
+}
+
+/**
+ * One deepening pass: same pack, same controls, but the model sees the
+ * existing pool's item names and emits ONLY new items. Returns the
+ * merged, re-validated pool.
+ */
+export async function deepenSheet(
+  input: EnginePromptInput,
+  existing: SheetContent,
+  opts: GenerateOptions = {},
+): Promise<GenerateResult> {
+  const client = opts.client ?? defaultGeminiClient();
+  const system = buildSystemPrompt();
+  const user = `${buildUserPrompt(input)}
+
+──────
+
+TOP-UP PASS — the pool below ALREADY EXISTS. Your entire job in this
+call is to DEEPEN it with material you did not itemize last time:
+worked examples summarized instead of split out, lecture definitions
+skipped, regression-output rows, chart-choice rules, T/F statements,
+each past-exam question as its own entry.
+
+EXISTING POOL (do NOT repeat or rephrase any of these):
+${poolInventory(existing)}
+
+Emit the SAME full JSON schema, but every array contains ONLY NEW
+items (title/examFormat may repeat; emit "verifiedPatterns": [] —
+already captured). Minimums for THIS call: 8 formulas, 8 concepts,
+5 traps, 8 questions, 2 tables — all with real numbers and citations
+from the pack, ranked best-first.`;
+
+  const packMeta: PackFileMeta[] = input.pack.map((f) => ({
+    filename: f.filename,
+    tag: f.tag,
+    charCount: f.text.length,
+  }));
+
+  const first = await client.generate({ system, user, temperature: 0.4 });
+  const parse = tryParseJsonAndValidate(first.text);
+  if (!parse.ok) {
+    throw new EngineError(`Top-up pass failed validation: ${parse.error}`, first.text);
+  }
+
+  const sanitized = sanitizeForTrust(parse.value, packMeta);
+  const merged = safeParseSheetContent(mergePools(existing, sanitized.content));
+  if (!merged.success) {
+    throw new EngineError(`Merged pool failed validation: ${merged.error}`);
+  }
+  return {
+    content: merged.data,
+    warnings: sanitized.warnings,
+    meta: {
+      model: first.model,
+      inputTokens: first.usage.inputTokens,
+      outputTokens: first.usage.outputTokens,
+      retried: false,
+      sanitizedItems: sanitized.stripped,
+      droppedPatterns: sanitized.droppedPatterns,
+    },
+  };
+}
+
 type ParseResult =
   | { ok: true; value: SheetContent }
   | { ok: false; error: string };

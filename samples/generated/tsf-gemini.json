@@ -1,0 +1,1245 @@
+{
+  "title": "OPRE 3333: Time Series & Forecasting Exam Reference",
+  "examFormat": {
+    "mix": "Multiple choice, short answer calculations, and multi-part problems involving forecasting and regression.",
+    "time": "Not specified, but likely 75-90 minutes.",
+    "openBook": false,
+    "notes": "No notes or books allowed. Calculator is required."
+  },
+  "verifiedPatterns": [
+    {
+      "pattern": "★ Calculate MAE, MSE, and MAPE for a given time series using Naive, Average, Moving Average, or Exponential Smoothing methods.",
+      "src": "exam-review-2.pdf Q12, Q13, Q14, Q15"
+    },
+    {
+      "pattern": "★ Use a given multiple regression equation (with trend and/or seasonal dummies) to compute forecasts for future periods (e.g., 'next year').",
+      "src": "exam-review-2.pdf Q16, Q17"
+    },
+    {
+      "pattern": "★ Set up and interpret a multiple regression model with dummy variables to account for seasonality and trend.",
+      "src": "exam-review-2.pdf Q17, Q18, Q19"
+    },
+    {
+      "pattern": "★ Choose the best forecasting model by comparing accuracy metrics (e.g., MSE) between different methods or parameters (e.g., Moving Average k=3 vs k=5).",
+      "src": "chapter08-timeseries-notes.md Sheet: Q3-MovingAverage"
+    }
+  ],
+  "topics": [
+    {
+      "name": "Time Series Forecasting Methods",
+      "why": "Core of the exam. You must be able to calculate forecasts using Naive, Average, Moving Average, and Exponential Smoothing.",
+      "src": "exam-review-2.pdf Q12, Q13, Q14, Q15; lecture-06.pdf p7-13",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Forecast Accuracy Metrics",
+      "why": "Every calculation problem asks for MAE, MSE, or MAPE. Know the formulas and what they measure.",
+      "src": "exam-review-2.pdf Q12, Q13, Q14, Q15; lecture-06.pdf p6",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Regression for Forecasting",
+      "why": "The most complex problems involve building or using regression models with trend and seasonal dummy variables.",
+      "src": "exam-review-2.pdf Q16, Q17, Q18, Q19; lecture-06.pdf p16-23",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Time Series Patterns",
+      "why": "Identifying the pattern (Horizontal, Trend, Seasonal) is the first step to choosing the correct forecasting method.",
+      "src": "exam-review-2.pdf Q9, Q10, Q11; lecture-06.pdf p2-5",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Interpreting Regression Output",
+      "why": "You need to read ANOVA and Coefficients tables to assess model significance (F-test, p-values) and understand predictor effects (coefficients, t-stats).",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "name": "Data Visualization",
+      "why": "Conceptual questions test when to use specific charts (Bar, Column, Line, Scatter, Crosstab).",
+      "src": "exam-review-2.pdf Q3, Q4, Q5; lecture-05.pdf p1-4",
+      "conf": "high",
+      "verified": true
+    }
+  ],
+  "formulas": [
+    {
+      "name": "★ Naive Forecast",
+      "formula": "ŷ_{t+1} = y_t",
+      "vars": "ŷ_{t+1} forecast for next period · y_t actual value for current period",
+      "when": "For a horizontal pattern, as a simple baseline.",
+      "ex": "Data: ..., 310, 298. Forecast for period 6 is 298. ✓",
+      "src": "exam-review-2.pdf Q12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Average of All Data Forecast",
+      "formula": "ŷ_{t+1} = (y₁ + y₂ + ... + y_t) / t",
+      "vars": "ŷ_{t+1} forecast for next period · y_i historical values · t number of periods",
+      "when": "For a stable horizontal pattern with no trend.",
+      "ex": "Data: 234, 287, 255, 310, 298. Forecast for period 6 is (234+287+255+310+298)/5 = 276.8. ✓",
+      "src": "exam-review-2.pdf Q13",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Moving Average Forecast",
+      "formula": "ŷ_{t+1} = (y_t + y_{t-1} + ... + y_{t-k+1}) / k",
+      "vars": "k number of periods in average · y_t most recent value",
+      "when": "For a horizontal pattern where only recent values are relevant.",
+      "ex": "k=3, Data: ..., 255, 310, 298. Forecast for period 6 is (255+310+298)/3 = 287.67. ✓",
+      "src": "exam-review-2.pdf Q14",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Exponential Smoothing Forecast",
+      "formula": "ŷ_{t+1} = α·y_t + (1-α)·ŷ_t",
+      "vars": "α smoothing constant (0-1) · y_t current actual · ŷ_t current forecast",
+      "when": "For a horizontal pattern. A weighted average approach.",
+      "trap": "The first forecast ŷ₂ is set to the first actual value y₁.",
+      "ex": "α=0.2, y₅=298, ŷ₅=259.34. Forecast ŷ₆ = 0.2(298) + 0.8(259.34) = 267.07. ✓",
+      "src": "exam-review-2.pdf Q15",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Forecast Error",
+      "formula": "e_t = y_t - ŷ_t",
+      "vars": "e_t error · y_t actual value · ŷ_t forecasted value",
+      "when": "Always the first step for calculating accuracy metrics.",
+      "ex": "Actual y₅=298, Forecast ŷ₅=310. Error e₅ = 298 - 310 = -12. ✓",
+      "src": "lecture-06.pdf p6",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Mean Absolute Error (MAE)",
+      "formula": "MAE = Σ|e_t| / n",
+      "vars": "e_t forecast error · n number of forecasts",
+      "when": "To find the average forecast error magnitude in original units.",
+      "ex": "Errors: 53, -32, 55, -12. MAE = (|53|+|-32|+|55|+|-12|)/4 = (53+32+55+12)/4 = 38. ✓",
+      "src": "exam-review-2.pdf Q12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Mean Squared Error (MSE)",
+      "formula": "MSE = Σ(e_t)² / n",
+      "vars": "e_t forecast error · n number of forecasts",
+      "when": "To measure accuracy, heavily penalizing large errors.",
+      "ex": "Errors: 53, -32, 55, -12. MSE = (53² + (-32)² + 55² + (-12)²)/4 = (2809+1024+3025+144)/4 = 1750.5. ✓",
+      "src": "exam-review-2.pdf Q12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Mean Absolute Percentage Error (MAPE)",
+      "formula": "MAPE = (Σ(|e_t/y_t|)) / n * 100%",
+      "vars": "e_t error · y_t actual value · n number of forecasts",
+      "when": "To find average percentage error, useful for comparing across different scales.",
+      "ex": "y₂=287, e₂=53. |e₂/y₂| = |53/287| = 0.1847. Sum these percentages and divide by n.",
+      "src": "exam-review-2.pdf Q12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Linear Trend Regression Forecast",
+      "formula": "ŷ_t = b₀ + b₁t",
+      "vars": "ŷ_t forecast · b₀ intercept · b₁ slope · t time period",
+      "when": "Forecasting data with a consistent linear trend.",
+      "ex": "Eq: IP = 78.291 + 3.035t. Forecast for t=6 is 78.291 + 3.035(6) = 96.501. ✓",
+      "src": "exam-review-2.pdf Q16",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Seasonal Regression (No Trend)",
+      "formula": "ŷ_t = b₀ + b₁Qtr1 + b₂Qtr2 + b₃Qtr3",
+      "vars": "b₀ base case (Qtr4) avg · b₁,b₂,b₃ adjustments for other qtrs",
+      "when": "Data has a repeating seasonal pattern but no long-term trend.",
+      "ex": "Eq: ŷ=77-10Q1-30Q2-20Q3. Forecast Q2: 77-30=47. Forecast Q4: 77. ✓",
+      "src": "exam-review-2.pdf Q18; review-solutions-2.md Sheet: Q18",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Seasonal Regression (With Trend)",
+      "formula": "ŷ_t = b₀ + b₁Qtr1 + b₂Qtr2 + b₃Qtr3 + b₄t",
+      "vars": "b₀ intercept at t=0 for base qtr · b₁,b₂,b₃ seasonal adjustments · b₄ trend slope · t time period",
+      "when": "Data has both seasonal patterns and a linear trend.",
+      "ex": "Eq: ŷ=864+88Q1+138Q2+106Q3+28t. Forecast for Q1 at t=13: 864+88(1)+28(13) = 1316. ✓",
+      "src": "exam-review-2.pdf Q17",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "R Square (R²)",
+      "formula": "R² = SS_Regression / SS_Total",
+      "vars": "SS_Regression explained variation · SS_Total total variation",
+      "when": "To measure the percentage of variation in Y explained by the model's X variables.",
+      "ex": "R²=0.928 means 92.8% of the variation in the dependent variable is explained by the model. ✓",
+      "src": "chapter08-timeseries-notes.md Sheet: RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "name": "★ MFE (Mean Forecast Error)",
+      "formula": "MFE = (Σ eₜ) / n",
+      "vars": "eₜ: forecast error (Actual - Forecast) for period t · n: number of periods with forecasts",
+      "when": "To measure the average bias of a forecast. A large positive or negative value indicates consistent over- or under-forecasting.",
+      "trap": "Relying on MFE alone is WRONG because positive and negative errors can cancel out, making a biased forecast look good. MFE=0 does not mean the forecast is accurate, just that it's unbiased.",
+      "ex": "Errors: -10, 5, -10, 5, 10. Sum = 0. MFE = 0/5 = 0. The forecast is unbiased. ✓ (NOT an indicator of low error, as MAE is 8).",
+      "src": "lecture-06.pdf p6; lecture-07.pdf p2",
+      "conf": "high"
+    },
+    {
+      "name": "★ Forecast for Next Period (Moving Avg)",
+      "formula": "ŷₜ₊₁ = (yₜ + yₜ₋₁ + ... + yₜ₋ₖ₊₁) / k",
+      "vars": "ŷₜ₊₁: forecast for the next period · yₜ: actual value in period t · k: number of periods in the moving average",
+      "when": "Forecasting for a time series with a horizontal pattern (no trend or seasonality).",
+      "ex": "Data: 234, 287, 255, 310, 298. k=3. Forecast for year 6 = (255+310+298)/3 = 287.67 ✓",
+      "src": "exam-review-2.pdf Q14; review-solutions-2.md Sheet1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Forecast for Next Period (Exp. Smoothing)",
+      "formula": "ŷₜ₊₁ = α·yₜ + (1-α)·ŷₜ",
+      "vars": "ŷₜ₊₁: forecast for next period · α: smoothing constant · yₜ: actual value at t · ŷₜ: forecast at t",
+      "when": "Forecasting for a time series with a horizontal pattern, giving more weight to recent data.",
+      "ex": "α=0.2. Actual y₅=298, Forecast ŷ₅=259.34. Forecast for year 6 = 0.2*(298) + 0.8*(259.34) = 59.6 + 207.47 = 267.07 ✓",
+      "src": "exam-review-2.pdf Q15; review-solutions-2.md Sheet1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Forecast for Next Period (Linear Trend)",
+      "formula": "ŷₜ = b₀ + b₁·t",
+      "vars": "ŷₜ: forecast for period t · b₀: intercept · b₁: slope · t: time period index",
+      "when": "Forecasting for a time series with a clear linear trend.",
+      "ex": "Model: IP = 78.291 + 3.035·t. Forecast for year t=6: ŷ₆ = 78.291 + 3.035*(6) = 96.501 ✓",
+      "src": "exam-review-2.pdf Q16; review-solutions-2.md Sheet1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Forecast for Next Quarter (Seasonal + Trend)",
+      "formula": "ŷₜ = b₀ + b₁Qtr1 + b₂Qtr2 + b₃Qtr3 + b₄t",
+      "vars": "b₀: intercept · b₁,b₂,b₃: seasonal effects · b₄: trend effect · t: time period index",
+      "when": "Forecasting for a time series with both seasonality and a linear trend.",
+      "ex": "Model: ŷ = 864.08 + 87.8Q1 + 137.98Q2 + 106.16Q3 + 28.16t. Forecast for next year's Q1 (t=13): ŷ₁₃ = 864.08 + 87.8(1) + 28.16(13) = 1317.9 ✓",
+      "src": "exam-review-2.pdf Q17; review-solutions-2.md Sheet1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Forecast for Next Quarter (Seasonal Only)",
+      "formula": "ŷₜ = b₀ + b₁Qtr1 + b₂Qtr2 + b₃Qtr3",
+      "vars": "b₀: intercept (base quarter value) · b₁,b₂,b₃: adjustments for other quarters",
+      "when": "Forecasting for a time series with seasonality but no trend.",
+      "ex": "Model: ŷ = 77 - 10Q1 - 30Q2 - 20Q3. Forecast for Q2: ŷ = 77 - 30(1) = 47 ✓. Forecast for Q4 (base): ŷ = 77 ✓.",
+      "src": "exam-review-2.pdf Q18; review-solutions-2.md Sheet: Q18",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Full Seasonal + Trend Model Equation",
+      "formula": "ŷₜ = b₀ + b₁Qtr1 + b₂Qtr2 + b₃Qtr3 + b₄·Period",
+      "vars": "b₀ intercept · b₁-b₃ seasonal coeffs · b₄ trend coeff · Period is time index t",
+      "when": "Building a predictive model from scratch for data with both seasonal and trend patterns.",
+      "ex": "Model: ŷ = -73.25 + 48.61Q1 + 145.28Q2 + 279.74Q3 + 12.14t. Forecast for Y6, Q1 (t=21): ŷ₂₁ = -73.25 + 48.61(1) + 12.14(21) = 230.2 ✓",
+      "src": "exam-review-2.pdf Q19; review-solutions-2.md Sheet: Q19",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Residual Sum of Squares (SSE or Residual SS)",
+      "formula": "SSE = Σ(yᵢ - ŷᵢ)²",
+      "vars": "yᵢ: actual value · ŷᵢ: predicted value from regression",
+      "when": "Calculating the unexplained variance in a regression model. This is the value the model seeks to minimize.",
+      "ex": "From ANOVA table: Residual SS = 35.62. This is the sum of all squared forecast errors for the 10 observations. ✓",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "name": "★ Forecast for Specific Quarter (Seasonal+Trend)",
+      "formula": "ŷ_t = b₀ + b₁(Qtr1) + b₂(Qtr2) + b₃(Qtr3) + b₄(t)",
+      "vars": "b₀..b₄ are coefficients · Qtr1..3 are dummy variables · t is the time period",
+      "when": "Forecasting a time series with both a seasonal pattern and a linear trend.",
+      "trap": "Forgetting to set the correct dummy variables to 0 for the quarter you are forecasting is a common error.",
+      "ex": "Model: ŷ_t = 864.08 + 87.8Qtr1 + 137.98Qtr2 + 106.16Qtr3 + 28.16t. Forecast for Year 4, Q2 (t=14): ŷ₁₄ = 864.08 + 87.8(0) + 137.98(1) + 106.16(0) + 28.16(14) = 1396.25 ✓",
+      "src": "exam-review-2.pdf Q17; review-solutions-2.md Q17",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Forecast for Next Period (Average of All)",
+      "formula": "ŷ_(t+1) = (y₁ + y₂ + ... + y_t) / t",
+      "vars": "y_t is the actual value at period t · t is the number of past periods",
+      "when": "Time series has a horizontal pattern with no trend or seasonality.",
+      "ex": "Data: 234, 287, 255, 310, 298. Forecast for Year 6 (t=6): ŷ₆ = (234+287+255+310+298)/5 = 276.8 ✓",
+      "src": "exam-review-2.pdf Q13; review-solutions-2.md Q13",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "t-Statistic for Coefficient",
+      "formula": "t Stat = Coefficient / Standard Error",
+      "vars": "Coefficient is the estimated slope or intercept · Standard Error is its uncertainty",
+      "when": "Testing if a single predictor variable is statistically significant (i.e., its coefficient is different from zero).",
+      "trap": "A t-stat less than ~2 (in absolute value) is generally NOT statistically significant at the 95% confidence level.",
+      "ex": "From regression output: Coefficient=2.3618, Std Error=0.2323. t Stat = 2.3618 / 0.2323 = 10.17 ✓. Since |10.17| > 2, the variable is highly significant.",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "name": "F-Statistic (ANOVA)",
+      "formula": "F = MS_Regression / MS_Residual",
+      "vars": "MS_Regression is Mean Square of Regression · MS_Residual is Mean Square of Residuals (or Errors)",
+      "when": "Testing the overall significance of the entire regression model.",
+      "trap": "A high F-statistic is good, but you must check its p-value (Significance F). A low p-value (< 0.05) confirms the model is significant.",
+      "ex": "From ANOVA table: MS_Regression = 460.20, MS_Residual = 4.45. F = 460.20 / 4.45 = 103.35 ✓. The associated p-value was 7.5E-06, so the model is significant.",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "name": "Adjusted R-Square",
+      "formula": "1 - [ (1 - R²) * (n - 1) / (n - p - 1) ]",
+      "vars": "R² is R-Square · n is number of observations · p is number of predictors",
+      "when": "Comparing regression models with different numbers of predictor variables.",
+      "trap": "Adjusted R² can be negative if the model is worse than predicting the mean, which is a strong signal the model is very poor.",
+      "ex": "R²=0.928, n=10, p=1. Adj R² = 1 - [(1-0.928)*(10-1)/(10-1-1)] = 1 - [0.072 * 9 / 8] = 0.919 ✓",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "name": "Standard Error of Regression",
+      "formula": "S = √(SSE / (n - p - 1)) = √MS_Residual",
+      "vars": "SSE is Sum of Squared Residuals · n is observations · p is predictors · MS_Residual is Mean Square Residual",
+      "when": "To measure the typical distance between observed values and the regression line, in the units of the Y variable.",
+      "ex": "From ANOVA table, MS_Residual = 4.4527. Standard Error = √4.4527 = 2.11 ✓. Predictions are typically off by ±2.11 units.",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "name": "Alternative Exponential Smoothing Formula",
+      "formula": "ŷ_(t+1) = ŷ_t + α * e_t",
+      "vars": "ŷ_t is the forecast for period t · α is the smoothing constant · e_t is the forecast error for period t (y_t - ŷ_t)",
+      "when": "Updating a forecast based on the most recent error. Conceptually shows how the model 'learns'.",
+      "ex": "Given ŷ₂=17, y₂=21, α=0.2. First find error e₂ = 21-17=4. Then forecast for period 3 is ŷ₃ = 17 + 0.2 * 4 = 17.8 ✓",
+      "src": "lecture-06.pdf p14",
+      "conf": "low"
+    },
+    {
+      "name": "Mean Square (MS) in ANOVA",
+      "formula": "MS = SS / df",
+      "vars": "SS is the Sum of Squares for a source (Regression or Residual) · df is the degrees of freedom for that source",
+      "when": "Calculating the F-statistic. It represents the average variation.",
+      "ex": "From ANOVA table: SS_Regression = 460.2, df_Regression = 1. MS_Regression = 460.2 / 1 = 460.2 ✓",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    }
+  ],
+  "concepts": [
+    {
+      "term": "★ Time Series",
+      "def": "A set of observations on a variable measured at successive, regular points in time (e.g., daily sales, quarterly profits).",
+      "src": "exam-review-2.pdf Q7; lecture-06.pdf p1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Horizontal Pattern",
+      "def": "Data fluctuates randomly around a constant mean over time. No trend or seasonality.",
+      "src": "exam-review-2.pdf Q9; lecture-06.pdf p2",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Trend Pattern",
+      "def": "A gradual, long-term shift to higher or lower values. Can be linear or non-linear.",
+      "src": "lecture-06.pdf p2",
+      "conf": "med"
+    },
+    {
+      "term": "Seasonal Pattern",
+      "def": "A recurring pattern of highs and lows that completes within a year and repeats annually (e.g., winter coat sales).",
+      "src": "lecture-06.pdf p3",
+      "conf": "med"
+    },
+    {
+      "term": "★ Dummy Variables",
+      "def": "Variables coded as 0 or 1 to represent categorical data (like seasons) in a regression model. For k categories, you must use k-1 dummy variables.",
+      "src": "exam-review-2.pdf Q11; lecture-06.pdf p19",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Smoothing Constant (α)",
+      "def": "In exponential smoothing, the weight (0 to 1) given to the most recent actual value. High α reacts quickly to changes; low α provides more smoothing.",
+      "src": "lecture-06.pdf p13-14",
+      "conf": "med"
+    },
+    {
+      "term": "Order of Moving Average (k)",
+      "def": "The number of recent periods used to calculate the forecast. A small k tracks shifts quickly but is sensitive to noise; a large k is smoother.",
+      "src": "lecture-06.pdf p10",
+      "conf": "med"
+    },
+    {
+      "term": "★ Predictive Analytics",
+      "def": "Techniques that use models constructed from past data to predict the future or ascertain the impact of one variable on another.",
+      "src": "exam-review-2.pdf Q1; lecture-04.pdf p2",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Descriptive Analytics",
+      "def": "Techniques that describe what has happened in the past, such as data visualization and summary statistics.",
+      "src": "lecture-04.pdf p1",
+      "conf": "med"
+    },
+    {
+      "term": "Prescriptive Analytics",
+      "def": "Techniques that yield a best course of action to take. Optimization models are a key example.",
+      "src": "lecture-04.pdf p2",
+      "conf": "med"
+    },
+    {
+      "term": "★ Crosstabulation",
+      "def": "A tabular summary of data for two variables, often used to show the relationship between one categorical and one quantitative variable, or two categorical variables.",
+      "src": "exam-review-2.pdf Q4; lecture-05.pdf p2",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "R Square (R²)",
+      "def": "The coefficient of determination. Measures the proportion of variance in the dependent variable that is predictable from the independent variable(s).",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "term": "Adjusted R Square",
+      "def": "A modified version of R² that adjusts for the number of predictors in a model. It penalizes for adding non-significant variables.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "term": "F-statistic",
+      "def": "In ANOVA, tests the overall significance of the regression model. It compares the model's explanatory power to a model with no independent variables.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "term": "p-value (Significance F)",
+      "def": "The probability of observing the F-statistic if the null hypothesis (that all model coefficients are zero) is true. A p-value < 0.05 indicates a statistically significant model.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "term": "t Stat",
+      "def": "Tests the significance of an individual regression coefficient. It's the coefficient divided by its standard error. A |t Stat| > 2 is a rule of thumb for significance at the 95% level.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "term": "Standard Error (of Regression)",
+      "def": "The typical distance between the observed values and the regression line. It is a measure of the model's predictive accuracy in the units of the dependent variable.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "term": "★ Bar/Column Charts",
+      "def": "Charts that use horizontal (bar) or vertical (column) bars to display and compare the frequency or magnitude of categorical variables.",
+      "src": "exam-review-2.pdf Q5; lecture-05.pdf p4",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Mean Forecast Error (MFE)",
+      "def": "The average of all forecast errors (Actual - Forecast). Its primary use is to identify systematic bias. A value far from zero implies a consistent tendency to over- or under-forecast.",
+      "src": "exam-review-2.pdf Q12; lecture-06.pdf p6; lecture-07.pdf p2",
+      "conf": "high"
+    },
+    {
+      "term": "★ Scatter Chart",
+      "def": "A graph showing the relationship between two quantitative variables. One variable is plotted on the horizontal axis and the other on the vertical axis. Used to spot correlations and trends.",
+      "src": "exam-review-2.pdf Q4, Q5; lecture-05.pdf p3",
+      "conf": "high"
+    },
+    {
+      "term": "★ Line Chart",
+      "def": "A chart that connects a series of data points with a continuous line. It is the primary tool for visualizing time series data to identify patterns like trend and seasonality.",
+      "src": "exam-review-2.pdf Q5; lecture-05.pdf p3",
+      "conf": "high"
+    },
+    {
+      "term": "Multiple R",
+      "def": "The correlation coefficient between the actual values (Y) and the predicted values (Ŷ) from a regression model. It ranges from -1 to +1 and measures the strength of the linear relationship.",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "term": "Sum of Squares (SS)",
+      "def": "A measure of total variance in a dataset. Total SS = Regression SS (explained variance) + Residual SS (unexplained variance). Found in the ANOVA table.",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "term": "Mean Square (MS)",
+      "def": "The average variance, calculated as Sum of Squares (SS) divided by its degrees of freedom (df). The F-statistic is the ratio of MS Regression to MS Residual.",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "term": "Degrees of Freedom (df)",
+      "def": "The number of values in a final calculation that are free to vary. For regression residuals, df = n - p - 1, where n is observations and p is the number of predictors.",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "term": "Sparkline",
+      "def": "A minimalist line chart placed in a single cell, showing a general trend without axes. Useful for compact data visualization in tables.",
+      "src": "lecture-05.pdf p4",
+      "conf": "low"
+    },
+    {
+      "term": "Bubble Chart",
+      "def": "A variation of a scatter chart that visualizes three variables in two dimensions. The x and y axes represent two variables, while the size of the bubble represents the third.",
+      "src": "lecture-05.pdf p6",
+      "conf": "low"
+    },
+    {
+      "term": "Heat Map",
+      "def": "A graphical representation of data where values are depicted by color. Often used on tables to quickly identify high and low values.",
+      "src": "lecture-05.pdf p6",
+      "conf": "low"
+    },
+    {
+      "term": "★ Cyclical Pattern",
+      "def": "A time series pattern showing rises and falls that are not of a fixed period, often lasting multiple years. These fluctuations are usually due to multi-year economic or business cycles.",
+      "src": "exam-review-2.pdf Q9; lecture-06.pdf",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Optimization",
+      "def": "A form of prescriptive analytics that aims to identify the best possible decision from a set of alternatives, given certain constraints. It helps find the maximum profit, minimum cost, etc.",
+      "src": "exam-review-2.pdf Q2; lecture-04.pdf p2",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Coefficient Confidence Interval",
+      "def": "A range (e.g., Lower 95%, Upper 95%) that likely contains the true value of a regression coefficient. If the interval does not contain 0, the coefficient is statistically significant.",
+      "src": "chapter08-timeseries-notes.md Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "term": "Trendline",
+      "def": "A line on a scatter chart that provides an approximation of the relationship between two quantitative variables. It helps visualize the direction and strength of a trend.",
+      "src": "lecture-05.pdf p3",
+      "conf": "low"
+    },
+    {
+      "term": "Data Mining",
+      "def": "A predictive analytics technique used to find patterns, relationships, and anomalies in large databases. It's about discovering insights, not just describing data.",
+      "src": "lecture-04.pdf p2",
+      "conf": "low"
+    },
+    {
+      "term": "Simulation",
+      "def": "A predictive analytics technique that uses probability and statistics to build a computer model to study the impact of uncertainty on a decision.",
+      "src": "lecture-04.pdf p2",
+      "conf": "low"
+    },
+    {
+      "term": "Interval Data",
+      "def": "Numerical or quantitative data where all arithmetic operations (add, subtract, multiply, divide) are meaningful. Examples include height, price, and temperature.",
+      "src": "lecture-05.pdf p1",
+      "conf": "low"
+    },
+    {
+      "term": "Nominal Data",
+      "def": "Qualitative or categorical data where values are labels or names. Arithmetic operations are meaningless. Examples include marital status or product category.",
+      "src": "lecture-05.pdf p1",
+      "conf": "low"
+    },
+    {
+      "term": "Sum of Squares Regression (SSR)",
+      "def": "The portion of the total variation in the dependent variable (Y) that is explained by the regression model. Appears as 'SS' in the 'Regression' row of the ANOVA table.",
+      "src": "chapter08-timeseries-notes.md ANOVA Table",
+      "conf": "med"
+    }
+  ],
+  "tables": [
+    {
+      "title": "Forecast Accuracy Metrics",
+      "cols": [
+        "Metric",
+        "Formula",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "MFE",
+          "Σ(y-ŷ)/n",
+          "Shows forecast bias (avg. over/under)"
+        ],
+        [
+          "MAE",
+          "Σ|y-ŷ|/n",
+          "Average absolute error in original units"
+        ],
+        [
+          "MSE",
+          "Σ(y-ŷ)²/n",
+          "Average squared error; penalizes large errors"
+        ],
+        [
+          "MAPE",
+          "Σ(|(y-ŷ)/y|)/n * 100",
+          "Average % error; good for comparing scales"
+        ]
+      ],
+      "src": "lecture-06.pdf p6-7; lecture-07.pdf p2"
+    },
+    {
+      "title": "Choosing a Forecasting Method",
+      "cols": [
+        "Pattern",
+        "Characteristics",
+        "Appropriate Method(s)"
+      ],
+      "rows": [
+        [
+          "Horizontal",
+          "Fluctuates around a constant mean",
+          "Naive, Avg of All, Moving Avg, Exp. Smoothing"
+        ],
+        [
+          "Trend",
+          "Gradual shift to higher/lower values",
+          "Linear Trend Regression"
+        ],
+        [
+          "Seasonal",
+          "Recurring pattern at regular intervals",
+          "Regression with Dummy Variables"
+        ],
+        [
+          "Trend + Seasonal",
+          "Both trend and seasonal effects present",
+          "Regression with Trend & Dummy Variables"
+        ]
+      ],
+      "src": "lecture-06.pdf p2-5, p16-23"
+    },
+    {
+      "title": "Dummy Variable Coding (k=4 Quarters)",
+      "cols": [
+        "Quarter",
+        "Qtr1",
+        "Qtr2",
+        "Qtr3"
+      ],
+      "rows": [
+        [
+          "1",
+          "1",
+          "0",
+          "0"
+        ],
+        [
+          "2",
+          "0",
+          "1",
+          "0"
+        ],
+        [
+          "3",
+          "0",
+          "0",
+          "1"
+        ],
+        [
+          "4 (Base)",
+          "0",
+          "0",
+          "0"
+        ]
+      ],
+      "src": "lecture-06.pdf p19"
+    },
+    {
+      "title": "Interpreting Regression ANOVA Table",
+      "cols": [
+        "Term",
+        "What it Means"
+      ],
+      "rows": [
+        [
+          "SS Regression",
+          "Variation EXPLAINED by your model"
+        ],
+        [
+          "SS Residual",
+          "Variation NOT EXPLAINED by your model (error)"
+        ],
+        [
+          "F-statistic",
+          "Tests if model is better than just predicting the mean"
+        ],
+        [
+          "Significance F",
+          "p-value for F-statistic. < 0.05 means model is significant."
+        ]
+      ],
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation"
+    },
+    {
+      "title": "Interpreting Regression Coefficients Table",
+      "cols": [
+        "Term",
+        "What it Means"
+      ],
+      "rows": [
+        [
+          "Coefficients",
+          "The intercept (b₀) and slopes (b₁, b₂, ...)"
+        ],
+        [
+          "t Stat",
+          "Tests if a coefficient is significantly different from 0"
+        ],
+        [
+          "P-value",
+          "Prob. the coefficient is 0. < 0.05 means predictor is significant."
+        ],
+        [
+          "Lower/Upper 95%",
+          "95% confidence interval for the true coefficient value"
+        ]
+      ],
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation"
+    },
+    {
+      "title": "Chart Selection Guide",
+      "cols": [
+        "Chart Type",
+        "Best For",
+        "Example"
+      ],
+      "rows": [
+        [
+          "Bar / Column",
+          "Comparing categorical data.",
+          "Sales per store location."
+        ],
+        [
+          "Line",
+          "Visualizing time series data.",
+          "Monthly sales over 2 years."
+        ],
+        [
+          "Scatter",
+          "Showing relationship between two numeric variables.",
+          "Advertising spend vs. sales."
+        ],
+        [
+          "Pie",
+          "Showing parts of a whole (proportions).",
+          "Market share by company."
+        ],
+        [
+          "Bubble",
+          "Visualizing three variables (x, y, size).",
+          "Market share (size) vs. growth (y) vs. profit (x)."
+        ]
+      ],
+      "src": "lecture-05.pdf p3-6"
+    },
+    {
+      "title": "Analytics Categories & Examples",
+      "cols": [
+        "Category",
+        "Focus",
+        "Example"
+      ],
+      "rows": [
+        [
+          "Descriptive",
+          "What happened in the past?",
+          "Weekly sales report, data dashboards."
+        ],
+        [
+          "Predictive",
+          "What is likely to happen?",
+          "Time series forecast of next month's demand."
+        ],
+        [
+          "Prescriptive",
+          "What should we do?",
+          "Optimization model to set staffing levels."
+        ]
+      ],
+      "src": "lecture-04.pdf p1-3"
+    },
+    {
+      "title": "★ Moving Average Performance (k=3 vs k=5)",
+      "cols": [
+        "Metric",
+        "k=3",
+        "k=5",
+        "Better"
+      ],
+      "rows": [
+        [
+          "MSE",
+          "1737.87",
+          "1935.23",
+          "k=3"
+        ],
+        [
+          "MAE",
+          "36.38",
+          "38.56",
+          "k=3"
+        ],
+        [
+          "MPAE",
+          "12.90%",
+          "14.19%",
+          "k=3"
+        ]
+      ],
+      "src": "chapter08-timeseries-notes.md Q3-MovingAverage with K=3"
+    },
+    {
+      "title": "★ Interpreting Seasonal + Trend Model Coefficients (Q17)",
+      "cols": [
+        "Coefficient",
+        "Estimate",
+        "Interpretation"
+      ],
+      "rows": [
+        [
+          "Intercept (b₀)",
+          "864.08",
+          "Forecast for Q4 when t=0. This is the baseline quarter."
+        ],
+        [
+          "Qtr1 (b₁)",
+          "87.80",
+          "Q1 sales are 87.8 units higher than Q4, holding trend constant."
+        ],
+        [
+          "Qtr2 (b₂)",
+          "137.98",
+          "Q2 sales are 137.98 units higher than Q4, holding trend constant."
+        ],
+        [
+          "Qtr3 (b₃)",
+          "106.16",
+          "Q3 sales are 106.16 units higher than Q4, holding trend constant."
+        ],
+        [
+          "Trend (b₄)",
+          "28.16",
+          "Sales increase by an average of 28.16 units each quarter."
+        ]
+      ],
+      "src": "exam-review-2.pdf Q17; review-solutions-2.md Q17"
+    },
+    {
+      "title": "Regression Statistics Breakdown (Q5 Example)",
+      "cols": [
+        "Statistic",
+        "Value",
+        "Meaning"
+      ],
+      "rows": [
+        [
+          "Multiple R",
+          "0.963",
+          "Very strong positive linear correlation between Year and IP."
+        ],
+        [
+          "R Square",
+          "0.928",
+          "92.8% of the variation in IP is explained by the variable Year."
+        ],
+        [
+          "Adjusted R Square",
+          "0.919",
+          "Adjusted for number of predictors; close to R², so the model is not overfit."
+        ],
+        [
+          "Standard Error",
+          "2.11",
+          "The typical prediction error is ±2.11 IP units."
+        ]
+      ],
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)"
+    }
+  ],
+  "traps": [
+    {
+      "text": "Using k dummy variables for k categories is WRONG because it introduces perfect multicollinearity, making the regression model unsolvable. Always use k-1 dummy variables.",
+      "src": "lecture-06.pdf p19"
+    },
+    {
+      "text": "Applying smoothing methods (Moving Avg, Exp. Smoothing) to data with a clear trend is WRONG because these methods are for horizontal patterns and will consistently lag behind the trend.",
+      "src": "exam-review-2.pdf Q10"
+    },
+    {
+      "text": "Choosing a model based only on R² is INCORRECT because R² always increases when you add variables, even useless ones. Use Adjusted R² to compare models with different numbers of predictors.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation"
+    },
+    {
+      "text": "Relying on MFE alone is WRONG because positive and negative errors can cancel out, making a biased forecast look accurate. An MFE of 0 does NOT mean the forecast is perfect.",
+      "src": "lecture-07.pdf p3"
+    },
+    {
+      "text": "A negative Adjusted R² is NOT an error. It indicates the model is worse than a simple horizontal line (predicting the mean), meaning the chosen predictors have no explanatory power.",
+      "src": "chapter08-timeseries-notes.md Sheet: RegressionSeasonalNoTrend(Q6)"
+    },
+    {
+      "text": "Confusing MAE and MSE is a common mistake. MSE penalizes large errors more heavily than MAE because it squares the errors. The choice is NOT arbitrary; it depends on how costly large errors are.",
+      "src": "lecture-07.pdf p2"
+    },
+    {
+      "text": "Interpreting the intercept coefficient when the predictor variable (e.g., time) cannot be zero is WRONG. For a time series starting at Year 1, the intercept (at Year 0) is a mathematical anchor, not a practical prediction.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation"
+    },
+    {
+      "text": "Assuming a small `k` in moving averages is always better is FALSE. A small `k` tracks shifts faster but is very sensitive to random noise; a larger `k` provides more smoothing for volatile data.",
+      "src": "lecture-06.pdf p10"
+    },
+    {
+      "text": "Assuming a large `α` in exponential smoothing is always better is FALSE. A large `α` reacts quickly to real changes but will overreact to random noise. Use a small `α` for noisy data.",
+      "src": "lecture-06.pdf p15"
+    },
+    {
+      "text": "Assuming a high R² means the model is good for forecasting is FALSE. A high R² indicates a good fit for past data, but it doesn't guarantee future predictive accuracy, especially if the model is overfit.",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation"
+    },
+    {
+      "text": "Using a line chart for categorical comparisons is WRONG. Line charts imply a connection or trend over time between points. Use bar or column charts for comparing distinct categories.",
+      "src": "exam-review-2.pdf Q5; lecture-05.pdf p4"
+    },
+    {
+      "text": "Using Adjusted R² to compare models on different datasets is INCORRECT. Adjusted R² is only valid for comparing models fit to the exact same set of observations (Y values).",
+      "src": "context: distilled"
+    },
+    {
+      "text": "★ Interpreting a seasonal dummy coefficient as the season's absolute forecast is WRONG. The coefficient is the average difference *relative to the base quarter* (the one with no dummy variable).",
+      "src": "lecture-06.pdf p19-20; exam-review-2.pdf Q17"
+    },
+    {
+      "text": "★ Using a seasonal-only regression model when a clear trend exists is INCORRECT. This will produce poor forecasts because the model's average (the intercept) does not change over time, failing to capture the underlying growth or decline.",
+      "src": "chapter08-timeseries-notes.md Q6-Regression-SeasonalNoTrend vs Q6-Regression-SeasonalWithTrend"
+    },
+    {
+      "text": "★ Forgetting to increment the time variable `t` for future forecasts in a trend model is a common WRONG step. If your data ends at t=12, the next year's forecasts use t=13, 14, 15, 16, not t=1, 2, 3, 4.",
+      "src": "exam-review-2.pdf Q17; lecture-06.pdf p22"
+    },
+    {
+      "text": "Assuming a non-significant p-value for one dummy variable (e.g., Qtr1) means seasonality is NOT present is FALSE. It only means that quarter is not statistically different from the base quarter (e.g., Qtr4). Other quarters might be very different.",
+      "src": "chapter08-timeseries-notes.md RegressionSeasonalNoTrend(Q6)"
+    },
+    {
+      "text": "Interpreting a regression intercept like 'Sales at Year 0' is often WRONG if Year 0 is far outside the range of your data. The intercept is primarily a mathematical anchor for the line, not always a meaningful real-world value.",
+      "src": "chapter08-timeseries-notes.md Regression Interpretation"
+    },
+    {
+      "text": "★ Using a bar chart to show a relationship between two quantitative variables is WRONG because bar charts are for comparing categorical variables; a scatter chart is the correct tool.",
+      "src": "exam-review-2.pdf Q5; lecture-05.pdf p4"
+    },
+    {
+      "text": "★ Including non-significant seasonal dummy variables (with high p-values > 0.05) in a final model is WRONG because they add complexity without explanatory power and can worsen forecast accuracy.",
+      "src": "chapter08-timeseries-notes.md RegressionSeasonalNoTrend(Q6)"
+    },
+    {
+      "text": "Choosing the moving average order 'k' without testing is WRONG because the optimal 'k' that minimizes MSE depends on the specific time series data; it must be found by comparison.",
+      "src": "chapter08-timeseries-notes.md Q3-MovingAverage with K=3"
+    },
+    {
+      "text": "Choosing the exponential smoothing constant 'α' without testing is WRONG because the optimal 'α' that minimizes MSE depends on the balance of trend and noise in the data.",
+      "src": "lecture-06.pdf p15"
+    },
+    {
+      "text": "Ignoring the F-statistic's p-value (Significance F) is WRONG because even if individual coefficients seem significant, a high p-value for the F-test (> 0.05) means the overall model is not statistically reliable.",
+      "src": "chapter08-timeseries-notes.md ANOVA Table"
+    }
+  ],
+  "questions": [
+    {
+      "q": "★ Given sales data for 5 years: 15, 18, 17, 22, 20. Calculate the forecast for year 6 using a 3-year moving average.",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q14",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A regression model for quarterly sales is ŷ = 500 + 20*t - 50*Q1 + 100*Q2 + 75*Q3. Forecast sales for Year 3, Quarter 1 (t=9).",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q17",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ For the data 234, 287, 255, calculate the MAE and MSE using the naive forecasting method.",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Using α=0.2 and y₁=100, y₂=120, calculate the exponential smoothing forecast for period 3 (ŷ₃).",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q15",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Moving averages and exponential smoothing are appropriate for a time series exhibiting which pattern?",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q10",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ To model a time series with a seasonal pattern, the season should be treated as a...",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q11",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A pattern that exists when data fluctuate randomly around a constant mean over time is called...",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q9",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which charts are most helpful for making comparisons between categorical variables?",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q5",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A useful type of table for describing data of two variables is a...",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q4",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ The objective of time series analysis is to uncover a pattern and then...",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q8",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "A time series of monthly sales data is modeled using dummy variables. How many dummy variables are required?",
+      "kind": "short",
+      "src": "lecture-06.pdf p19",
+      "conf": "med"
+    },
+    {
+      "q": "If a model's MSE is 64, what is its RMSE (Root Mean Squared Error)?",
+      "kind": "short",
+      "src": "lecture-07.pdf p6",
+      "conf": "med"
+    },
+    {
+      "q": "Your model has an R² of 0.90 and an Adjusted R² of 0.60. What does the large difference imply?",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "q": "In exponential smoothing, if you want your forecast to be more responsive to recent changes, should you use a high or low value for alpha (α)?",
+      "kind": "short",
+      "src": "lecture-06.pdf p15",
+      "conf": "med"
+    },
+    {
+      "q": "Which forecast accuracy metric is most sensitive to large, outlier errors?",
+      "kind": "short",
+      "src": "lecture-07.pdf p3",
+      "conf": "med"
+    },
+    {
+      "q": "★ Given the regression equation IP = 78.291 + 3.035 * Year, what is the forecast for Year 7?",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q16",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ When are qualitative forecasting methods used?",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q6",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which category of analytics helps in constructing a mathematical model to predict future sales based on past data?",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "In a regression output, the p-value for the F-test is 0.0001. Is the overall model statistically significant?",
+      "kind": "T/F",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "q": "A coefficient for a predictor has a t-statistic of 1.5. Is this predictor statistically significant at the 95% confidence level?",
+      "kind": "T/F",
+      "src": "chapter08-timeseries-notes.md Sheet: Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "q": "★ Optimization helps in: (a) identifying the best decision under constraints, (b) finding good decisions in uncertain settings, (c) assigning values to outcomes.",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q2",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Tables should be used instead of charts when: (a) the reader needs specific numerical values, (b) only relative comparisons are needed, (c) values have the same units.",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q3",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A set of observations on a variable measured at successive points in time constitute a ____.",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q7",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Given the seasonal regression model ŷ = 77 - 10*Q1 - 30*Q2 - 20*Q3, what is the forecast for Quarter 2? And for Quarter 4?",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q18; review-solutions-2.md Sheet: Q18",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Using the model ŷ = -73.25 + 48.61Q1 + 145.28Q2 + 279.74Q3 + 12.14t, compute the sales forecast for Year 6, Quarter 2 (which is period t=22).",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q19; review-solutions-2.md Sheet: Q19",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A regression model for quarterly sales has an R-Square of 0.137 and an Adjusted R-Square of -0.185. What does this suggest about the model's predictors?",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md RegressionSeasonalNoTrend(Q6)",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "The F-statistic for a model is 103.35 with a Significance F of 7.5E-06. Is the overall model statistically significant? Why?",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md RegressionAnalysis(Q5)",
+      "conf": "med"
+    },
+    {
+      "q": "In the regression output for IP vs Year, the coefficient for 'Year' is 2.3618. What does this number mean in plain English?",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "q": "★ Compare the MSE for a 3-year moving average (1737.87) vs. a 5-year moving average (1935.23) using the provided data. Which value of k is better for this dataset?",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md Q3-MovingAverage with K=3",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which of the following states the objective of time series analysis?",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q8",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "For the data 234, 287, 255, 310, 298, what is the forecast for year 6 using the average of all historical data?",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q13",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "For the data 234, 287, 255, 310, 298, what is the forecast for year 6 using a three-year moving average?",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q14",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "With α=0.2 and the time series 234, 287, 255, 310, 298, compute the forecast for year 6 using exponential smoothing.",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q15",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Given the model ŷ = 864.08 + 87.8Qtr1 + 137.98Qtr2 + 106.16Qtr3 + 28.16t, compute the forecast for Year 4, Quarter 2 (t=14).",
+      "kind": "problem",
+      "src": "exam-review-2.pdf Q17",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "A time series plot shows both a repeating annual pattern and a general upward movement over time. What type of pattern exists in the data?",
+      "kind": "short",
+      "src": "exam-review-2.pdf Q19",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "For a quarterly time series, how many dummy variables are required to model the seasonal effects in a regression model?",
+      "kind": "short",
+      "src": "exam-review-2.pdf Q18; lecture-06.pdf p19",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "In a regression output, the 95% confidence interval for a slope coefficient is [1.83, 2.90]. Is this coefficient statistically significant at the 5% level? Why?",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md Regression Interpretation",
+      "conf": "med"
+    },
+    {
+      "q": "What is the primary purpose of the F-test (and its Significance F p-value) in an ANOVA table for regression?",
+      "kind": "short",
+      "src": "chapter08-timeseries-notes.md ANOVA Table",
+      "conf": "med"
+    },
+    {
+      "q": "In exponential smoothing, if the time series contains substantial random variability, should you choose a small or large value for the smoothing constant α?",
+      "kind": "short",
+      "src": "lecture-06.pdf p14",
+      "conf": "low"
+    }
+  ]
+}
