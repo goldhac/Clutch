@@ -72,17 +72,18 @@ export default async function SheetPage({
   // ?page=front|back → the R6 front/back prototype: FRONT = MAX (×5),
   // BACK = Balanced composed from the remainder (docs/09 §7).
   if (page === "front" || page === "back") {
-    // FRONT is always the MAX ×5 weapon per the user's standard.
-    const fb = splitFrontBack(pool, undefined, true);
+    // FRONT is the full 7-col MAX weapon (the proven design); BACK is
+    // Balanced (docs/09 §7). cols5=false → the standard 7-col front.
+    const fb = splitFrontBack(pool, undefined, false);
     const isFront = page === "front";
     return (
       <div className="sheet-page">
-        <DevBar density={isFront ? "max" : "balanced"} cols5={isFront} g={g} page={page} />
+        <DevBar density={isFront ? "max" : "balanced"} cols5={false} g={g} page={page} />
         <OverflowMonitor />
         <Sheet
           content={isFront ? fb.front : fb.back}
           density={isFront ? "max" : "balanced"}
-          cols5={isFront}
+          cols5={false}
         />
       </div>
     );

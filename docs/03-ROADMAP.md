@@ -91,3 +91,14 @@ The full vision is in `01-PRD.md`. This file sequences it. Each phase has an acc
 - **Trust layer is P0 always** — confidence + sources are not optional polish.
 - **One-page constraint is sacred** for the cheat sheet — verify page count programmatically on every render.
 - **Keep the wedge** — every proposed feature is checked against "does this make us the bloated suite?" If yes, defer or cut.
+
+### Ingest backlog
+
+- **Vision/OCR ingest for image-heavy PDFs (P1, land with Supabase upload).**
+  Today `src/parse/pdf.ts` reads only the text layer; content drawn as an
+  image (Excel regression-output screenshots, chart figures, scanned or
+  handwritten notes) is invisible to the engine. Fine for text-native
+  packs, silent data loss for image-native ones. Add a vision pass
+  (render suspect pages → multimodal model, or OCR) ahead of the text
+  engine. Trigger: real arbitrary uploads (not curated demo packs).
+  See `00-STATE.md §7b`.

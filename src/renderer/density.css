@@ -93,22 +93,24 @@
 .sheet.density-balanced .box,
 .sheet.density-balanced .qq { margin: 2.5pt 0; }
 
-/* ── MAX — 4 cols (allow 5), 5.7pt body, 92–97% coverage ────────────
+/* ── MAX — 7 cols, 5.7pt body, 92–97% coverage ──────────────────────
  * The hero. Engineered density. Floor 5.5pt — never below.
  * Values tuned from the proven hand-built reference (BD final centerpiece
- * @ reference/exam-prep/Big_Data_Exam/00-meta/cheatsheet-maxdensity.html).
- * That sheet ran 7-col at 5.7pt; at 4-col on A4 we have a wider column
- * and can hold the same body size comfortably. */
+ * @ reference/exam-prep/Big_Data_Exam/00-meta/cheatsheet-maxdensity.html),
+ * which ran 7 CSS columns at 5.7pt on Letter landscape. A4 landscape is
+ * WIDER (11.69in vs 11in), so 7 columns fit with room to spare — this is
+ * the full weapon as designed, not a 4/5-col downgrade. */
 .sheet.density-max {
   font-size: 5.7pt;
   line-height: 1.13;
 }
 .sheet.density-max .cols {
-  column-count: 4; /* allow 5 via .cols-5; never promise 7 on a one-page A4 */
-  column-gap: 4pt;
+  column-count: 7; /* the design default — the proven 7-col weapon */
+  column-gap: 3pt;
 }
 .sheet.density-max .cols.cols-5 {
-  column-count: 5;
+  column-count: 5; /* explicit narrow variant (DevBar "max ×5" comparison) */
+  column-gap: 4pt;
 }
 .sheet.density-max h1 { font-size: 10pt; }
 .sheet.density-max h2 { font-size: 5.9pt; }

@@ -37,7 +37,8 @@ export function normalizeDensity(raw: string | null | undefined): Density {
 export interface SheetProps {
   content: SheetContent;
   density: Density;
-  /** Optional 5-column override for MAX (OutSpec §3 — never promise 7). */
+  /** Narrow 5-column variant for MAX. Default MAX is the full 7-col
+   * weapon; set this only for the DevBar "max ×5" comparison view. */
   cols5?: boolean;
 }
 

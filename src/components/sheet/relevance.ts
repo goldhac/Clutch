@@ -82,8 +82,12 @@ interface Geometry {
   lineHeight: number;
 }
 
+// MAX = 7 columns — the proven hand-built weapon (cheatsheet-maxdensity.html
+// ran 7-col @ 5.7pt on Letter landscape; A4 landscape is WIDER, so 7 fits
+// with room to spare). The `cols5` flag forces a narrower 5-col variant for
+// comparison; the standard FRONT is the full 7.
 const GEO: Record<Density, Geometry> = {
-  max: { cols: 4, gap: 4, bodyPt: 5.7, monoPt: 4.7, lineHeight: 1.13 },
+  max: { cols: 7, gap: 3, bodyPt: 5.7, monoPt: 4.7, lineHeight: 1.13 },
   balanced: { cols: 3, gap: 11, bodyPt: 8, monoPt: 7, lineHeight: 1.32 },
   essentials: { cols: 2, gap: 16, bodyPt: 9, monoPt: 8, lineHeight: 1.42 },
 };
@@ -505,15 +509,16 @@ export interface FrontBack {
 }
 
 /**
- * Split a pool into FRONT (max, cols5 by default) + BACK (balanced,
+ * Split a pool into FRONT (max — full 7-col weapon) + BACK (balanced,
  * composed from the remainder). Deterministic. Page 2's input is the
  * pool minus page 1's placed set — the docs/09 §7 data flow with the
- * estimated cutoff.
+ * estimated cutoff. `cols5=false` → the standard 7-col FRONT; pass true
+ * only for the narrow 5-col comparison variant.
  */
 export function splitFrontBack(
   content: SheetContent,
   ctx: ScoreCtx = EMPTY_CTX,
-  cols5 = true,
+  cols5 = false,
 ): FrontBack {
   const frontCompose = compose(content, "max", ctx, defaultBudget("max", cols5), cols5);
   const frontIds = new Set(frontCompose.placed.map((p) => p.id));

@@ -132,9 +132,35 @@ Key screens: `/` (marketing), `/generate`, `/results`, `/library`, `/sheet?densi
 - **R2 (quick):** extend the sessionStorage stash written in `src/app/generate/page.tsx` (and the `Stash` interface in `src/app/results/page.tsx`) to carry `ctx: { files: [{name, tag}], examType, priority }`. This is what Layer A (`relevance.ts scoreItem`) needs to compute source-authority + control multipliers on `/results`. Without it, every item scores by evidence only (silently degraded). Spec: `09 §1`, `F-BLK-3`.
 - **R3 (the hard one):** wire `<Sheet>` to render from a `visibleIds` React state set with `data-fit-id` on break-inside:avoid leaves; build `src/components/sheet/FitController.tsx` (client) that measures and outputs `hiddenIds` state; remove the section-level `no-break` in `TrapCallout.tsx`'s `TrapsSection`; retire `overflow-monitor.tsx`. Follow `09 §4` exactly — the clip axis, the try-and-revert monotone gap-fill, and the React-state (not DOM-mutation) visibility are the three things the review said MUST be right. Verify in-browser that zero items are clipped and the page fills at all three densities.
 
-Then R4 (PDF transport + verifier) → R5 (engine pool prompt; will finally make MAX fill) → R6 (front/back).
+Then R4 (PDF transport + verifier) → R6 (front/back full mode).
+**R5 landed early** (2026-07 detour): engine now emits a ranked POOL
+(supply) not a page; `deepenSheet()` + `gen-cli --topup=N` top-up passes
+reach ~140 items; density is layout-only. **MAX is now the full 7-col
+weapon** (was silently capped at 4/5 cols) — matches the proven
+`cheatsheet-maxdensity.html`. FRONT=7-col MAX, BACK=Balanced remainder
+via `splitFrontBack()`.
 
 After the relevance system: Supabase (auth + saved sheets), then Stripe (paywall).
+
+---
+
+## 7b. BACKLOG / known limitations
+
+- **Engine reads text, not pixels (P1).** The ingest pipeline
+  (`src/parse/pdf.ts` → `gen-cli`) extracts only the PDF *text layer*.
+  Anything drawn as an image is invisible to the engine: Excel
+  regression-output screenshots (e.g. Lecture 6 Fig 8 — Multiple R / R² /
+  ANOVA tables), chart figures, scanned/handwritten notes. It didn't hurt
+  the OPRE 3333 detour (key coefficients were repeated in body text and
+  the xlsx workbooks were dumped to markdown separately), but a pack whose
+  only copy of a number lives inside a chart image would silently lose it.
+  **Fix:** add a vision pass (render image-heavy pages → multimodal model,
+  or OCR) for slide decks before the text engine runs. Scope with the
+  Supabase upload work (real arbitrary uploads is when this bites).
+- **Back-page slack (folds into R3).** `splitFrontBack()` uses the
+  *estimated* budget cutoff, so the Balanced BACK can leave a little
+  bottom slack when the remainder pool is thin. FitController (R3) with
+  measured visibility closes it (tail-only monotone gap-fill).
 
 ---
 
