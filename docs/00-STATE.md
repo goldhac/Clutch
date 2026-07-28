@@ -127,10 +127,17 @@ Key screens: `/` (marketing), `/generate`, `/results`, `/library`, `/sheet?densi
 
 ## 7. NEXT ACTION
 
-**Do R2, then R3.** (R1 is done and committed.)
+**The R-track (R1–R6) is DONE.** Next up: Supabase, then Stripe.
 
-- **R2 (quick):** extend the sessionStorage stash written in `src/app/generate/page.tsx` (and the `Stash` interface in `src/app/results/page.tsx`) to carry `ctx: { files: [{name, tag}], examType, priority }`. This is what Layer A (`relevance.ts scoreItem`) needs to compute source-authority + control multipliers on `/results`. Without it, every item scores by evidence only (silently degraded). Spec: `09 §1`, `F-BLK-3`.
-- **R3 (the hard one):** wire `<Sheet>` to render from a `visibleIds` React state set with `data-fit-id` on break-inside:avoid leaves; build `src/components/sheet/FitController.tsx` (client) that measures and outputs `hiddenIds` state; remove the section-level `no-break` in `TrapCallout.tsx`'s `TrapsSection`; retire `overflow-monitor.tsx`. Follow `09 §4` exactly — the clip axis, the try-and-revert monotone gap-fill, and the React-state (not DOM-mutation) visibility are the three things the review said MUST be right. Verify in-browser that zero items are clipped and the page fills at all three densities.
+R-track status (all committed):
+- **R1 ✅** relevance core (scorer + composer + estimator + 22/22 gate).
+- **R2 ✅** scoring ctx stored: `generate/page.tsx` writes `ctx:{files,examType,priority}` into the stash; `results/page.tsx` carries it into `FittedSheet`.
+- **R3 ✅** `FittedSheet.tsx` (client Layer C): composes then MEASURES, trims lowest-scored on overflow, gap-fills bench into slack. Clip test is the PER-ITEM right-edge (matches the PDF verifier). Concepts are inline row-blocks (was a monolithic table). Section `no-break` removed; `overflow-monitor.tsx` retired. Topic color-coding restored (tinted section bars + cycling `tk-0..9` left-rules).
+- **R4 ✅** `pool-store.ts` + `/print` route + `/api/pdf` POST transport; REAL clip verifier in the route (422 `ClipError` if any visible block spills past the columns). `/results` Export PDF POSTs the session pool.
+- **R5 ✅** engine emits a ranked POOL (supply) not a page; `deepenSheet()` + `gen-cli --topup=N`.
+- **R6 ✅** `splitFrontBack`: FRONT = full 7-col MAX, BACK = Balanced full remainder; front split 0.8× so trimmed items flow to the back.
+
+Gotcha the verifier caught: the FitController's container-`scrollWidth` overflow test disagreed with the per-item right-edge test → blocks stayed clipped past `data-fit-done`. Both now use the per-item right edge; Phase-B gap-fill re-checks GLOBAL clipping after each reveal (a bench item sits mid-flow and can push later sections off-page).
 
 Then R4 (PDF transport + verifier) → R6 (front/back full mode).
 **R5 landed early** (2026-07 detour): engine now emits a ranked POOL
