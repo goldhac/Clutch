@@ -135,7 +135,7 @@ R-track status (all committed):
 - **R3 ✅** `FittedSheet.tsx` (client Layer C): composes then MEASURES, trims lowest-scored on overflow, gap-fills bench into slack. Clip test is the PER-ITEM right-edge (matches the PDF verifier). Concepts are inline row-blocks (was a monolithic table). Section `no-break` removed; `overflow-monitor.tsx` retired. Topic color-coding restored (tinted section bars + cycling `tk-0..9` left-rules).
 - **R4 ✅** `pool-store.ts` + `/print` route + `/api/pdf` POST transport; REAL clip verifier in the route (422 `ClipError` if any visible block spills past the columns). `/results` Export PDF POSTs the session pool.
 - **R5 ✅** engine emits a ranked POOL (supply) not a page; `deepenSheet()` + `gen-cli --topup=N`.
-- **R6 ✅** `splitFrontBack`: FRONT = full 7-col MAX, BACK = Balanced full remainder; front split 0.8× so trimmed items flow to the back.
+- **R6 ✅** `splitFrontBack`: FRONT and BACK are BOTH the full 7-col MAX — one continuous sheet across two sides of a page (user decision 2026-07-28, overriding the earlier BACK=Balanced call; matches the proven cheatsheet-maxdensity.html which ran 7-col on both sides). Front split 0.8× so trimmed items flow to the back; back gets the full remainder and its FitController fills to the boundary.
 
 Gotcha the verifier caught: the FitController's container-`scrollWidth` overflow test disagreed with the per-item right-edge test → blocks stayed clipped past `data-fit-done`. Both now use the per-item right edge; Phase-B gap-fill re-checks GLOBAL clipping after each reveal (a bench item sits mid-flow and can push later sections off-page).
 

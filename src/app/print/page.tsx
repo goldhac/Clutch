@@ -54,11 +54,12 @@ export default async function PrintPage({
   if (page === "front" || page === "back") {
     const fb = splitFrontBack(stored.content, stored.ctx, false);
     const isFront = page === "front";
+    // FRONT and BACK are the same 7-col MAX — one continuous sheet.
     return (
       <div className="sheet-page">
         <FittedSheet
           content={isFront ? fb.front : fb.back}
-          density={isFront ? "max" : "balanced"}
+          density="max"
           cols5={false}
         />
       </div>

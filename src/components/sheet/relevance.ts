@@ -548,11 +548,11 @@ export function splitFrontBack(
     // verified patterns lead the FRONT only; back gets a plain header.
     verifiedPatterns: undefined,
   };
-  // BACK = the FULL remainder (not just backCompose.placed). The back
-  // page's own FittedSheet re-composes at Balanced and its FitController
-  // gap-fills to the boundary — so it must receive every leftover item to
-  // pull from, or it underfills whenever the estimate was conservative.
-  const backCompose = compose(remainder, "balanced", ctx, defaultBudget("balanced"));
+  // BACK = the SAME 7-col MAX as the front — one continuous sheet, front
+  // and back of a single page (the proven cheatsheet-maxdensity.html ran
+  // BOTH sides 7-col at 5.7pt). The back receives the FULL remainder pool
+  // and its own FitController fills to the boundary.
+  const backCompose = compose(remainder, "max", ctx, defaultBudget("max", cols5), cols5);
   const back = { ...remainder, topics: content.topics, title: `${content.title} — BACK` };
 
   return { front, back, frontCompose, backCompose };

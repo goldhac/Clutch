@@ -75,12 +75,14 @@ export default async function SheetPage({
     // Balanced (docs/09 §7). cols5=false → the standard 7-col front.
     const fb = splitFrontBack(pool, undefined, false);
     const isFront = page === "front";
+    // FRONT and BACK are the same 7-col MAX weapon — one continuous
+    // sheet across both sides of the page.
     return (
       <div className="sheet-page">
-        <DevBar density={isFront ? "max" : "balanced"} cols5={false} g={g} page={page} />
+        <DevBar density="max" cols5={false} g={g} page={page} />
         <FittedSheet
           content={isFront ? fb.front : fb.back}
-          density={isFront ? "max" : "balanced"}
+          density="max"
           cols5={false}
           debug
         />

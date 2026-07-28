@@ -236,7 +236,8 @@ export async function POST(req: NextRequest) {
     const pdf = await renderToPdf({
       targetUrl: printUrl.toString(),
       pages,
-      density: isSplit ? (b.page === "front" ? "max" : "balanced") : density,
+      // Front/back are both the 7-col MAX (one continuous sheet).
+      density: isSplit ? "max" : density,
       verifyClip: true,
     });
     return pdfResponse(pdf, density);

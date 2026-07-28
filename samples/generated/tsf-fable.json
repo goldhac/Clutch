@@ -313,6 +313,66 @@
       "ex": "MAE 38.36 · MSE 1981.95 over 9 errors",
       "src": "chapter08-timeseries-notes.md Q4",
       "conf": "med"
+    },
+    {
+      "name": "F-statistic (ANOVA)",
+      "formula": "F = MS_Regression / MS_Residual",
+      "vars": "MS = SS/df for each source",
+      "when": "Overall model significance — pair with Significance F",
+      "trap": "A big F still needs its p-value (Significance F) < 0.05 to conclude",
+      "ex": "Q5: 460.20 / 4.45 = 103.35 · Sig F 7.5E-06 ✓",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "name": "Mean Square",
+      "formula": "MS = SS / df",
+      "vars": "per ANOVA row",
+      "when": "Bridge from sums of squares to the F-test",
+      "trap": "Residual df = n − p − 1 (10−1−1 = 8), NOT n−1",
+      "ex": "Q5: MS_Res = 35.62/8 = 4.45",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "name": "t-Stat for a coefficient",
+      "formula": "t = coefficient / standard error",
+      "vars": "per-predictor significance",
+      "when": "|t| > ~2 → the predictor matters",
+      "trap": "Tests ONE coefficient — the F-test covers the whole model",
+      "ex": "Year: 2.3618/0.2323 = 10.17 ✓ significant",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "name": "SSE — residual sum of squares",
+      "formula": "SSE = Σ(y_t − ŷ_t)²",
+      "vars": "unexplained variation",
+      "when": "The quantity regression minimizes; feeds MS_Residual",
+      "trap": "SSE is what's LEFT OVER — SS_Regression is what's explained",
+      "ex": "Q5: SSE = 35.62 over 10 obs",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "name": "R² from sums of squares",
+      "formula": "R² = SS_Regression / SS_Total",
+      "vars": "explained ÷ total variation",
+      "when": "Connects the ANOVA table to R²",
+      "trap": "SS_Total = SS_Reg + SS_Res — don't divide by SSE",
+      "ex": "Q5: 460.20/495.82 = 0.928 ✓",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "name": "Slope 95% CI",
+      "formula": "b ± t*·SE(b)",
+      "vars": "SE from the coefficients table",
+      "when": "Range for the TRUE per-period change",
+      "trap": "CI excluding 0 ⇔ significant at 5%",
+      "ex": "Year: [1.83, 2.90] — excludes 0 ✓",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
     }
   ],
   "concepts": [
@@ -486,6 +546,54 @@
       "term": "Choosing MA order k",
       "def": "Fit each k, compare MSE on the same series: k=3 MSE 1737.87 beat k=5's 1935.23 → pick k=3.",
       "src": "chapter08-timeseries-notes.md Q3",
+      "conf": "med"
+    },
+    {
+      "term": "Multiple R",
+      "def": "Correlation between actual and predicted y; −1..+1. Q5: 0.963 = very strong. R² is its square.",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "SS Regression",
+      "def": "Variation EXPLAINED by the model (Q5: 460.20).",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "SS Residual",
+      "def": "Variation NOT explained — the errors (Q5: 35.62).",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "ANOVA df rules",
+      "def": "Regression df = # predictors · Residual df = n − p − 1 · Total df = n − 1 (1 / 8 / 9 in Q5).",
+      "src": "chapter08-timeseries-notes.md Q5",
+      "conf": "med"
+    },
+    {
+      "term": "ANOVA table purpose",
+      "def": "Splits total variation into explained vs unexplained; the F-test compares them.",
+      "src": "chapter08-timeseries-notes.md",
+      "conf": "med"
+    },
+    {
+      "term": "Error sign meaning",
+      "def": "e = y − ŷ. Positive = actual ABOVE forecast = UNDER-forecast; negative = over-forecast.",
+      "src": "lecture-06.pdf p6",
+      "conf": "med"
+    },
+    {
+      "term": "Line chart",
+      "def": "Connects points over time — THE chart for time-series data.",
+      "src": "lecture-05.pdf",
+      "conf": "med"
+    },
+    {
+      "term": "Bar vs column",
+      "def": "Bar = horizontal bars, column = vertical — both compare categorical frequencies.",
+      "src": "lecture-05.pdf",
       "conf": "med"
     }
   ],
@@ -708,6 +816,58 @@
         ]
       ],
       "src": "chapter08-timeseries-notes.md Q3"
+    },
+    {
+      "title": "ANOVA quick decoder (notes Q5)",
+      "cols": [
+        "Source",
+        "df",
+        "SS",
+        "MS"
+      ],
+      "rows": [
+        [
+          "Regression",
+          "1",
+          "460.20",
+          "460.20"
+        ],
+        [
+          "Residual",
+          "8",
+          "35.62",
+          "4.45"
+        ],
+        [
+          "Total",
+          "9",
+          "495.82",
+          "—"
+        ]
+      ],
+      "src": "chapter08-timeseries-notes.md Q5"
+    },
+    {
+      "title": "Error sign decoder",
+      "cols": [
+        "Signal",
+        "Read as"
+      ],
+      "rows": [
+        [
+          "e > 0",
+          "under-forecast (actual above)"
+        ],
+        [
+          "e < 0",
+          "over-forecast"
+        ],
+        [
+          "MFE ≈ 0",
+          "unbiased — NOT necessarily accurate"
+        ]
+      ],
+      "src": "lecture-06.pdf p6; lecture-07.pdf"
     }
   ],
   "traps": [
@@ -790,6 +950,18 @@
     {
       "text": "\"A dummy with p = 0.97 still belongs in the model\" is FALSE — no-trend fit: Qtr1 p = 0.974 → indistinguishable from zero. High p = no evidence of effect.",
       "src": "chapter08-timeseries-notes.md Q6"
+    },
+    {
+      "text": "\"The trend model predicts ANY future year equally well\" is FALSE — the notes' fitted line is reliable for years NEAR the data (1–10); far extrapolation degrades.",
+      "src": "chapter08-timeseries-notes.md Regression Interpretation"
+    },
+    {
+      "text": "\"Residual df = n − 1\" is FALSE — it's n − predictors − 1 (Q5: 10−1−1 = 8); dividing by the wrong df wrecks MS and F.",
+      "src": "chapter08-timeseries-notes.md Q5"
+    },
+    {
+      "text": "\"A positive forecast error means you over-forecast\" is FALSE — e = y − ŷ > 0 means the actual came in ABOVE the forecast (under-forecast).",
+      "src": "lecture-06.pdf p6"
     }
   ],
   "questions": [
@@ -977,6 +1149,61 @@
       "q": "Quarterly data climbs steadily; a dummies-only model gives R² = 0.14. Fix? → add the trend term t (R² → 0.90)",
       "kind": "short",
       "src": "chapter08-timeseries-notes.md Q6",
+      "conf": "med"
+    },
+    {
+      "q": "\"Techniques that describe what HAS HAPPENED\" → descriptive analytics ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q1",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Reader needs exact values and precise comparisons → use a TABLE ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q3",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Table for TWO variables at once (any qual/quant mix) → crosstabulation ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q4",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Best chart for a time series → line chart ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q5",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Series fluctuating around a constant mean, no trend/seasonality → horizontal pattern ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q9",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Which methods suit a horizontal pattern? → naive · average · moving average · exponential smoothing ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q10",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "Recurring pattern within a year → seasonal; model with k−1 dummy variables ✓",
+      "kind": "MCQ",
+      "src": "exam-review-2.pdf Q11",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "T/F: MFE > 0 signals systematic UNDER-forecasting. → TRUE (errors run positive → actuals above forecasts)",
+      "kind": "T/F",
+      "src": "lecture-06.pdf p6; lecture-07.pdf",
       "conf": "med"
     }
   ]
