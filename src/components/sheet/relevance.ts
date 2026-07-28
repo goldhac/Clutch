@@ -520,7 +520,15 @@ export function splitFrontBack(
   ctx: ScoreCtx = EMPTY_CTX,
   cols5 = false,
 ): FrontBack {
-  const frontCompose = compose(content, "max", ctx, defaultBudget("max", cols5), cols5);
+  // The 7-col MAX estimate runs optimistic — narrow columns wrap taller
+  // than estimateHeight() predicts, so the client FitController trims ~20%
+  // of the estimated placement. Split the front CONSERVATIVELY (0.8×) so
+  // its materialized set ≈ what actually renders, and the true remainder
+  // (the rest) flows to the back instead of being trimmed into the void.
+  const FRONT_FIT_FACTOR = 0.8;
+  const frontCompose = compose(
+    content, "max", ctx, defaultBudget("max", cols5) * FRONT_FIT_FACTOR, cols5,
+  );
   const frontIds = new Set(frontCompose.placed.map((p) => p.id));
   const front = materialize(content, frontIds);
 
@@ -536,12 +544,12 @@ export function splitFrontBack(
     // verified patterns lead the FRONT only; back gets a plain header.
     verifiedPatterns: undefined,
   };
+  // BACK = the FULL remainder (not just backCompose.placed). The back
+  // page's own FittedSheet re-composes at Balanced and its FitController
+  // gap-fills to the boundary — so it must receive every leftover item to
+  // pull from, or it underfills whenever the estimate was conservative.
   const backCompose = compose(remainder, "balanced", ctx, defaultBudget("balanced"));
-  const backIds = new Set(backCompose.placed.map((p) => p.id));
-  const back = {
-    ...materialize(remainder, backIds),
-    title: `${content.title} — BACK`,
-  };
+  const back = { ...remainder, title: `${content.title} — BACK` };
 
   return { front, back, frontCompose, backCompose };
 }

@@ -7,10 +7,9 @@ import Link from "next/link";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { sampleContent } from "@samples/sample-content";
-import { Sheet, type Density, normalizeDensity } from "@/components/sheet";
+import { FittedSheet, type Density, normalizeDensity } from "@/components/sheet";
 import { splitFrontBack } from "@/components/sheet/relevance";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
-import { OverflowMonitor } from "./overflow-monitor";
 
 function parseDensity(raw: string | string[] | undefined): Density {
   return normalizeDensity(Array.isArray(raw) ? raw[0] : raw);
@@ -79,11 +78,11 @@ export default async function SheetPage({
     return (
       <div className="sheet-page">
         <DevBar density={isFront ? "max" : "balanced"} cols5={false} g={g} page={page} />
-        <OverflowMonitor />
-        <Sheet
+        <FittedSheet
           content={isFront ? fb.front : fb.back}
           density={isFront ? "max" : "balanced"}
           cols5={false}
+          debug
         />
       </div>
     );
@@ -93,8 +92,7 @@ export default async function SheetPage({
   return (
     <div className="sheet-page">
       <DevBar density={density} cols5={cols5} g={g} />
-      <OverflowMonitor />
-      <Sheet content={pool} density={density} cols5={cols5} />
+      <FittedSheet content={pool} density={density} cols5={cols5} debug />
     </div>
   );
 }

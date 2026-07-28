@@ -7,17 +7,22 @@ import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust"
  */
 export interface QuestionBoxProps {
   question: Question;
+  /** When true, render just the inner content (no <li> wrapper) — the
+   * caller (FittedSheet's FitLeaf) supplies the <li className="qq">. */
+  bare?: boolean;
 }
 
-export function QuestionBox({ question: q }: QuestionBoxProps) {
-  return (
-    <li className="qq">
+export function QuestionBox({ question: q, bare = false }: QuestionBoxProps) {
+  const inner = (
+    <>
       <VerifiedStar verified={q.verified} />
       <span className="kind">{q.kind}</span> <InlineText text={q.q} />{" "}
       <ConfDot conf={q.conf} />
       <Citation src={q.src} />
-    </li>
+    </>
   );
+  if (bare) return inner;
+  return <li className="qq">{inner}</li>;
 }
 
 /** Batched — the "Likely questions" section. */

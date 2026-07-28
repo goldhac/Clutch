@@ -7,7 +7,8 @@ import "@/renderer/sheet.css";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
-import { Sheet, type Density } from "@/components/sheet";
+import { FittedSheet, type Density } from "@/components/sheet";
+import { EMPTY_CTX, type ScoreCtx } from "@/components/sheet/relevance";
 import {
   LinkButton,
   Callout,
@@ -26,6 +27,8 @@ interface Stash {
   };
   warnings?: string[];
   density?: Density;
+  /** Scoring context (R2) — files/examType/priority for Layer A. */
+  ctx?: ScoreCtx;
   savedAt?: string;
 }
 
@@ -155,7 +158,7 @@ export default function ResultsPage() {
       {/* ── The sheet, centered on the workspace ─────────────────────── */}
       <div className="flex justify-center overflow-x-auto px-4 py-8">
         <div className="rounded-[var(--r-lg)] shadow-[var(--sh-xl)]">
-          <Sheet content={content} density={density} />
+          <FittedSheet content={content} density={density} ctx={stash.ctx ?? EMPTY_CTX} />
         </div>
       </div>
 

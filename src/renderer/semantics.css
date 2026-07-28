@@ -324,3 +324,55 @@
 .sheet .span-all {
   column-span: all;
 }
+
+/* ── Fit leaves (Layer C) — each measurable/hideable block. break-inside
+ * avoid so clipping lands BETWEEN blocks, never through one. */
+.sheet .fit-leaf {
+  break-inside: avoid;
+}
+
+/* ── Topic color-coding (design handoff: "topic-tinted block headers with
+ * colored left rule"). The renderer cycles tk-0..tk-9 across formula
+ * blocks so the sheet reads as color-chunked, exactly like the proven
+ * cheatsheet-maxdensity build. Colored left rule + tinted title. */
+.sheet .formula-block { border-left-width: 2pt; }
+.sheet .tk-0 .formula-block { border-left-color: var(--topic-indigo); }
+.sheet .tk-0 .title strong { color: var(--topic-indigo); }
+.sheet .tk-1 .formula-block { border-left-color: var(--topic-teal); }
+.sheet .tk-1 .title strong { color: var(--topic-teal); }
+.sheet .tk-2 .formula-block { border-left-color: var(--topic-maroon); }
+.sheet .tk-2 .title strong { color: var(--topic-maroon); }
+.sheet .tk-3 .formula-block { border-left-color: var(--topic-green); }
+.sheet .tk-3 .title strong { color: var(--topic-green); }
+.sheet .tk-4 .formula-block { border-left-color: var(--topic-purple); }
+.sheet .tk-4 .title strong { color: var(--topic-purple); }
+.sheet .tk-5 .formula-block { border-left-color: var(--topic-orange); }
+.sheet .tk-5 .title strong { color: var(--topic-orange); }
+.sheet .tk-6 .formula-block { border-left-color: var(--topic-blue); }
+.sheet .tk-6 .title strong { color: var(--topic-blue); }
+.sheet .tk-7 .formula-block { border-left-color: var(--topic-pink); }
+.sheet .tk-7 .title strong { color: var(--topic-pink); }
+.sheet .tk-8 .formula-block { border-left-color: var(--topic-olive); }
+.sheet .tk-8 .title strong { color: var(--topic-olive); }
+.sheet .tk-9 .formula-block { border-left-color: var(--topic-gold); }
+.sheet .tk-9 .title strong { color: var(--topic-gold); }
+
+/* ── Concept row-blocks — replace the monolithic memorize-cold table so
+ * each concept is an independently trimmable/fillable fit-leaf. In the
+ * narrow MAX columns a rigid grid wraps term text one-char-per-line, so
+ * these flow INLINE: bold indigo term, then definition, then a trailing
+ * conf-dot + citation — wrapping like a normal paragraph. */
+.sheet .concepts-flow .concept-row {
+  display: block;
+  padding: 0.35pt 0;
+  border-bottom: 0.25pt solid var(--color-border-light);
+  overflow-wrap: break-word;
+}
+.sheet .concepts-flow .concept-row .term {
+  display: inline;
+  color: var(--color-primary-indigo);
+  font-weight: 600;
+}
+.sheet .concepts-flow .concept-row .term::after { content: " — "; color: var(--ink-400); }
+.sheet .concepts-flow .concept-row .def { display: inline; }
+.sheet .concepts-flow .concept-row .meta { display: inline; margin-left: 2pt; white-space: nowrap; }

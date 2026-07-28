@@ -72,6 +72,15 @@ export async function GET(req: NextRequest) {
 
     await page.goto(sheetUrl.toString(), { waitUntil: "networkidle" });
 
+    // The client FitController (Layer C) measures the real layout and
+    // trims/gap-fills before it marks the sheet done. Wait for that so the
+    // PDF captures the fitted result, not the pre-measure baseline. Falls
+    // through after a short budget if the attribute never appears (e.g. JS
+    // disabled) — the CSS overflow:hidden still guarantees one page.
+    await page
+      .waitForSelector(".sheet[data-fit-done='1']", { timeout: 4000 })
+      .catch(() => {});
+
     const pdf = await page.pdf({
       format: "A4",
       landscape: true,

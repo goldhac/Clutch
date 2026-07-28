@@ -116,6 +116,14 @@ export default function GeneratePage() {
           meta: payload.meta,
           warnings: payload.warnings ?? [],
           density,
+          // Scoring context for Layer A (relevance.ts): file tags drive
+          // source-authority, examType/priority drive the multipliers.
+          // Without this the sheet scores by evidence only (R2 / spec §1).
+          ctx: {
+            files: files.map((f) => ({ name: f.file.name, tag: f.tag })),
+            examType,
+            priority,
+          },
           savedAt: new Date().toISOString(),
         }),
       );
