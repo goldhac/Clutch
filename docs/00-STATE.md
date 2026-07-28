@@ -74,11 +74,11 @@ The one thing left half-done. Spec: [`09-RELEVANCE-AND-FIT.md`](09-RELEVANCE-AND
 | Phase | Status | What |
 |---|---|---|
 | **R1** Relevance core (scorer + composer + estimator, pure) + 22-check gate | ✅ done (`40fd440`) | `src/components/sheet/relevance.ts` + `scripts/check-relevance.ts` (`npm run check:relevance`, 22/22) |
-| **R2** Store scoring ctx (files/tags/examType/priority) with the pool | ⬜ **NEXT** | extend the sessionStorage stash + results Stash type so Layer A can score on `/results` |
-| **R3** Sheet wiring + `FitController` | ⬜ hardest | React-state visibility (not DOM mutation), correct clip axis (`item.right > cols.right` — multicol overflow is HORIZONTAL), mix-aware trim, tail-only monotone gap-fill, remove section-level `no-break` |
-| **R4** PDF pool transport | ⬜ | `/print` route + POST the pool to `/api/pdf` (Playwright can't see sessionStorage) + real clip verifier (422 on timeout, never print clipped) |
-| **R5** Engine POOL TARGET prompt | ⬜ | drop density tuning → emit ~1.5–2× pool so every density fills (MAX currently est-fills only 52% because the sample is old-sized) |
-| **R6** Front/back 2-page | ⬜ | `pages:1\|2`, sequential fit, page-2 = pool minus page-1 visible, **BACK = Balanced density** |
+| **R2** Store scoring ctx (files/tags/examType/priority) with the pool | ✅ done | stash + results Stash carry `ctx`; `/results` scores with it |
+| **R3** Sheet wiring + `FitController` | ✅ done | `FittedSheet.tsx` — measures, trims lowest-scored, gap-fills bench; per-item right-edge clip test |
+| **R4** PDF pool transport | ✅ done | `pool-store.ts` + `/print` + `/api/pdf` POST + real clip verifier (422 `ClipError`) |
+| **R5** Engine POOL TARGET prompt | ✅ done | pool-supply prompt + `deepenSheet()` top-up passes (`gen-cli --topup=N`) |
+| **R6** Front/back 2-page | ✅ done | FRONT and BACK both 7-col MAX — one continuous sheet (see §4) |
 
 **Not started (post-relevance):** Supabase auth+persistence (auth/library/pricing are UI shells today), Stripe paywall, real SSE loading progress.
 
@@ -86,7 +86,7 @@ The one thing left half-done. Spec: [`09-RELEVANCE-AND-FIT.md`](09-RELEVANCE-AND
 
 ## 4. Decisions locked (don't re-litigate)
 
-- **BACK page = Balanced density** (front/back). Roomier "annotation/desk" layer; ~1.5× pool; lower engine risk.
+- **FRONT and BACK are BOTH 7-col MAX** — one continuous sheet, two sides of a single page (user decision 2026-07-28, OVERRIDES the earlier BACK=Balanced call; matches the proven cheatsheet-maxdensity.html). Pool target ~2.5× one page.
 - **Trap scoring = scorer-side** (traps base 35, or 50 if exam-cited; tables 20). No `conf`/`verified` added to `TrapSchema`. (Phase-2 option only.)
 - **The relevance model = "keep adding by rank until full."** All items ranked (verified→high→med→low), included; the fixed A4 box + bigger type per density decide how many show. **The page is ALWAYS full, never dead space, always top-ranked first.** Do NOT reintroduce hard item caps that cause underflow.
 - **User controls move the mix SHARES** (±percentage-points), not just per-section scores (constant multipliers don't change within-section order).
