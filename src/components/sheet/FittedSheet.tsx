@@ -44,12 +44,6 @@ import { assignTopics } from "./topics-color";
  */
 
 const DISPLAY_ORDER: Section[] = ["formulas", "tables", "concepts", "traps", "questions"];
-const SECTION_HEAD: Partial<Record<Section, string>> = {
-  formulas: "Formulas",
-  concepts: "Memorize cold",
-  traps: "Traps",
-  questions: "Likely questions",
-};
 
 export interface FittedSheetProps {
   content: SheetContent;
@@ -80,17 +74,26 @@ export function FittedSheet({
     [content, density, ctx, cols5],
   );
 
-  // Group placed + bench by section, score-ordered within section. Bench
-  // items start hidden; the fit pass reveals them into slack.
-  const bySection = useMemo(() => {
-    const g: Record<Section, Scored[]> = {
+  // TOPIC-MAJOR grouping (the proven layout): the sheet reads as colored
+  // topic blocks, each holding that topic's formulas → tables → concepts →
+  // traps → questions. Front and back get the SAME texture — one
+  // continuous generation, not "formula page then leftovers page".
+  // Bench items start hidden; the fit pass reveals them into slack.
+  const topicGroups = useMemo(() => {
+    const n = Math.max(1, content.topics.length);
+    const groups: Record<Section, Scored[]>[] = Array.from({ length: n }, () => ({
       formulas: [], concepts: [], traps: [], questions: [], topics: [], tables: [],
+    }));
+    const put = (it: Scored) => {
+      const ti = Math.min(topicAssign.topicIndexOf(it.id), n - 1);
+      groups[ti][it.section].push(it);
     };
-    for (const p of placed) g[p.section].push(p);
-    for (const b of bench) g[b.section].push(b);
-    for (const s of DISPLAY_ORDER) g[s].sort((a, b) => b.score - a.score);
-    return g;
-  }, [placed, bench]);
+    for (const p of placed) put(p);
+    for (const b of bench) put(b);
+    for (const g of groups)
+      for (const s of DISPLAY_ORDER) g[s].sort((a, b) => b.score - a.score);
+    return groups;
+  }, [placed, bench, content.topics.length, topicAssign]);
 
   const benchIds = useMemo(() => new Set(bench.map((b) => b.id)), [bench]);
 
@@ -213,11 +216,11 @@ export function FittedSheet({
       window.removeEventListener("resize", onResize);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bySection, benchIds, density, cols5]);
+  }, [topicGroups, benchIds, density, cols5]);
 
   const hide = (id: string) => hiddenIds.has(id);
-  const sectionVisible = (s: Section) =>
-    bySection[s].some((it) => !hide(it.id));
+  const groupVisible = (g: Record<Section, Scored[]>) =>
+    DISPLAY_ORDER.some((s) => g[s].some((it) => !hide(it.id)));
 
   const counts = {
     formulas: content.formulas.length,
@@ -270,34 +273,35 @@ export function FittedSheet({
         <TopicsOverview topics={content.topics} colorClass={topicAssign.topicColor} />
 
 
-        {DISPLAY_ORDER.map((section) => {
-          if (bySection[section].length === 0 || !sectionVisible(section)) return null;
+        {topicGroups.map((g, ti) => {
+          if (!groupVisible(g)) return null;
+          const tk = topicAssign.topicColor(ti);
+          const topicName = content.topics[ti]?.name;
           return (
-            <section key={section} className={SECTION_CLASS[section]}>
-              {SECTION_HEAD[section] && (
-                <h2 className={SECTION_TINT[section]}>{SECTION_HEAD[section]}</h2>
+            <section key={ti} className={`topic-group ${tk}`}>
+              {topicName && <h2 className="topic-banner">{topicName}</h2>}
+              {(["formulas", "tables", "concepts"] as const).map((section) =>
+                g[section].map((it) => (
+                  <FitLeaf key={it.id} it={it} hidden={hide(it.id)} className={tk}>
+                    {renderItem(section, it)}
+                  </FitLeaf>
+                )),
               )}
-              {section === "questions" ? (
+              {/* Traps keep their orange "what NOT to do" styling inside the
+               * topic block; questions render as the qq drill list. */}
+              {g.traps.map((it) => (
+                <FitLeaf key={it.id} it={it} hidden={hide(it.id)}>
+                  {renderItem("traps", it)}
+                </FitLeaf>
+              ))}
+              {g.questions.some((it) => !hide(it.id)) && (
                 <ul className="qa-list">
-                  {bySection.questions.map((it) => (
-                    <FitLeaf key={it.id} it={it} hidden={hide(it.id)} as="li" className={`qq ${topicAssign.colorOf(it.id)}`}>
+                  {g.questions.map((it) => (
+                    <FitLeaf key={it.id} it={it} hidden={hide(it.id)} as="li" className={`qq ${tk}`}>
                       <QuestionBox question={it.item as Question} bare />
                     </FitLeaf>
                   ))}
                 </ul>
-              ) : (
-                bySection[section].map((it) => (
-                  <FitLeaf
-                    key={it.id}
-                    it={it}
-                    hidden={hide(it.id)}
-                    // Traps keep their orange semantic; everything else is
-                    // tinted by the topic it belongs to (the color key).
-                    className={section === "traps" ? undefined : topicAssign.colorOf(it.id)}
-                  >
-                    {renderItem(section, it)}
-                  </FitLeaf>
-                ))
               )}
             </section>
           );
@@ -318,23 +322,6 @@ export function FittedSheet({
   );
 }
 
-const SECTION_CLASS: Record<Section, string> = {
-  formulas: "formulas",
-  tables: "tables",
-  concepts: "concepts concepts-flow",
-  traps: "traps",
-  questions: "qa-section",
-  topics: "topics",
-};
-
-/** Per-section header tint (design handoff: color-coded section bars,
- * not all-black). */
-const SECTION_TINT: Partial<Record<Section, string>> = {
-  formulas: "t-indigo",
-  concepts: "t-teal",
-  traps: "t-orange",
-  questions: "t-purple",
-};
 
 /** One measurable, hideable leaf. break-inside:avoid keeps a block whole
  * (so clipping lands between blocks, never through one). */

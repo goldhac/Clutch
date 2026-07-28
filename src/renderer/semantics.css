@@ -354,7 +354,6 @@
 .sheet .fit-leaf .formula-block { border-left-color: var(--tk, var(--color-border-mid)); }
 .sheet .fit-leaf .title strong { color: var(--tk, inherit); }
 /* Concept term + compare-table heading take the topic color too. */
-.sheet .concepts-flow .fit-leaf .concept-row .term { color: var(--tk, var(--color-primary-indigo)); }
 .sheet .fit-leaf .compare-table h3 { color: var(--tk, var(--signal-600)); }
 /* Question box: topic-colored left rule so the drill set is scannable. */
 .sheet .qa-list .fit-leaf.qq { border-left-color: var(--tk, var(--color-primary-indigo)); }
@@ -391,22 +390,30 @@
   vertical-align: middle;
 }
 
-/* ── Concept row-blocks — replace the monolithic memorize-cold table so
- * each concept is an independently trimmable/fillable fit-leaf. In the
- * narrow MAX columns a rigid grid wraps term text one-char-per-line, so
- * these flow INLINE: bold indigo term, then definition, then a trailing
- * conf-dot + citation — wrapping like a normal paragraph. */
-.sheet .concepts-flow .concept-row {
+/* ── Concept row-blocks — each concept is an independently trimmable
+ * fit-leaf. In narrow MAX columns a rigid grid wraps one-char-per-line,
+ * so these flow INLINE: bold topic-colored term — definition — trailing
+ * conf-dot + citation, wrapping like a normal paragraph. */
+.sheet .concept-row {
   display: block;
   padding: 0.35pt 0;
   border-bottom: 0.25pt solid var(--color-border-light);
   overflow-wrap: break-word;
 }
-.sheet .concepts-flow .concept-row .term {
+.sheet .concept-row .term {
   display: inline;
-  color: var(--color-primary-indigo);
+  color: var(--tk, var(--color-primary-indigo));
   font-weight: 600;
 }
-.sheet .concepts-flow .concept-row .term::after { content: " — "; color: var(--ink-400); }
-.sheet .concepts-flow .concept-row .def { display: inline; }
-.sheet .concepts-flow .concept-row .meta { display: inline; margin-left: 2pt; white-space: nowrap; }
+.sheet .concept-row .term::after { content: " — "; color: var(--ink-400); }
+.sheet .concept-row .def { display: inline; }
+.sheet .concept-row .meta { display: inline; margin-left: 2pt; white-space: nowrap; }
+
+/* ── Topic groups — the proven layout: a colored topic banner, then that
+ * topic's formulas/tables/concepts/traps/questions mixed beneath it. Both
+ * sides of the sheet get identical texture. Banner takes the topic color. */
+.sheet .topic-group { margin-bottom: 1pt; }
+.sheet .topic-group > h2.topic-banner {
+  background: var(--tk, var(--ink-900));
+  color: #fff;
+}

@@ -40,6 +40,9 @@ function tokens(s: string): string[] {
 export interface TopicAssignment {
   /** topic color class for an item by its "{section}:{index}" id. */
   colorOf(id: string): string;
+  /** topic index (topics[] order) for an item id — drives topic-grouped
+   * rendering. Items with no topics fall to 0. */
+  topicIndexOf(id: string): number;
   /** topic color class for topic n (topics[] order). */
   topicColor(topicIndex: number): string;
   /** the topics in order, each with its assigned color class + a count of
@@ -69,6 +72,7 @@ export function assignTopics(content: SheetContent): TopicAssignment {
   if (topics.length === 0) {
     return {
       colorOf: () => NEUTRAL,
+      topicIndexOf: () => 0,
       topicColor: () => NEUTRAL,
       legend: [],
     };
@@ -118,6 +122,7 @@ export function assignTopics(content: SheetContent): TopicAssignment {
       const ti = byId.get(id);
       return ti === undefined ? NEUTRAL : topicColorClass(ti);
     },
+    topicIndexOf: (id) => byId.get(id) ?? 0,
     topicColor: (topicIndex) => topicColorClass(topicIndex),
     legend: topics.map((t, i) => ({
       name: shortTopicLabel(t.name),
