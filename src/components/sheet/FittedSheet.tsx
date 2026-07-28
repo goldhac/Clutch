@@ -20,6 +20,7 @@ import {
   type Scored,
   type Section,
 } from "./relevance";
+import { assignTopics } from "./topics-color";
 
 /**
  * FittedSheet — Layer C of the relevance & fit system (docs/09 §4).
@@ -67,6 +68,10 @@ export function FittedSheet({
   debug = false,
 }: FittedSheetProps) {
   const content = useMemo(() => filterForDensity(raw, density), [raw, density]);
+
+  // Topic color assignment — the KEY the reader scans. Each block is tinted
+  // by its topic; the legend maps color → topic name.
+  const topicAssign = useMemo(() => assignTopics(content), [content]);
 
   // Compose once (pure/deterministic). The estimated budget just needs to
   // land near the page — the measure pass corrects the rest.
@@ -238,17 +243,32 @@ export function FittedSheet({
           </div>
         </div>
         <div className="sheet-legend">
-          <span className="lg"><i className="dot conf-high" /> high</span>
-          <span className="lg"><i className="dot conf-med" /> med</span>
-          <span className="lg"><i className="dot conf-low" /> low</span>
-          <span className="lg"><i className="vstar">★</i> verified</span>
+          {topicAssign.legend.length > 0 && (
+            <div className="topic-key">
+              {topicAssign.legend
+                .filter((t) => t.count > 0)
+                .map((t, i) => (
+                  <span key={i} className={`tkitem ${t.colorClass}`} title={t.full}>
+                    <i className="tksw" />
+                    <span className="tkname">{t.name}</span>
+                  </span>
+                ))}
+            </div>
+          )}
+          <div className="sheet-conf-note">
+            <span className="lg"><i className="dot conf-high" /> high</span>
+            <span className="lg"><i className="dot conf-med" /> med</span>
+            <span className="lg"><i className="dot conf-low" /> low</span>
+            <span className="lg"><i className="vstar">★</i> verified</span>
+          </div>
         </div>
       </header>
 
       <div className={colsClass}>
         <ExamFormatStrip format={content.examFormat} />
         <VerifiedPatternsBlock patterns={content.verifiedPatterns} />
-        <TopicsOverview topics={content.topics} />
+        <TopicsOverview topics={content.topics} colorClass={topicAssign.topicColor} />
+
 
         {DISPLAY_ORDER.map((section) => {
           if (bySection[section].length === 0 || !sectionVisible(section)) return null;
@@ -260,18 +280,20 @@ export function FittedSheet({
               {section === "questions" ? (
                 <ul className="qa-list">
                   {bySection.questions.map((it) => (
-                    <FitLeaf key={it.id} it={it} hidden={hide(it.id)} as="li" className="qq">
+                    <FitLeaf key={it.id} it={it} hidden={hide(it.id)} as="li" className={`qq ${topicAssign.colorOf(it.id)}`}>
                       <QuestionBox question={it.item as Question} bare />
                     </FitLeaf>
                   ))}
                 </ul>
               ) : (
-                bySection[section].map((it, i) => (
+                bySection[section].map((it) => (
                   <FitLeaf
                     key={it.id}
                     it={it}
                     hidden={hide(it.id)}
-                    className={section === "formulas" ? `tk-${i % 10}` : undefined}
+                    // Traps keep their orange semantic; everything else is
+                    // tinted by the topic it belongs to (the color key).
+                    className={section === "traps" ? undefined : topicAssign.colorOf(it.id)}
                   >
                     {renderItem(section, it)}
                   </FitLeaf>

@@ -331,31 +331,65 @@
   break-inside: avoid;
 }
 
-/* ── Topic color-coding (design handoff: "topic-tinted block headers with
- * colored left rule"). The renderer cycles tk-0..tk-9 across formula
- * blocks so the sheet reads as color-chunked, exactly like the proven
- * cheatsheet-maxdensity build. Colored left rule + tinted title. */
+/* ── Topic color-coding — the KEY the reader scans. Each block is tinted
+ * by the TOPIC it belongs to (assigned in topics-color.ts), so "Regression
+ * = maroon" lets you jump straight to the maroon blocks. Each tk-N sets a
+ * single --tk custom property; the block rules below consume it, so one
+ * variable drives the left rule, the title, the concept term, and the
+ * question rule in lockstep. */
+.sheet .tk-0 { --tk: var(--topic-indigo); }
+.sheet .tk-1 { --tk: var(--topic-teal); }
+.sheet .tk-2 { --tk: var(--topic-maroon); }
+.sheet .tk-3 { --tk: var(--topic-green); }
+.sheet .tk-4 { --tk: var(--topic-purple); }
+.sheet .tk-5 { --tk: var(--topic-orange); }
+.sheet .tk-6 { --tk: var(--topic-blue); }
+.sheet .tk-7 { --tk: var(--topic-pink); }
+.sheet .tk-8 { --tk: var(--topic-olive); }
+.sheet .tk-9 { --tk: var(--topic-gold); }
+.sheet .tk-none { --tk: var(--color-primary-indigo); }
+
+/* Formula block: colored left rule + tinted title, keyed to its topic. */
 .sheet .formula-block { border-left-width: 2pt; }
-.sheet .tk-0 .formula-block { border-left-color: var(--topic-indigo); }
-.sheet .tk-0 .title strong { color: var(--topic-indigo); }
-.sheet .tk-1 .formula-block { border-left-color: var(--topic-teal); }
-.sheet .tk-1 .title strong { color: var(--topic-teal); }
-.sheet .tk-2 .formula-block { border-left-color: var(--topic-maroon); }
-.sheet .tk-2 .title strong { color: var(--topic-maroon); }
-.sheet .tk-3 .formula-block { border-left-color: var(--topic-green); }
-.sheet .tk-3 .title strong { color: var(--topic-green); }
-.sheet .tk-4 .formula-block { border-left-color: var(--topic-purple); }
-.sheet .tk-4 .title strong { color: var(--topic-purple); }
-.sheet .tk-5 .formula-block { border-left-color: var(--topic-orange); }
-.sheet .tk-5 .title strong { color: var(--topic-orange); }
-.sheet .tk-6 .formula-block { border-left-color: var(--topic-blue); }
-.sheet .tk-6 .title strong { color: var(--topic-blue); }
-.sheet .tk-7 .formula-block { border-left-color: var(--topic-pink); }
-.sheet .tk-7 .title strong { color: var(--topic-pink); }
-.sheet .tk-8 .formula-block { border-left-color: var(--topic-olive); }
-.sheet .tk-8 .title strong { color: var(--topic-olive); }
-.sheet .tk-9 .formula-block { border-left-color: var(--topic-gold); }
-.sheet .tk-9 .title strong { color: var(--topic-gold); }
+.sheet .fit-leaf .formula-block { border-left-color: var(--tk, var(--color-border-mid)); }
+.sheet .fit-leaf .title strong { color: var(--tk, inherit); }
+/* Concept term + compare-table heading take the topic color too. */
+.sheet .concepts-flow .fit-leaf .concept-row .term { color: var(--tk, var(--color-primary-indigo)); }
+.sheet .fit-leaf .compare-table h3 { color: var(--tk, var(--signal-600)); }
+/* Question box: topic-colored left rule so the drill set is scannable. */
+.sheet .qa-list .fit-leaf.qq { border-left-color: var(--tk, var(--color-primary-indigo)); }
+
+/* ── Topic KEY (the legend strip) — swatch + topic name, one per topic. */
+.sheet .topic-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1pt 6pt;
+  align-items: center;
+}
+.sheet .topic-key .tkitem {
+  display: inline-flex;
+  align-items: center;
+  gap: 2pt;
+  white-space: nowrap;
+}
+.sheet .topic-key .tksw {
+  width: 5pt;
+  height: 5pt;
+  border-radius: 1pt;
+  background: var(--tk, var(--color-border-mid));
+  flex: none;
+}
+.sheet .topic-key .tkname { color: var(--ink-700); }
+/* Colored bullet for the "On this sheet" topic list. */
+.sheet .topics li .tkdot {
+  display: inline-block;
+  width: 4.5pt;
+  height: 4.5pt;
+  border-radius: 50%;
+  background: var(--tk, var(--color-border-mid));
+  margin-right: 2pt;
+  vertical-align: middle;
+}
 
 /* ── Concept row-blocks — replace the monolithic memorize-cold table so
  * each concept is an independently trimmable/fillable fit-leaf. In the

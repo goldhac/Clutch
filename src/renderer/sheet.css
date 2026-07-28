@@ -156,12 +156,20 @@
 }
 .sheet .sheet-legend {
   display: flex;
-  align-items: center;
-  gap: 5pt;
-  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1.5pt;
+  flex: 0 1 auto;
+  max-width: 60%;
   font-size: 0.82em;
   color: var(--ink-500);
+}
+.sheet .sheet-legend .topic-key { justify-content: flex-end; }
+.sheet .sheet-conf-note {
+  display: flex;
+  gap: 5pt;
   white-space: nowrap;
+  opacity: 0.85;
 }
 .sheet .sheet-legend .lg { display: inline-flex; align-items: center; gap: 1.5pt; }
 .sheet .sheet-legend .dot { width: 0.62em; height: 0.62em; border-radius: 50%; display: inline-block; }

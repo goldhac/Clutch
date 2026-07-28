@@ -530,7 +530,11 @@ export function splitFrontBack(
     content, "max", ctx, defaultBudget("max", cols5) * FRONT_FIT_FACTOR, cols5,
   );
   const frontIds = new Set(frontCompose.placed.map((p) => p.id));
-  const front = materialize(content, frontIds);
+  // Keep the FULL topics list on the front (and back below) so the topic
+  // color key is IDENTICAL on both pages — a topic is the same color no
+  // matter which side it lands on. Topics are the TOC + key, not body
+  // content that needs splitting.
+  const front = { ...materialize(content, frontIds), topics: content.topics };
 
   // Remainder pool = everything NOT placed on the front.
   const remainder: SheetContent = {
@@ -549,7 +553,7 @@ export function splitFrontBack(
   // gap-fills to the boundary — so it must receive every leftover item to
   // pull from, or it underfills whenever the estimate was conservative.
   const backCompose = compose(remainder, "balanced", ctx, defaultBudget("balanced"));
-  const back = { ...remainder, title: `${content.title} — BACK` };
+  const back = { ...remainder, topics: content.topics, title: `${content.title} — BACK` };
 
   return { front, back, frontCompose, backCompose };
 }
