@@ -1,29 +1,32 @@
 /**
  * /api/pdf — render the sheet to a verified one-page A4-landscape PDF.
  *
- * The Phase 0 gate (roadmap): if THIS endpoint can't reliably produce a
- * one-page PDF from a typed SheetContent object, the product is broken.
- * Step 7's Tighten loop will eventually catch overflow and retry; for
- * now we throw loudly with PageCountError so callers (and we) see it.
+ * The Phase 0 gate: if THIS endpoint can't reliably produce a correctly-
+ * paged PDF from a typed SheetContent, the product is broken.
  *
- * Architecture: the same renderer that feeds /sheet (in-browser preview)
- * feeds this route — we just navigate Playwright to our own /sheet URL
- * and ask it to print. Single rendering codepath = single set of bugs.
+ * Two entry points share one renderer:
+ *   GET  — dev/QA path. Renders /sheet from the on-disk ?g=<name> pool (or
+ *          the sample), ?density=, ?cols=5, ?page=front|back.
+ *   POST — the production path (R4). Body carries the user's pool
+ *          { content, density, cols5, ctx, page }. We stash it in the
+ *          in-process pool store, drive Playwright to /print?token=…, and
+ *          drop the token when done. This is how /results exports a PDF of
+ *          a sheet that only exists in the user's browser session.
  *
- * Query params (same shape as /sheet plus `pages`):
- *   density = minimal | standard | max     (default: max)
- *   cols    = 5                            (max-only; 5-col variant)
- *   pages   = 1 | 2                        (default: 1)
- *                                          2-page front/back lands with
- *                                          Step 5 renderer work; route
- *                                          already verifies.
+ * The single renderer navigates Playwright to a real page URL on
+ * 127.0.0.1, waits for the client FitController's `data-fit-done` signal,
+ * VERIFIES no visible block is clipped, asserts the page count, and prints.
  *
- * On overflow: returns 422 with a human-readable error (the
- * OverflowMonitor on /sheet shows the same thing visually).
+ * On a violated rule (clip or wrong page count) it returns 422 (the
+ * request was valid, the render wasn't) so the caller can act on it
+ * without treating it as a 500.
  */
 import { type NextRequest } from "next/server";
-import { chromium } from "playwright";
+import { chromium, type Page } from "playwright";
 import { assertPageCount, PageCountError } from "@/lib/pdf-verify";
+import { safeParseSheetContent } from "@/contract/sheet-content";
+import { putPool, dropPool } from "@/lib/pool-store";
+import { EMPTY_CTX } from "@/components/sheet/relevance";
 
 // Playwright spawns Chromium subprocesses — Node runtime, not Edge.
 export const runtime = "nodejs";
@@ -33,6 +36,129 @@ export const dynamic = "force-dynamic";
 
 const VALID_DENSITIES = new Set(["essentials", "balanced", "max", "minimal", "standard"]);
 
+/** A visible block spilled outside the column box — content the reader
+ * would silently lose. Distinct from PageCountError (wrong # of pages). */
+class ClipError extends Error {
+  constructor(public readonly clipped: number) {
+    super(`${clipped} block(s) clipped outside the page — the FitController did not converge`);
+    this.name = "ClipError";
+  }
+}
+
+/** The /print target rendered its no-pool sentinel (bad/expired token). */
+class PrintTargetError extends Error {
+  constructor(reason: string) {
+    super(`print target error: ${reason}`);
+    this.name = "PrintTargetError";
+  }
+}
+
+function localBase(): string {
+  const port = process.env.PORT ?? "3000";
+  return `http://127.0.0.1:${port}`;
+}
+
+/**
+ * Independently verify the FitController's promise: every VISIBLE fit-leaf
+ * must sit within its column container's content box (horizontal axis —
+ * multicol overflow is sideways). Returns the count that don't. This is a
+ * real check, not a trust of `data-fit-done`.
+ */
+async function countClipped(page: Page): Promise<number> {
+  return page.evaluate(() => {
+    const cols = document.querySelector<HTMLElement>(".sheet .cols");
+    if (!cols) return 0;
+    const box = cols.getBoundingClientRect();
+    const TOL = 1.5;
+    let clipped = 0;
+    for (const el of Array.from(cols.querySelectorAll<HTMLElement>("[data-fit-id]"))) {
+      const style = getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      const r = el.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      // Clipped if the block's right edge extends past the visible columns.
+      if (r.right > box.right + TOL) clipped++;
+    }
+    return clipped;
+  });
+}
+
+async function renderToPdf(opts: {
+  targetUrl: string;
+  pages: 1 | 2;
+  density: string;
+  verifyClip: boolean;
+}): Promise<Uint8Array> {
+  const browser = await chromium.launch();
+  try {
+    const page = await browser.newContext().then((ctx) => ctx.newPage());
+
+    // Emulate print media so the @media print rules fire (hide dev chrome).
+    await page.emulateMedia({ media: "print" });
+    await page.goto(opts.targetUrl, { waitUntil: "networkidle" });
+
+    // Never print a sheet for a bad/expired token.
+    const printError = await page
+      .$eval("[data-print-error]", (el) => el.getAttribute("data-print-error"))
+      .catch(() => null);
+    if (printError) throw new PrintTargetError(printError);
+
+    // The client FitController (Layer C) measures + trims/gap-fills before
+    // it marks the sheet done. Wait so the PDF captures the FITTED result,
+    // not the pre-measure baseline. Falls through after a short budget if
+    // the signal never appears (JS disabled) — CSS overflow still clips to
+    // one page.
+    await page
+      .waitForSelector(".sheet[data-fit-done='1']", { timeout: 5000 })
+      .catch(() => {});
+
+    // Real clip verifier (R4): assert the FitController actually converged.
+    if (opts.verifyClip) {
+      const clipped = await countClipped(page);
+      if (clipped > 0) throw new ClipError(clipped);
+    }
+
+    const pdf = await page.pdf({
+      format: "A4",
+      landscape: true,
+      margin: { top: "0.16in", bottom: "0.16in", left: "0.14in", right: "0.14in" },
+      printBackground: true,
+      preferCSSPageSize: true,
+    });
+
+    // THE HARD RULE — page count is sacred. Throws PageCountError if not.
+    await assertPageCount(pdf, opts.pages, opts.density);
+    return new Uint8Array(pdf);
+  } finally {
+    await browser.close();
+  }
+}
+
+function pdfResponse(pdf: Uint8Array, density: string): Response {
+  return new Response(pdf as unknown as BodyInit, {
+    headers: {
+      "Content-Type": "application/pdf",
+      "Content-Disposition": `inline; filename="Exam Reference Sheet (${density}).pdf"`,
+      "Cache-Control": "no-store",
+    },
+  });
+}
+
+function errorResponse(err: unknown): Response {
+  if (err instanceof PageCountError || err instanceof ClipError || err instanceof PrintTargetError) {
+    return new Response(err.message, {
+      status: 422,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
+  }
+  console.error("[/api/pdf] unexpected error:", err);
+  return new Response(err instanceof Error ? err.message : String(err), {
+    status: 500,
+    headers: { "Content-Type": "text/plain; charset=utf-8" },
+  });
+}
+
+// ── GET — dev/QA render from the on-disk ?g= pool or the sample ─────────
 export async function GET(req: NextRequest) {
   const url = new URL(req.url);
   const density = (url.searchParams.get("density") ?? "max").toLowerCase();
@@ -40,86 +166,83 @@ export async function GET(req: NextRequest) {
     return new Response(`invalid density="${density}"`, { status: 400 });
   }
   const cols5 = url.searchParams.get("cols") === "5";
+  const pageParam = url.searchParams.get("page");
+  const isSplit = pageParam === "front" || pageParam === "back";
   const pages = Number.parseInt(url.searchParams.get("pages") ?? "1", 10);
   if (pages !== 1 && pages !== 2) {
     return new Response(`pages must be 1 or 2; got "${pages}"`, { status: 400 });
   }
 
-  // We point Playwright at the SAME Next.js server that's handling this
-  // request — but via plain HTTP on 127.0.0.1, not the public URL. Behind
-  // a TLS-terminating proxy (Railway/Vercel/etc.) req.url's origin can
-  // come back as "https://localhost:PORT" and Chromium errors with
-  // ERR_SSL_PROTOCOL_ERROR. Same-process upstream is also faster — no
-  // edge round-trip.
-  const port = process.env.PORT ?? "3000";
-  const sheetUrl = new URL(`http://127.0.0.1:${port}/sheet`);
+  const sheetUrl = new URL(`${localBase()}/sheet`);
   sheetUrl.searchParams.set("density", density);
   if (cols5) sheetUrl.searchParams.set("cols", "5");
-  sheetUrl.searchParams.set("print", "1"); // tells page to hide dev chrome
-  // Dev loader passthrough: generated-pool name + front/back page.
+  sheetUrl.searchParams.set("print", "1");
   const g = url.searchParams.get("g");
-  const pageParam = url.searchParams.get("page");
   if (g && /^[a-z0-9-]+$/i.test(g)) sheetUrl.searchParams.set("g", g);
-  if (pageParam === "front" || pageParam === "back") sheetUrl.searchParams.set("page", pageParam);
+  if (isSplit) sheetUrl.searchParams.set("page", pageParam!);
 
-  const browser = await chromium.launch();
   try {
-    const page = await browser.newContext().then((ctx) => ctx.newPage());
-
-    // Emulate print media so the @media print rules in our CSS fire
-    // (hides the OverflowMonitor + dev bar + page boundary marker).
-    await page.emulateMedia({ media: "print" });
-
-    await page.goto(sheetUrl.toString(), { waitUntil: "networkidle" });
-
-    // The client FitController (Layer C) measures the real layout and
-    // trims/gap-fills before it marks the sheet done. Wait for that so the
-    // PDF captures the fitted result, not the pre-measure baseline. Falls
-    // through after a short budget if the attribute never appears (e.g. JS
-    // disabled) — the CSS overflow:hidden still guarantees one page.
-    await page
-      .waitForSelector(".sheet[data-fit-done='1']", { timeout: 4000 })
-      .catch(() => {});
-
-    const pdf = await page.pdf({
-      format: "A4",
-      landscape: true,
-      margin: {
-        top: "0.16in",
-        bottom: "0.16in",
-        left: "0.14in",
-        right: "0.14in",
-      },
-      printBackground: true, // formula bg, table headers, conf dots, etc.
-      preferCSSPageSize: true, // let @page in density.css be authoritative
+    const pdf = await renderToPdf({
+      targetUrl: sheetUrl.toString(),
+      pages: pages as 1 | 2,
+      density,
+      verifyClip: true,
     });
-
-    // THE HARD RULE — one page is sacred. Throws PageCountError if not.
-    await assertPageCount(pdf, pages, density);
-
-    return new Response(new Uint8Array(pdf), {
-      headers: {
-        "Content-Type": "application/pdf",
-        "Content-Disposition": `inline; filename="Exam Reference Sheet (${density}).pdf"`,
-        "Cache-Control": "no-store",
-      },
-    });
+    return pdfResponse(pdf, density);
   } catch (err) {
-    if (err instanceof PageCountError) {
-      // 422 Unprocessable Entity: the request was valid but the rendered
-      // output violated our content rule. Caller (UI/Tighten loop) can
-      // act on this without treating it as a 500.
-      return new Response(err.message, {
-        status: 422,
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      });
-    }
-    console.error("[/api/pdf] unexpected error:", err);
+    return errorResponse(err);
+  }
+}
+
+// ── POST — production render of the user's own pool (R4) ────────────────
+export async function POST(req: NextRequest) {
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return new Response("body must be JSON", { status: 400 });
+  }
+  const b = body as {
+    content?: unknown;
+    density?: string;
+    cols5?: boolean;
+    ctx?: unknown;
+    page?: string;
+  };
+
+  const density = (b.density ?? "max").toLowerCase();
+  if (!VALID_DENSITIES.has(density)) {
+    return new Response(`invalid density="${density}"`, { status: 400 });
+  }
+  const parsed = safeParseSheetContent(b.content);
+  if (!parsed.success) {
     return new Response(
-      err instanceof Error ? err.message : String(err),
-      { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+      `content failed the contract: ${parsed.error.issues.map((i) => i.message).join("; ")}`,
+      { status: 400 },
     );
+  }
+  const isSplit = b.page === "front" || b.page === "back";
+  const pages: 1 | 2 = 1; // each printed side is one page; 2-page mode is two POSTs.
+
+  const ctx = b.ctx && typeof b.ctx === "object" ? (b.ctx as typeof EMPTY_CTX) : EMPTY_CTX;
+  const token = putPool(parsed.data, ctx);
+  try {
+    const printUrl = new URL(`${localBase()}/print`);
+    printUrl.searchParams.set("token", token);
+    printUrl.searchParams.set("density", density);
+    if (b.cols5) printUrl.searchParams.set("cols", "5");
+    if (isSplit) printUrl.searchParams.set("page", b.page!);
+
+    const pdf = await renderToPdf({
+      targetUrl: printUrl.toString(),
+      pages,
+      density: isSplit ? (b.page === "front" ? "max" : "balanced") : density,
+      verifyClip: true,
+    });
+    return pdfResponse(pdf, density);
+  } catch (err) {
+    return errorResponse(err);
   } finally {
-    await browser.close();
+    dropPool(token);
   }
 }

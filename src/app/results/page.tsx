@@ -10,6 +10,7 @@ import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-conte
 import { FittedSheet, type Density } from "@/components/sheet";
 import { EMPTY_CTX, type ScoreCtx } from "@/components/sheet/relevance";
 import {
+  Button,
   LinkButton,
   Callout,
   Chip,
@@ -43,6 +44,8 @@ export default function ResultsPage() {
   const [error, setError] = useState<string | null>(null);
   const [density, setDensity] = useState<Density>("max");
   const [dismissed, setDismissed] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -96,6 +99,32 @@ export default function ResultsPage() {
   const warnings = stash.warnings ?? [];
   const showWarnings = warnings.length > 0 && !dismissed;
 
+  // Export via POST (R4): the user's pool lives only in this browser
+  // session, so we ship it to /api/pdf, which stashes it, renders /print
+  // through Playwright (FitController + clip verifier), and streams the
+  // one-page PDF back. 422 = the render violated a rule (clip / page count).
+  async function exportPdf() {
+    setExporting(true);
+    setExportError(null);
+    try {
+      const res = await fetch("/api/pdf", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, density, ctx: stash?.ctx ?? EMPTY_CTX }),
+      });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const blob = await res.blob();
+      const objUrl = URL.createObjectURL(blob);
+      window.open(objUrl, "_blank", "noopener");
+      // Revoke after the new tab has had time to load the blob.
+      setTimeout(() => URL.revokeObjectURL(objUrl), 60_000);
+    } catch (e) {
+      setExportError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[var(--paper-2)]">
       {/* ── Results toolbar (sticky) ─────────────────────────────────── */}
@@ -123,17 +152,12 @@ export default function ResultsPage() {
             <LinkButton href="/generate" size="sm" variant="secondary">
               Make another
             </LinkButton>
-            <LinkButton
-              href={`/api/pdf?density=${density}`}
-              size="sm"
-              target="_blank"
-              rel="noopener"
-            >
+            <Button size="sm" onClick={exportPdf} loading={exporting}>
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
               </svg>
-              Export PDF
-            </LinkButton>
+              {exporting ? "Rendering…" : "Export PDF"}
+            </Button>
           </div>
         </div>
 
@@ -151,6 +175,12 @@ export default function ResultsPage() {
             >
               Dismiss warnings
             </button>
+          </div>
+        )}
+
+        {exportError && (
+          <div className="mx-auto max-w-6xl px-5 pb-3">
+            <Callout variant="danger">PDF export failed: {exportError}</Callout>
           </div>
         )}
       </header>

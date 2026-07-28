@@ -107,12 +107,23 @@ export function FittedSheet({
 
     const nodes = () =>
       Array.from(cols.querySelectorAll<HTMLElement>("[data-fit-id]"));
-    const overflowing = () => cols.scrollWidth > cols.clientWidth + 1.5;
+
+    // A block is CLIPPED if its right edge extends past the visible column
+    // box — the exact metric the PDF route's verifier uses, so the two
+    // never disagree. (Multicol overflow is horizontal: extra content
+    // spills into a clipped 8th column.) byId maps id→node for O(1) toggles.
+    const TOL = 1.5;
+    const isClipped = (el: HTMLElement, right: number) =>
+      el.style.display !== "none" && el.getBoundingClientRect().right > right + TOL;
 
     const run = () => {
       const all = nodes();
+      const byId = new Map<string, HTMLElement>();
       const scoreOf = new Map<string, number>();
-      for (const el of all) scoreOf.set(el.dataset.fitId!, Number(el.dataset.score));
+      for (const el of all) {
+        byId.set(el.dataset.fitId!, el);
+        scoreOf.set(el.dataset.fitId!, Number(el.dataset.score));
+      }
 
       // Start from the composed baseline: placed visible, bench hidden.
       const visible = new Set<string>();
@@ -123,10 +134,18 @@ export function FittedSheet({
         if (!hidden) visible.add(id);
       }
 
-      // Phase A — trim. While the visible columns overflow, hide the
-      // lowest-scored visible item (mix-aware, not a blind flow suffix).
+      const colsRight = () => cols.getBoundingClientRect().right;
+      const anyClipped = () => {
+        const right = colsRight();
+        for (const id of visible) if (isClipped(byId.get(id)!, right)) return true;
+        return false;
+      };
+
+      // Phase A — trim. While any visible block spills past the columns,
+      // hide the lowest-scored visible item (mix-aware, not a flow suffix)
+      // and re-measure. Converges because each step removes real height.
       let guard = all.length + 4;
-      while (overflowing() && visible.size > 0 && guard-- > 0) {
+      while (visible.size > 0 && guard-- > 0 && anyClipped()) {
         let victim: string | null = null;
         let low = Infinity;
         for (const id of visible) {
@@ -135,31 +154,39 @@ export function FittedSheet({
         }
         if (!victim) break;
         visible.delete(victim);
-        const el = all.find((n) => n.dataset.fitId === victim);
-        if (el) el.style.display = "none";
+        byId.get(victim)!.style.display = "none";
       }
 
       // Phase B — gap-fill. Reveal bench items (highest-scored first) into
-      // any slack; revert the first that pushes a new (clipped) column.
+      // any slack; revert the first that clips and stop (monotone tail).
+      // Check GLOBAL clipping after each reveal, not just the added item's
+      // edge: bench items sit mid-flow (end of their section), so revealing
+      // one pushes LATER sections rightward and could clip them.
       const benchSorted = [...benchIds]
         .filter((id) => scoreOf.has(id))
         .sort((a, b) => (scoreOf.get(b) ?? 0) - (scoreOf.get(a) ?? 0));
       for (const id of benchSorted) {
         if (visible.has(id)) continue;
-        const el = all.find((n) => n.dataset.fitId === id);
+        const el = byId.get(id);
         if (!el) continue;
         el.style.display = "";
-        if (overflowing()) { el.style.display = "none"; break; }
         visible.add(id);
+        if (anyClipped()) {
+          el.style.display = "none";
+          visible.delete(id);
+          break;
+        }
       }
 
-      // Commit to React state; clear the transient inline styles so state
-      // is the single source of truth.
-      for (const el of all) el.style.display = "";
+      // Commit: leave each node's inline display MATCHING the decision
+      // (hidden→none, visible→"") so the DOM stays consistent with the
+      // React state we set — no all-visible flash between effect and paint.
       const hidden = new Set<string>();
       for (const el of all) {
         const id = el.dataset.fitId!;
-        if (!visible.has(id)) hidden.add(id);
+        const isHidden = !visible.has(id);
+        el.style.display = isHidden ? "none" : "";
+        if (isHidden) hidden.add(id);
       }
       setHiddenIds(hidden);
       setFitInfo({ visible: visible.size, total: all.length });
