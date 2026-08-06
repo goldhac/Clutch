@@ -277,6 +277,7 @@ export const sampleContent: SheetContent = {
   questions: [
     {
       q: "Build a 95% CI for μ given n=16, x̄=22.0, s=3.0. (Look up t*₀.₀₂₅,₁₅ = 2.131.)",
+      a: "22.0 ± 2.131(3/4) = 22.0 ± 1.598 → (20.40, 23.60)",
       kind: "problem",
       src: "Past midterm 2024 Q3",
       conf: "high",
@@ -284,6 +285,7 @@ export const sampleContent: SheetContent = {
     },
     {
       q: "When do you use z* vs t* for a confidence interval for a mean? One sentence.",
+      a: "t* whenever σ is unknown (nearly always); z* only if σ is known",
       kind: "short",
       src: "Past final 2023 Q5",
       conf: "high",
@@ -292,6 +294,7 @@ export const sampleContent: SheetContent = {
     {
       q:
         "Test H₀: μ = 50 vs H₁: μ ≠ 50 with x̄=52, s=4, n=25, α=0.05. State decision and one-line reason.",
+      a: "t = (52−50)/(4/5) = 2.5 > 2.064 → REJECT H₀ at α=0.05",
       kind: "problem",
       src: "Past midterm 2024 Q5",
       conf: "high",
@@ -299,12 +302,14 @@ export const sampleContent: SheetContent = {
     },
     {
       q: "p-value < α implies we reject H₀. (T/F)",
+      a: "TRUE — small p means the data are unlikely under H₀",
       kind: "T/F",
       src: "Slides 19–21",
       conf: "low",
     },
     {
       q: "Which interpretation of a p-value is correct? (MCQ-style — name the one TRUE option.)",
+      a: "P(data this extreme | H₀ true) — NOT P(H₀ true)",
       kind: "MCQ",
       src: "Past midterm 2024 Q7",
       conf: "high",
@@ -312,6 +317,7 @@ export const sampleContent: SheetContent = {
     },
     {
       q: "Why is a 99% CI wider than a 95% CI? One sentence.",
+      a: "Higher confidence needs a bigger t*, so a wider margin",
       kind: "short",
       src: "Review p2; HW2 Q3",
       conf: "med",
@@ -319,6 +325,7 @@ export const sampleContent: SheetContent = {
     {
       q:
         "Given r=0.6, s_y=10, s_x=2, find the regression slope b and interpret it in plain English.",
+      a: "b = r·s_y/s_x = 0.6(10/2) = 3 → y rises 3 per 1-unit x",
       kind: "problem",
       src: "Past final 2023 Q8",
       conf: "high",

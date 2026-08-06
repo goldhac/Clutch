@@ -133,6 +133,18 @@ D) Named traps: "X is FALSE because Y", not "watch out for X".
 E) Likely questions in the prof's voice — short, imperative, with
    a clear question kind tag (MCQ / short / problem / T/F).
 
+   EVERY question MUST carry its ANSWER in the "a" field. This is a
+   reference sheet the student holds DURING the exam — not a quiz. A
+   question without its answer is worse than useless there: it burns
+   space and causes panic. The answer must be the actual answer, terse
+   and usable at a glance:
+     - MCQ    → the correct option, stated ("the ETL 'Load' step")
+     - T/F    → "TRUE" or "FALSE" + the one-clause reason
+     - short  → the definition/answer in ≤ 15 words
+     - problem→ the final number WITH the key step ("MSE = 2831.11/2 = 1415.56")
+   Never write "see above", "refer to the formula", or restate the
+   question. If you cannot answer it from the pack, DROP the question.
+
 F) examFormat block: a single short string summarizing exam logistics
    ("8 MCQ · 4 short · 2 problems · 75min · open book: no").
 
@@ -213,7 +225,8 @@ No code fences, no prose before/after, no Markdown — just the JSON.
   "tables":   [{ "title", "cols": ["string",...],
                   "rows": [["string",...],...], "src" }],
   "traps":    [{ "text": "X is FALSE because Y", "src" }],
-  "questions":[{ "q", "kind": "MCQ|short|problem|T/F",
+  "questions":[{ "q", "a",   // "a" = THE ANSWER — required, never omit
+                  "kind": "MCQ|short|problem|T/F",
                   "src", "conf", "verified"? }]
 }
 

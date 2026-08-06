@@ -717,224 +717,258 @@
   ],
   "questions": [
     {
-      "q": "★ Confirmed answer #1 → server-centric",
+      "q": "★ Confirmed answer #1",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "server-centric"
     },
     {
-      "q": "★ Confirmed answer #2 → thin client",
+      "q": "★ Confirmed answer #2",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "thin client"
     },
     {
-      "q": "★ The lines showing relationships between tables are called…? → cardinality",
+      "q": "★ The lines showing relationships between tables are called…?",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "cardinality"
     },
     {
-      "q": "★ Which is NOT a responsibility of project management in IT? → the intel calls this a 'free question' — pick the option that is an operational/technical task, not planning, scope, time, cost, quality, risk or resources",
+      "q": "★ Which is NOT a responsibility of project management in IT?",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "the intel calls this a 'free question' — pick the option that is an operational/technical task, not planning, scope, time, cost, quality, risk or resources"
     },
     {
-      "q": "★ What is NOT part of an ETL process? → creating meaningful reports",
+      "q": "★ What is NOT part of an ETL process?",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "creating meaningful reports"
     },
     {
-      "q": "★ What will a typical LMS NOT do? → author your content / run operational business databases (it delivers, tracks and administers training)",
+      "q": "★ What will a typical LMS NOT do?",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "author your content / run operational business databases (it delivers, tracks and administers training)"
     },
     {
-      "q": "★ Difference between analog and digital? → analog = continuous physical waves; digital = discrete binary 0s and 1s",
+      "q": "★ Difference between analog and digital?",
       "kind": "short",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "analog = continuous physical waves; digital = discrete binary 0s and 1s"
     },
     {
-      "q": "★ What is a critical path? → the longest chain of dependent tasks; delay on it delays the whole project",
+      "q": "★ What is a critical path?",
       "kind": "short",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "the longest chain of dependent tasks; delay on it delays the whole project"
     },
     {
-      "q": "★ What unlocks everyone's password by recording keystrokes, also called a rubber ducky? → a keylogger",
+      "q": "★ What unlocks everyone's password by recording keystrokes, also called a rubber ducky?",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "a keylogger"
     },
     {
-      "q": "★ Order these: byte, gigabyte, terabyte, megabyte, kilobyte → B < KB < MB < GB < TB (×1,024 each)",
+      "q": "★ Order these: byte, gigabyte, terabyte, megabyte, kilobyte",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "B < KB < MB < GB < TB (×1,024 each)"
     },
     {
-      "q": "★ A group who share a profession and learn from each other by interacting regularly → community of practice",
+      "q": "★ A group who share a profession and learn from each other by interacting regularly",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "community of practice"
     },
     {
-      "q": "★ Percentage of site visitors who become users → conversion rate",
+      "q": "★ Percentage of site visitors who become users",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "conversion rate"
     },
     {
-      "q": "★ Getting ideas or work from a large open online group → crowdsourcing",
+      "q": "★ Getting ideas or work from a large open online group",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "crowdsourcing"
     },
     {
-      "q": "★ Collecting, storing, distributing and applying firm knowledge → knowledge management",
+      "q": "★ Collecting, storing, distributing and applying firm knowledge",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "knowledge management"
     },
     {
-      "q": "★ A hierarchical classification scheme for organizing things → taxonomy",
+      "q": "★ A hierarchical classification scheme for organizing things",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "taxonomy"
     },
     {
-      "q": "★ Identifying, prioritizing and planning responses to project threats → risk management",
+      "q": "★ Identifying, prioritizing and planning responses to project threats",
       "kind": "MCQ",
       "src": "exam-review-classmate-intel.md",
       "conf": "high",
-      "verified": true
+      "verified": true,
+      "a": "risk management"
     },
     {
-      "q": "A student has one advisor; an advisor has many students. What cardinality? → one-to-many (1:M)",
+      "q": "A student has one advisor; an advisor has many students. What cardinality?",
       "kind": "short",
       "src": "lecture-databases-slides.md Slide 16",
-      "conf": "med"
+      "conf": "med",
+      "a": "one-to-many (1:M)"
     },
     {
-      "q": "Which key appears in a second table as a look-up back to the first? → foreign key",
+      "q": "Which key appears in a second table as a look-up back to the first?",
       "kind": "MCQ",
       "src": "lecture-databases-slides.md Slide 8",
-      "conf": "med"
+      "conf": "med",
+      "a": "foreign key"
     },
     {
-      "q": "Streamlining data to minimize redundancy and remove many-to-many relationships → normalization",
+      "q": "Streamlining data to minimize redundancy and remove many-to-many relationships",
       "kind": "MCQ",
       "src": "lecture-databases-slides.md Slide 12",
-      "conf": "med"
+      "conf": "med",
+      "a": "normalization"
     },
     {
-      "q": "Which stores current AND historical data from many systems and cannot be altered? → data warehouse (a mart is a subset)",
+      "q": "Which stores current AND historical data from many systems and cannot be altered?",
       "kind": "MCQ",
       "src": "lecture-bi-slides.md",
-      "conf": "med"
+      "conf": "med",
+      "a": "data warehouse (a mart is a subset)"
     },
     {
-      "q": "Credit scoring and sales projections are examples of which analytics? → predictive",
+      "q": "Credit scoring and sales projections are examples of which analytics?",
       "kind": "MCQ",
       "src": "lecture-bi-slides.md Slide 16",
-      "conf": "med"
+      "conf": "med",
+      "a": "predictive"
     },
     {
-      "q": "Optimization and simulation are examples of which analytics? → prescriptive",
+      "q": "Optimization and simulation are examples of which analytics?",
       "kind": "MCQ",
       "src": "lecture-bi-slides.md Slide 16",
-      "conf": "med"
+      "conf": "med",
+      "a": "prescriptive"
     },
     {
-      "q": "Which decision type is typically unstructured and sets overall direction? → strategic",
+      "q": "Which decision type is typically unstructured and sets overall direction?",
       "kind": "MCQ",
       "src": "lecture-bi-slides.md Slide 6",
-      "conf": "med"
+      "conf": "med",
+      "a": "strategic"
     },
     {
-      "q": "Which BI tool gives rapid multidimensional answers insulated from operational processing? → OLAP",
+      "q": "Which BI tool gives rapid multidimensional answers insulated from operational processing?",
       "kind": "MCQ",
       "src": "lecture-bi-slides.md Slide 23",
-      "conf": "med"
+      "conf": "med",
+      "a": "OLAP"
     },
     {
-      "q": "Which mining type extracts key elements from unstructured text? → text mining",
+      "q": "Which mining type extracts key elements from unstructured text?",
       "kind": "MCQ",
       "src": "lecture-bi-slides.md Slide 23",
-      "conf": "med"
+      "conf": "med",
+      "a": "text mining"
     },
     {
-      "q": "Which AI technique learns by example? → neural networks (expert systems use rules; genetic algorithms search huge solution spaces)",
+      "q": "Which AI technique learns by example?",
       "kind": "MCQ",
       "src": "lecture-bi-slides.md Slide 22",
-      "conf": "med"
+      "conf": "med",
+      "a": "neural networks (expert systems use rules; genetic algorithms search huge solution spaces)"
     },
     {
-      "q": "Distributed parallel processing of big data across inexpensive computers → Hadoop",
+      "q": "Distributed parallel processing of big data across inexpensive computers",
       "kind": "MCQ",
       "src": "lecture-databases-slides.md Slide 24",
-      "conf": "med"
+      "conf": "med",
+      "a": "Hadoop"
     },
     {
-      "q": "Which uses RAM instead of disk to cut processing from hours to seconds? → in-memory computing",
+      "q": "Which uses RAM instead of disk to cut processing from hours to seconds?",
       "kind": "MCQ",
       "src": "lecture-databases-slides.md Slide 24",
-      "conf": "med"
+      "conf": "med",
+      "a": "in-memory computing"
     },
     {
-      "q": "T/F: A project is an interrelated collection of programs. → FALSE — a PROGRAM is an interrelated collection of PROJECTS",
+      "q": "T/F: A project is an interrelated collection of programs.",
       "kind": "T/F",
       "src": "lecture-projectmgmt-slides.md Slide 2",
-      "conf": "med"
+      "conf": "med",
+      "a": "FALSE — a PROGRAM is an interrelated collection of PROJECTS"
     },
     {
-      "q": "What percentage of IT projects are runaway projects? → 30–40%",
+      "q": "What percentage of IT projects are runaway projects?",
       "kind": "MCQ",
       "src": "lecture-projectmgmt-slides.md Slide 7",
-      "conf": "med"
+      "conf": "med",
+      "a": "30–40%"
     },
     {
-      "q": "Which encrypts a message, wraps it for a gateway, then decrypts it inside the LAN? → VPN",
+      "q": "Which encrypts a message, wraps it for a gateway, then decrypts it inside the LAN?",
       "kind": "MCQ",
       "src": "lecture-hardware-cloud-slides.md Slide 14",
-      "conf": "med"
+      "conf": "med",
+      "a": "VPN"
     },
     {
-      "q": "What converts IP addresses to domain names? → DNS",
+      "q": "What converts IP addresses to domain names?",
       "kind": "MCQ",
       "src": "lecture-hardware-cloud-slides.md Slide 13",
-      "conf": "med"
+      "conf": "med",
+      "a": "DNS"
     },
     {
-      "q": "Which Tableau product is free and publishes interactive data online? → Tableau Public",
+      "q": "Which Tableau product is free and publishes interactive data online?",
       "kind": "MCQ",
       "src": "lecture-tableau-slides.md Slide 2",
-      "conf": "med"
+      "conf": "med",
+      "a": "Tableau Public"
     },
     {
-      "q": "What is the 'heart' of what Tableau does? → data visualization",
+      "q": "What is the 'heart' of what Tableau does?",
       "kind": "MCQ",
       "src": "lecture-tableau-slides.md Slide 3",
-      "conf": "med"
+      "conf": "med",
+      "a": "data visualization"
     }
   ]
 }

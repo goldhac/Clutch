@@ -363,6 +363,18 @@
 /* Question box: topic-colored left rule so the drill set is scannable. */
 .sheet .qa-list .fit-leaf.qq { border-left-color: var(--tk, var(--color-primary-indigo)); }
 
+/* The ANSWER — the whole reason a likely-question earns its space on an
+ * exam-room sheet. Must be instantly separable from the question text:
+ * green, bold, arrow-led. */
+.sheet .qq .ans {
+  color: var(--color-correct-green);
+  font-weight: 700;
+}
+.sheet .qq .ans-arrow {
+  font-weight: 700;
+  opacity: 0.75;
+}
+
 /* ── Topic KEY (the legend strip) — swatch + topic name, one per topic. */
 .sheet .topic-key {
   display: flex;

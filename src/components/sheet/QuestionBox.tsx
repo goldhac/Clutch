@@ -17,6 +17,9 @@ export function QuestionBox({ question: q, bare = false }: QuestionBoxProps) {
     <>
       <VerifiedStar verified={q.verified} />
       <span className="kind">{q.kind}</span> <InlineText text={q.q} />{" "}
+      <span className="ans">
+        <span className="ans-arrow">→</span> <InlineText text={q.a} />
+      </span>{" "}
       <ConfDot conf={q.conf} />
       <Citation src={q.src} />
     </>

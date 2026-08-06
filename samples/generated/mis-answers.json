@@ -1,0 +1,766 @@
+{
+  "title": "ITSS 3300 - Final Exam Reference Sheet",
+  "verifiedPatterns": [
+    {
+      "pattern": "★ Define core IT & business terminology (e.g., Cardinality, Critical Path, Keylogger, Crowdsourcing).",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "pattern": "★ Identify what is NOT part of a process or a role's responsibility (e.g., 'not part of ETL', 'LMS will NOT do', 'not a responsibility of project management'). Read NOT/EXCEPT questions twice.",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "pattern": "★ Distinguish between related technical concepts (e.g., Digital vs. Analog, Thin vs. Thick Client, Data Warehouse vs. Data Mart).",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.pptx Slide 5"
+    }
+  ],
+  "topics": [
+    {
+      "name": "Database Concepts",
+      "why": "Exam directly tests Cardinality and database principles. Normalization, keys, and SQL are foundational.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.pptx",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Business Intelligence & Analytics",
+      "why": "ETL process is a confirmed exam question. Decision types, analytics categories (descriptive, predictive), and data warehousing are core BI topics.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.pptx",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Project Management",
+      "why": "Critical Path and Risk Management are confirmed topics. The Triple Constraint (Scope, Time, Resources) is a central PM concept.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.pptx",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Hardware, Networking & Cloud",
+      "why": "Confirmed questions on client types (Thin Client) and data storage units (Bytes, GB, TB). Analog vs. Digital is also confirmed.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.pptx",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "IT Security & Knowledge Management",
+      "why": "Keylogger, Knowledge Management, Crowdsourcing, and Community of Practice are all confirmed exam topics.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.pptx Slide 21",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Data Visualization",
+      "why": "Principles of data visualization are a confirmed topic. Know the purpose of different chart types in Tableau.",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.pptx",
+      "conf": "high",
+      "verified": true
+    }
+  ],
+  "formulas": [
+    {
+      "name": "Basic SQL Query Structure",
+      "formula": "SELECT [Columns] FROM [Table] WHERE [Condition];",
+      "vars": "SELECT specifies fields to show · FROM specifies the source table · WHERE filters rows based on a condition",
+      "when": "Used to retrieve specific data from a relational database.",
+      "trap": "Forgetting the semicolon at the end is a common syntax error. Also, string values in WHERE clauses need single quotes, e.g., WHERE City = 'Dallas'.",
+      "ex": "SELECT Part_Name, Unit_Price FROM PART WHERE Supplier_Number = 8259; ✓",
+      "src": "lecture-databases-slides.pptx Slide 19; lecture-databases-slides.pptx Slide 21",
+      "conf": "high"
+    },
+    {
+      "name": "SQL Join Syntax",
+      "formula": "SELECT T1.Col, T2.Col FROM Table1 T1, Table2 T2 WHERE T1.Key = T2.Key;",
+      "vars": "T1, T2 are aliases for tables · T1.Key = T2.Key links the tables on a common field (Primary/Foreign Key)",
+      "when": "Retrieving data from two or more related tables in a single query.",
+      "ex": "SELECT PART.Part_Name, SUPPLIER.Supplier_Name FROM PART, SUPPLIER WHERE PART.Supplier_Number = SUPPLIER.Supplier_Number; ✓",
+      "src": "lecture-databases-slides.pptx Slide 21",
+      "conf": "med"
+    }
+  ],
+  "concepts": [
+    {
+      "term": "★ Cardinality",
+      "def": "The measure of the number of links between one or more data entities in a database. It defines the relationships between tables, such as one-to-one, one-to-many, or many-to-many. Example: One student can have many course enrollments (one-to-many).",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.pptx Slide 16",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Thin Client",
+      "def": "A computing model where significant processing is performed on a central server, and the client device is primarily for input and display. The answer to a confirmed question is 'thin client'. Example: A web browser accessing a cloud application like Google Docs.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.pptx Slide 5",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Digital vs. Analog",
+      "def": "Analog signals are continuous physical waves, while digital signals are discrete, using binary numbers (0s and 1s). Example: A vinyl record uses an analog groove, while a CD stores music digitally.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.pptx Slide 12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Critical Path",
+      "def": "In project management, this is the sequence of tasks that determines the total length of the project. Any delay in a critical path task directly delays the project completion. Example: If 'Build Foundation' is on the critical path, a 1-day delay in starting it delays the whole construction project by 1 day.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.pptx Slide 9",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Keylogger",
+      "def": "Malicious software or hardware that records keystrokes on a computer, used to steal passwords and other sensitive information. A hardware version can be a small USB device, sometimes called a 'rubber ducky'. Example: A hacker installs a keylogger to capture a user's online banking username and password.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ ETL Process",
+      "def": "Extract, Transform, Load. A process in data warehousing for pulling data from source systems (Extract), cleaning and standardizing it (Transform), and storing it in a data warehouse (Load). Example: Extracting sales data from multiple stores, transforming date formats to be consistent, and loading it into a central sales data warehouse.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.pptx Slide 25",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Risk Management",
+      "def": "The process of identifying, assessing, and controlling threats to an organization's capital and earnings. In project management, it involves determining potential risks and developing strategies to mitigate them. Example: A project team identifies 'key developer leaving' as a risk and mitigates it by documenting code thoroughly.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.pptx Slide 8",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Conversion Rate",
+      "def": "A metric, often in e-commerce or web analytics, that measures the percentage of users who take a desired action. Example: If 1000 people visit a product page and 50 make a purchase, the conversion rate is 5%.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Crowdsourcing",
+      "def": "The practice of obtaining information or input into a task or project by enlisting the services of a large number of people, typically via the Internet. Example: Wikipedia uses crowdsourcing for its content; Waze uses it for real-time traffic data.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Knowledge Management",
+      "def": "The process of creating, sharing, using, and managing the knowledge and information of an organization. It refers to a multidisciplinary approach to achieving organizational objectives. Example: Creating a company-wide wiki to store best practices and project documentation.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.pptx Slide 21",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Taxonomy",
+      "def": "The science of classification; arranging things into groups based on their similarities. In IT, it refers to the classification and naming of data in a structured way. Example: A library's Dewey Decimal System is a taxonomy for books.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Community of Practice",
+      "def": "A group of people who share a concern or a passion for something they do and learn how to do it better as they interact regularly. Example: A group of software developers at a company who meet monthly to discuss new programming techniques.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Server Concentric",
+      "def": "A term likely referring to a server-centric architecture, where a central server handles the majority of processing, data management, and application logic. This is a confirmed answer on the exam. Example: Mainframe systems or modern cloud computing where the client is a simple interface.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Data vs. Information",
+      "def": "Data are raw, unorganized facts. Information is data that has been processed, organized, and structured to provide context and meaning. Example: The number '1.29' is data. 'Brite Dish Soap price: $1.29' is information.",
+      "src": "lecture-databases-slides.pptx Slide 3",
+      "conf": "med"
+    },
+    {
+      "term": "Database Hierarchy",
+      "def": "The structure of data organization: A Database contains Tables (Files), which contain Rows (Records), which contain Columns (Fields), which are made of Bytes (Characters). Example: A 'Students' database has a 'Grades' table with a row for each student, containing fields like 'Name' and 'HW1_Score'.",
+      "src": "lecture-databases-slides.pptx Slide 5; lecture-databases-slides.pptx Slide 6",
+      "conf": "high"
+    },
+    {
+      "term": "Primary Key vs. Foreign Key",
+      "def": "A Primary Key is a field that uniquely identifies each record in a table (e.g., Student_ID). A Foreign Key is a primary key from one table used in another table to create a link between them (e.g., Student_ID in the 'Enrollment' table).",
+      "src": "lecture-databases-slides.pptx Slide 8",
+      "conf": "med"
+    },
+    {
+      "term": "Normalization",
+      "def": "The process of organizing columns and tables in a relational database to minimize data redundancy and improve data integrity. Example: Separating a single 'Employee' table with department info into two tables, 'Employee' and 'Department', linked by a Dept_ID foreign key.",
+      "src": "lecture-databases-slides.pptx Slide 12",
+      "conf": "med"
+    },
+    {
+      "term": "Data Warehouse vs. Data Mart",
+      "def": "A Data Warehouse is a large, centralized repository of data from many sources across an enterprise. A Data Mart is a smaller, focused subset of a data warehouse for a specific business line or team. Example: A company's main data warehouse holds all sales, marketing, and HR data. The marketing team uses a data mart containing only marketing campaign and customer data.",
+      "src": "lecture-bi-slides.pptx Slide 26",
+      "conf": "med"
+    },
+    {
+      "term": "OLAP (Online Analytical Processing)",
+      "def": "A tool for multidimensional data analysis, allowing users to quickly analyze and query large datasets from various viewpoints. Example: Using a pivot table in Excel to slice and dice sales data by region, product, and time period.",
+      "src": "lecture-bi-slides.pptx Slide 23; lecture-databases-slides.pptx Slide 25",
+      "conf": "high"
+    },
+    {
+      "term": "Data Mining",
+      "def": "The process of discovering hidden patterns and relationships in large datasets to predict future behavior. Example: A retail company mines purchase history to discover that customers who buy diapers also tend to buy beer, and places them near each other.",
+      "src": "lecture-bi-slides.pptx Slide 23",
+      "conf": "med"
+    },
+    {
+      "term": "Big Data",
+      "def": "Massive, complex datasets (unstructured or semi-structured) that are too large for traditional database management systems to handle. Example: Data from social media feeds, web traffic logs, and IoT sensors.",
+      "src": "lecture-databases-slides.pptx Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Project Management Triple Constraint",
+      "def": "The three key constraints of any project: Scope (what needs to be done), Time (the schedule), and Resources (cost/budget). A change in one constraint requires a change in at least one of the others. Example: If project scope increases, either the time or the budget (or both) must also increase.",
+      "src": "lecture-projectmgmt-slides.pptx Slide 3",
+      "conf": "med"
+    },
+    {
+      "term": "Gantt Chart",
+      "def": "A type of bar chart that illustrates a project schedule, showing the start and finish dates of tasks and their dependencies. Example: A chart with horizontal bars representing tasks like 'Design', 'Build', and 'Test' along a timeline.",
+      "src": "lecture-projectmgmt-slides.pptx Slide 9; lecture-projectmgmt-slides.pptx Slide 10",
+      "conf": "high"
+    },
+    {
+      "term": "VPN (Virtual Private Network)",
+      "def": "A secure, encrypted connection over a public network (like the Internet) that creates a private 'tunnel' for data. Example: Using a VPN client to securely connect to a company's internal network from home.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 14",
+      "conf": "med"
+    },
+    {
+      "term": "DNS (Domain Name System)",
+      "def": "The Internet's system for converting alphabetic domain names (like www.google.com) into numeric IP addresses (like 172.217.6.78) that computers use to connect to each other. Example: It acts like a phonebook for the internet.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 13",
+      "conf": "med"
+    },
+    {
+      "term": "TCP/IP",
+      "def": "Transmission Control Protocol/Internet Protocol. The fundamental suite of communication protocols used to interconnect network devices on the Internet. TCP ensures reliable data delivery, and IP handles addressing and routing. Example: When you load a webpage, TCP/IP manages breaking the page into packets, sending them, and reassembling them correctly in your browser.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 10",
+      "conf": "med"
+    },
+    {
+      "term": "Packet Switching",
+      "def": "A method of grouping data into packets that are transmitted over a digital network. Packets can take different paths to their destination and are reassembled at the end. Example: An email is broken into small packets, sent over the internet, and reassembled in the recipient's inbox.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 10",
+      "conf": "med"
+    },
+    {
+      "term": "Firmware",
+      "def": "Specialized software that is stored in non-volatile, read-only memory on a hardware device. It provides low-level control for the device's specific hardware. Example: The BIOS in a computer that runs when you first turn it on is firmware.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 5",
+      "conf": "med"
+    },
+    {
+      "term": "Balanced Scorecard",
+      "def": "A strategic management performance metric used to identify and improve various internal functions of a business and their resulting external outcomes. It measures performance across four dimensions: Financial, Customer, Internal Business Process, and Learning & Growth. Example: A company tracking not just profit (Financial) but also customer satisfaction scores (Customer).",
+      "src": "lecture-bi-slides.pptx Slide 30; lecture-bi-slides.pptx Slide 31",
+      "conf": "high"
+    },
+    {
+      "term": "KPI (Key Performance Indicator)",
+      "def": "A measurable value that demonstrates how effectively a company is achieving key business objectives. KPIs are used to evaluate success at reaching targets. Example: 'Monthly recurring revenue' is a KPI for a subscription-based business.",
+      "src": "lecture-bi-slides.pptx Slide 30",
+      "conf": "med"
+    },
+    {
+      "term": "Tableau Dimension vs. Measure",
+      "def": "In Tableau, Dimensions are qualitative (categorical) data that determine the level of detail (e.g., 'Region', 'Category'). Measures are quantitative (numeric) data that can be aggregated (e.g., 'Sales', 'Profit'). Example: Analyzing 'Sales' (Measure) by 'Region' (Dimension).",
+      "src": "lecture-tableau-slides.pptx Slide 12",
+      "conf": "med"
+    },
+    {
+      "term": "Tableau Dashboard",
+      "def": "A presentation of multiple related data visualizations (views) arranged together to communicate a cohesive message. Dashboards are often interactive. Example: A sales dashboard showing a map of sales by state, a bar chart of sales by product, and a line chart of sales over time.",
+      "src": "lecture-tableau-slides.pptx Slide 10; lecture-tableau-slides.pptx Slide 20",
+      "conf": "high"
+    }
+  ],
+  "tables": [
+    {
+      "title": "Data Storage Capacity",
+      "cols": [
+        "Term",
+        "Abbreviation",
+        "Size"
+      ],
+      "rows": [
+        [
+          "Byte",
+          "B",
+          "8 bits (one character)"
+        ],
+        [
+          "Kilobyte",
+          "KB",
+          "1,024 Bytes"
+        ],
+        [
+          "Megabyte",
+          "MB",
+          "1,024 KB"
+        ],
+        [
+          "Gigabyte",
+          "GB",
+          "1,024 MB"
+        ],
+        [
+          "Terabyte",
+          "TB",
+          "1,024 GB"
+        ],
+        [
+          "Petabyte",
+          "PB",
+          "1,024 TB"
+        ]
+      ],
+      "src": "lecture-hardware-cloud-slides.pptx Slide 4"
+    },
+    {
+      "title": "Types of Business Decisions",
+      "cols": [
+        "Level",
+        "Management",
+        "Type",
+        "Example Question"
+      ],
+      "rows": [
+        [
+          "Strategic",
+          "Upper (Execs)",
+          "Unstructured",
+          "WHY? (e.g., What new markets should we enter?)"
+        ],
+        [
+          "Tactical",
+          "Middle (Directors)",
+          "Semi-Structured",
+          "WHAT? (e.g., What products should we launch next year?)"
+        ],
+        [
+          "Operational",
+          "Operational Mgrs",
+          "Structured",
+          "HOW/WHEN? (e.g., How do we schedule staff this week?)"
+        ]
+      ],
+      "src": "lecture-bi-slides.pptx Slide 4; lecture-bi-slides.pptx Slide 6"
+    },
+    {
+      "title": "Categories of Business Analytics",
+      "cols": [
+        "Category",
+        "Question Answered",
+        "Example"
+      ],
+      "rows": [
+        [
+          "Descriptive",
+          "What happened?",
+          "Financial Reports, Sales Statistics"
+        ],
+        [
+          "Predictive",
+          "What will happen?",
+          "Credit Scoring, Sales Projections"
+        ],
+        [
+          "Prescriptive",
+          "What should we do?",
+          "Optimization, Simulation"
+        ]
+      ],
+      "src": "lecture-bi-slides.pptx Slide 12; lecture-bi-slides.pptx Slide 16"
+    },
+    {
+      "title": "Cloud Service Models (Who Manages What)",
+      "cols": [
+        "Model",
+        "You Manage",
+        "Vendor Manages"
+      ],
+      "rows": [
+        [
+          "On-Premises",
+          "Everything (Apps, Data, OS, Servers, Network...)",
+          "Nothing"
+        ],
+        [
+          "IaaS",
+          "Applications, Data, Runtime, Middleware, OS",
+          "Virtualization, Servers, Storage, Network"
+        ],
+        [
+          "PaaS",
+          "Applications, Data",
+          "Runtime, Middleware, OS, Servers, Network..."
+        ],
+        [
+          "SaaS",
+          "Nothing (maybe some user-level config)",
+          "Everything (Apps, Data, OS, Servers, Network...)"
+        ]
+      ],
+      "src": "lecture-hardware-cloud-slides.pptx Slide 26"
+    },
+    {
+      "title": "Database Hierarchy",
+      "cols": [
+        "Level",
+        "Contains",
+        "Analogy"
+      ],
+      "rows": [
+        [
+          "Database",
+          "Group of related Tables",
+          "Filing Cabinet"
+        ],
+        [
+          "Table (File)",
+          "Group of related Rows",
+          "Drawer"
+        ],
+        [
+          "Row (Record)",
+          "Group of related Columns",
+          "Folder"
+        ],
+        [
+          "Column (Field)",
+          "Group of Characters",
+          "Piece of paper (e.g., 'Name')"
+        ]
+      ],
+      "src": "lecture-databases-slides.pptx Slide 5; lecture-databases-slides.pptx Slide 6"
+    },
+    {
+      "title": "Key SQL Commands",
+      "cols": [
+        "Command",
+        "Purpose"
+      ],
+      "rows": [
+        [
+          "SELECT",
+          "Specifies the columns to retrieve"
+        ],
+        [
+          "FROM",
+          "Specifies the table to retrieve data from"
+        ],
+        [
+          "WHERE",
+          "Filters records that meet a certain condition"
+        ],
+        [
+          "ORDER BY",
+          "Sorts the result set"
+        ]
+      ],
+      "src": "lecture-databases-slides.pptx Slide 19"
+    }
+  ],
+  "traps": [
+    {
+      "text": "★ Creating meaningful reports is NOT part of the ETL 'Transform' step. The 'Transform' step is for cleansing and standardizing data for storage, not for end-user reporting. Reporting happens later using BI tools on the loaded data.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.pptx Slide 27"
+    },
+    {
+      "text": "★ An LMS (Learning Management System) will typically NOT perform functions outside of education and training management, such as processing payroll or managing company-wide financial accounting. Its scope is limited to learning activities.",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "text": "★ Project Management responsibilities do NOT typically include performing the day-to-day technical tasks of the project, like writing code or designing hardware. Their role is to plan, execute, and control the project, not to be the primary technical implementer.",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "text": "Treating raw data as information is FALSE because data are just raw facts; information is data shaped into a meaningful form. Example: '331' is data, 'Brite Dish Soap sales: 331 units' is information.",
+      "src": "lecture-databases-slides.pptx Slide 3"
+    },
+    {
+      "text": "Assuming a Data Warehouse and a Database are the same is incorrect. A database is designed for transactions (OLTP), while a data warehouse is designed for analysis (OLAP) and stores historical data from many sources.",
+      "src": "lecture-bi-slides.pptx Slide 14; lecture-databases-slides.pptx Slide 24"
+    },
+    {
+      "text": "Confusing a Gantt chart with a Critical Path is wrong. A Gantt chart is a visual timeline of all tasks, while the Critical Path is the specific sequence of tasks that dictates the project's minimum duration.",
+      "src": "lecture-projectmgmt-slides.pptx Slide 9"
+    },
+    {
+      "text": "Thinking you 'own' software is FALSE. You own a license to use it, which comes with restrictions. This applies to individual, site, and even some open-source licenses.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 5"
+    },
+    {
+      "text": "Using the 'Transform' function in ETL to manipulate data for a specific report is WRONG because it compromises the integrity of the raw data stored in the warehouse. Transformations should be for standardization, not for one-off report formatting.",
+      "src": "lecture-bi-slides.pptx Slide 27"
+    },
+    {
+      "text": "Considering an IT implementation project to be solely an IT project is incorrect. It requires buy-in and involvement from all business stakeholders to succeed, as it impacts organizational processes.",
+      "src": "lecture-projectmgmt-slides.pptx Slide 5"
+    },
+    {
+      "text": "Assuming more data is always better is FALSE. Without proper BI tools and analytics, 'Big Data' can lead to confusion and poor decisions. The quality and analysis of data are more important than sheer volume.",
+      "src": "lecture-databases-slides.pptx Slide 22"
+    },
+    {
+      "text": "Believing that user involvement alone guarantees project success is FALSE. While critical, it's not sufficient without strong management support, which ensures funding, resources, and enforcement of organizational changes.",
+      "src": "lecture-projectmgmt-slides.pptx Slide 6"
+    },
+    {
+      "text": "Confusing a Data Mart with a full Data Warehouse is incorrect. A Data Mart is a smaller, focused subset of a Data Warehouse, serving a single department or subject area, not the entire enterprise.",
+      "src": "lecture-bi-slides.pptx Slide 26"
+    },
+    {
+      "text": "Assuming Wi-Fi is always secure is FALSE. It has inherent security weaknesses, and public hotspots can be particularly risky without additional security measures like a VPN.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 20"
+    },
+    {
+      "text": "Thinking that a database and a DBMS are the same thing is wrong. The database is the collection of data (tables, relationships), while the DBMS is the software used to create, manage, and query the database.",
+      "src": "lecture-databases-slides.pptx Slide 8"
+    },
+    {
+      "text": "Assuming that increasing project resources will always shorten the timeline is FALSE. Adding more people to a late project can sometimes make it later due to increased communication overhead (Brooks's Law).",
+      "src": "lecture-projectmgmt-slides.pptx Slide 3"
+    },
+    {
+      "text": "Confusing Tableau Joins and Blends is incorrect. Joins combine data at the row-level from tables within the same data source. Blends combine aggregated data from different data sources.",
+      "src": "lecture-tableau-slides.pptx Slide 21"
+    }
+  ],
+  "questions": [
+    {
+      "q": "★ What is cardinality in the context of databases?",
+      "kind": "short",
+      "a": "It defines the relationship between tables, such as one-to-one or one-to-many.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.pptx Slide 16",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which of the following is NOT considered part of an ETL process?",
+      "kind": "MCQ",
+      "a": "Creating meaningful reports for end-users.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is the difference between digital and analog signals?",
+      "kind": "short",
+      "a": "Analog uses continuous waves; digital uses discrete binary numbers (0s and 1s).",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.pptx Slide 12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is a critical path in project management?",
+      "kind": "short",
+      "a": "The sequence of tasks that determines the project's total duration.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.pptx Slide 9",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A computing model where most processing is done on a central server is called a:",
+      "kind": "MCQ",
+      "a": "Thin client.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.pptx Slide 5",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is a keylogger?",
+      "kind": "short",
+      "a": "Malicious hardware or software that records a user's keystrokes to steal information.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which of the following is NOT a typical responsibility of IT project management?",
+      "kind": "MCQ",
+      "a": "Writing the source code for the application.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is a conversion rate?",
+      "kind": "short",
+      "a": "The percentage of users who perform a desired action (e.g., make a purchase).",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is crowdsourcing?",
+      "kind": "short",
+      "a": "Obtaining input or services from a large group of people, usually via the internet.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What does a typical Learning Management System (LMS) NOT do?",
+      "kind": "MCQ",
+      "a": "Process company-wide payroll.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is taxonomy?",
+      "kind": "short",
+      "a": "The classification and naming of items into a structured, hierarchical system.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A server-centric architecture where the server handles most processing is a confirmed answer.",
+      "kind": "T/F",
+      "a": "TRUE. The confirmed answer is 'server concentric', referring to this model.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "What are the three components of the project management triple constraint?",
+      "kind": "short",
+      "a": "Scope, Time, and Resources (Cost).",
+      "src": "lecture-projectmgmt-slides.pptx Slide 3",
+      "conf": "med"
+    },
+    {
+      "q": "What is the purpose of normalization in database design?",
+      "kind": "short",
+      "a": "To minimize data redundancy and improve data integrity.",
+      "src": "lecture-databases-slides.pptx Slide 12",
+      "conf": "med"
+    },
+    {
+      "q": "Which type of business analytics answers the question 'What will happen in the future?'",
+      "kind": "MCQ",
+      "a": "Predictive analytics.",
+      "src": "lecture-bi-slides.pptx Slide 16",
+      "conf": "med"
+    },
+    {
+      "q": "In the SaaS cloud model, who is responsible for managing the underlying operating system?",
+      "kind": "short",
+      "a": "The vendor.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 26",
+      "conf": "med"
+    },
+    {
+      "q": "What is the function of a DNS server?",
+      "kind": "short",
+      "a": "To translate human-readable domain names into machine-readable IP addresses.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 13",
+      "conf": "med"
+    },
+    {
+      "q": "A Data Mart is a larger, more comprehensive version of a Data Warehouse.",
+      "kind": "T/F",
+      "a": "FALSE. A Data Mart is a smaller subset of a Data Warehouse, focused on a single subject.",
+      "src": "lecture-bi-slides.pptx Slide 26",
+      "conf": "med"
+    },
+    {
+      "q": "What is the difference between a primary key and a foreign key?",
+      "kind": "short",
+      "a": "A primary key uniquely identifies a record in its table; a foreign key is that primary key placed in another table to link them.",
+      "src": "lecture-databases-slides.pptx Slide 8",
+      "conf": "med"
+    },
+    {
+      "q": "Which SQL command is used to filter the rows returned by a query?",
+      "kind": "short",
+      "a": "The WHERE clause.",
+      "src": "lecture-databases-slides.pptx Slide 19",
+      "conf": "med"
+    },
+    {
+      "q": "What are the four perspectives of the Balanced Scorecard method?",
+      "kind": "short",
+      "a": "Financial, Customer, Internal Business Process, and Learning & Growth.",
+      "src": "lecture-bi-slides.pptx Slide 30",
+      "conf": "med"
+    },
+    {
+      "q": "A Gantt chart is primarily used to show the project's budget allocation.",
+      "kind": "T/F",
+      "a": "FALSE. It is used to show the project schedule and task timelines.",
+      "src": "lecture-projectmgmt-slides.pptx Slide 9",
+      "conf": "med"
+    },
+    {
+      "q": "What is OLAP?",
+      "kind": "short",
+      "a": "Online Analytical Processing: tools for fast, multidimensional analysis of data.",
+      "src": "lecture-bi-slides.pptx Slide 23",
+      "conf": "med"
+    },
+    {
+      "q": "In Tableau, are categorical fields like 'Region' or 'Product Name' typically Dimensions or Measures?",
+      "kind": "short",
+      "a": "Dimensions.",
+      "src": "lecture-tableau-slides.pptx Slide 12",
+      "conf": "med"
+    },
+    {
+      "q": "What is the main advantage of using a VPN?",
+      "kind": "short",
+      "a": "It creates a secure, encrypted connection over a public network.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 14",
+      "conf": "med"
+    },
+    {
+      "q": "Which decision-making level is concerned with unstructured, strategic decisions?",
+      "kind": "short",
+      "a": "Upper management (Executives).",
+      "src": "lecture-bi-slides.pptx Slide 6",
+      "conf": "med"
+    },
+    {
+      "q": "The process of discovering hidden patterns in large datasets is called:",
+      "kind": "MCQ",
+      "a": "Data mining.",
+      "src": "lecture-bi-slides.pptx Slide 23",
+      "conf": "med"
+    },
+    {
+      "q": "What is firmware?",
+      "kind": "short",
+      "a": "Software permanently stored on a hardware device's read-only memory (ROM).",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 5",
+      "conf": "med"
+    },
+    {
+      "q": "What is the purpose of a Tableau Dashboard?",
+      "kind": "short",
+      "a": "To display multiple visualizations together to tell a cohesive data story.",
+      "src": "lecture-tableau-slides.pptx Slide 20",
+      "conf": "med"
+    },
+    {
+      "q": "What does TCP/IP stand for?",
+      "kind": "short",
+      "a": "Transmission Control Protocol / Internet Protocol.",
+      "src": "lecture-hardware-cloud-slides.pptx Slide 10",
+      "conf": "med"
+    }
+  ]
+}

@@ -122,6 +122,33 @@ export type QuestionKind = z.infer<typeof QuestionKindSchema>;
 export const QuestionSchema = rankedItem({
   q: z.string().min(1),
   kind: QuestionKindSchema,
+  /**
+   * The ANSWER. Required — this is an exam-room reference sheet, not a
+   * quiz. A question without its answer burns space and causes panic at
+   * the exact moment the student can least afford it. (Historically this
+   * field didn't exist: hand-written pools smuggled answers into `q` as
+   * "→ …" while the engine emitted bare questions, so ~100% of generated
+   * questions were unanswerable. Making it a required field is what
+   * actually enforces the rule.)
+   */
+  a: z
+    .string()
+    .min(1, "every likely question MUST carry its answer (output spec §4)")
+    // An answer that admits it doesn't know is not an answer — it's dead
+    // weight on a page where space is the scarcest resource. The prompt
+    // says to DROP such questions; this makes the model actually do it
+    // instead of hedging ("the specific answer is unknown, but…").
+    .refine(
+      (a) =>
+        !/\b(answer is unknown|unknown, but|cannot be determined|can't be determined|not specified in|not provided in|unclear from|see above|refer to the)\b/i.test(
+          a,
+        ),
+      {
+        message:
+          "answer must actually ANSWER — no 'unknown', 'cannot be determined', or 'see above'. " +
+          "If the pack doesn't support an answer, DROP the question instead.",
+      },
+    ),
 });
 export type Question = z.infer<typeof QuestionSchema>;
 
