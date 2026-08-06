@@ -519,41 +519,106 @@ export function splitFrontBack(
   content: SheetContent,
   ctx: ScoreCtx = EMPTY_CTX,
   cols5 = false,
+  /** id → topic index (from topics-color.assignTopics). When supplied, the
+   * split partitions WHOLE TOPICS across the two sides. */
+  topicOf?: (id: string) => number,
 ): FrontBack {
-  // The 7-col MAX estimate runs optimistic — narrow columns wrap taller
-  // than estimateHeight() predicts, so the client FitController trims ~20%
-  // of the estimated placement. Split the front CONSERVATIVELY (0.8×) so
-  // its materialized set ≈ what actually renders, and the true remainder
-  // (the rest) flows to the back instead of being trimmed into the void.
-  const FRONT_FIT_FACTOR = 0.8;
-  const frontCompose = compose(
-    content, "max", ctx, defaultBudget("max", cols5) * FRONT_FIT_FACTOR, cols5,
-  );
+  const budget = defaultBudget("max", cols5);
+
+  // ── TOPIC-PARTITIONED split (the proven sheet's structure) ───────────
+  // The reference sheet puts each topic on exactly ONE side (front =
+  // Spark/MLlib, back = NoSQL/Mongo/HBase). Nothing repeats, so the two
+  // sides read as one continuous document. Splitting by ITEM instead makes
+  // the same topic banner appear on both pages — the "disjointed" look.
+  //
+  // So: score every item, bucket by topic, order topics by their strongest
+  // content, then fill the front with WHOLE topics until it's full; the
+  // rest go to the back.
+  if (topicOf && content.topics.length > 1) {
+    const pools = scoreAll(content, "max", ctx, cols5);
+    const scored = SECTION_ORDER.filter((s) => s !== "topics").flatMap((s) => pools[s]);
+
+    const nTopics = content.topics.length;
+    const bucket = Array.from({ length: nTopics }, () => ({ ids: [] as string[], h: 0, best: 0 }));
+    for (const it of scored) {
+      const ti = Math.min(Math.max(0, topicOf(it.id)), nTopics - 1);
+      bucket[ti].ids.push(it.id);
+      bucket[ti].h += it.estHeight;
+      bucket[ti].best = Math.max(bucket[ti].best, it.score);
+    }
+
+    // Topic order = strongest topic first (its best item's score), so the
+    // front carries what matters most and the back CONTINUES the sequence.
+    const order = bucket.map((b, i) => ({ i, ...b })).sort((a, b) => b.best - a.best);
+
+    // Choose the split point that BALANCES the two sides. Filling the front
+    // to a fixed cap leaves it loose whenever the next topic is large (the
+    // front ends up half-empty while the back overflows). Splitting nearest
+    // the midpoint of total height fills both sides evenly — and because
+    // topics stay in strength order, the back reads as a continuation.
+    // The FRONT also carries the verifiedPatterns strip (spans all columns),
+    // so it has less room for topic content than the back — aim slightly
+    // under half so the back doesn't come up short.
+    const totalH = order.reduce((a, t) => a + t.h, 0);
+    const frontShare = content.verifiedPatterns?.length ? 0.45 : 0.5;
+    const target = Math.min(totalH * frontShare, budget);
+    let bestK = 0;
+    let bestDelta = Infinity;
+    let run = 0;
+    for (let k = 0; k < order.length - 1; k++) {
+      run += order[k].h;
+      const delta = Math.abs(run - target);
+      if (delta < bestDelta) { bestDelta = delta; bestK = k; }
+    }
+    const frontTopics = new Set<number>();
+    for (let k = 0; k <= bestK; k++) frontTopics.add(order[k].i);
+
+    const inFront = (id: string) =>
+      frontTopics.has(Math.min(Math.max(0, topicOf(id)), nTopics - 1));
+    const pick = (side: "front" | "back") => {
+      const keep = <T,>(arr: T[], section: Section): T[] =>
+        arr.filter((_, i) =>
+          side === "front" ? inFront(`${section}:${i}`) : !inFront(`${section}:${i}`));
+      return {
+        ...content,
+        formulas: keep(content.formulas, "formulas"),
+        concepts: keep(content.concepts, "concepts"),
+        traps: keep(content.traps, "traps"),
+        questions: keep(content.questions, "questions"),
+        tables: content.tables ? keep(content.tables, "tables") : undefined,
+        // Both sides keep the FULL topics list so the color key is
+        // identical; each side only renders banners for topics it holds.
+        topics: content.topics,
+      };
+    };
+
+    const front = pick("front");
+    const back = { ...pick("back"), verifiedPatterns: undefined, title: `${content.title} — BACK` };
+    return {
+      front,
+      back,
+      frontCompose: compose(front, "max", ctx, budget, cols5),
+      backCompose: compose(back, "max", ctx, budget, cols5),
+    };
+  }
+
+  // ── Fallback: item-level split (no topic map / single topic) ─────────
+  const frontCompose = compose(content, "max", ctx, budget * 0.8, cols5);
   const frontIds = new Set(frontCompose.placed.map((p) => p.id));
-  // Keep the FULL topics list on the front (and back below) so the topic
-  // color key is IDENTICAL on both pages — a topic is the same color no
-  // matter which side it lands on. Topics are the TOC + key, not body
-  // content that needs splitting.
   const front = { ...materialize(content, frontIds), topics: content.topics };
 
-  // Remainder pool = everything NOT placed on the front.
   const remainder: SheetContent = {
     ...content,
-    topics: content.topics.filter((_, i) => !frontIds.has(`topics:${i}`)),
+    topics: content.topics,
     formulas: content.formulas.filter((_, i) => !frontIds.has(`formulas:${i}`)),
     concepts: content.concepts.filter((_, i) => !frontIds.has(`concepts:${i}`)),
     traps: content.traps.filter((_, i) => !frontIds.has(`traps:${i}`)),
     questions: content.questions.filter((_, i) => !frontIds.has(`questions:${i}`)),
     tables: content.tables?.filter((_, i) => !frontIds.has(`tables:${i}`)),
-    // verified patterns lead the FRONT only; back gets a plain header.
     verifiedPatterns: undefined,
   };
-  // BACK = the SAME 7-col MAX as the front — one continuous sheet, front
-  // and back of a single page (the proven cheatsheet-maxdensity.html ran
-  // BOTH sides 7-col at 5.7pt). The back receives the FULL remainder pool
-  // and its own FitController fills to the boundary.
-  const backCompose = compose(remainder, "max", ctx, defaultBudget("max", cols5), cols5);
-  const back = { ...remainder, topics: content.topics, title: `${content.title} — BACK` };
+  const backCompose = compose(remainder, "max", ctx, budget, cols5);
+  const back = { ...remainder, title: `${content.title} — BACK` };
 
   return { front, back, frontCompose, backCompose };
 }

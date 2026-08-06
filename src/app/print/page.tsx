@@ -5,6 +5,7 @@ import "@/renderer/sheet.css";
 import type { Metadata } from "next";
 import { FittedSheet, normalizeDensity } from "@/components/sheet";
 import { splitFrontBack } from "@/components/sheet/relevance";
+import { assignTopics } from "@/components/sheet/topics-color";
 import { takePool } from "@/lib/pool-store";
 
 export const metadata: Metadata = { title: "Exam Reference Sheet" };
@@ -52,7 +53,7 @@ export default async function PrintPage({
   }
 
   if (page === "front" || page === "back") {
-    const fb = splitFrontBack(stored.content, stored.ctx, false);
+    const fb = splitFrontBack(stored.content, stored.ctx, false, assignTopics(stored.content).topicIndexOf);
     const isFront = page === "front";
     // FRONT and BACK are the same 7-col MAX — one continuous sheet.
     return (

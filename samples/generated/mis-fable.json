@@ -1,0 +1,940 @@
+{
+  "title": "ITSS 3300 — Exam Reference Sheet (Franson)",
+  "examFormat": {
+    "mix": "Multiple choice, definition-heavy. A classmate's confirmed intel lists ~16 exact topics — those are the ★ items below and they come FIRST.",
+    "time": "not stated",
+    "openBook": false,
+    "notes": "Every ★ item was named by a classmate who saw the exam. Definitions here include an example, because the exam asks you to recognize the concept in a scenario."
+  },
+  "verifiedPatterns": [
+    {
+      "pattern": "Definition-recognition MCQ: a term is described in a scenario and you pick the name (cardinality, taxonomy, crowdsourcing, conversion rate, community of practice, knowledge management)",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "pattern": "NOT/EXCEPT questions — 'which is NOT a responsibility of project management', 'what will an LMS NOT do', 'what is NOT part of ETL'. Read the stem twice; the odd one out is usually the REPORTING/analysis step.",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "pattern": "Compare-the-pair: analog vs digital · thin vs thick client · server-centric vs client-centric · data warehouse vs data mart · byte→KB→MB→GB→TB",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md"
+    },
+    {
+      "pattern": "Two answers were leaked outright: Q1 = server-centric, Q2 = thin client",
+      "src": "exam-review-classmate-intel.md"
+    }
+  ],
+  "topics": [
+    {
+      "name": "Confirmed exam intel (answer these first)",
+      "why": "A classmate listed the exact topics on the test. Every ★ item traces to that email — highest-value 15 minutes of study.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Databases, cardinality & SQL",
+      "why": "Cardinality is named TWICE in the intel ('how tables talk to each other'). Keys, normalization, ETL all live here.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Hardware, networks & storage units",
+      "why": "Byte→ZB table is a confirmed question; analog vs digital and thin client are confirmed answers.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Business intelligence, ETL & analytics",
+      "why": "ETL NOT-question confirmed; BI vs analytics, OLAP, warehouse vs mart, 3 analytics types.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Project management & risk",
+      "why": "Critical path + risk management + the 'NOT a PM responsibility' free question are all confirmed.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Knowledge management & data visualization",
+      "why": "Community of practice, taxonomy, crowdsourcing, LMS, conversion rate, viz principles — all confirmed MCQ fodder.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md; lecture-tableau-slides.md",
+      "conf": "high",
+      "verified": true
+    }
+  ],
+  "formulas": [
+    {
+      "name": "★ Storage units — the ladder",
+      "formula": "1 KB = 1,024 B · 1 MB = 1,024 KB · 1 GB = 1,024 MB\n1 TB = 1,024 GB · 1 PB = 1,024 TB · 1 EB = 1,024 PB · 1 ZB = 1,024 EB",
+      "vars": "byte = bits needed for ONE character",
+      "when": "Confirmed question — 'know the difference between bytes, gigabyte, terabyte'",
+      "trap": "Each step is 1,024 (2¹⁰), NOT 1,000 — and the order is B→KB→MB→GB→TB→PB→EB→ZB",
+      "ex": "1 GB = 1,073,741,824 bytes · 1 TB = 1,099,511,627,776 bytes",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 4",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Cardinality — how tables talk",
+      "formula": "1:1 · 1:M (one-to-many) · M:N (many-to-many)",
+      "vars": "the LINES on a relationship diagram",
+      "when": "Named twice in the intel — the single most likely question",
+      "trap": "Cardinality is the NUMBER of links in the relationship, not the key itself. The crow's-foot LINES are the cardinality.",
+      "ex": "A student has ONE advisor, an advisor advises MANY students → 1:M. A department has many advisors and an advisor serves many departments → M:N",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 16",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Critical path (project time mgmt)",
+      "formula": "critical path = the LONGEST path of dependent tasks through the project",
+      "vars": "tasks with zero slack/float",
+      "when": "Confirmed intel item",
+      "trap": "It is the LONGEST duration path, not the shortest or the cheapest — and any delay on it delays the WHOLE project",
+      "ex": "A(3d)→B(5d)→D(2d) = 10 days vs A(3d)→C(1d)→D(2d) = 6 days → critical path is A-B-D; slipping B one day slips the project one day",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ ETL — Extract, Transform, Load",
+      "formula": "EXTRACT → TRANSFORM → LOAD",
+      "vars": "operational sources → cleansed/normalized → warehouse",
+      "when": "Confirmed 'what is NOT part of ETL' question",
+      "trap": "Creating meaningful REPORTS is NOT part of ETL — that's the reporting layer. Also: NEVER use Transform to manipulate report data (it breaks warehouse integrity).",
+      "ex": "Extract sales from POS DB · Transform = cleanse + normalize + translate codes · Load = organize, relate, catalog with metadata",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slides 25, 27",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "SQL skeleton",
+      "formula": "SELECT fields FROM tables WHERE conditions ORDER BY field",
+      "vars": "SELECT=what to see · FROM=source tables · WHERE=conditions + joins · AND/OR=combine · ORDER BY=sort",
+      "when": "SQL basics MCQ",
+      "trap": "The '=' in WHERE both filters AND establishes the table relationship (or use JOIN)",
+      "ex": "SELECT Name, Dept FROM Employee, Department WHERE Employee.DeptID = Department.DeptID ORDER BY Name",
+      "src": "lecture-databases-slides.md Slides 18–19",
+      "conf": "med"
+    },
+    {
+      "name": "Key fields",
+      "formula": "Primary Key (unique in THIS table) → Foreign Key (that PK used in ANOTHER table)",
+      "vars": "key field = uniquely identifies a record",
+      "when": "Any relational-DB question",
+      "trap": "The foreign key lives in the SECOND table as the look-up back to the original — don't reverse it",
+      "ex": "Employee.EmpID is the PK; in Timesheet, EmpID is the FK pointing back to Employee",
+      "src": "lecture-databases-slides.md Slide 8",
+      "conf": "med"
+    }
+  ],
+  "concepts": [
+    {
+      "term": "★ Thin client",
+      "def": "A device that does almost NO processing itself — it relies on the server for applications, storage and computing power; mostly just displays the result. (Confirmed exam ANSWER #2.)",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Server-centric",
+      "def": "An architecture where processing and data live on the SERVER rather than the user's machine. (Confirmed exam ANSWER #1.)",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Analog vs digital",
+      "def": "Analog = continuous physical WAVES (infinitely variable). Digital = discrete BINARY numbers, 0s and 1s. Example: a vinyl record groove (analog) vs an MP3 file (digital); a dimmer knob vs a light switch.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Keylogger (a.k.a. rubber ducky)",
+      "def": "Malware/hardware that RECORDS EVERY KEYSTROKE, so it captures everyone's passwords as they type them. The USB-stick version that auto-types payloads when plugged in is called a rubber ducky. Example: a USB dongle left in a lab PC harvesting logins all week.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Risk management",
+      "def": "Identifying, assessing and PRIORITIZING project risks, then planning responses (avoid / mitigate / transfer / accept) and monitoring them. Example: key developer might quit → mitigate by documenting and cross-training.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Community of practice",
+      "def": "A GROUP OF PEOPLE who share a craft or profession and learn from each other by interacting regularly — informal, voluntary, knowledge-sharing. Example: all the Tableau users across different departments meeting monthly to swap dashboard tricks.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Conversion rate",
+      "def": "The PERCENTAGE OF VISITORS who take the desired action — i.e. people converting into users/customers on your site. Example: 5,000 visitors, 250 sign up → 5% conversion rate.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Crowdsourcing",
+      "def": "Obtaining ideas, content, or work by soliciting contributions from a LARGE OPEN GROUP of people (usually online) instead of from employees or a vendor. Example: Wikipedia articles, Waze traffic reports, a logo contest on 99designs.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Knowledge management",
+      "def": "Firm-wide effort to COLLECT, STORE, DISTRIBUTE and APPLY digital content and knowledge so expertise isn't lost. Includes enterprise KM systems and knowledge work systems (KWS) for engineers/scientists. Example: an internal wiki of solved support tickets.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slide 21",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Taxonomy",
+      "def": "A CLASSIFICATION SCHEME — a hierarchical way of organizing and naming things into categories so they can be found. Example: a product catalog organized Electronics → Computers → Laptops; or the folder/tag hierarchy in a document system.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ LMS (Learning Management System)",
+      "def": "Software to DELIVER, TRACK and ADMINISTER training/courses — hosts content, enrolls learners, records completion and scores. Example: eLearning, Blackboard, Canvas. Watch the NOT-question: an LMS does not write your course content, run payroll, or manage the company's operational databases.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Data vs information",
+      "def": "Data = streams of RAW FACTS. Information = data shaped into a MEANINGFUL FORM. Example: '78, 92, 85' is data; 'class average = 85' is information.",
+      "src": "lecture-databases-slides.md Slide 3",
+      "conf": "med"
+    },
+    {
+      "term": "Database hierarchy",
+      "def": "Database → Table (file) → Row (record) → Column (field) → characters. Entity = the person/place/thing you store info about; Attribute (metadata) = a characteristic describing it.",
+      "src": "lecture-databases-slides.md Slide 5",
+      "conf": "med"
+    },
+    {
+      "term": "DBMS",
+      "def": "Program to CREATE, PROCESS and ADMINISTER a database; centralizes data and controls redundancy so one database serves many applications. A relational DBMS represents data as two-dimensional tables.",
+      "src": "lecture-databases-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "term": "Normalization",
+      "def": "Streamlining complex data groupings to MINIMIZE REDUNDANCY and remove awkward many-to-many relationships. Example: splitting one bloated Employee sheet into Employee + Department tables.",
+      "src": "lecture-databases-slides.md Slide 12",
+      "conf": "med"
+    },
+    {
+      "term": "Referential integrity",
+      "def": "RDBMS rules ensuring relationships between tables stay CONSISTENT — you can't point a foreign key at a row that doesn't exist.",
+      "src": "lecture-databases-slides.md Slide 12",
+      "conf": "med"
+    },
+    {
+      "term": "Fact vs dimension table",
+      "def": "In the normalized example the Employee table is the FACT table (the measured events) and the Department table is the DIMENSION table (descriptive context).",
+      "src": "lecture-databases-slides.md Slide 14",
+      "conf": "med"
+    },
+    {
+      "term": "Data warehouse vs data mart",
+      "def": "Warehouse = current + historical data from MANY operational systems, consolidated enterprise-wide, and CANNOT be altered. Data mart = a SUBSET focused on one subject or line of business. Example: enterprise warehouse vs the Marketing-only mart.",
+      "src": "lecture-bi-slides.md; lecture-databases-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "term": "Big data",
+      "def": "Massive UNSTRUCTURED/semi-structured datasets (web traffic, social media, sensors) too large for a typical DBMS — petabytes/exabytes; needs new tools and reveals more patterns.",
+      "src": "lecture-databases-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Hadoop / in-memory / analytic platforms",
+      "def": "Hadoop = distributed parallel processing across cheap computers. In-memory computing = uses RAM instead of disk, cutting hours to seconds. Analytic platforms = high-speed relational + non-relational systems for big datasets.",
+      "src": "lecture-databases-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "term": "OLAP (multidimensional analysis)",
+      "def": "Rapid ONLINE answers over many dimensions, insulated from operational processing. Example: a pivot table slicing sales by region × quarter × product.",
+      "src": "lecture-bi-slides.md Slides 23, 29",
+      "conf": "med"
+    },
+    {
+      "term": "Data / text / web mining",
+      "def": "Data mining = find hidden patterns and relationships in datasets. Text mining = extract key elements from UNSTRUCTURED text. Web mining = discovery from web content, structure and usage.",
+      "src": "lecture-bi-slides.md Slide 23",
+      "conf": "med"
+    },
+    {
+      "term": "Three types of business analytics",
+      "def": "Descriptive = describe performance from established data (financial reports, statistics). Predictive = predict future trends from past performance (credit scoring, sales projections). Prescriptive = analyze current situation to recommend action (optimization, simulation).",
+      "src": "lecture-bi-slides.md Slide 16",
+      "conf": "med"
+    },
+    {
+      "term": "Strategic / tactical / operational decisions",
+      "def": "Strategic = UNSTRUCTURED, top level, overall direction and goals. Tactical = SEMI-structured, midlevel, how to achieve the strategy. Operational = STRUCTURED, day-to-day, closest to the customer.",
+      "src": "lecture-bi-slides.md Slide 6",
+      "conf": "med"
+    },
+    {
+      "term": "Objective vs subjective decisions",
+      "def": "Objective = data-driven, quantitative, measurable (numbers, structured, analytical). Subjective = qualitative, perception and intuition (unstructured, opinion, exploratory).",
+      "src": "lecture-bi-slides.md Slide 9",
+      "conf": "med"
+    },
+    {
+      "term": "Business intelligence vs business analytics",
+      "def": "BI = the INFRASTRUCTURE for collecting, storing and analyzing business data (databases, warehouses, marts). Business analytics = the TOOLS AND TECHNIQUES applied to it (OLAP, statistics, models, data mining).",
+      "src": "lecture-bi-slides.md Slide 14",
+      "conf": "med"
+    },
+    {
+      "term": "Decision-support systems (DSS)",
+      "def": "Support SEMI-STRUCTURED decisions with mathematical/analytical models — 'what-if' analysis, sensitivity analysis, backward sensitivity, multidimensional/OLAP.",
+      "src": "lecture-bi-slides.md Slide 29",
+      "conf": "med"
+    },
+    {
+      "term": "Expert system vs neural network vs genetic algorithm",
+      "def": "Expert system = captures tacit knowledge as RULES (knowledge base + inference engine). Neural network = learns BY EXAMPLE. Genetic algorithm = searches a huge solution space with a DNA-like approach. Case-based reasoning = reuses past cases. Fuzzy logic = handles imprecision.",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Intelligent agents",
+      "def": "Software that searches external sources for solutions on your behalf. Example: Siri, Priceline.com.",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Project vs program",
+      "def": "Project = a planned undertaking with a BEGINNING AND END producing a definite result. Program = an interrelated COLLECTION of projects.",
+      "src": "lecture-projectmgmt-slides.md Slide 2",
+      "conf": "med"
+    },
+    {
+      "term": "Runaway projects",
+      "def": "30–40% of IT projects exceed schedule/budget or fail to perform as specified. Failure types: missing essential business requirements, no organizational benefit, poor UI, inaccurate/inconsistent data.",
+      "src": "lecture-projectmgmt-slides.md Slide 7",
+      "conf": "med"
+    },
+    {
+      "term": "PM governance structure",
+      "def": "Corporate strategic planning group (firm strategy) → IS steering committee (approves plans across divisions) → project management group (oversees specific projects) → project team (one system project).",
+      "src": "lecture-projectmgmt-slides.md Slide 4",
+      "conf": "med"
+    },
+    {
+      "term": "Network basics",
+      "def": "A network is TWO OR MORE connected computers. Components: client + server, NICs, connection medium, network OS, hubs/switches/routers. LAN = local area; WAN = wide area. SDN = switch/router functions run by a central program.",
+      "src": "lecture-hardware-cloud-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "term": "IP address & DNS",
+      "def": "Every device gets an IP address (32-bit, e.g. 207.46.250.119). DNS converts IP addresses to domain names in a hierarchical structure with top-level domains.",
+      "src": "lecture-hardware-cloud-slides.md Slide 13",
+      "conf": "med"
+    },
+    {
+      "term": "VPN",
+      "def": "'Virtual' = appears to exist but does not. VPN client ENCRYPTS the message, wraps it with the VPN server's address, sends it over the Internet; the gateway strips the address, DECRYPTS it and delivers plain text inside the LAN.",
+      "src": "lecture-hardware-cloud-slides.md Slide 14",
+      "conf": "med"
+    },
+    {
+      "term": "The cloud / commodity",
+      "def": "Commodity = a widely available good whose availability lowers cost and shrinks margins so price dominates. The cloud 'commoditizes' key infrastructure to lower overall cost — enabled by better speed and security.",
+      "src": "lecture-hardware-cloud-slides.md Slides 24–25",
+      "conf": "med"
+    },
+    {
+      "term": "BYOD trade-off",
+      "def": "Advantages: cost savings, employee satisfaction, less training, higher productivity, lower support cost. Disadvantages: data loss/damage, loss of control, compatibility problems, infection risk, greater support cost. (Support cost appears on BOTH sides — a classic trick.)",
+      "src": "lecture-hardware-cloud-slides.md Slide 6",
+      "conf": "med"
+    },
+    {
+      "term": "Cellular generations",
+      "def": "3G ≈ 144 Kbps (email, browsing). 4G up to 100 Mbps (Internet video), LTE/WiMax. 5G = 10–20× faster downloads, better spectrum use, more devices. CDMA = US only; GSM = rest of world (AT&T, T-Mobile).",
+      "src": "lecture-hardware-cloud-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "term": "Tableau product family",
+      "def": "Desktop (individual) · Server (sharing) · Reader (read files) · Online (BI in the cloud) · Public (free, publishes online).",
+      "src": "lecture-tableau-slides.md Slide 2",
+      "conf": "med"
+    },
+    {
+      "term": "What Tableau does — five steps",
+      "def": "Data connection/preparation → data exploration → data VISUALIZATION (the heart) → data analysis → data storytelling (interactive dashboards and stories).",
+      "src": "lecture-tableau-slides.md Slide 3; lecture-bi-slides.md Slide 32",
+      "conf": "med"
+    },
+    {
+      "term": "Live vs extract connection",
+      "def": "Live = queries the source directly and stays current. Extract = a snapshot pulled into Tableau, faster but as of the extract time.",
+      "src": "lecture-tableau-slides.md Slide 6",
+      "conf": "med"
+    },
+    {
+      "term": "Location analytics & GIS",
+      "def": "Location analytics = business insight from the GEOGRAPHIC component of data (phones, sensors, map data). GIS ties location data to maps. Example: local government computing disaster response times.",
+      "src": "lecture-bi-slides.md Slide 20",
+      "conf": "med"
+    },
+    {
+      "term": "Operational intelligence / IoT",
+      "def": "Business activity monitoring using data generated by SENSORS — the Internet of Things creating huge real-time streams; descriptive and/or prescriptive in nature.",
+      "src": "lecture-bi-slides.md Slide 19",
+      "conf": "med"
+    }
+  ],
+  "tables": [
+    {
+      "title": "★ Storage ladder (confirmed question)",
+      "cols": [
+        "Unit",
+        "Equals",
+        "Abbrev"
+      ],
+      "rows": [
+        [
+          "Byte",
+          "bits for ONE character",
+          "B"
+        ],
+        [
+          "Kilobyte",
+          "1,024 bytes",
+          "KB"
+        ],
+        [
+          "Megabyte",
+          "1,024 KB",
+          "MB"
+        ],
+        [
+          "Gigabyte",
+          "1,024 MB",
+          "GB"
+        ],
+        [
+          "Terabyte",
+          "1,024 GB",
+          "TB"
+        ],
+        [
+          "Petabyte",
+          "1,024 TB",
+          "PB"
+        ],
+        [
+          "Exabyte",
+          "1,024 PB",
+          "EB"
+        ],
+        [
+          "Zettabyte",
+          "1,024 EB",
+          "ZB"
+        ]
+      ],
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 4"
+    },
+    {
+      "title": "★ Cardinality cheat",
+      "cols": [
+        "Type",
+        "Reads as",
+        "Example"
+      ],
+      "rows": [
+        [
+          "1:1",
+          "one to one",
+          "employee ↔ badge"
+        ],
+        [
+          "1:M",
+          "one to many",
+          "advisor → many students"
+        ],
+        [
+          "M:N",
+          "many to many",
+          "departments ↔ advisors"
+        ]
+      ],
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 16"
+    },
+    {
+      "title": "★ ETL — and what is NOT in it",
+      "cols": [
+        "Step",
+        "Does",
+        "Watch"
+      ],
+      "rows": [
+        [
+          "Extract",
+          "pull from operational/external DBs",
+          "source systems"
+        ],
+        [
+          "Transform",
+          "cleanse, translate, normalize",
+          "NEVER for report data"
+        ],
+        [
+          "Load",
+          "organize, relate, catalog w/ metadata",
+          "into the warehouse"
+        ],
+        [
+          "Reporting",
+          "NOT part of ETL ✗",
+          "the confirmed NOT-answer"
+        ]
+      ],
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slide 25"
+    },
+    {
+      "title": "Three analytics types",
+      "cols": [
+        "Type",
+        "Answers",
+        "Examples"
+      ],
+      "rows": [
+        [
+          "Descriptive",
+          "what happened?",
+          "financial reports, statistics"
+        ],
+        [
+          "Predictive",
+          "what will happen?",
+          "credit scoring, sales projections"
+        ],
+        [
+          "Prescriptive",
+          "what should we do?",
+          "optimization, simulation"
+        ]
+      ],
+      "src": "lecture-bi-slides.md Slide 16"
+    },
+    {
+      "title": "Decision levels",
+      "cols": [
+        "Level",
+        "Structure",
+        "Who"
+      ],
+      "rows": [
+        [
+          "Strategic",
+          "unstructured",
+          "top mgmt, overall direction"
+        ],
+        [
+          "Tactical",
+          "semi-structured",
+          "midlevel, how to achieve"
+        ],
+        [
+          "Operational",
+          "structured",
+          "ops mgrs, day to day"
+        ]
+      ],
+      "src": "lecture-bi-slides.md Slide 6"
+    },
+    {
+      "title": "Warehouse vs mart",
+      "cols": [
+        "Aspect",
+        "Data warehouse",
+        "Data mart"
+      ],
+      "rows": [
+        [
+          "Scope",
+          "enterprise, many systems",
+          "one subject / line of business"
+        ],
+        [
+          "Data",
+          "current + historical",
+          "subset of warehouse"
+        ],
+        [
+          "Altered?",
+          "cannot be altered",
+          "—"
+        ]
+      ],
+      "src": "lecture-bi-slides.md; lecture-databases-slides.md Slide 24"
+    },
+    {
+      "title": "BYOD — both sides",
+      "cols": [
+        "Advantage",
+        "Disadvantage"
+      ],
+      "rows": [
+        [
+          "cost savings",
+          "data loss or damage"
+        ],
+        [
+          "employee satisfaction",
+          "loss of control"
+        ],
+        [
+          "reduced training",
+          "compatibility problems"
+        ],
+        [
+          "higher productivity",
+          "risk of infection"
+        ],
+        [
+          "reduced support costs",
+          "greater support costs"
+        ]
+      ],
+      "src": "lecture-hardware-cloud-slides.md Slide 6"
+    },
+    {
+      "title": "Database hierarchy",
+      "cols": [
+        "Level",
+        "Is a group of"
+      ],
+      "rows": [
+        [
+          "Database",
+          "related tables"
+        ],
+        [
+          "Table (file)",
+          "related rows"
+        ],
+        [
+          "Row (record)",
+          "related columns"
+        ],
+        [
+          "Column (field)",
+          "characters/words/numbers"
+        ]
+      ],
+      "src": "lecture-databases-slides.md Slide 5"
+    }
+  ],
+  "traps": [
+    {
+      "text": "★ \"Creating meaningful reports is part of ETL\" is FALSE — ETL is Extract, Transform, Load only; reporting is a separate layer. The intel says this exact NOT-question is on the exam.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slide 25"
+    },
+    {
+      "text": "★ Using the Transform step to manipulate REPORT data is WRONG — it destroys data-warehouse integrity. Transform is for cleansing/normalizing on the way IN.",
+      "src": "lecture-bi-slides.md Slide 27"
+    },
+    {
+      "text": "★ \"Cardinality means the primary key\" is FALSE — cardinality is the measure of the NUMBER OF LINKS in a relationship (1:1, 1:M, M:N); it's what the connecting LINES on the diagram show.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 16"
+    },
+    {
+      "text": "★ \"A kilobyte is 1,000 bytes\" is FALSE — it's 1,024 (2¹⁰). Every rung of the ladder multiplies by 1,024, not 1,000.",
+      "src": "lecture-hardware-cloud-slides.md Slide 4"
+    },
+    {
+      "text": "★ \"Analog means old and digital means new\" is WRONG — the real difference is CONTINUOUS WAVES (analog) vs DISCRETE BINARY 0s and 1s (digital).",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 12"
+    },
+    {
+      "text": "★ \"A thin client does the processing locally\" is FALSE — the thin client offloads processing to the SERVER; that's what makes it thin.",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "text": "★ \"The critical path is the shortest route through the project\" is FALSE — it is the LONGEST chain of dependent tasks, and it has zero slack.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.md"
+    },
+    {
+      "text": "\"An LMS builds your course content and runs the business's databases\" is FALSE — an LMS delivers, tracks and administers training; authoring content and operational data management are NOT its job.",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "text": "\"A data mart holds everything the warehouse holds\" is FALSE — a mart is a SUBSET focused on a single subject or line of business.",
+      "src": "lecture-bi-slides.md; lecture-databases-slides.md Slide 24"
+    },
+    {
+      "text": "\"Strategic decisions are structured\" is FALSE — strategic = UNSTRUCTURED, tactical = semi-structured, operational = structured. The exam loves flipping these.",
+      "src": "lecture-bi-slides.md Slide 6"
+    },
+    {
+      "text": "\"Data and information mean the same thing\" is FALSE — data is raw facts; information is data shaped into meaningful form.",
+      "src": "lecture-databases-slides.md Slide 3"
+    },
+    {
+      "text": "\"Project management in IT is only an IT responsibility\" is FALSE — implementation projects must NEVER be considered solely IT projects, even though PM is a core IT competency.",
+      "src": "lecture-projectmgmt-slides.md Slide 5"
+    },
+    {
+      "text": "\"Predictive analytics recommends the best action\" is FALSE — that's PRESCRIPTIVE (optimization, simulation). Predictive forecasts what is likely to happen.",
+      "src": "lecture-bi-slides.md Slide 16"
+    },
+    {
+      "text": "\"BI and business analytics are the same\" is FALSE — BI is the infrastructure (warehouses, marts); analytics is the toolset applied to it (OLAP, mining, models).",
+      "src": "lecture-bi-slides.md Slide 14"
+    },
+    {
+      "text": "\"A foreign key must be unique in its own table\" is FALSE — the PRIMARY key is unique; the foreign key repeats as a look-up to the other table.",
+      "src": "lecture-databases-slides.md Slide 8"
+    },
+    {
+      "text": "\"BYOD always reduces support costs\" is FALSE — the slide lists reduced support costs as an advantage AND greater support costs as a disadvantage; read which side the question is asking about.",
+      "src": "lecture-hardware-cloud-slides.md Slide 6"
+    }
+  ],
+  "questions": [
+    {
+      "q": "★ Confirmed answer #1 → server-centric",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Confirmed answer #2 → thin client",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ The lines showing relationships between tables are called…? → cardinality",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which is NOT a responsibility of project management in IT? → the intel calls this a 'free question' — pick the option that is an operational/technical task, not planning, scope, time, cost, quality, risk or resources",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is NOT part of an ETL process? → creating meaningful reports",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What will a typical LMS NOT do? → author your content / run operational business databases (it delivers, tracks and administers training)",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Difference between analog and digital? → analog = continuous physical waves; digital = discrete binary 0s and 1s",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is a critical path? → the longest chain of dependent tasks; delay on it delays the whole project",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What unlocks everyone's password by recording keystrokes, also called a rubber ducky? → a keylogger",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Order these: byte, gigabyte, terabyte, megabyte, kilobyte → B < KB < MB < GB < TB (×1,024 each)",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A group who share a profession and learn from each other by interacting regularly → community of practice",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Percentage of site visitors who become users → conversion rate",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Getting ideas or work from a large open online group → crowdsourcing",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Collecting, storing, distributing and applying firm knowledge → knowledge management",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ A hierarchical classification scheme for organizing things → taxonomy",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Identifying, prioritizing and planning responses to project threats → risk management",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "A student has one advisor; an advisor has many students. What cardinality? → one-to-many (1:M)",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 16",
+      "conf": "med"
+    },
+    {
+      "q": "Which key appears in a second table as a look-up back to the first? → foreign key",
+      "kind": "MCQ",
+      "src": "lecture-databases-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "q": "Streamlining data to minimize redundancy and remove many-to-many relationships → normalization",
+      "kind": "MCQ",
+      "src": "lecture-databases-slides.md Slide 12",
+      "conf": "med"
+    },
+    {
+      "q": "Which stores current AND historical data from many systems and cannot be altered? → data warehouse (a mart is a subset)",
+      "kind": "MCQ",
+      "src": "lecture-bi-slides.md",
+      "conf": "med"
+    },
+    {
+      "q": "Credit scoring and sales projections are examples of which analytics? → predictive",
+      "kind": "MCQ",
+      "src": "lecture-bi-slides.md Slide 16",
+      "conf": "med"
+    },
+    {
+      "q": "Optimization and simulation are examples of which analytics? → prescriptive",
+      "kind": "MCQ",
+      "src": "lecture-bi-slides.md Slide 16",
+      "conf": "med"
+    },
+    {
+      "q": "Which decision type is typically unstructured and sets overall direction? → strategic",
+      "kind": "MCQ",
+      "src": "lecture-bi-slides.md Slide 6",
+      "conf": "med"
+    },
+    {
+      "q": "Which BI tool gives rapid multidimensional answers insulated from operational processing? → OLAP",
+      "kind": "MCQ",
+      "src": "lecture-bi-slides.md Slide 23",
+      "conf": "med"
+    },
+    {
+      "q": "Which mining type extracts key elements from unstructured text? → text mining",
+      "kind": "MCQ",
+      "src": "lecture-bi-slides.md Slide 23",
+      "conf": "med"
+    },
+    {
+      "q": "Which AI technique learns by example? → neural networks (expert systems use rules; genetic algorithms search huge solution spaces)",
+      "kind": "MCQ",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "q": "Distributed parallel processing of big data across inexpensive computers → Hadoop",
+      "kind": "MCQ",
+      "src": "lecture-databases-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "q": "Which uses RAM instead of disk to cut processing from hours to seconds? → in-memory computing",
+      "kind": "MCQ",
+      "src": "lecture-databases-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "q": "T/F: A project is an interrelated collection of programs. → FALSE — a PROGRAM is an interrelated collection of PROJECTS",
+      "kind": "T/F",
+      "src": "lecture-projectmgmt-slides.md Slide 2",
+      "conf": "med"
+    },
+    {
+      "q": "What percentage of IT projects are runaway projects? → 30–40%",
+      "kind": "MCQ",
+      "src": "lecture-projectmgmt-slides.md Slide 7",
+      "conf": "med"
+    },
+    {
+      "q": "Which encrypts a message, wraps it for a gateway, then decrypts it inside the LAN? → VPN",
+      "kind": "MCQ",
+      "src": "lecture-hardware-cloud-slides.md Slide 14",
+      "conf": "med"
+    },
+    {
+      "q": "What converts IP addresses to domain names? → DNS",
+      "kind": "MCQ",
+      "src": "lecture-hardware-cloud-slides.md Slide 13",
+      "conf": "med"
+    },
+    {
+      "q": "Which Tableau product is free and publishes interactive data online? → Tableau Public",
+      "kind": "MCQ",
+      "src": "lecture-tableau-slides.md Slide 2",
+      "conf": "med"
+    },
+    {
+      "q": "What is the 'heart' of what Tableau does? → data visualization",
+      "kind": "MCQ",
+      "src": "lecture-tableau-slides.md Slide 3",
+      "conf": "med"
+    }
+  ]
+}

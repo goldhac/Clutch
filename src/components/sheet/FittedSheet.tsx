@@ -246,18 +246,9 @@ export function FittedSheet({
           </div>
         </div>
         <div className="sheet-legend">
-          {topicAssign.legend.length > 0 && (
-            <div className="topic-key">
-              {topicAssign.legend
-                .filter((t) => t.count > 0)
-                .map((t, i) => (
-                  <span key={i} className={`tkitem ${t.colorClass}`} title={t.full}>
-                    <i className="tksw" />
-                    <span className="tkname">{t.name}</span>
-                  </span>
-                ))}
-            </div>
-          )}
+          {/* Topic key lives in the full-width COLOR KEY strip below the
+           * header (the proven sheet's layout); here we keep only the
+           * compact confidence note. */}
           <div className="sheet-conf-note">
             <span className="lg"><i className="dot conf-high" /> high</span>
             <span className="lg"><i className="dot conf-med" /> med</span>
@@ -269,6 +260,19 @@ export function FittedSheet({
 
       <div className={colsClass}>
         <ExamFormatStrip format={content.examFormat} />
+        {/* COLOR KEY strip — the proven sheet's top line: chip per topic. */}
+        {topicAssign.legend.length > 0 && (
+          <div className="color-key-strip">
+            <span className="cklabel">COLOR KEY:</span>
+            {topicAssign.legend
+              .filter((t) => t.count > 0)
+              .map((t, i) => (
+                <span key={i} className={`ckchip ${t.colorClass}`} title={t.full}>
+                  {t.name}
+                </span>
+              ))}
+          </div>
+        )}
         <VerifiedPatternsBlock patterns={content.verifiedPatterns} />
         <TopicsOverview topics={content.topics} colorClass={topicAssign.topicColor} />
 

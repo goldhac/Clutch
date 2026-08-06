@@ -349,9 +349,14 @@
 .sheet .tk-9 { --tk: var(--topic-gold); }
 .sheet .tk-none { --tk: var(--color-primary-indigo); }
 
-/* Formula block: colored left rule + tinted title, keyed to its topic. */
-.sheet .formula-block { border-left-width: 2pt; }
-.sheet .fit-leaf .formula-block { border-left-color: var(--tk, var(--color-border-mid)); }
+/* Formula block: CONTINUOUS flow like the proven sheet — no box border,
+ * just the topic-colored left rule + tinted bold title. */
+.sheet .formula-block {
+  border: none;
+  border-left: 1.4pt solid var(--tk, var(--color-border-mid));
+  border-radius: 0;
+  padding: 0.3pt 0 0.3pt 2pt;
+}
 .sheet .fit-leaf .title strong { color: var(--tk, inherit); }
 /* Concept term + compare-table heading take the topic color too. */
 .sheet .fit-leaf .compare-table h3 { color: var(--tk, var(--signal-600)); }
@@ -412,8 +417,37 @@
 /* ── Topic groups — the proven layout: a colored topic banner, then that
  * topic's formulas/tables/concepts/traps/questions mixed beneath it. Both
  * sides of the sheet get identical texture. Banner takes the topic color. */
-.sheet .topic-group { margin-bottom: 1pt; }
+.sheet .topic-group { margin-bottom: 0.6pt; }
 .sheet .topic-group > h2.topic-banner {
   background: var(--tk, var(--ink-900));
   color: #fff;
+  margin: 1.2pt 0 0.4pt 0;
+}
+
+/* ── COLOR KEY strip (the proven sheet's top line) — full-width row of
+ * topic-colored chips so the reader learns the color→topic map before
+ * reading anything else. */
+.sheet .color-key-strip {
+  column-span: all;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1.5pt 3pt;
+  padding: 0.5pt 0 0.8pt;
+  border-bottom: 0.3pt solid var(--color-border-light);
+  margin-bottom: 0.8pt;
+}
+.sheet .color-key-strip .cklabel {
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--ink-500);
+}
+.sheet .color-key-strip .ckchip {
+  background: var(--tk, var(--ink-900));
+  color: #fff;
+  font-weight: 700;
+  padding: 0 2.6pt;
+  border-radius: 1pt;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
 }

@@ -1,0 +1,1218 @@
+{
+  "title": "ITSS 3300 - Final Exam Reference Sheet",
+  "verifiedPatterns": [
+    {
+      "pattern": "Define key terminology from databases, BI, and project management (e.g., Cardinality, ETL, Risk Management).",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "pattern": "Answer 'Which of the following is NOT...' questions for topics like Project Management responsibilities or ETL processes.",
+      "src": "exam-review-classmate-intel.md"
+    },
+    {
+      "pattern": "Distinguish between related concepts (e.g., Analog vs. Digital, Data vs. Information, Data Warehouse vs. Data Mart).",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md; lecture-databases-slides.md"
+    },
+    {
+      "pattern": "Know data storage hierarchies, from byte to zettabyte.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 4"
+    }
+  ],
+  "topics": [
+    {
+      "name": "★ Databases & Data Management",
+      "why": "Core topic confirmed on the exam. Questions on cardinality, table relationships, normalization, and SQL are guaranteed.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Business Intelligence (BI) & Analytics",
+      "why": "Confirmed exam topic. Know the purpose of BI, the ETL process, types of analytics (Descriptive, Predictive, Prescriptive), and Knowledge Management.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Project Management",
+      "why": "Confirmed exam questions on project management responsibilities, risk management, and critical path.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "★ Hardware, Networks & Cloud",
+      "why": "Exam tests knowledge of data storage units (bytes, GB, TB), analog vs. digital, and client types (thin client).",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Data Visualization & Tableau",
+      "why": "Principles of data visualization are a confirmed topic. Understand the goal of tools like Tableau and the types of charts for different data stories.",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md",
+      "conf": "med"
+    },
+    {
+      "name": "★ IT Security Concepts",
+      "why": "A question on keyloggers (and the term 'rubber ducky') is confirmed for the exam.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    }
+  ],
+  "formulas": [
+    {
+      "name": "Basic SQL Query Structure",
+      "formula": "SELECT [Fields]\nFROM [Tables]\nWHERE [Conditions]",
+      "vars": "SELECT: columns to show · FROM: tables to pull data from · WHERE: filters rows based on conditions (e.g., joining tables with '=')",
+      "when": "Querying a relational database.",
+      "trap": "Forgetting to join tables in the WHERE clause will produce a Cartesian product (all possible row combinations), which is almost always wrong.",
+      "ex": "SELECT Name, Department\nFROM Employee, Dept\nWHERE Employee.DeptID = Dept.DeptID; ✓",
+      "src": "lecture-databases-slides.md Slide 19",
+      "conf": "med"
+    },
+    {
+      "name": "SQL Query with JOIN",
+      "formula": "SELECT T1.field1, T2.field2\nFROM Table1 AS T1, Table2 AS T2\nWHERE T1.common_field = T2.common_field;",
+      "vars": "T1, T2 table aliases · common_field the primary/foreign key linking the tables",
+      "when": "To combine rows from two or more tables based on a related column between them.",
+      "trap": "Forgetting table aliases (T1, T2) in the SELECT and WHERE clauses when field names are ambiguous is a common syntax error.",
+      "ex": "SELECT C.CustomerName, O.OrderID FROM Customers AS C, Orders AS O WHERE C.CustomerID = O.CustomerID; ✓",
+      "src": "lecture-databases-slides.md Slide 19",
+      "conf": "med"
+    },
+    {
+      "name": "Data Storage Conversion",
+      "formula": "1 GB = 1,024 MB\n1 MB = 1,024 KB\n1 TB = 1,024 GB",
+      "vars": "GB Gigabyte · MB Megabyte · KB Kilobyte · TB Terabyte",
+      "when": "Answering questions about relative sizes of data units.",
+      "trap": "Using 1,000 instead of 1,024 for conversions is WRONG in a technical context (powers of 2), though sometimes used for marketing.",
+      "ex": "How many KB in 1 GB? 1024 * 1024 = 1,048,576 KB ✓ (NOT 1,000,000 KB)",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 4",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "ETL Process Steps",
+      "formula": "1. EXTRACT → 2. TRANSFORM → 3. LOAD",
+      "vars": "EXTRACT get data from sources · TRANSFORM cleanse, normalize · LOAD put into data warehouse",
+      "when": "Describing the process of populating a data warehouse.",
+      "trap": "Including 'Reporting' as a 4th step is WRONG. ETL prepares data; reporting uses the prepared data later.",
+      "ex": "Data from sales system (Extract) -> Standardize date formats (Transform) -> Insert into sales data mart (Load). ✓",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slide 25",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "name": "Excel VLOOKUP Function",
+      "formula": "=VLOOKUP(lookup_value, table_array, col_index_num, [range_lookup])",
+      "vars": "lookup_value what to look for · table_array where to look · col_index_num which column to return · range_lookup EXACT (FALSE) or APPROX (TRUE)",
+      "when": "To find things in a table or a range by row. A simple relational lookup in Excel.",
+      "trap": "Forgetting to use FALSE for `range_lookup` when you need an exact match is a common error that can return incorrect data.",
+      "ex": "=VLOOKUP(\"P102\", A2:C10, 3, FALSE) finds product ID P102 in column A and returns the value from the 3rd column of that row. ✓",
+      "src": "lecture-databases-slides.md Slide 10",
+      "conf": "med"
+    },
+    {
+      "name": "URL Structure",
+      "formula": "protocol://domain_name/path_to_file",
+      "vars": "protocol e.g., http, https · domain_name e.g., www.example.com · path e.g., /content/features/file.html",
+      "when": "Deconstructing a web address.",
+      "ex": "http://www.megacorp.com/content/features/082602.html → protocol: http, domain: www.megacorp.com, path: /content/features/082602.html ✓",
+      "src": "lecture-hardware-cloud-slides.md Slide 15",
+      "conf": "med"
+    },
+    {
+      "name": "Decision Making Process Steps",
+      "formula": "1. Define Problem → 2. ID Solutions → 3. Set Criteria → 4. Evaluate → 5. Choose → 6. Communicate",
+      "vars": "A structured sequence for making business decisions.",
+      "when": "Asked to outline a formal process for decision-making.",
+      "trap": "Skipping the 'Communicate' step is a failure. An uncommunicated analysis doesn't answer the business question.",
+      "src": "lecture-bi-slides.md Slide 4; lecture-bi-slides.md Slide 7",
+      "conf": "med"
+    },
+    {
+      "name": "SQL Query with WHERE/AND",
+      "formula": "SELECT ... FROM ... WHERE condition1 AND condition2;",
+      "vars": "condition1 first filter criteria · condition2 second filter criteria",
+      "when": "Filtering query results based on multiple criteria that must all be true.",
+      "trap": "Using OR instead of AND is incorrect if you want to narrow results; OR expands them.",
+      "ex": "SELECT * FROM Products WHERE Category='Software' AND Price > 100; ✓",
+      "src": "lecture-databases-slides.md Slide 19",
+      "conf": "med"
+    },
+    {
+      "name": "SQL Query with ORDER BY",
+      "formula": "SELECT ... FROM ... ORDER BY field_name [ASC|DESC];",
+      "vars": "field_name column to sort by · ASC ascending (default) · DESC descending",
+      "when": "Sorting the results of a query.",
+      "ex": "SELECT ProductName, Price FROM Products ORDER BY Price DESC; (shows most expensive first) ✓",
+      "src": "lecture-databases-slides.md Slide 19",
+      "conf": "med"
+    },
+    {
+      "name": "SQL Query with Aggregation",
+      "formula": "SELECT col1, AGG_FUNC(col2)\nFROM table\nGROUP BY col1\nHAVING AGG_FUNC(col2) > value;",
+      "vars": "AGG_FUNC e.g., COUNT(), SUM(), AVG() · GROUP BY collapses rows · HAVING filters groups post-aggregation",
+      "when": "Calculating a value (like average salary) for groups of rows (like departments) and filtering based on that calculated value.",
+      "trap": "Using WHERE to filter on an aggregate function is WRONG. WHERE filters rows before GROUP BY; HAVING filters groups after.",
+      "ex": "Find departments with more than 5 employees:\nSELECT DeptName, COUNT(EmpID)\nFROM Employees\nGROUP BY DeptName\nHAVING COUNT(EmpID) > 5; ✓",
+      "src": "lecture-databases-slides.md Slide 19",
+      "conf": "med"
+    },
+    {
+      "name": "Project Management Triple Constraint",
+      "formula": "Scope + Time + Cost = Quality",
+      "vars": "Scope: What work will be done · Time: Schedule · Cost: Budget/Resources · Quality: The standard of the result",
+      "when": "Evaluating trade-offs in any project. A change in one constraint forces a change in at least one other.",
+      "trap": "Believing you can change one constraint (e.g., add scope) without impacting time, cost, or quality is FALSE. There is always a trade-off.",
+      "ex": "Client wants more features (↑ Scope) but won't increase budget (↔ Cost) or deadline (↔ Time). The result will be a drop in Quality (↓ Quality).",
+      "src": "lecture-projectmgmt-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "name": "SQL INSERT Statement",
+      "formula": "INSERT INTO table_name (column1, column2)\nVALUES (value1, value2);",
+      "vars": "table_name: The target table · (column1, ...): List of columns to populate · (value1, ...): Values to insert, matching column order and data type",
+      "when": "Adding a new row (record) to a database table.",
+      "ex": "INSERT INTO Students (StudentID, FName, LName)\nVALUES (101, 'Jane', 'Doe');",
+      "src": "lecture-databases-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "name": "SQL UPDATE Statement",
+      "formula": "UPDATE table_name\nSET column1 = value1\nWHERE condition;",
+      "vars": "SET: Specifies the column and new value · WHERE: Crucial clause to limit which rows are changed. Without it, ALL rows are updated.",
+      "when": "Modifying existing data in one or more rows of a table.",
+      "trap": "Forgetting the WHERE clause in an UPDATE statement is a catastrophic error because it will modify every single row in the table.",
+      "ex": "UPDATE Students\nSET FName = 'Janet'\nWHERE StudentID = 101;",
+      "src": "lecture-databases-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "name": "SQL DELETE Statement",
+      "formula": "DELETE FROM table_name WHERE condition;",
+      "vars": "WHERE: Crucial clause to limit which rows are deleted. Without it, ALL rows are deleted.",
+      "when": "Removing one or more rows from a table.",
+      "trap": "Forgetting the WHERE clause in a DELETE statement is a catastrophic error because it will delete every single row in the table.",
+      "ex": "DELETE FROM Students WHERE StudentID = 101;",
+      "src": "lecture-databases-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "name": "Tableau Calculated Field (Example)",
+      "formula": "SUM([Sales]) / SUM([Profit])",
+      "vars": "[FieldName]: Reference to a data field · SUM(): An aggregation function",
+      "when": "Creating a new field (measure or dimension) in Tableau that is derived from existing data.",
+      "ex": "To create a Profit Ratio, you'd create a calculated field with the formula `SUM([Profit]) / SUM([Sales])`.",
+      "src": "lecture-tableau-slides.md Slide 26",
+      "conf": "med"
+    },
+    {
+      "name": "Bandwidth Calculation (Simplified)",
+      "formula": "Bandwidth = Data Size / Time",
+      "vars": "Bandwidth: Data transfer rate (e.g., in Mbps) · Data Size: Amount of data (e.g., in Megabits) · Time: Transfer duration (in seconds)",
+      "when": "Estimating data transfer rates or times.",
+      "ex": "To transfer 800 Megabits (Mb) in 10 seconds requires a bandwidth of 800/10 = 80 Mbps.",
+      "src": "lecture-hardware-cloud-slides.md Slide 12",
+      "conf": "low"
+    },
+    {
+      "name": "SQL Query with Multiple JOINs",
+      "formula": "SELECT c.Name, o.OrderDate, i.ProductName\nFROM Customers c\nJOIN Orders o ON c.CustomerID = o.CustomerID\nJOIN OrderItems i ON o.OrderID = i.OrderID;",
+      "vars": "c, o, i: Table aliases for brevity · JOIN: Combines rows from two tables based on a related column.",
+      "when": "Retrieving data that spans across three or more related tables.",
+      "src": "lecture-databases-slides.md Slide 8; lecture-databases-slides.md Slide 19",
+      "conf": "med"
+    }
+  ],
+  "concepts": [
+    {
+      "term": "★ Cardinality",
+      "def": "The measure of the number of links between one or more data entities. It defines the relationship between tables, such as one-to-one, one-to-many, or many-to-many.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 16",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ ETL Process",
+      "def": "Extract, Transform, Load. A three-step process for loading a data warehouse. 1. EXTRACT data from sources. 2. TRANSFORM cleanses and normalizes data. 3. LOAD organizes and catalogs data into the warehouse.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slide 25",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Digital vs. Analog",
+      "def": "Analog signals are continuous physical waves. Digital signals are discrete, using binary numbers (0s and 1s) to represent information.",
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 12",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Keylogger",
+      "def": "Malware or hardware that secretly records every keystroke a user makes. A hardware version can be a small USB device, sometimes called a 'rubber ducky'.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Knowledge Management",
+      "def": "Enterprise-wide systems for collecting, storing, distributing, and applying digital content and knowledge.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slide 21",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Risk Management",
+      "def": "The process of identifying, assessing, and controlling threats to an organization's capital and earnings. A key responsibility of project management.",
+      "src": "exam-review-classmate-intel.md; lecture-projectmgmt-slides.md Slide 8",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Critical Path",
+      "def": "The sequence of stages in a project which determines the minimum time for completion. Any delay in a critical path task delays the entire project.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Thin Client",
+      "def": "A computer that runs from resources stored on a central server instead of a localized hard drive. It works by connecting remotely to a server-based computing environment.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Conversion Rate",
+      "def": "The percentage of users who take a desired action. In e-commerce, this often refers to the percentage of website visitors who buy something.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Crowdsourcing",
+      "def": "The practice of obtaining information or input into a task or project by enlisting the services of a large number of people, either paid or unpaid, typically via the Internet.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Taxonomy",
+      "def": "The practice and science of classification. In IT, it refers to the scheme of classifying information (e.g., in a knowledge management system).",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Community of Practice",
+      "def": "A group of people who share a concern or a passion for something they do and learn how to do it better as they interact regularly.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "★ Server Concentric",
+      "def": "A confirmed exam answer. Likely refers to a server-centric or client-server architecture model where processing is concentrated on the server.",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "term": "Normalization",
+      "def": "The process of streamlining complex data groupings to minimize redundant data and awkward relationships. Creates separate tables for separate entities.",
+      "src": "lecture-databases-slides.md Slide 12",
+      "conf": "med"
+    },
+    {
+      "term": "Primary Key vs. Foreign Key",
+      "def": "A Primary Key uniquely identifies each record in a table. A Foreign Key is a primary key from one table used in another table to create a link between them.",
+      "src": "lecture-databases-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "term": "Data vs. Information",
+      "def": "Data are raw facts. Information is data that has been shaped into a meaningful form.",
+      "src": "lecture-databases-slides.md Slide 3",
+      "conf": "med"
+    },
+    {
+      "term": "Data Warehouse vs. Data Mart",
+      "def": "A Data Warehouse stores current and historical data from across the entire enterprise. A Data Mart is a smaller subset of a data warehouse, focused on a single subject or line of business.",
+      "src": "lecture-bi-slides.md Slide 26",
+      "conf": "med"
+    },
+    {
+      "term": "Business Analytics Types",
+      "def": "Descriptive (what happened), Predictive (what will happen), Prescriptive (what should we do).",
+      "src": "lecture-bi-slides.md Slide 16",
+      "conf": "med"
+    },
+    {
+      "term": "Business Decision Types",
+      "def": "Strategic (unstructured, long-term goals), Tactical (semi-structured, mid-level management), Operational (structured, day-to-day).",
+      "src": "lecture-bi-slides.md Slide 6",
+      "conf": "med"
+    },
+    {
+      "term": "OLAP (Online Analytical Processing)",
+      "def": "A tool for multidimensional data analysis, allowing users to rapidly analyze information from multiple perspectives. Insulated from operational processing.",
+      "src": "lecture-bi-slides.md Slide 23",
+      "conf": "med"
+    },
+    {
+      "term": "Virtual Private Network (VPN)",
+      "def": "A secure, encrypted connection over a public network (like the Internet) that makes it seem as if you are on a private network.",
+      "src": "lecture-hardware-cloud-slides.md Slide 14",
+      "conf": "med"
+    },
+    {
+      "term": "Data Mining",
+      "def": "The process of finding hidden patterns and relationships in large datasets to predict future behavior.",
+      "src": "lecture-bi-slides.md Slide 23",
+      "conf": "med"
+    },
+    {
+      "term": "Fact Table vs. Dimension Table",
+      "def": "In a data warehouse, a Fact Table contains quantitative, numerical data (the 'facts' or measures). A Dimension Table contains descriptive attributes (the 'dimensions') that provide context to the facts, like customer names or product categories.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 14",
+      "conf": "high"
+    },
+    {
+      "term": "Measures vs. Dimensions (Tableau)",
+      "def": "Dimensions are qualitative, categorical fields that set the level of detail (granularity) in a view (e.g., Category, Region). Measures are quantitative, numerical fields that can be aggregated (e.g., Sales, Profit). Dimensions are typically blue pills, Measures are green.",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md Slide 12",
+      "conf": "high"
+    },
+    {
+      "term": "Data Blending vs. Joining (Tableau)",
+      "def": "Joining combines tables from the same data source at a row-level, creating a single new table. Blending links data from multiple, separate data sources at an aggregate level, querying each source independently and displaying the results together in a view.",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md Slide 21",
+      "conf": "high"
+    },
+    {
+      "term": "Referential Integrity",
+      "def": "A set of rules used by a relational DBMS to ensure that relationships between tables remain consistent. For example, it prevents you from adding a record to a related table if there is no associated record in the primary table (e.g., can't add an order for a non-existent customer).",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 12",
+      "conf": "high"
+    },
+    {
+      "term": "Data Dictionary",
+      "def": "A centralized repository of information about data, such as its meaning, relationships to other data, origin, usage, and format. It defines the structure of the database, including all tables, fields, and their properties.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 9",
+      "conf": "high"
+    },
+    {
+      "term": "Entity-Relationship Diagram (ERD)",
+      "def": "A graphical representation of entities (tables) and their relationships in a database design. It shows how tables are linked together via primary and foreign keys and illustrates the cardinality (e.g., one-to-many) of those relationships.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 12",
+      "conf": "high"
+    },
+    {
+      "term": "Runaway Project",
+      "def": "An IT project that is 30-40% over budget or schedule, or fails to perform as specified. Common causes include poor requirements gathering, scope creep, and lack of executive support.",
+      "src": "lecture-projectmgmt-slides.md Slide 7",
+      "conf": "med"
+    },
+    {
+      "term": "Gantt Chart",
+      "def": "A type of bar chart that illustrates a project schedule. It lists tasks on the vertical axis and time intervals on the horizontal axis. The width of the horizontal bars shows the duration of each task.",
+      "src": "lecture-projectmgmt-slides.md Slide 10",
+      "conf": "med"
+    },
+    {
+      "term": "Hadoop",
+      "def": "An open-source software framework for storing and processing Big Data in a distributed manner across clusters of inexpensive computers. It enables parallel processing of massive datasets.",
+      "src": "lecture-databases-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "term": "Domain Name System (DNS)",
+      "def": "The Internet's system for converting alphabetic domain names (like www.google.com) into numeric IP addresses (like 172.217.6.78) that computers use to connect to each other.",
+      "src": "lecture-hardware-cloud-slides.md Slide 13",
+      "conf": "med"
+    },
+    {
+      "term": "LAN vs. WAN",
+      "def": "A LAN (Local Area Network) connects computers in a limited geographical area like a home, school, or office building. A WAN (Wide Area Network) connects computers over a large geographical area, such as a city, country, or the entire world (the Internet is the largest WAN).",
+      "src": "lecture-hardware-cloud-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "term": "Expert System",
+      "def": "An AI technique that captures the tacit knowledge of a human expert as a set of rules in a knowledge base. An inference engine then applies these rules to new data to make decisions or solve problems.",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Machine Learning",
+      "def": "An AI technique where systems learn from data, identify patterns, and make decisions with minimal human intervention. It allows computers to learn without being explicitly programmed.",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Project vs. Program",
+      "def": "A project is a temporary endeavor with a defined beginning and end to create a unique product or result. A program is a collection of related projects managed in a coordinated way to obtain benefits not available from managing them individually.",
+      "src": "lecture-projectmgmt-slides.md Slide 2",
+      "conf": "med"
+    },
+    {
+      "term": "In-memory Computing",
+      "def": "A technology that relies on a computer's main memory (RAM) for data storage instead of slower disk drives. It is used in Big Data analysis to dramatically speed up processing times from hours/days to seconds.",
+      "src": "lecture-databases-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "term": "RFID (Radio Frequency Identification)",
+      "def": "A technology that uses electromagnetic fields to automatically identify and track tags attached to objects. A tag contains electronically stored information that can be read from a distance without a direct line of sight.",
+      "src": "lecture-hardware-cloud-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Tableau: Sheet vs. Dashboard vs. Story",
+      "def": "Sheet: A single data visualization (a view), like a bar chart. Dashboard: A collection of multiple views arranged on one screen, often interactive. Story: A sequence of sheets or dashboards used to present a narrative or guided analysis.",
+      "src": "lecture-tableau-slides.md Slides 9-10, 28",
+      "conf": "med"
+    },
+    {
+      "term": "System Failure Types",
+      "def": "Projects can fail by: 1) Not capturing essential business requirements, 2) Not providing organizational benefits, 3) Having a complicated or poor user interface, or 4) Containing inaccurate or inconsistent data.",
+      "src": "lecture-projectmgmt-slides.md Slide 7",
+      "conf": "med"
+    },
+    {
+      "term": "DBMS Operations (CRUD)",
+      "def": "The four main operations for processing a database: Create (INSERT), Read (SELECT), Update (UPDATE), and Delete (DELETE).",
+      "src": "lecture-databases-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "term": "Cellular Generations (3G/4G/5G)",
+      "def": "3G: ~144 Kbps, suitable for email/basic web. 4G (LTE): Up to 100 Mbps, enabled mobile video. 5G: 10-20x faster than 4G, enables more device connections and better spectrum use.",
+      "src": "lecture-hardware-cloud-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "term": "Tableau Calculated Field",
+      "def": "A user-created field (dimension or measure) in Tableau. It allows you to create new data from your existing data source using formulas, functions, and logic.",
+      "src": "lecture-tableau-slides.md Slide 26",
+      "conf": "med"
+    },
+    {
+      "term": "Text Mining vs. Web Mining",
+      "def": "Text Mining extracts key elements and patterns from unstructured *text* data (e.g., documents, emails). Web Mining discovers and analyzes patterns from the *web*, including web content, structure (links), and usage (clickstreams).",
+      "src": "lecture-bi-slides.md Slide 23; lecture-databases-slides.md Slide 25",
+      "conf": "med"
+    },
+    {
+      "term": "Entity vs. Attribute",
+      "def": "An Entity is a person, place, or thing about which data is stored (e.g., 'Student', 'Course'). An Attribute is a characteristic or quality of that entity (e.g., for 'Student', attributes are 'StudentID', 'Name', 'Major'). An entity becomes a table, attributes become columns.",
+      "src": "lecture-databases-slides.md Slide 5",
+      "conf": "med"
+    },
+    {
+      "term": "'What-if' Analysis",
+      "def": "A feature of Decision-Support Systems (DSS) that allows a user to change the values in a model to observe how those changes affect the outcomes. Example: 'What if we increase the marketing budget by 10%?'",
+      "src": "lecture-bi-slides.md Slide 29",
+      "conf": "med"
+    },
+    {
+      "term": "Commoditization (in Cloud Computing)",
+      "def": "The process by which IT infrastructure (like servers and storage) becomes a standardized, widely available good or service, where price is the main differentiator. The cloud 'commoditizes' infrastructure, lowering costs for users.",
+      "src": "lecture-hardware-cloud-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "term": "IP Address",
+      "def": "Internet Protocol address. A unique numerical label (e.g., 207.46.250.119) assigned to each device connected to a computer network that uses the Internet Protocol for communication.",
+      "src": "lecture-hardware-cloud-slides.md Slide 13",
+      "conf": "med"
+    },
+    {
+      "term": "Genetic Algorithms",
+      "def": "An intelligent technique that mimics evolutionary biology to find optimal solutions. It examines a very large number of possible solutions, using a process like combination, mutation, and selection to 'evolve' toward the best fit.",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "term": "Fuzzy Logic",
+      "def": "An intelligent technique used to handle ambiguity and imprecision. It uses rules to process approximate values and subjective linguistic terms (e.g., 'hot', 'cold', 'fast') rather than precise binary (true/false) logic.",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    }
+  ],
+  "tables": [
+    {
+      "title": "★ Data Storage Capacity",
+      "cols": [
+        "Term",
+        "Abbreviation",
+        "Size"
+      ],
+      "rows": [
+        [
+          "Byte",
+          "B",
+          "1 character"
+        ],
+        [
+          "Kilobyte",
+          "KB",
+          "1,024 Bytes"
+        ],
+        [
+          "Megabyte",
+          "MB",
+          "1,024 KB"
+        ],
+        [
+          "Gigabyte",
+          "GB",
+          "1,024 MB"
+        ],
+        [
+          "Terabyte",
+          "TB",
+          "1,024 GB"
+        ],
+        [
+          "Petabyte",
+          "PB",
+          "1,024 TB"
+        ],
+        [
+          "Exabyte",
+          "EB",
+          "1,024 PB"
+        ],
+        [
+          "Zettabyte",
+          "ZB",
+          "1,024 EB"
+        ]
+      ],
+      "src": "exam-review-classmate-intel.md; lecture-hardware-cloud-slides.md Slide 4"
+    },
+    {
+      "title": "Types of Business Decisions",
+      "cols": [
+        "Type",
+        "Structure",
+        "Level",
+        "Description"
+      ],
+      "rows": [
+        [
+          "Strategic",
+          "Unstructured",
+          "Senior Mgmt",
+          "Overall direction, long-term goals"
+        ],
+        [
+          "Tactical",
+          "Semi-structured",
+          "Mid-level Mgmt",
+          "How to achieve strategic goals"
+        ],
+        [
+          "Operational",
+          "Structured",
+          "Operations Mgmt",
+          "Day-to-day firm operations"
+        ]
+      ],
+      "src": "lecture-bi-slides.md Slide 6"
+    },
+    {
+      "title": "Cloud Services: Who Manages What",
+      "cols": [
+        "Model",
+        "You Manage",
+        "Vendor Manages"
+      ],
+      "rows": [
+        [
+          "On-Premises",
+          "Everything",
+          "Nothing"
+        ],
+        [
+          "IaaS (Infrastructure)",
+          "Apps, Data, Runtime, OS",
+          "Virtualization, Servers, Storage, Networking"
+        ],
+        [
+          "PaaS (Platform)",
+          "Apps, Data",
+          "Runtime, OS, Servers, Storage, etc."
+        ],
+        [
+          "SaaS (Software)",
+          "Nothing",
+          "Everything"
+        ]
+      ],
+      "src": "lecture-hardware-cloud-slides.md Slide 26"
+    },
+    {
+      "title": "Database Hierarchy",
+      "cols": [
+        "Level",
+        "Description"
+      ],
+      "rows": [
+        [
+          "Database",
+          "Group of related tables"
+        ],
+        [
+          "Table (File)",
+          "Group of related rows"
+        ],
+        [
+          "Row (Record)",
+          "Group of related columns for one entity"
+        ],
+        [
+          "Column (Field)",
+          "A single attribute of an entity"
+        ],
+        [
+          "Byte",
+          "A single character"
+        ]
+      ],
+      "src": "lecture-databases-slides.md Slide 5"
+    },
+    {
+      "title": "Tableau Chart Types & Use Cases",
+      "cols": [
+        "Chart Type",
+        "Best For"
+      ],
+      "rows": [
+        [
+          "Bar Chart",
+          "Comparing a value across different categories."
+        ],
+        [
+          "Line Chart",
+          "Showing movement or relationship over time."
+        ],
+        [
+          "Filled Map",
+          "Showing location data for filled areas (country, state)."
+        ],
+        [
+          "Tree Map",
+          "Representing hierarchical relationships of parts to a whole."
+        ],
+        [
+          "Heat Map",
+          "Showing patterns or hot spots in dense data using color."
+        ]
+      ],
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md Slides 13-19"
+    },
+    {
+      "title": "Intelligent Techniques Overview",
+      "cols": [
+        "Technique",
+        "Description"
+      ],
+      "rows": [
+        [
+          "Expert Systems",
+          "Captures tacit knowledge as a set of rules."
+        ],
+        [
+          "Case-Based Reasoning",
+          "Uses knowledge from past experiences (cases)."
+        ],
+        [
+          "Machine Learning",
+          "Learns from data without explicit programming."
+        ],
+        [
+          "Neural Networks",
+          "Learns by example, mimicking the human brain."
+        ],
+        [
+          "Genetic Algorithms",
+          "Examines many possible solutions using a DNA-like approach."
+        ],
+        [
+          "Intelligent Agents",
+          "Software that searches for solutions (e.g., Siri)."
+        ]
+      ],
+      "src": "lecture-bi-slides.md Slide 22"
+    },
+    {
+      "title": "Project Management Structure",
+      "cols": [
+        "Group",
+        "Responsibility"
+      ],
+      "rows": [
+        [
+          "Corporate Strategic Planning Group",
+          "Firm’s overall strategic plan."
+        ],
+        [
+          "IS Steering Committee",
+          "Reviews and approves system plans for all divisions."
+        ],
+        [
+          "Project Management Group",
+          "Oversees specific, individual projects."
+        ],
+        [
+          "Project Team",
+          "Responsible for executing an individual systems project."
+        ]
+      ],
+      "src": "lecture-projectmgmt-slides.md Slide 4"
+    },
+    {
+      "title": "BYOD (Bring Your Own Device) Pros & Cons",
+      "cols": [
+        "Advantages",
+        "Disadvantages"
+      ],
+      "rows": [
+        [
+          "Cost savings (for company)",
+          "Data loss or damage risk"
+        ],
+        [
+          "Greater employee satisfaction",
+          "Loss of control over device"
+        ],
+        [
+          "Reduced need for training",
+          "Compatibility problems"
+        ],
+        [
+          "Higher productivity",
+          "Risk of malware infection"
+        ],
+        [
+          "Reduced support costs (hardware)",
+          "Greater support costs (software)"
+        ]
+      ],
+      "src": "lecture-hardware-cloud-slides.md Slide 6"
+    },
+    {
+      "title": "Tableau Products",
+      "cols": [
+        "Product",
+        "Use Case"
+      ],
+      "rows": [
+        [
+          "Tableau Desktop",
+          "For individual use to create visualizations and dashboards."
+        ],
+        [
+          "Tableau Server",
+          "For organizations to share, manage, and collaborate on content."
+        ],
+        [
+          "Tableau Reader",
+          "Free desktop application to open and interact with packaged workbooks."
+        ],
+        [
+          "Tableau Online",
+          "Cloud-hosted version of Tableau Server."
+        ],
+        [
+          "Tableau Public",
+          "Free version to publish interactive data visualizations to the web."
+        ]
+      ],
+      "src": "lecture-tableau-slides.md Slide 2"
+    },
+    {
+      "title": "Cellular Network Generations",
+      "cols": [
+        "Generation",
+        "Typical Speed",
+        "Key Use Case Enabled"
+      ],
+      "rows": [
+        [
+          "3G",
+          "144 Kbps",
+          "Email & basic web browsing on mobile"
+        ],
+        [
+          "4G (LTE)",
+          "Up to 100 Mbps",
+          "Internet video streaming on mobile"
+        ],
+        [
+          "5G",
+          "1-2 Gbps+",
+          "Internet of Things (IoT), real-time analytics, AR/VR"
+        ]
+      ],
+      "src": "lecture-hardware-cloud-slides.md Slide 18"
+    },
+    {
+      "title": "Database Administration (DBA) Task Areas",
+      "cols": [
+        "Category",
+        "Key Responsibilities"
+      ],
+      "rows": [
+        [
+          "Development",
+          "Validate data model, evaluate application design, specify requirements."
+        ],
+        [
+          "Operation",
+          "Manage security/user rights, monitor performance, track problems."
+        ],
+        [
+          "Backup & Recovery",
+          "Monitor backup procedures, manage recovery process."
+        ],
+        [
+          "Adaptation",
+          "Manage configuration changes, track requests for change."
+        ]
+      ],
+      "src": "lecture-databases-slides.md Slides 27-28"
+    }
+  ],
+  "traps": [
+    {
+      "text": "★ Creating meaningful reports is NOT part of the ETL process. ETL (Extract, Transform, Load) is for populating a data warehouse; reporting is a separate application that uses the warehouse data.",
+      "src": "exam-review-classmate-intel.md; lecture-bi-slides.md Slide 25; lecture-bi-slides.md Slide 27"
+    },
+    {
+      "text": "★ Using the 'Transform' step of ETL to manipulate data for a specific report is WRONG because it compromises the integrity of the central data warehouse. Transformations should be for cleansing and standardizing, not for ad-hoc reporting needs.",
+      "src": "lecture-bi-slides.md Slide 27"
+    },
+    {
+      "text": "★ Assuming an IT project is solely the IT department's responsibility is WRONG because strategic implementations require a holistic approach and involvement from all affected operational departments.",
+      "src": "lecture-projectmgmt-slides.md Slide 5"
+    },
+    {
+      "text": "★ Choosing a project management approach without considering organizational change is WRONG because most IT project failures stem from failing to manage the impact on people and processes, not just technology.",
+      "src": "lecture-projectmgmt-slides.md Slide 6"
+    },
+    {
+      "text": "Failing to normalize a database is WRONG because it leads to data redundancy, data inconsistency, and maintenance problems.",
+      "src": "lecture-databases-slides.md Slide 12; lecture-databases-slides.md Slide 13"
+    },
+    {
+      "text": "Assuming BYOD (Bring Your Own Device) always saves money is WRONG because hidden costs like increased support needs and security risks can offset the savings on hardware.",
+      "src": "lecture-hardware-cloud-slides.md Slide 6"
+    },
+    {
+      "text": "Confusing Data Mining with simple querying is incorrect. Querying finds specific information you ask for, while Data Mining discovers hidden, previously unknown patterns in the data.",
+      "src": "lecture-bi-slides.md Slide 23"
+    },
+    {
+      "text": "Treating data and information as the same thing is WRONG. Data is raw facts, while information is data processed into a meaningful context.",
+      "src": "lecture-databases-slides.md Slide 3"
+    },
+    {
+      "text": "Confusing Measures and Dimensions in Tableau is WRONG because dimensions set the level of detail for aggregating measures; swapping them produces nonsensical visualizations, like summing up product category names.",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md Slide 12"
+    },
+    {
+      "text": "Assuming joining and blending data in Tableau are the same is INCORRECT; joins combine data at the row-level from a single data source, while blends combine aggregated data from different data sources.",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md Slide 21"
+    },
+    {
+      "text": "Ignoring referential integrity when designing a database is WRONG because it leads to inconsistent data and orphan records (e.g., orders with no customer), making the database unreliable.",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 12"
+    },
+    {
+      "text": "Thinking Big Data can be managed by a typical relational DBMS is INCORRECT because the volume, velocity, and variety of Big Data exceed the capabilities of traditional database systems, requiring tools like Hadoop.",
+      "src": "lecture-databases-slides.md Slide 22"
+    },
+    {
+      "text": "Considering a project and a program to be interchangeable is FALSE; a program is a collection of interrelated projects managed together to obtain benefits not available from managing them individually.",
+      "src": "lecture-projectmgmt-slides.md Slide 2"
+    },
+    {
+      "text": "Believing that a Gantt chart alone is sufficient for project management is WRONG because it primarily tracks schedule and task dependencies, but does not inherently manage scope, budget, risk, or quality.",
+      "src": "lecture-projectmgmt-slides.md Slide 8; lecture-projectmgmt-slides.md Slide 9"
+    },
+    {
+      "text": "Thinking SQL `WHERE` and `HAVING` are interchangeable is WRONG because `WHERE` filters individual rows *before* they are grouped by `GROUP BY`, while `HAVING` filters entire groups *after* aggregation has occurred.",
+      "src": "lecture-databases-slides.md Slide 19"
+    },
+    {
+      "text": "Confusing a Tableau Dashboard with a Story is WRONG because a dashboard is a single-screen collection of views for exploration, whereas a story is a guided, sequential narrative composed of multiple dashboards or views.",
+      "src": "lecture-tableau-slides.md Slides 10, 28"
+    },
+    {
+      "text": "Treating a runaway project as only a budget problem is INCORRECT because runaway projects are defined as exceeding schedule and failing to perform as specified, in addition to exceeding their budget.",
+      "src": "lecture-projectmgmt-slides.md Slide 7"
+    },
+    {
+      "text": "Assuming all Business Intelligence is predictive is WRONG because BI also includes descriptive analytics (what happened) and prescriptive analytics (what should we do), which are often more common.",
+      "src": "lecture-bi-slides.md Slide 16"
+    },
+    {
+      "text": "Believing database normalization always improves query speed is FALSE because while it reduces redundancy, high levels of normalization can require more complex JOIN operations, which can slow down retrieval.",
+      "src": "lecture-databases-slides.md Slide 12"
+    },
+    {
+      "text": "Assuming a higher cellular 'G' number (like 5G vs 4G) guarantees better signal everywhere is FALSE because higher-frequency signals used by 5G provide faster speeds but have shorter range and penetrate buildings less effectively than lower-frequency 4G signals.",
+      "src": "lecture-hardware-cloud-slides.md Slide 18"
+    }
+  ],
+  "questions": [
+    {
+      "q": "★ What is cardinality in the context of a database?",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which of the following is NOT considered part of the ETL process?",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Explain the difference between analog and digital signals.",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Which of the following is NOT a responsibility of project management in IT?",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is a keylogger, and what is another name for a hardware version of this device?",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is a critical path in project management?",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What will a typical Learning Management System (LMS) NOT do?",
+      "kind": "MCQ",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ Define knowledge management.",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "★ What is a conversion rate?",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md",
+      "conf": "high",
+      "verified": true
+    },
+    {
+      "q": "List the three main types of business decisions and the management level typically responsible for each.",
+      "kind": "short",
+      "src": "lecture-bi-slides.md Slide 6",
+      "conf": "med"
+    },
+    {
+      "q": "What is the primary purpose of Business Intelligence?",
+      "kind": "short",
+      "src": "lecture-bi-slides.md Slide 2",
+      "conf": "med"
+    },
+    {
+      "q": "What is the difference between a data warehouse and a data mart?",
+      "kind": "short",
+      "src": "lecture-bi-slides.md Slide 26",
+      "conf": "med"
+    },
+    {
+      "q": "In a relational database, what is the role of a Primary Key?",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "q": "What is normalization and why is it important for database design?",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 12",
+      "conf": "med"
+    },
+    {
+      "q": "List two advantages and two disadvantages of a BYOD (Bring Your Own Device) policy.",
+      "kind": "short",
+      "src": "lecture-hardware-cloud-slides.md Slide 6",
+      "conf": "med"
+    },
+    {
+      "q": "What are the three categories of business analytics? Provide a brief description of each.",
+      "kind": "short",
+      "src": "lecture-bi-slides.md Slide 16",
+      "conf": "med"
+    },
+    {
+      "q": "What does the acronym SQL stand for, and what is its primary use?",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "q": "What is a VPN and what is its main function?",
+      "kind": "short",
+      "src": "lecture-hardware-cloud-slides.md Slide 14",
+      "conf": "med"
+    },
+    {
+      "q": "What is the difference between a Fact Table and a Dimension Table in a data warehouse?",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 14",
+      "conf": "high"
+    },
+    {
+      "q": "In Tableau, distinguish between a Measure and a Dimension. How are they typically represented in the interface?",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md Slide 12",
+      "conf": "high"
+    },
+    {
+      "q": "Differentiate between joining and blending data in Tableau.",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md; lecture-tableau-slides.md Slide 21",
+      "conf": "high"
+    },
+    {
+      "q": "What is referential integrity and why is it important in a relational database?",
+      "kind": "short",
+      "src": "exam-review-classmate-intel.md; lecture-databases-slides.md Slide 12",
+      "conf": "high"
+    },
+    {
+      "q": "What is a 'runaway project' and what are two common reasons for system failure?",
+      "kind": "short",
+      "src": "lecture-projectmgmt-slides.md Slide 7",
+      "conf": "med"
+    },
+    {
+      "q": "What is the purpose of a Gantt chart in project management?",
+      "kind": "short",
+      "src": "lecture-projectmgmt-slides.md Slide 10",
+      "conf": "med"
+    },
+    {
+      "q": "What is the function of the Domain Name System (DNS)?",
+      "kind": "short",
+      "src": "lecture-hardware-cloud-slides.md Slide 13",
+      "conf": "med"
+    },
+    {
+      "q": "What is Hadoop and what problem is it designed to solve?",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "q": "Name and briefly describe three types of 'Intelligent Techniques' used in knowledge management.",
+      "kind": "short",
+      "src": "lecture-bi-slides.md Slide 22",
+      "conf": "med"
+    },
+    {
+      "q": "What is the difference between a Local Area Network (LAN) and a Wide Area Network (WAN)?",
+      "kind": "short",
+      "src": "lecture-hardware-cloud-slides.md Slide 8",
+      "conf": "med"
+    },
+    {
+      "q": "What do HTML, HTTP, and URL stand for, and what is the role of each in the World Wide Web?",
+      "kind": "short",
+      "src": "lecture-hardware-cloud-slides.md Slide 15",
+      "conf": "med"
+    },
+    {
+      "q": "Describe the difference between a Tableau Sheet, Dashboard, and Story.",
+      "kind": "short",
+      "src": "lecture-tableau-slides.md Slides 9-10, 28",
+      "conf": "med"
+    },
+    {
+      "q": "List three distinct reasons why an IT project might fail, other than going over budget.",
+      "kind": "short",
+      "src": "lecture-projectmgmt-slides.md Slide 7",
+      "conf": "med"
+    },
+    {
+      "q": "In SQL, when must you use a `HAVING` clause instead of a `WHERE` clause?",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 19",
+      "conf": "med"
+    },
+    {
+      "q": "What are the four fundamental operations of a DBMS, often known by the acronym CRUD?",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "q": "Explain the difference between an Entity and an Attribute in a database context. Give an example of each.",
+      "kind": "short",
+      "src": "lecture-databases-slides.md Slide 5",
+      "conf": "med"
+    },
+    {
+      "q": "What is a 'calculated field' in Tableau and why is it useful?",
+      "kind": "short",
+      "src": "lecture-tableau-slides.md Slide 26",
+      "conf": "med"
+    },
+    {
+      "q": "What key capability distinguished 4G from 3G cellular networks?",
+      "kind": "short",
+      "src": "lecture-hardware-cloud-slides.md Slide 18",
+      "conf": "med"
+    },
+    {
+      "q": "Explain the concept of 'commoditization' and how it enabled the rise of cloud computing.",
+      "kind": "short",
+      "src": "lecture-hardware-cloud-slides.md Slide 24",
+      "conf": "med"
+    },
+    {
+      "q": "What is the difference between Text Mining and Web Mining?",
+      "kind": "short",
+      "src": "lecture-bi-slides.md Slide 23",
+      "conf": "med"
+    },
+    {
+      "q": "In a Decision Support System, what does 'What-if' analysis allow a user to do?",
+      "kind": "short",
+      "src": "lecture-bi-slides.md Slide 29",
+      "conf": "med"
+    }
+  ]
+}

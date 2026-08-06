@@ -9,6 +9,7 @@ import path from "node:path";
 import { sampleContent } from "@samples/sample-content";
 import { FittedSheet, type Density, normalizeDensity } from "@/components/sheet";
 import { splitFrontBack } from "@/components/sheet/relevance";
+import { assignTopics } from "@/components/sheet/topics-color";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 
 function parseDensity(raw: string | string[] | undefined): Density {
@@ -73,7 +74,10 @@ export default async function SheetPage({
   if (page === "front" || page === "back") {
     // FRONT is the full 7-col MAX weapon (the proven design); BACK is
     // Balanced (docs/09 §7). cols5=false → the standard 7-col front.
-    const fb = splitFrontBack(pool, undefined, false);
+    // Partition WHOLE TOPICS across the two sides so no topic repeats —
+    // the proven sheet's structure (front = one set of topics, back = the
+    // rest), which is what makes the two sides read as one document.
+    const fb = splitFrontBack(pool, undefined, false, assignTopics(pool).topicIndexOf);
     const isFront = page === "front";
     // FRONT and BACK are the same 7-col MAX weapon — one continuous
     // sheet across both sides of the page.
