@@ -217,7 +217,6 @@ export function FittedSheet({
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [topicGroups, benchIds, density, cols5]);
 
   const hide = (id: string) => hiddenIds.has(id);
