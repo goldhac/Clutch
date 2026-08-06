@@ -7,7 +7,6 @@ import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust"
 import { filterForDensity } from "./tiers";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
-import { TopicsOverview } from "./TopicsOverview";
 import { FormulaBlock } from "./FormulaBlock";
 import { TrapCallout } from "./TrapCallout";
 import { QuestionBox } from "./QuestionBox";
@@ -173,6 +172,10 @@ export function FittedSheet({
       const benchSorted = [...benchIds]
         .filter((id) => scoreOf.has(id))
         .sort((a, b) => (scoreOf.get(b) ?? 0) - (scoreOf.get(a) ?? 0));
+      // Don't STOP at the first item that doesn't fit — skip it and keep
+      // trying smaller ones. The page must always end up full (the locked
+      // product rule: never dead space), and a single tall block early in
+      // the bench would otherwise leave the last column half empty.
       for (const id of benchSorted) {
         if (visible.has(id)) continue;
         const el = byId.get(id);
@@ -182,7 +185,6 @@ export function FittedSheet({
         if (anyClipped()) {
           el.style.display = "none";
           visible.delete(id);
-          break;
         }
       }
 
@@ -274,7 +276,9 @@ export function FittedSheet({
           </div>
         )}
         <VerifiedPatternsBlock patterns={content.verifiedPatterns} />
-        <TopicsOverview topics={content.topics} colorClass={topicAssign.topicColor} />
+        {/* No "On this sheet" TOC — the COLOR KEY strip above already maps
+         * color → topic, and the banners label each block. The TOC just
+         * consumed a column for content the reader already has. */}
 
 
         {topicGroups.map((g, ti) => {

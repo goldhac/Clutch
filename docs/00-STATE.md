@@ -151,10 +151,36 @@ After the relevance system: Supabase (auth + saved sheets), then Stripe (paywall
 
 ---
 
+## 7c. Vision ingest (SHIPPED 2026-08-06)
+
+`src/parse/ingest.ts` is now the single entry point; it reads the text
+layer AND the pixels.
+
+- `parse/pptx.ts` — real PPTX reader: slide `<a:t>` runs (exact tag match;
+  `<a:t[^>]*>` also matches `<a:tabLst>` and dragged raw XML into the
+  text), **SmartArt** text from `ppt/diagrams/dataN.xml`, and **speaker
+  notes**. This alone recovered "critical path" on the ITSS 3300 deck —
+  it was in a SmartArt shape, not an image.
+- `parse/rasterize.ts` — `pdftoppm` (poppler) renders image-only PDF
+  pages at 110 dpi. Missing binary ⇒ warning, not failure.
+- `parse/vision.ts` — multimodal transcription (Gemini Flash, temp 0.1)
+  with a TRANSCRIBE-don't-summarize prompt; emits `SKIP` for decorative
+  images, which we filter. Output appended under a
+  `===== VISION TRANSCRIPTION =====` marker so provenance is visible.
+- Triggers only where text extraction failed: PPTX slides with pictures
+  and < 120 chars of text; PDF pages far below the doc's average text
+  density; whole PDFs under ~100 chars/page (scans).
+- `LLMRequest` gained `images` + `plainText`; `GeminiClient` sends
+  `inlineData` parts.
+- Measured on the ITSS 3300 pack: **31 images transcribed, +33.8k chars**
+  of previously invisible content; the Gantt-chart slide (18 chars of
+  text) yielded its full task/duration/predecessor table.
+
 ## 7b. BACKLOG / known limitations
 
-- **Engine reads text, not pixels (P1).** The ingest pipeline
-  (`src/parse/pdf.ts` → `gen-cli`) extracts only the PDF *text layer*.
+- ~~**Engine reads text, not pixels (P1).**~~ **FIXED 2026-08-06.** See
+  §7c below. Original problem: the ingest pipeline extracted only the
+  *text layer*.
   Anything drawn as an image is invisible to the engine: Excel
   regression-output screenshots (e.g. Lecture 6 Fig 8 — Multiple R / R² /
   ANOVA tables), chart figures, scanned/handwritten notes. It didn't hurt

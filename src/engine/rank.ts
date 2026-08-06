@@ -228,9 +228,31 @@ from the pack, ranked best-first.`;
   }));
 
   const first = await client.generate({ system, user, temperature: 0.4 });
-  const parse = tryParseJsonAndValidate(first.text);
+  let parse = tryParseJsonAndValidate(first.text);
+  let used = first;
+
+  // Retry ONCE with the errors appended — same self-correction the main
+  // pass gets. Without it a single stray key (e.g. an extra "context"
+  // field the strict schema rejects) throws away a whole top-up call.
   if (!parse.ok) {
-    throw new EngineError(`Top-up pass failed validation: ${parse.error}`, first.text);
+    const retry = await client.generate({
+      system,
+      user: `${user}
+
+──────
+
+YOUR PREVIOUS RESPONSE FAILED VALIDATION:
+${parse.error}
+
+Fix every error above and emit a NEW, full, valid JSON object. Emit ONLY
+the schema's fields — no extra keys. Do not explain or apologize.`,
+      temperature: 0.2,
+    });
+    parse = tryParseJsonAndValidate(retry.text);
+    used = retry;
+    if (!parse.ok) {
+      throw new EngineError(`Top-up pass failed validation after retry: ${parse.error}`, retry.text);
+    }
   }
 
   const sanitized = sanitizeForTrust(parse.value, packMeta);
@@ -242,10 +264,10 @@ from the pack, ranked best-first.`;
     content: merged.data,
     warnings: sanitized.warnings,
     meta: {
-      model: first.model,
-      inputTokens: first.usage.inputTokens,
-      outputTokens: first.usage.outputTokens,
-      retried: false,
+      model: used.model,
+      inputTokens: (first.usage.inputTokens ?? 0) + (used === first ? 0 : (used.usage.inputTokens ?? 0)),
+      outputTokens: (first.usage.outputTokens ?? 0) + (used === first ? 0 : (used.usage.outputTokens ?? 0)),
+      retried: used !== first,
       sanitizedItems: sanitized.stripped,
       droppedPatterns: sanitized.droppedPatterns,
     },
@@ -277,8 +299,25 @@ function tryParseJsonAndValidate(raw: string): ParseResult {
 
   const result = safeParseSheetContent(parsed);
   if (!result.success) {
+    // Include the OFFENDING VALUE, not just the path. "traps.5.text is
+    // bad" gives the model nothing to work with on retry; quoting the
+    // actual sentence lets it rewrite exactly that one.
+    const at = (path: (string | number)[]): unknown =>
+      path.reduce<unknown>(
+        (acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[String(k)] : undefined),
+        parsed,
+      );
     const lines = result.error.issues
-      .map((i) => `  • [${i.path.join(".") || "<root>"}] ${i.message}`)
+      .map((i) => {
+        const val = at(i.path);
+        const shown =
+          typeof val === "string"
+            ? ` — you wrote: "${val.slice(0, 160)}"`
+            : val === undefined
+              ? ""
+              : ` — you wrote: ${JSON.stringify(val).slice(0, 160)}`;
+        return `  • [${i.path.join(".") || "<root>"}] ${i.message}${shown}`;
+      })
       .join("\n");
     return { ok: false, error: lines };
   }

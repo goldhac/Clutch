@@ -468,8 +468,13 @@ export function compose(
   const rest: Scored[] = [];
   for (const s of SECTION_ORDER) for (const it of pools[s]) if (!placedIds.has(it.id)) rest.push(it);
   rest.sort((a, b) => b.score - a.score || SECTION_ORDER.indexOf(a.section) - SECTION_ORDER.indexOf(b.section) || cmpId(a.id, b.id));
-  const bench = rest.slice(0, 8);
-  const overflow = rest.slice(8);
+  // Bench = gap-fill candidates the client can reveal into leftover space.
+  // Generous (was 8): the FitController tries them in rank order and the
+  // page must ALWAYS end up full — a short bench is the #1 cause of dead
+  // space at the bottom of the last column.
+  const BENCH = 40;
+  const bench = rest.slice(0, BENCH);
+  const overflow = rest.slice(BENCH);
 
   const counts: Record<Section, number> = { formulas: 0, concepts: 0, traps: 0, questions: 0, topics: 0, tables: 0 };
   for (const p of placed) counts[p.section]++;

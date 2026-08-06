@@ -32,8 +32,7 @@ loadDotenv({ path: ".env", quiet: true });
 import { readFile, writeFile, readdir, stat } from "node:fs/promises";
 import path from "node:path";
 import { generateSheet, deepenSheet, EngineError } from "@/engine/rank";
-import { extractPdfText } from "@/parse/pdf";
-import { extractText } from "@/parse/text";
+import { ingestDocument } from "@/parse/ingest";
 import { type Density } from "@/components/sheet";
 import {
   type ExamType,
@@ -65,6 +64,8 @@ interface CliArgs {
   outPath?: string;
   /** Number of pool-deepening passes to run after the first call (0-3). */
   topup: number;
+  /** Skip the vision/OCR pass for image-only pages+slides. */
+  noVision: boolean;
 }
 
 function parseArgs(argv: string[]): CliArgs {
@@ -84,10 +85,11 @@ function parseArgs(argv: string[]): CliArgs {
     priority: (get("priority") ?? "balanced") as PriorityMode,
     outPath: get("out"),
     topup: Math.min(3, Math.max(0, Number.parseInt(get("topup") ?? "0", 10) || 0)),
+    noVision: rest.includes("--no-vision"),
   };
 }
 
-const DOC_EXTS = [".pdf", ".txt", ".md"];
+const DOC_EXTS = [".pdf", ".txt", ".md", ".pptx"];
 
 async function findDocs(dir: string, depth = 0): Promise<string[]> {
   if (depth > 2) return []; // don't recurse too deeply
@@ -124,15 +126,19 @@ async function main() {
     const filename = path.basename(file);
     const tag = guessTag(filename);
     try {
-      if (filename.toLowerCase().endsWith(".pdf")) {
-        const { text, charCount, pageCount } = await extractPdfText(buf);
-        console.error(`[gen-cli]   ${tag.padEnd(12)} ${pageCount}p ${charCount}c  ${filename}`);
-        pack.push({ tag, filename, text });
-      } else {
-        const { text, charCount } = extractText(buf.toString("utf-8"));
-        console.error(`[gen-cli]   ${tag.padEnd(12)} txt ${charCount}c  ${filename}`);
-        pack.push({ tag, filename, text });
-      }
+      // ingestDocument reads the text layer AND (when the text layer is
+      // thin for a page/slide that carries pictures) transcribes the image
+      // content via the vision pass. --no-vision skips it.
+      const r = await ingestDocument(filename, buf, { vision: !args.noVision });
+      const unit = filename.toLowerCase().endsWith(".pptx") ? "sl" : "p";
+      const vis = r.visionImages
+        ? ` +vision(${r.visionImages} img, ${r.visionChars}c)`
+        : "";
+      console.error(
+        `[gen-cli]   ${tag.padEnd(12)} ${r.units || "–"}${unit} ${r.charCount}c${vis}  ${filename}`,
+      );
+      for (const w of r.warnings) console.error(`[gen-cli]     ⚠ ${w}`);
+      pack.push({ tag, filename, text: r.text });
     } catch (e) {
       console.error(`[gen-cli]   FAILED  ${filename}: ${e instanceof Error ? e.message : e}`);
     }

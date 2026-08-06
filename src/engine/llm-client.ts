@@ -23,11 +23,30 @@ export interface LLMUsage {
   raw?: unknown;
 }
 
+/** An image sent alongside the prompt (vision/OCR pass). */
+export interface LLMImage {
+  /** Raw bytes, base64-encoded (no data: prefix). */
+  base64: string;
+  /** e.g. "image/png", "image/jpeg". */
+  mimeType: string;
+}
+
 export interface LLMRequest {
   /** System / persona — set once per call. Cached when supported. */
   system: string;
   /** User content — the per-pack instruction + extracted text. */
   user: string;
+  /**
+   * Optional images for a multimodal call. Used by the vision ingest pass
+   * (src/parse/vision.ts) to read content that lives only as pixels —
+   * chart figures, screenshotted tables, image-only slides.
+   */
+  images?: LLMImage[];
+  /**
+   * When true the provider should NOT force JSON output — the vision pass
+   * wants plain transcribed text.
+   */
+  plainText?: boolean;
   /**
    * Optional JSON schema description for structured output. Providers
    * that support response schemas use it natively; others get it

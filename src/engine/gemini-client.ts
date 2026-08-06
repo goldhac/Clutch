@@ -57,10 +57,11 @@ export class GeminiClient implements LLMClient {
       generationConfig: {
         temperature: req.temperature ?? 0.3,
         maxOutputTokens: req.maxOutputTokens ?? 32768,
-        // Native JSON-only mode — Gemini will refuse non-JSON output.
-        responseMimeType: "application/json",
+        // JSON-only mode for the ranking pass. The vision/OCR pass sets
+        // plainText because it returns a transcription, not a document.
+        ...(req.plainText ? {} : { responseMimeType: "application/json" }),
         // Optional schema enforcement at the provider level.
-        ...(req.jsonOutputHint?.schema
+        ...(req.jsonOutputHint?.schema && !req.plainText
           ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
             { responseSchema: req.jsonOutputHint.schema as any }
           : {}),
@@ -68,7 +69,19 @@ export class GeminiClient implements LLMClient {
     });
 
     try {
-      const result = await model.generateContent(req.user);
+      // Multimodal when images are supplied (vision ingest); plain text
+      // otherwise. Gemini takes an array of parts.
+      const payload = req.images?.length
+        ? [
+            { text: req.user },
+            ...req.images.map((img) => ({
+              inlineData: { data: img.base64, mimeType: img.mimeType },
+            })),
+          ]
+        : req.user;
+      const result = await model.generateContent(
+        payload as Parameters<typeof model.generateContent>[0],
+      );
       const text = result.response.text();
       const usage = result.response.usageMetadata;
 

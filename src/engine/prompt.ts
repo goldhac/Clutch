@@ -150,13 +150,20 @@ that don't fit are benched, never lost. Your job is SUPPLY: a deep,
 evidence-backed pool ~2× what one dense page holds, best-first within
 each section.
 
+The sheet prints FRONT AND BACK — two full A4-landscape pages at 7
+columns. Measured: one page holds ~55-60 blocks, so a two-sided sheet
+needs ~120 placed items PLUS a surplus for the fitter to trim against.
+Under ~130 items the back page ends with visible dead space, which is a
+product defect. Aim for ~140.
+
 Emit (hard minimums in parentheses — going under starves the layout):
-- topics:    4–6        (4)
-- formulas: 18–26      (12)  — every one with worked numbers in "ex"
-- concepts: 18–26      (12)
-- traps:    12–18       (8)
-- questions:18–28      (12)  — mirror the past exam's kind mix
-- tables:    4–7        (3)
+- topics:    5–7        (5)
+- formulas: 20–30      (14)  — every one with worked numbers in "ex"
+- concepts: 30–45      (24)  — EVERY definition ends with a concrete
+                              example ("Example: …"). No exceptions.
+- traps:    16–24      (12)
+- questions:30–45      (24)  — mirror the past exam's kind mix
+- tables:    6–10       (5)
 
 Rank order WITHIN each array matters: put the most exam-likely first.
 Do not pad with filler to hit counts — mine the pack deeper instead
