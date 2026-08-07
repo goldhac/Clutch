@@ -31,6 +31,12 @@ RUN npm run build
 FROM mcr.microsoft.com/playwright:v1.60.0-jammy AS runtime
 WORKDIR /app
 
+# poppler-utils provides pdftoppm — the vision-ingest pass rasterizes
+# image-only PDF pages with it (src/parse/rasterize.ts). Without it the
+# pipeline degrades to text-only with a user-facing warning.
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
+  && rm -rf /var/lib/apt/lists/*
+
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
