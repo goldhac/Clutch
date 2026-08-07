@@ -127,7 +127,31 @@ Key screens: `/` (marketing), `/generate`, `/results`, `/library`, `/sheet?densi
 
 ## 7. NEXT ACTION
 
-**The R-track (R1–R6) is DONE.** Next up: Supabase, then Stripe.
+**The R-track (R1–R6) is DONE — and superseded in part by the
+sequential-fill architecture (2026-08-07, commits 6dfaf0c..007d4a0):**
+
+- **TwoPageSheet.tsx is THE front/back renderer.** Both pages in one
+  document, filled sequentially by real measurement (page 1 takes all it
+  can hold, page 2 gets the exact remainder + smallest-first tail
+  packing). splitFrontBack/estimated budgets are legacy — do NOT tune
+  them; the two-page path never touches them.
+- **Vision ingest shipped** (§7c): parse/ingest.ts reads text + SmartArt
+  + speaker notes + rasterized/vision-transcribed image content.
+- **Questions carry answers** (contract-required `a` field, green → on
+  the sheet); **items carry explicit `topic` tags** (exact topics[].name,
+  contract + prompt enforced) driving topic-grouped layout + color key.
+- **Adjust-the-sheet feature** on /results: free presets (deterministic
+  ScoreCtx steering, instant) + Pro free-text tweaks (/api/tweak →
+  tweakSheet(), contract re-validated, 422 on degradation).
+- **/results previews the FULL two-page sheet at MAX.** Free tier sees
+  the real back page BLURRED behind an unlock card ("Unlock with Pro ·
+  $4.99") — the conversion surface Stripe will gate. Pro sees both pages
+  + exports the 2-page PDF in one pass.
+- Demo/QA: `/results?g=<pool>&tier=free|pro` self-seeds from
+  samples/generated via /api/dev-pool.
+
+**Next up: Supabase (auth + saved sheets + server-side tier), then
+Stripe on the back-page paywall + /api/tweak entitlement.**
 
 R-track status (all committed):
 - **R1 ✅** relevance core (scorer + composer + estimator + 22/22 gate).
