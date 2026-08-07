@@ -30,8 +30,21 @@ interface Stash {
   density?: Density;
   /** Scoring context (R2) — files/examType/priority for Layer A. */
   ctx?: ScoreCtx;
+  /** Entitlement tier. UI-gated today; server-enforced once auth lands. */
+  tier?: "free" | "pro";
   savedAt?: string;
 }
+
+/** Free-tier presets — steer the DETERMINISTIC composer (no engine call,
+ * instant). Each maps to the ScoreCtx controls the relevance system
+ * already honors. */
+const FREE_PRESETS: { label: string; patch: Partial<ScoreCtx> }[] = [
+  { label: "More formulas", patch: { priority: "formulas" } },
+  { label: "More concepts", patch: { priority: "concepts" } },
+  { label: "Problem-heavy", patch: { examType: "problem-solving" } },
+  { label: "Concept-heavy", patch: { examType: "conceptual" } },
+  { label: "Reset mix", patch: { priority: "balanced", examType: "mixed" } },
+];
 
 const DENSITY_OPTS = [
   { value: "max" as const, label: "MAX" },
@@ -46,6 +59,13 @@ export default function ResultsPage() {
   const [dismissed, setDismissed] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
+  // Adjust panel state — free presets patch the compose ctx locally;
+  // Pro free-text tweaks go through /api/tweak and replace the pool.
+  const [ctxPatch, setCtxPatch] = useState<Partial<ScoreCtx>>({});
+  const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [instruction, setInstruction] = useState("");
+  const [tweaking, setTweaking] = useState(false);
+  const [tweakError, setTweakError] = useState<string | null>(null);
 
   useEffect(() => {
     try {
@@ -110,7 +130,7 @@ export default function ResultsPage() {
       const res = await fetch("/api/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, density, ctx: stash?.ctx ?? EMPTY_CTX }),
+        body: JSON.stringify({ content, density, ctx: effectiveCtx }),
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const blob = await res.blob();
@@ -122,6 +142,39 @@ export default function ResultsPage() {
       setExportError(e instanceof Error ? e.message : String(e));
     } finally {
       setExporting(false);
+    }
+  }
+
+  const tier = stash?.tier ?? "free";
+  const effectiveCtx: ScoreCtx = { ...(stash?.ctx ?? EMPTY_CTX), ...ctxPatch };
+
+  function applyPreset(label: string, patch: Partial<ScoreCtx>) {
+    setCtxPatch(patch);
+    setActivePreset(label);
+  }
+
+  // Pro: free-text tweak — the pool is engine-edited then contract
+  // re-validated; the stash is updated so exports use the edited sheet.
+  async function applyTweak() {
+    if (!instruction.trim() || !stash || !content) return;
+    setTweaking(true);
+    setTweakError(null);
+    try {
+      const res = await fetch("/api/tweak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content, instruction: instruction.trim() }),
+      });
+      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
+      const payload = (await res.json()) as { content: unknown };
+      const next = { ...stash, content: payload.content };
+      setStash(next);
+      sessionStorage.setItem("cramsheet:last", JSON.stringify(next));
+      setInstruction("");
+    } catch (e) {
+      setTweakError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setTweaking(false);
     }
   }
 
@@ -185,10 +238,74 @@ export default function ResultsPage() {
         )}
       </header>
 
+      {/* ── Adjust panel — tiered edits ──────────────────────────────── */}
+      <div className="print:hidden mx-auto max-w-6xl px-5 pt-5">
+        <div className="rounded-[var(--r-lg)] border border-[var(--ink-150)] bg-[var(--paper)] p-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[13px] font-semibold text-[var(--ink-800)]">Adjust the sheet</span>
+            <span className="text-[12px] text-[var(--ink-400)]">instant, no re-generation</span>
+            <div className="ml-1 flex flex-wrap gap-1.5">
+              {FREE_PRESETS.map((pz) => (
+                <button
+                  key={pz.label}
+                  type="button"
+                  onClick={() => applyPreset(pz.label, pz.patch)}
+                  className={`rounded-full border px-2.5 py-0.5 text-[12px] font-medium transition-colors ${
+                    activePreset === pz.label
+                      ? "border-[var(--ink-900)] bg-[var(--ink-900)] text-white"
+                      : "border-[var(--ink-200)] bg-white text-[var(--ink-700)] hover:border-[var(--ink-400)]"
+                  }`}
+                >
+                  {pz.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-3 flex items-start gap-2">
+            <div className="relative flex-1">
+              <textarea
+                value={instruction}
+                onChange={(e) => setInstruction(e.target.value)}
+                disabled={tier !== "pro" || tweaking}
+                rows={2}
+                maxLength={500}
+                placeholder={'Tell it what to change — e.g. "shorter questions" · "more SQL formulas" · "drop the Tableau section" · "add worked examples to every trap"'}
+                className="w-full resize-none rounded-[var(--r-md)] border border-[var(--ink-200)] bg-white px-3 py-2 text-[13px] text-[var(--ink-900)] placeholder:text-[var(--ink-400)] focus:border-[var(--ink-500)] focus:outline-none disabled:bg-[var(--ink-100)] disabled:text-[var(--ink-400)]"
+              />
+              {tier !== "pro" && (
+                <span className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full bg-[var(--ink-900)] px-2 py-0.5 text-[11px] font-semibold text-white">
+                  ✦ Pro
+                </span>
+              )}
+            </div>
+            <Button
+              size="sm"
+              onClick={applyTweak}
+              disabled={tier !== "pro" || !instruction.trim()}
+              loading={tweaking}
+            >
+              {tweaking ? "Editing…" : "Apply edit"}
+            </Button>
+          </div>
+          {tier !== "pro" && (
+            <p className="mt-1.5 text-[12px] text-[var(--ink-500)]">
+              Free tier: use the preset chips above. Custom edits — in your own words —
+              come with <Link href="/pricing" className="underline">Pro</Link>.
+            </p>
+          )}
+          {tweakError && (
+            <div className="mt-2">
+              <Callout variant="danger">Edit failed: {tweakError}</Callout>
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* ── The sheet, centered on the workspace ─────────────────────── */}
       <div className="flex justify-center overflow-x-auto px-4 py-8">
         <div className="rounded-[var(--r-lg)] shadow-[var(--sh-xl)]">
-          <FittedSheet content={content} density={density} ctx={stash.ctx ?? EMPTY_CTX} />
+          <FittedSheet content={content} density={density} ctx={effectiveCtx} />
         </div>
       </div>
 

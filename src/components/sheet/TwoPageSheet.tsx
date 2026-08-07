@@ -171,20 +171,31 @@ export function TwoPageSheet({
         visible.delete(victim);
         byId.get(victim)!.style.display = "none";
       }
-      // Re-add pass: anything still hidden (from candidates) that fits,
+      // Re-add pass 1: anything still hidden (from candidates) that fits,
       // best-scored first, skip-and-continue.
-      const hiddenSorted = [...candidates]
-        .filter((id) => !visible.has(id) && byId.has(id))
-        .sort((a, b) => (scoreOf.get(b) ?? 0) - (scoreOf.get(a) ?? 0));
-      for (const id of hiddenSorted) {
-        const el = byId.get(id)!;
-        el.style.display = "";
-        visible.add(id);
-        if (clipped()) {
-          el.style.display = "none";
-          visible.delete(id);
+      const tryAdd = (ids: string[]) => {
+        for (const id of ids) {
+          if (visible.has(id)) continue;
+          const el = byId.get(id)!;
+          el.style.display = "";
+          visible.add(id);
+          if (clipped()) {
+            el.style.display = "none";
+            visible.delete(id);
+          }
         }
-      }
+      };
+      const stillHidden = () =>
+        [...candidates].filter((id) => !visible.has(id) && byId.has(id));
+      tryAdd(
+        stillHidden().sort((a, b) => (scoreOf.get(b) ?? 0) - (scoreOf.get(a) ?? 0)),
+      );
+      // Re-add pass 2 — tail packing: the score pass leaves bottom-of-column
+      // gaps when every remaining high-scored item is too tall. Retry the
+      // remainder SMALLEST-first so short items (a one-line concept, a T/F)
+      // slot into the tail gaps.
+      const estOf = (id: string) => Number(byId.get(id)!.dataset.est ?? 0);
+      tryAdd(stillHidden().sort((a, b) => estOf(a) - estOf(b)));
       return visible;
     };
 
@@ -392,6 +403,7 @@ function FitLeaf({
     <Tag
       data-fit-id={it.id}
       data-score={it.score}
+      data-est={it.estHeight}
       className={`fit-leaf${className ? ` ${className}` : ""}`}
       style={hidden ? { display: "none" } : undefined}
     >

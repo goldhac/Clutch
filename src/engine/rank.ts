@@ -329,3 +329,80 @@ function tryParseJsonAndValidate(raw: string): ParseResult {
  * the contract module directly — keeps the engine the single owner.
  */
 export { parseSheetContent };
+
+/* ────────────────────────────────────────────────────────────────────
+ * Tweak pass — the user's "make a little edit" feature (tiered).
+ *
+ * Free tier steers the deterministic composer (priority/examType — no
+ * engine call). The paid tier gets THIS: a free-text instruction applied
+ * to the pool by the model as a SMALL edit, re-validated by the same
+ * contract (trust rules, answers, topics) so a tweak can't degrade the
+ * sheet below the quality bar.
+ * ──────────────────────────────────────────────────────────────────── */
+
+export async function tweakSheet(
+  existing: SheetContent,
+  instruction: string,
+  opts: GenerateOptions = {},
+): Promise<GenerateResult> {
+  const client = opts.client ?? defaultGeminiClient();
+  const system = buildSystemPrompt();
+  const user = `TWEAK PASS — a student asked for a small edit to their
+existing sheet. Below is the CURRENT pool (already validated + cited).
+
+Apply the instruction as a TARGETED EDIT, not a rebuild:
+- Touch only what the instruction implies; keep everything else
+  byte-identical (same wording, same src, same conf/verified).
+- "shorter X" → rewrite those items tighter, never drop the answer/example.
+- "more X" → add new items of that kind, same citation rules as always —
+  ONLY from knowledge already evidenced in the existing pool's content;
+  if you can't cite it from the pool, don't add it.
+- "remove/less X" → delete the lowest-value matching items.
+- Keep every "topic" tag a valid topics[].name. Keep every question's "a".
+- If the instruction is unsafe, unrelated to the sheet, or asks you to
+  invent uncited material, apply nothing and return the pool unchanged.
+
+INSTRUCTION FROM THE STUDENT:
+"${instruction.replace(/"/g, "'").slice(0, 500)}"
+
+CURRENT POOL:
+${JSON.stringify(existing)}
+
+Emit the FULL edited JSON object (same schema, no extra keys).`;
+
+  const first = await client.generate({ system, user, temperature: 0.3 });
+  let parse = tryParseJsonAndValidate(first.text);
+  let used = first;
+  if (!parse.ok) {
+    const retry = await client.generate({
+      system,
+      user: `${user}
+
+──────
+
+YOUR PREVIOUS RESPONSE FAILED VALIDATION:
+${parse.error}
+
+Fix every error above and emit a NEW, full, valid JSON object.`,
+      temperature: 0.2,
+    });
+    parse = tryParseJsonAndValidate(retry.text);
+    used = retry;
+    if (!parse.ok) {
+      throw new EngineError(`Tweak pass failed validation after retry: ${parse.error}`, retry.text);
+    }
+  }
+
+  return {
+    content: parse.value,
+    warnings: [],
+    meta: {
+      model: used.model,
+      inputTokens: (first.usage.inputTokens ?? 0) + (used === first ? 0 : (used.usage.inputTokens ?? 0)),
+      outputTokens: (first.usage.outputTokens ?? 0) + (used === first ? 0 : (used.usage.outputTokens ?? 0)),
+      retried: used !== first,
+      sanitizedItems: 0,
+      droppedPatterns: 0,
+    },
+  };
+}
