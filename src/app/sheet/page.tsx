@@ -7,9 +7,7 @@ import Link from "next/link";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { sampleContent } from "@samples/sample-content";
-import { FittedSheet, type Density, normalizeDensity } from "@/components/sheet";
-import { splitFrontBack } from "@/components/sheet/relevance";
-import { assignTopics } from "@/components/sheet/topics-color";
+import { FittedSheet, TwoPageSheet, type Density, normalizeDensity } from "@/components/sheet";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 
 function parseDensity(raw: string | string[] | undefined): Density {
@@ -69,27 +67,15 @@ export default async function SheetPage({
   const page = Array.isArray(sp.page) ? sp.page[0] : sp.page;
   const pool = await loadContent(g);
 
-  // ?page=front|back → the R6 front/back prototype: FRONT = MAX (×5),
-  // BACK = Balanced composed from the remainder (docs/09 §7).
+  // ?page=front|back → the two-page document, filled SEQUENTIALLY by
+  // real measurement: page 1 takes all it can hold from the whole pool,
+  // page 2 gets exactly the remainder. No estimated split — items can't
+  // be lost between the pages and both pages always fill.
   if (page === "front" || page === "back") {
-    // FRONT is the full 7-col MAX weapon (the proven design); BACK is
-    // Balanced (docs/09 §7). cols5=false → the standard 7-col front.
-    // Partition WHOLE TOPICS across the two sides so no topic repeats —
-    // the proven sheet's structure (front = one set of topics, back = the
-    // rest), which is what makes the two sides read as one document.
-    const fb = splitFrontBack(pool, undefined, false, assignTopics(pool).topicIndexOf);
-    const isFront = page === "front";
-    // FRONT and BACK are the same 7-col MAX weapon — one continuous
-    // sheet across both sides of the page.
     return (
       <div className="sheet-page">
         <DevBar density="max" cols5={false} g={g} page={page} />
-        <FittedSheet
-          content={isFront ? fb.front : fb.back}
-          density="max"
-          cols5={false}
-          debug
-        />
+        <TwoPageSheet content={pool} cols5={false} debug />
       </div>
     );
   }

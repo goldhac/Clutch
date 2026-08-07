@@ -5,6 +5,7 @@
  */
 export { Sheet, type SheetProps, type Density, DENSITY_ALIASES, normalizeDensity } from "./Sheet";
 export { FittedSheet, type FittedSheetProps } from "./FittedSheet";
+export { TwoPageSheet, type TwoPageSheetProps } from "./TwoPageSheet";
 export { ExamFormatStrip } from "./ExamFormatStrip";
 export { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 export { TopicsOverview } from "./TopicsOverview";

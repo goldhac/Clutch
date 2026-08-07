@@ -383,7 +383,12 @@ function ConceptRow({ concept: c }: { concept: Concept }) {
         <VerifiedStar verified={c.verified} />
         <strong><InlineText text={c.term} /></strong>
       </div>
-      <div className="def"><InlineText text={c.def} /></div>
+      <div className="def">
+        <InlineText text={c.def} />
+        {c.ex && (
+          <span className="cex"> Example: <InlineText text={c.ex} /></span>
+        )}
+      </div>
       <div className="meta">
         <ConfDot conf={c.conf} />
         <Citation src={c.src} />

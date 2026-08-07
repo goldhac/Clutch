@@ -18,6 +18,8 @@ export const TOPIC_COLOR_COUNT = 10;
 export const topicColorClass = (topicIndex: number): string =>
   `tk-${((topicIndex % TOPIC_COLOR_COUNT) + TOPIC_COLOR_COUNT) % TOPIC_COLOR_COUNT}`;
 
+const norm = (x: string) => x.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+
 const STOP = new Set([
   "the", "and", "for", "with", "from", "that", "this", "when", "use", "are",
   "you", "your", "per", "not", "but", "its", "has", "had", "each", "into",
@@ -94,7 +96,22 @@ export function assignTopics(content: SheetContent): TopicAssignment {
   const counts = new Array(topics.length).fill(0);
   const byId = new Map<string, number>();
 
-  const assign = (section: Section, index: number, text: string) => {
+  // Explicit topic tags win: the engine copies topics[].name into each
+  // item's `topic` field (contract-supported). The keyword matcher is
+  // only the fallback for older pools — it demonstrably mis-groups
+  // (observed: one topic swallowing an entire pack).
+  const topicIndexByName = new Map<string, number>();
+  topics.forEach((t, i) => topicIndexByName.set(norm(t.name), i));
+
+  const assign = (section: Section, index: number, text: string, explicit?: string) => {
+    if (explicit) {
+      const exact = topicIndexByName.get(norm(explicit));
+      if (exact !== undefined) {
+        byId.set(`${section}:${index}`, exact);
+        counts[exact]++;
+        return;
+      }
+    }
     const toks = tokens(text);
     let best = -1;
     let bestScore = 0;
@@ -110,12 +127,12 @@ export function assignTopics(content: SheetContent): TopicAssignment {
   };
 
   content.formulas.forEach((f, i) =>
-    assign("formulas", i, `${f.name} ${f.when ?? ""} ${f.trap ?? ""} ${f.vars ?? ""}`));
-  content.concepts.forEach((c, i) => assign("concepts", i, `${c.term} ${c.def}`));
-  content.traps.forEach((t, i) => assign("traps", i, t.text));
-  content.questions.forEach((q, i) => assign("questions", i, q.q));
+    assign("formulas", i, `${f.name} ${f.when ?? ""} ${f.trap ?? ""} ${f.vars ?? ""}`, f.topic));
+  content.concepts.forEach((c, i) => assign("concepts", i, `${c.term} ${c.def}`, c.topic));
+  content.traps.forEach((t, i) => assign("traps", i, t.text, t.topic));
+  content.questions.forEach((q, i) => assign("questions", i, q.q, q.topic));
   (content.tables ?? []).forEach((t, i) =>
-    assign("tables", i, `${t.title} ${t.cols.join(" ")}`));
+    assign("tables", i, `${t.title} ${t.cols.join(" ")}`, t.topic));
 
   return {
     colorOf: (id) => {

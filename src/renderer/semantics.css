@@ -436,6 +436,20 @@
   margin: 1.2pt 0 0.4pt 0;
 }
 
+/* ── Two-page document (front + back, one DOM) — the sequential-fill
+ * container. Screen: pages stacked with a gap. Print: each .sheet is
+ * exactly one A4-landscape page; break between them. */
+.two-page {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+@media print {
+  .two-page { display: block; gap: 0; }
+  .two-page .sheet[data-page="1"] { break-after: page; page-break-after: always; }
+}
+
 /* ── COLOR KEY strip (the proven sheet's top line) — full-width row of
  * topic-colored chips so the reader learns the color→topic map before
  * reading anything else. */
@@ -462,4 +476,20 @@
   border-radius: 1pt;
   letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+/* Concept example tail — visually quieter than the definition. */
+.sheet .concept-row .cex { color: var(--ink-600); font-style: italic; }
+
+/* Compare-tables get fixed layout too — auto layout lets a long
+ * unbreakable cell push the table wider than its column and bleed over
+ * the neighbor (same failure the concepts table had). */
+.sheet .compare-table table {
+  table-layout: fixed;
+  width: 100%;
+}
+.sheet .compare-table td,
+.sheet .compare-table th {
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }

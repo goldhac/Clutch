@@ -218,6 +218,9 @@ No code fences, no prose before/after, no Markdown — just the JSON.
     { "pattern": "string", "src": "string" }
   ],
   "topics":   [{ "name", "why", "src", "conf", "verified"? }],
+  // EVERY item below (formulas/concepts/traps/questions/tables) MUST
+  // carry "topic": an EXACT copy of one topics[].name — it drives the
+  // sheet's topic grouping + color key. Never invent a new topic string.
   "formulas": [{ "name", "formula", "vars", "when",
                   "trap"?, "ex"?,           // OMIT if no real material
                   "src", "conf", "verified"? }],

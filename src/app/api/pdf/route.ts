@@ -66,18 +66,20 @@ function localBase(): string {
  */
 async function countClipped(page: Page): Promise<number> {
   return page.evaluate(() => {
-    const cols = document.querySelector<HTMLElement>(".sheet .cols");
-    if (!cols) return 0;
-    const box = cols.getBoundingClientRect();
-    const TOL = 1.5;
+    // Check EVERY sheet on the target — the two-page document renders
+    // front AND back; a clip on either page is a defect.
     let clipped = 0;
-    for (const el of Array.from(cols.querySelectorAll<HTMLElement>("[data-fit-id]"))) {
-      const style = getComputedStyle(el);
-      if (style.display === "none" || style.visibility === "hidden") continue;
-      const r = el.getBoundingClientRect();
-      if (r.width === 0 && r.height === 0) continue;
-      // Clipped if the block's right edge extends past the visible columns.
-      if (r.right > box.right + TOL) clipped++;
+    const TOL = 1.5;
+    for (const cols of Array.from(document.querySelectorAll<HTMLElement>(".sheet .cols"))) {
+      const box = cols.getBoundingClientRect();
+      for (const el of Array.from(cols.querySelectorAll<HTMLElement>("[data-fit-id]"))) {
+        const style = getComputedStyle(el);
+        if (style.display === "none" || style.visibility === "hidden") continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 && r.height === 0) continue;
+        // Clipped if the block's right edge extends past the visible columns.
+        if (r.right > box.right + TOL) clipped++;
+      }
     }
     return clipped;
   });
@@ -108,8 +110,10 @@ async function renderToPdf(opts: {
     // not the pre-measure baseline. Falls through after a short budget if
     // the signal never appears (JS disabled) — CSS overflow still clips to
     // one page.
+    // FittedSheet marks its .sheet; TwoPageSheet marks its .two-page
+    // wrapper only after BOTH pages settle — match either.
     await page
-      .waitForSelector(".sheet[data-fit-done='1']", { timeout: 5000 })
+      .waitForSelector("[data-fit-done='1']", { timeout: 6000 })
       .catch(() => {});
 
     // Real clip verifier (R4): assert the FitController actually converged.
@@ -168,7 +172,9 @@ export async function GET(req: NextRequest) {
   const cols5 = url.searchParams.get("cols") === "5";
   const pageParam = url.searchParams.get("page");
   const isSplit = pageParam === "front" || pageParam === "back";
-  const pages = Number.parseInt(url.searchParams.get("pages") ?? "1", 10);
+  // Front/back mode renders the two-page document (sequential fill) —
+  // ONE Playwright pass produces the final 2-page PDF. No merge step.
+  const pages = isSplit ? 2 : Number.parseInt(url.searchParams.get("pages") ?? "1", 10);
   if (pages !== 1 && pages !== 2) {
     return new Response(`pages must be 1 or 2; got "${pages}"`, { status: 400 });
   }
@@ -222,7 +228,8 @@ export async function POST(req: NextRequest) {
     );
   }
   const isSplit = b.page === "front" || b.page === "back";
-  const pages: 1 | 2 = 1; // each printed side is one page; 2-page mode is two POSTs.
+  // Front/back = the two-page document in one pass.
+  const pages: 1 | 2 = isSplit ? 2 : 1;
 
   const ctx = b.ctx && typeof b.ctx === "object" ? (b.ctx as typeof EMPTY_CTX) : EMPTY_CTX;
   const token = putPool(parsed.data, ctx);

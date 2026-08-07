@@ -63,6 +63,13 @@ function rankedItem<S extends z.ZodRawShape>(extra: S) {
       src: z.string().min(1, "src citation required (e.g. 'Slide 14', 'Past exam 2024 Q5')"),
       conf: ConfSchema,
       verified: z.boolean().optional(),
+      /**
+       * Which topics[] entry this item belongs to — MUST be an exact copy
+       * of one topics[].name. Drives the topic-grouped layout + color key.
+       * Optional for back-compat (older pools infer it by keyword match),
+       * but the engine prompt requires it.
+       */
+      topic: z.string().min(1).optional(),
     })
     .strict();
 
@@ -113,6 +120,9 @@ export type Formula = z.infer<typeof FormulaSchema>;
 export const ConceptSchema = rankedItem({
   term: z.string().min(1),
   def: z.string().min(1),
+  /** Concrete example — the prompt demands one per definition; models
+   * naturally emit it as its own field, so the contract accepts it. */
+  ex: z.string().min(1).optional(),
 });
 export type Concept = z.infer<typeof ConceptSchema>;
 
@@ -162,6 +172,8 @@ export const TableSchema = z
       .array(z.array(z.string()))
       .min(1, "table needs at least one row"),
     src: z.string().min(1),
+    /** Owning topic — exact topics[].name (see rankedItem.topic). */
+    topic: z.string().min(1).optional(),
   })
   .strict()
   .superRefine((data, ctx) => {
@@ -189,6 +201,8 @@ export const TrapSchema = z
           'not vague "be careful about X"',
       }),
     src: z.string().min(1),
+    /** Owning topic — exact topics[].name (see rankedItem.topic). */
+    topic: z.string().min(1).optional(),
   })
   .strict();
 export type Trap = z.infer<typeof TrapSchema>;

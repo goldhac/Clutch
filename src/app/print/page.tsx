@@ -3,9 +3,7 @@ import "@/renderer/semantics.css";
 import "@/renderer/sheet.css";
 
 import type { Metadata } from "next";
-import { FittedSheet, normalizeDensity } from "@/components/sheet";
-import { splitFrontBack } from "@/components/sheet/relevance";
-import { assignTopics } from "@/components/sheet/topics-color";
+import { FittedSheet, TwoPageSheet, normalizeDensity } from "@/components/sheet";
 import { takePool } from "@/lib/pool-store";
 
 export const metadata: Metadata = { title: "Exam Reference Sheet" };
@@ -53,16 +51,11 @@ export default async function PrintPage({
   }
 
   if (page === "front" || page === "back") {
-    const fb = splitFrontBack(stored.content, stored.ctx, false, assignTopics(stored.content).topicIndexOf);
-    const isFront = page === "front";
-    // FRONT and BACK are the same 7-col MAX — one continuous sheet.
+    // One two-page document, filled sequentially by real measurement —
+    // Playwright prints both pages in a single pass (pages=2 assert).
     return (
       <div className="sheet-page">
-        <FittedSheet
-          content={isFront ? fb.front : fb.back}
-          density="max"
-          cols5={false}
-        />
+        <TwoPageSheet content={stored.content} ctx={stored.ctx} cols5={false} />
       </div>
     );
   }
