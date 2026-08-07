@@ -47,6 +47,9 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package.json ./package.json
+# Generated demo pools — /api/dev-pool + /sheet?g= read these at runtime
+# (owner demos / QA). Small JSON; PDFs excluded via .dockerignore.
+COPY --from=build /app/samples ./samples
 
 EXPOSE 3000
 

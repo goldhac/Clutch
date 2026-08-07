@@ -36,3 +36,6 @@ docs/
 
 # Don't ship the playwright local browser cache; image already has it
 .cache
+
+# keep the runtime image lean — demo pools ship, their PDFs don't
+samples/generated/pdf
