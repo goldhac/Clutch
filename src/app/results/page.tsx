@@ -68,6 +68,33 @@ export default function ResultsPage() {
   const [tweakError, setTweakError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Demo/QA self-seed: /results?g=<pool>&tier=pro loads a generated
+    // pool from disk (via /api/dev-pool) into the session — so the full
+    // results experience is one URL away in any fresh browser.
+    const sp = new URLSearchParams(window.location.search);
+    const g = sp.get("g");
+    if (g) {
+      const tier = sp.get("tier") === "pro" ? ("pro" as const) : ("free" as const);
+      fetch(`/api/dev-pool?g=${encodeURIComponent(g)}`)
+        .then(async (r) => {
+          if (!r.ok) throw new Error(await r.text());
+          const { content } = (await r.json()) as { content: unknown };
+          const seeded: Stash = {
+            content,
+            meta: { model: "gemini-2.5-pro" },
+            warnings: [],
+            density: "max",
+            tier,
+            ctx: EMPTY_CTX,
+            savedAt: new Date().toISOString(),
+          };
+          sessionStorage.setItem("cramsheet:last", JSON.stringify(seeded));
+          setStash(seeded);
+          setDensity("max");
+        })
+        .catch((e) => setError(e instanceof Error ? e.message : String(e)));
+      return;
+    }
     try {
       const raw = sessionStorage.getItem("cramsheet:last");
       if (!raw) {
