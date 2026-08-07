@@ -55,6 +55,9 @@ export interface TwoPageSheetProps {
   ctx?: ScoreCtx;
   cols5?: boolean;
   debug?: boolean;
+  /** Free-tier preview: the BACK page renders (real content, real fit)
+   * but blurred behind an unlock card — the conversion surface. */
+  lockBack?: boolean;
 }
 
 type Groups = Record<Section, Scored[]>[];
@@ -64,6 +67,7 @@ export function TwoPageSheet({
   ctx = EMPTY_CTX,
   cols5 = false,
   debug = false,
+  lockBack = false,
 }: TwoPageSheetProps) {
   const content = useMemo(() => filterForDensity(raw, "max"), [raw]);
   const topicAssign = useMemo(() => assignTopics(content), [content]);
@@ -252,17 +256,31 @@ export function TwoPageSheet({
         verified={counts.verified}
         cols5={cols5}
       />
-      <SheetPage
-        pageNo={2}
-        title={`${content.title} — BACK`}
-        content={content}
-        groups={topicGroups}
-        visible={page2Ids}
-        topicAssign={topicAssign}
-        totalRanked={totalRanked}
-        verified={counts.verified}
-        cols5={cols5}
-      />
+      <div className={lockBack ? "back-locked" : undefined}>
+        <SheetPage
+          pageNo={2}
+          title={`${content.title} — BACK`}
+          content={content}
+          groups={topicGroups}
+          visible={page2Ids}
+          topicAssign={topicAssign}
+          totalRanked={totalRanked}
+          verified={counts.verified}
+          cols5={cols5}
+        />
+        {lockBack && (
+          <div className="back-lock-overlay print:hidden">
+            <div className="back-lock-card">
+              <div className="back-lock-title">The BACK of your sheet is ready</div>
+              <p className="back-lock-sub">
+                {fitInfo ? `${fitInfo.p2} more ranked items` : "More ranked items"} — the
+                second side of the page. Unlock the full front-and-back sheet with Pro.
+              </p>
+              <a href="/pricing" className="back-lock-cta">Unlock with Pro · $4.99</a>
+            </div>
+          </div>
+        )}
+      </div>
       {debug && fitInfo && (
         <div className="print:hidden fixed left-3 bottom-3 z-50 rounded border border-green-300 bg-green-50 px-2 py-0.5 text-xs font-medium text-green-800 shadow">
           ✓ front {fitInfo.p1} · back {fitInfo.p2} · surplus {fitInfo.dropped} · no clip

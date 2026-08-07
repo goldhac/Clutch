@@ -7,7 +7,7 @@ import "@/renderer/sheet.css";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
-import { FittedSheet, type Density } from "@/components/sheet";
+import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
 import { EMPTY_CTX, type ScoreCtx } from "@/components/sheet/relevance";
 import {
   Button,
@@ -157,7 +157,14 @@ export default function ResultsPage() {
       const res = await fetch("/api/pdf", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, density, ctx: effectiveCtx }),
+        body: JSON.stringify({
+          content,
+          density,
+          ctx: effectiveCtx,
+          // MAX + Pro exports the full front/back document (2 pages in
+          // one pass); free exports the single front page.
+          ...(density === "max" && tier === "pro" ? { page: "front" } : {}),
+        }),
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const blob = await res.blob();
@@ -332,7 +339,14 @@ export default function ResultsPage() {
       {/* ── The sheet, centered on the workspace ─────────────────────── */}
       <div className="flex justify-center overflow-x-auto px-4 py-8">
         <div className="rounded-[var(--r-lg)] shadow-[var(--sh-xl)]">
-          <FittedSheet content={content} density={density} ctx={effectiveCtx} />
+          {density === "max" ? (
+            // The standard: the FULL two-page sheet (front + back,
+            // sequential fill). Free tier sees the back blurred behind
+            // the unlock card; Pro sees both pages clean.
+            <TwoPageSheet content={content} ctx={effectiveCtx} lockBack={tier !== "pro"} />
+          ) : (
+            <FittedSheet content={content} density={density} ctx={effectiveCtx} />
+          )}
         </div>
       </div>
 

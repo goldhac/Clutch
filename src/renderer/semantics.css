@@ -493,3 +493,54 @@
   overflow-wrap: anywhere;
   word-break: break-word;
 }
+
+/* ── Locked BACK page (free-tier preview) — the real page renders and
+ * fits underneath, blurred behind an unlock card. Conversion surface,
+ * not a fake: what you buy is literally what you see. */
+.back-locked {
+  position: relative;
+}
+.back-locked .sheet {
+  filter: blur(4px) saturate(0.85);
+  user-select: none;
+  pointer-events: none;
+}
+.back-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+.back-lock-card {
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid var(--ink-200);
+  border-radius: 10px;
+  box-shadow: 0 12px 40px rgba(17, 17, 20, 0.18);
+  padding: 22px 28px;
+  max-width: 340px;
+  text-align: center;
+}
+.back-lock-title {
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink-900);
+}
+.back-lock-sub {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink-600);
+}
+.back-lock-cta {
+  display: inline-block;
+  margin-top: 12px;
+  background: var(--ink-900);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 7px 16px;
+  border-radius: 999px;
+}
+.back-lock-cta:hover { opacity: 0.9; }
