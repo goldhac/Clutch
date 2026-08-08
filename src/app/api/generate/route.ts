@@ -19,8 +19,7 @@
  */
 import { type NextRequest } from "next/server";
 import { generateSheet, EngineError } from "@/engine/rank";
-import { extractPdfText } from "@/parse/pdf";
-import { extractText } from "@/parse/text";
+import { ingestDocument } from "@/parse/ingest";
 import {
   type ExamType,
   type FileTag,
@@ -77,6 +76,7 @@ export async function POST(req: NextRequest) {
 
   // Collect file_N / tag_N pairs. UI sends them in parallel arrays.
   const pack: PackFile[] = [];
+  const ingestWarnings: string[] = [];
   let i = 0;
   while (form.has(`file_${i}`)) {
     const file = form.get(`file_${i}`);
@@ -87,19 +87,18 @@ export async function POST(req: NextRequest) {
       return badRequest(`bad tag for file ${file.name}: ${tag}`);
     }
     const buf = Buffer.from(await file.arrayBuffer());
+    const name = file.name.toLowerCase();
+    if (!/\.(pdf|txt|md|pptx)$/.test(name)) {
+      return badRequest(
+        `unsupported file type for "${file.name}". Supported: PDF, PPTX, .txt, .md.`,
+      );
+    }
     try {
-      const name = file.name.toLowerCase();
-      let extracted: { text: string };
-      if (name.endsWith(".pdf")) {
-        extracted = await extractPdfText(buf);
-      } else if (name.endsWith(".txt") || name.endsWith(".md")) {
-        extracted = extractText(buf.toString("utf-8"));
-      } else {
-        return badRequest(
-          `unsupported file type for "${file.name}". v1 supports PDF + .txt/.md; PPTX/DOCX are stubbed.`,
-        );
-      }
-      pack.push({ tag, filename: file.name, text: extracted.text });
+      // Full ingest: text layer + SmartArt/notes (PPTX) + vision pass for
+      // content that only exists as pixels — same pipeline as gen-cli.
+      const r = await ingestDocument(file.name, buf, { vision: true });
+      ingestWarnings.push(...r.warnings);
+      pack.push({ tag, filename: file.name, text: r.text });
     } catch (e) {
       return badRequest(
         `failed to extract "${file.name}": ${(e as Error).message}`,
@@ -122,7 +121,7 @@ export async function POST(req: NextRequest) {
     return Response.json({
       content: result.content,
       meta: result.meta,
-      warnings: result.warnings,
+      warnings: [...ingestWarnings, ...result.warnings],
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),
     });
   } catch (e) {

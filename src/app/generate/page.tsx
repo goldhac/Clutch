@@ -157,7 +157,7 @@ export default function GeneratePage() {
         <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
           {/* ── Left: files ─────────────────────────────────────────── */}
           <section className="space-y-4">
-            <FileDrop onFiles={addFiles} accept=".pdf,.txt,.md" disabled={submitting} />
+            <FileDrop onFiles={addFiles} accept=".pdf,.pptx,.txt,.md" disabled={submitting} />
 
             {files.map((f, ix) => (
               <Card key={`${f.file.name}-${ix}`} className="flex items-center gap-3 !py-3">
