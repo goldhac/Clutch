@@ -17,6 +17,7 @@ import {
   SegmentedControl,
   Wordmark,
 } from "@/components/ui";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 interface Stash {
   content: unknown;
@@ -66,6 +67,9 @@ export default function ResultsPage() {
   const [instruction, setInstruction] = useState("");
   const [tweaking, setTweaking] = useState(false);
   const [tweakError, setTweakError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [savedId, setSavedId] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     // Demo/QA self-seed: /results?g=<pool>&tier=pro loads a generated
@@ -212,6 +216,39 @@ export default function ResultsPage() {
     }
   }
 
+  // Save the sheet to the user's library (Supabase, RLS-owned rows).
+  // Not signed in → /auth with next back here; the session stash
+  // survives the round-trip so nothing is lost.
+  async function saveToLibrary() {
+    if (!content) return;
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const supabase = supabaseBrowser();
+      const { data: userRes } = await supabase.auth.getUser();
+      if (!userRes.user) {
+        window.location.href = "/auth?next=" + encodeURIComponent("/results");
+        return;
+      }
+      const { data, error: insErr } = await supabase
+        .from("sheets")
+        .insert({
+          user_id: userRes.user.id,
+          title: content.title,
+          content: content as unknown as Record<string, unknown>,
+          ctx: effectiveCtx as unknown as Record<string, unknown>,
+        })
+        .select("id")
+        .single();
+      if (insErr) throw insErr;
+      setSavedId(data.id);
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setSaving(false);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-[var(--paper-2)]">
       {/* ── Results toolbar (sticky) ─────────────────────────────────── */}
@@ -239,6 +276,9 @@ export default function ResultsPage() {
             <LinkButton href="/generate" size="sm" variant="secondary">
               Make another
             </LinkButton>
+            <Button size="sm" variant="secondary" onClick={saveToLibrary} loading={saving} disabled={!!savedId}>
+              {savedId ? "Saved ✓" : saving ? "Saving…" : "Save to library"}
+            </Button>
             <Button size="sm" onClick={exportPdf} loading={exporting}>
               <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
@@ -268,6 +308,11 @@ export default function ResultsPage() {
         {exportError && (
           <div className="mx-auto max-w-6xl px-5 pb-3">
             <Callout variant="danger">PDF export failed: {exportError}</Callout>
+          </div>
+        )}
+        {saveError && (
+          <div className="mx-auto max-w-6xl px-5 pb-3">
+            <Callout variant="danger">Save failed: {saveError}</Callout>
           </div>
         )}
       </header>

@@ -1,34 +1,24 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppChrome, Button, LinkButton, TextInput, Card } from "@/components/ui";
+import { AppChrome, Button, LinkButton, TextInput, Card, Callout } from "@/components/ui";
 import type { Density } from "@/components/sheet";
+import { supabaseBrowser } from "@/lib/supabase/client";
 
 /**
- * /library — My Sheets. Local-first: reads a lightweight index from
- * localStorage (Supabase persistence lands later). Until a real sheet
- * is saved, shows the design's grid with representative demo cards so
- * the surface is never blank.
+ * /library — My Sheets, backed by Supabase (RLS-owned rows).
+ * Signed out → sign-in prompt. Signed in → the user's saved sheets;
+ * opening one seeds the session stash and routes to /results.
  */
-interface LibItem {
+interface SheetRow {
   id: string;
   title: string;
-  course: string;
-  date: string;
-  density: Density;
-  topicColor: string;
+  content: unknown;
+  ctx: unknown;
+  created_at: string;
 }
 
-const DEMO: LibItem[] = [
-  { id: "1", title: "Intro Statistics", course: "STAT 200 · Final", date: "Mar 14", density: "max", topicColor: "var(--topic-1)" },
-  { id: "2", title: "Organic Chemistry", course: "CHEM 210 · MT2", date: "Mar 11", density: "max", topicColor: "var(--topic-3)" },
-  { id: "3", title: "Microeconomics", course: "ECON 101 · Final", date: "Mar 9", density: "balanced", topicColor: "var(--topic-2)" },
-  { id: "4", title: "Cell Biology", course: "BIOL 220 · MT1", date: "Feb 28", density: "max", topicColor: "var(--topic-4)" },
-  { id: "5", title: "Linear Algebra", course: "MATH 240 · Final", date: "Feb 22", density: "essentials", topicColor: "var(--topic-5)" },
-  { id: "6", title: "US History", course: "HIST 108 · MT2", date: "Feb 15", density: "balanced", topicColor: "var(--topic-6)" },
-];
-
-function Thumb({ density }: { density: Density }) {
+function Thumb({ density = "max" as Density }: { density?: Density }) {
   const cols = density === "max" ? 5 : density === "balanced" ? 3 : 2;
   return (
     <div className="relative aspect-[1.414/1] overflow-hidden rounded-[var(--r-sm)] border border-[var(--ink-150)] bg-white p-1.5">
@@ -51,42 +41,65 @@ function Thumb({ density }: { density: Density }) {
 
 export default function LibraryPage() {
   const [q, setQ] = useState("");
-  const [items, setItems] = useState<LibItem[]>(DEMO);
+  const [rows, setRows] = useState<SheetRow[] | null>(null);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Local-first: if a real sheet was generated this session, surface it
-    // at the front. (Full history persistence lands with Supabase.)
-    try {
-      const raw = sessionStorage.getItem("cramsheet:last");
-      if (raw) {
-        const s = JSON.parse(raw) as { content?: { title?: string }; density?: Density };
-        if (s.content?.title) {
-          setItems((prev) => [
-            {
-              id: "current",
-              title: s.content!.title!.replace(/ — .*$/, ""),
-              course: "This session",
-              date: "Just now",
-              density: (s.density ?? "max") as Density,
-              topicColor: "var(--signal-500)",
-            },
-            ...prev,
-          ]);
+    const supabase = supabaseBrowser();
+    supabase.auth
+      .getUser()
+      .then(async ({ data }) => {
+        if (!data.user) {
+          setSignedIn(false);
+          return;
         }
-      }
-    } catch {
-      /* ignore */
-    }
+        setSignedIn(true);
+        setEmail(data.user.email ?? null);
+        const { data: sheets, error: qErr } = await supabase
+          .from("sheets")
+          .select("id, title, content, ctx, created_at")
+          .order("created_at", { ascending: false });
+        if (qErr) setError(qErr.message);
+        else setRows(sheets ?? []);
+      })
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
-  const filtered = items.filter(
-    (i) =>
-      i.title.toLowerCase().includes(q.toLowerCase()) ||
-      i.course.toLowerCase().includes(q.toLowerCase()),
-  );
+  function openSheet(row: SheetRow) {
+    sessionStorage.setItem(
+      "cramsheet:last",
+      JSON.stringify({
+        content: row.content,
+        ctx: row.ctx ?? undefined,
+        warnings: [],
+        density: "max",
+        savedAt: row.created_at,
+      }),
+    );
+    window.location.href = "/results";
+  }
+
+  async function deleteSheet(id: string) {
+    const prev = rows;
+    setRows((r) => (r ? r.filter((x) => x.id !== id) : r));
+    const { error: delErr } = await supabaseBrowser().from("sheets").delete().eq("id", id);
+    if (delErr) {
+      setError(delErr.message);
+      setRows(prev ?? null);
+    }
+  }
+
+  async function signOut() {
+    await supabaseBrowser().auth.signOut();
+    window.location.reload();
+  }
+
+  const filtered = (rows ?? []).filter((i) => i.title.toLowerCase().includes(q.toLowerCase()));
 
   return (
-    <AppChrome active="library" credits={2} avatar="AD">
+    <AppChrome active="library" credits={2} avatar={(email ?? "?").slice(0, 2).toUpperCase()}>
       <div className="mx-auto max-w-6xl px-5 py-8">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
@@ -94,24 +107,30 @@ export default function LibraryPage() {
               My Sheets
             </h1>
             <p className="mt-1 text-[14px] text-[var(--ink-500)]">
-              {filtered.length} sheet{filtered.length === 1 ? "" : "s"} · sorted by most recent
+              {signedIn === false
+                ? "Sign in to see your saved sheets"
+                : rows === null
+                  ? "Loading…"
+                  : `${filtered.length} sheet${filtered.length === 1 ? "" : "s"} · sorted by most recent`}
+              {email && <span className="ml-2 font-mono text-[12px] text-[var(--ink-400)]">{email}</span>}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-48">
-              <TextInput
-                type="search"
-                placeholder="Search sheets"
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                leading={
-                  <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-                    <circle cx="11" cy="11" r="7" />
-                    <path d="m20 20-3.5-3.5" strokeLinecap="round" />
-                  </svg>
-                }
-              />
-            </div>
+            {signedIn && (
+              <div className="w-48">
+                <TextInput
+                  type="search"
+                  placeholder="Search sheets"
+                  value={q}
+                  onChange={(e) => setQ(e.target.value)}
+                />
+              </div>
+            )}
+            {signedIn && (
+              <Button variant="ghost" size="sm" onClick={signOut}>
+                Sign out
+              </Button>
+            )}
             <LinkButton href="/generate">
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
                 <path d="M12 5v14M5 12h14" />
@@ -121,27 +140,61 @@ export default function LibraryPage() {
           </div>
         </div>
 
-        {filtered.length === 0 ? (
+        {error && (
+          <div className="mt-4">
+            <Callout variant="danger">{error}</Callout>
+          </div>
+        )}
+
+        {signedIn === false ? (
           <Card className="mt-10 flex flex-col items-center py-16 text-center">
-            <p className="font-serif text-[22px] text-[var(--ink-900)]">No sheets match that search.</p>
-            <Button variant="ghost" className="mt-3" onClick={() => setQ("")}>
-              Clear search
-            </Button>
+            <p className="font-serif text-[22px] text-[var(--ink-900)]">Your library lives with your account.</p>
+            <p className="mt-2 max-w-sm text-[14px] text-[var(--ink-600)]">
+              Sign in with a magic link — every sheet you save shows up here, on any device.
+            </p>
+            <LinkButton href="/auth?next=/library" className="mt-5">
+              Sign in
+            </LinkButton>
+          </Card>
+        ) : rows !== null && filtered.length === 0 ? (
+          <Card className="mt-10 flex flex-col items-center py-16 text-center">
+            <p className="font-serif text-[22px] text-[var(--ink-900)]">
+              {q ? "No sheets match that search." : "No saved sheets yet."}
+            </p>
+            {q ? (
+              <Button variant="ghost" className="mt-3" onClick={() => setQ("")}>
+                Clear search
+              </Button>
+            ) : (
+              <p className="mt-2 max-w-sm text-[14px] text-[var(--ink-600)]">
+                Generate a sheet, then hit <strong>Save to library</strong> on the results page.
+              </p>
+            )}
           </Card>
         ) : (
           <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {filtered.map((it) => (
-              <Card key={it.id} interactive as="article" className="!p-3">
-                <Thumb density={it.density} />
-                <div className="mt-3 flex items-start gap-2">
-                  <span className="mt-1 h-2 w-2 shrink-0 rounded-full" style={{ background: it.topicColor }} aria-hidden />
-                  <div className="min-w-0">
-                    <div className="truncate text-[14px] font-semibold text-[var(--ink-900)]">{it.title}</div>
-                    <div className="mt-0.5 font-mono text-[11px] text-[var(--ink-400)]">
-                      {it.course} · {it.date}
+              <Card key={it.id} interactive as="article" className="group relative !p-3">
+                <button type="button" className="block w-full text-left" onClick={() => openSheet(it)}>
+                  <Thumb />
+                  <div className="mt-3 flex items-start gap-2">
+                    <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-[var(--signal-500)]" aria-hidden />
+                    <div className="min-w-0">
+                      <div className="truncate text-[14px] font-semibold text-[var(--ink-900)]">{it.title}</div>
+                      <div className="mt-0.5 font-mono text-[11px] text-[var(--ink-400)]">
+                        {new Date(it.created_at).toLocaleDateString(undefined, { month: "short", day: "numeric" })}
+                      </div>
                     </div>
                   </div>
-                </div>
+                </button>
+                <button
+                  type="button"
+                  aria-label={`delete ${it.title}`}
+                  onClick={() => void deleteSheet(it.id)}
+                  className="absolute right-2 top-2 hidden rounded bg-white/95 px-1.5 py-0.5 text-[11px] text-[var(--ink-500)] shadow-[var(--sh-xs)] hover:text-[var(--color-strong-red)] group-hover:block"
+                >
+                  ✕
+                </button>
               </Card>
             ))}
           </div>
