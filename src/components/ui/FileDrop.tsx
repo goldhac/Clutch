@@ -22,7 +22,7 @@ export function FileDrop({
   multiple = true,
   disabled = false,
   title = "Drop your files",
-  hint = "Drag files here, or browse · PDF, TXT, MD up to 40 MB each",
+  hint = "Drag files here, or browse · PDF, PPTX, TXT, MD up to 40 MB each",
 }: FileDropProps) {
   const [over, setOver] = useState(false);
 
