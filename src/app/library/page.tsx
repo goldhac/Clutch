@@ -69,7 +69,7 @@ export default function LibraryPage() {
 
   function openSheet(row: SheetRow) {
     sessionStorage.setItem(
-      "cramsheet:last",
+      "clutch:last",
       JSON.stringify({
         content: row.content,
         ctx: row.ctx ?? undefined,

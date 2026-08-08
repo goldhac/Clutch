@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { LinkButton } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "Pricing — CramSheet",
+  title: "Pricing — Clutch",
   description:
     "Pay for the sheet, not a subscription. Single $4.99, 3-Pack $9.99, Sprint Pass $14.99. Free preview on every sheet. Credits never expire.",
 };

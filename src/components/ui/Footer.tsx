@@ -13,7 +13,7 @@ export function Footer() {
           <div className="max-w-sm">
             <span className="inline-flex items-center gap-2">
               <Mark px={26} />
-              <span className="text-[15px] font-semibold text-white">CramSheet</span>
+              <span className="text-[15px] font-semibold text-white">Clutch</span>
             </span>
             <p className="mt-3 text-[14px] leading-[1.6] text-[var(--ink-400)]">
               The one-page cheat sheet that knows what&apos;s on the exam. Every claim scored and
@@ -29,7 +29,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 flex flex-col gap-2 border-t border-[var(--ink-700)] pt-6 text-[13px] text-[var(--ink-500)] sm:flex-row sm:items-center sm:justify-between">
-          <span>© {new Date().getFullYear()} CramSheet</span>
+          <span>© {new Date().getFullYear()} Clutch</span>
           <span className="font-mono text-[12px]">One page. Print it. Take it.</span>
         </div>
       </div>

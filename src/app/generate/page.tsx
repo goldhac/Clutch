@@ -110,7 +110,7 @@ export default function GeneratePage() {
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const payload = (await res.json()) as { content: unknown; meta: unknown; warnings?: string[] };
       sessionStorage.setItem(
-        "cramsheet:last",
+        "clutch:last",
         JSON.stringify({
           content: payload.content,
           meta: payload.meta,

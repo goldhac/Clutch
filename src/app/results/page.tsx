@@ -92,7 +92,7 @@ export default function ResultsPage() {
             ctx: EMPTY_CTX,
             savedAt: new Date().toISOString(),
           };
-          sessionStorage.setItem("cramsheet:last", JSON.stringify(seeded));
+          sessionStorage.setItem("clutch:last", JSON.stringify(seeded));
           setStash(seeded);
           setDensity("max");
         })
@@ -100,7 +100,7 @@ export default function ResultsPage() {
       return;
     }
     try {
-      const raw = sessionStorage.getItem("cramsheet:last");
+      const raw = sessionStorage.getItem("clutch:last");
       if (!raw) {
         setError("No generated sheet found in this session. Generate one to see it here.");
         return;
@@ -207,7 +207,7 @@ export default function ResultsPage() {
       const payload = (await res.json()) as { content: unknown };
       const next = { ...stash, content: payload.content };
       setStash(next);
-      sessionStorage.setItem("cramsheet:last", JSON.stringify(next));
+      sessionStorage.setItem("clutch:last", JSON.stringify(next));
       setInstruction("");
     } catch (e) {
       setTweakError(e instanceof Error ? e.message : String(e));

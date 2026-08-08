@@ -46,7 +46,7 @@ export interface EnginePromptInput {
  * ──────────────────────────────────────────────────────────────────── */
 
 const SYSTEM_VOICE = `
-You are CramSheet's exam-prep engine. Your job is to turn a student's
+You are Clutch's exam-prep engine. Your job is to turn a student's
 course materials into a ranked, evidence-backed JSON object that powers
 a one-page printable Exam Reference Sheet.
 

@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 /**
- * Wordmark — the ink rounded-square mark (white sheet glyph) + CramSheet
+ * Wordmark — the ink rounded-square mark (white sheet glyph) + Clutch
  * lettering, from the design handoff. Placeholder brand until the final
  * logo lands; kept as one component so the eventual swap is one edit.
  */
@@ -46,13 +46,13 @@ export function Wordmark({ href = "/", size = "md", markOnly, className }: Wordm
       <Mark px={px} />
       {!markOnly && (
         <span className={`font-semibold tracking-[-0.01em] text-[var(--ink-900)] ${text}`}>
-          CramSheet
+          Clutch
         </span>
       )}
     </span>
   );
   return href ? (
-    <Link href={href} className="inline-flex" aria-label="CramSheet home">
+    <Link href={href} className="inline-flex" aria-label="Clutch home">
       {inner}
     </Link>
   ) : (

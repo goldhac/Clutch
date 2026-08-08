@@ -48,7 +48,7 @@ export default function AuthPage() {
         {!sent ? (
           <>
             <h1 className="mt-8 text-center font-serif text-[30px] tracking-[-0.01em] text-[var(--ink-900)]">
-              Sign in to CramSheet
+              Sign in to Clutch
             </h1>
             <p className="mt-2 text-center text-[14px] text-[var(--ink-500)]">
               No password. We&apos;ll email you a link.

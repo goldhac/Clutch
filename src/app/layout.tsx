@@ -37,22 +37,22 @@ export const metadata: Metadata = {
     process.env.NEXT_PUBLIC_APP_URL ?? "https://cramsheet-production.up.railway.app",
   ),
   title: {
-    default: "CramSheet — the one-page cheat sheet that knows what's on the exam",
-    template: "%s · CramSheet",
+    default: "Clutch — the one-page cheat sheet that knows what's on the exam",
+    template: "%s · Clutch",
   },
   description:
     "Upload your materials, get a ranked, sourced Exam Reference Sheet — every claim scored and cited. One page. Print it. Take it.",
-  applicationName: "CramSheet",
+  applicationName: "Clutch",
   openGraph: {
-    title: "CramSheet — the one-page cheat sheet that knows what's on the exam",
+    title: "Clutch — the one-page cheat sheet that knows what's on the exam",
     description:
       "Every claim scored and sourced. Upload your materials, get a ranked Exam Reference Sheet.",
     type: "website",
-    siteName: "CramSheet",
+    siteName: "Clutch",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CramSheet",
+    title: "Clutch",
     description: "The one-page cheat sheet that knows what's on the exam.",
   },
 };

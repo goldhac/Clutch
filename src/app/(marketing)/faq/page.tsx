@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { LinkButton } from "@/components/ui";
 
 export const metadata: Metadata = {
-  title: "How it works — CramSheet",
+  title: "How it works — Clutch",
   description:
-    "How CramSheet ranks what's most likely tested, verifies against your past exams, and cites every claim. No subscription; credits never expire.",
+    "How Clutch ranks what's most likely tested, verifies against your past exams, and cites every claim. No subscription; credits never expire.",
 };
 
 const FAQS: { q: string; a: string }[] = [
@@ -26,7 +26,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a subscription?",
-    a: "No. There is no monthly plan anywhere in CramSheet. You pay once for what you need, and that's it.",
+    a: "No. There is no monthly plan anywhere in Clutch. You pay once for what you need, and that's it.",
   },
   {
     q: "What if the sheet is wrong?",

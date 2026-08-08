@@ -10,7 +10,7 @@ import { Sheet } from "@/components/sheet";
 import { sampleContent } from "@samples/sample-content";
 
 export const metadata: Metadata = {
-  title: "CramSheet — the one-page cheat sheet that knows what's on the exam",
+  title: "Clutch — the one-page cheat sheet that knows what's on the exam",
   description:
     "Upload your slides, review guides, and past exams. Get one dense, printable Exam Reference Sheet that ranks what's most likely tested — every claim scored and sourced.",
 };

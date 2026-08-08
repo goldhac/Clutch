@@ -61,7 +61,7 @@ export async function rasterizePdf(
   const maxPages = opts.maxPages ?? 12;
   const wanted = opts.pages?.slice(0, maxPages);
 
-  const dir = await mkdtemp(path.join(tmpdir(), "cramsheet-raster-"));
+  const dir = await mkdtemp(path.join(tmpdir(), "clutch-raster-"));
   const src = path.join(dir, "in.pdf");
   try {
     await writeFile(src, Buffer.from(buf));

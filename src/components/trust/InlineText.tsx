@@ -1,7 +1,7 @@
 import { inlineFormat } from "@/renderer/primitives";
 
 /**
- * InlineText — renders content that may contain the CramSheet inline
+ * InlineText — renders content that may contain the Clutch inline
  * conventions from OutSpec §2:
  *
  *   **bold**    → strong-red must-know fact

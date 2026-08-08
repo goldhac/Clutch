@@ -4,7 +4,7 @@ import "@/renderer/semantics.css";
 /**
  * Design-system debug surface (v2 — the product-design token set).
  *
- * Source of truth: design/CramSheet.dc.html :root block (mirrored in
+ * Source of truth: design/Clutch.dc.html :root block (mirrored in
  * src/renderer/tokens.css). If a hex below doesn't match its swatch,
  * the token wiring is broken. This page is also the D1 acceptance gate
  * and grows into the living design-system reference (D6).
@@ -103,7 +103,7 @@ export default function TokensDebugPage() {
           One page. Print it. <em className="text-signal-600">Take it.</em>
         </h1>
         <p className="mt-3 max-w-xl text-sm text-ink-600">
-          Source: <code className="rounded bg-ink-100 px-1 font-mono text-xs">design/CramSheet.dc.html</code>{" "}
+          Source: <code className="rounded bg-ink-100 px-1 font-mono text-xs">design/Clutch.dc.html</code>{" "}
           — mirrored in <code className="rounded bg-ink-100 px-1 font-mono text-xs">tokens.css</code>. Light
           mode only; the sheet lives on paper.
         </p>
@@ -197,7 +197,7 @@ export default function TokensDebugPage() {
           <div>
             <p className="font-mono text-[11px] text-signal-600">Body · Geist 400 · 14/1.55</p>
             <p className="max-w-lg text-[14px] leading-[1.55] text-ink-800">
-              CramSheet turns your exam materials into a single dense, printable page that
+              Clutch turns your exam materials into a single dense, printable page that
               decides what&apos;s most likely tested — and proves every claim with a confidence
               score and a real citation.
             </p>
