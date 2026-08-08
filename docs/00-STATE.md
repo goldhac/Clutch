@@ -150,8 +150,19 @@ sequential-fill architecture (2026-08-07, commits 6dfaf0c..007d4a0):**
 - Demo/QA: `/results?g=<pool>&tier=free|pro` self-seeds from
   samples/generated via /api/dev-pool.
 
-**Next up: Supabase (auth + saved sheets + server-side tier), then
-Stripe on the back-page paywall + /api/tweak entitlement.**
+**Supabase phase 1 SHIPPED (2026-08-07, commit 507666e):** project
+`cramsheet` (lwglwzriuhqrfprcnqpr, us-east-1; note: api-health-monitor
+was PAUSED to free the free-tier slot). profiles (tier/credits
+server-owned) + sheets (owner RLS); magic-link auth (/auth →
+/auth/callback), Save-to-library on /results, real /library
+(list/open/delete), /api/tweak gated server-side in production
+(401/403 verified live). Env vars set locally + Railway.
+**MANUAL STEP OUTSTANDING:** Supabase dashboard → Auth → URL config:
+Site URL + redirect https://cramsheet-production.up.railway.app/auth/callback
+(until then prod magic links point at localhost).
+
+**Next up: STRIPE — checkout on the back-page unlock card + webhook
+writing profiles.tier/credits (the only writer of those columns).**
 
 R-track status (all committed):
 - **R1 ✅** relevance core (scorer + composer + estimator + 22/22 gate).
