@@ -18,6 +18,15 @@ RUN npm ci --no-audit --no-fund
 FROM mcr.microsoft.com/playwright:v1.60.0-jammy AS build
 WORKDIR /app
 
+# NEXT_PUBLIC_* is inlined into the client bundle at BUILD time — and a
+# Dockerfile only sees Railway's service variables if it declares them
+# as ARGs. Without these, the deployed client had no Supabase config
+# ("Your project's URL and API key are required").
+ARG NEXT_PUBLIC_SUPABASE_URL
+ARG NEXT_PUBLIC_SUPABASE_ANON_KEY
+ENV NEXT_PUBLIC_SUPABASE_URL=$NEXT_PUBLIC_SUPABASE_URL
+ENV NEXT_PUBLIC_SUPABASE_ANON_KEY=$NEXT_PUBLIC_SUPABASE_ANON_KEY
+
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 
