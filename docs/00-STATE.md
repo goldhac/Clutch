@@ -252,3 +252,58 @@ layer AND the pixels.
 | `10-PODCAST-FEATURE-RESEARCH.md` | Clutch Audio research handoff (repos, TTS options, cost model) |
 | `11-PODCAST-BUILD-PLAN.md` | Clutch Audio decided build plan (crash course + topic episodes) — builds AFTER redesign |
 | `design/v2-handoff/` | **the v2 premium redesign handoff** — implemented on branch `redesign-v2` (all routes rebuilt: tokens, brand mark colorway B, trust layer, modals/toasts, dock) |
+
+---
+
+## 9. Performance: the São Paulo routing problem (measured 2026-09-10)
+
+**Symptom:** pages feel slow to load. Measured from Plano TX (Verizon
+Business): production first-contentful-paint **5.2 s**, with only 19 KB
+of HTML and 117 KB of JS. Payload was never the problem.
+
+**Root cause — not in this repo.** Railway's edge terminates this
+connection in **São Paulo** even though the service runs in US East:
+
+```
+x-railway-edge: gru1        # gru = Guarulhos / São Paulo
+x-hikari-trace: gru1.469d
+railway status -> region: US East
+```
+
+Every request therefore crosses a continent and back:
+
+| | this app (via gru1) | US baseline (same machine) |
+|---|---|---|
+| TCP connect | 147 ms | 14 ms (google/cloudflare) |
+| TLS handshake | 301 ms | ~40 ms |
+| TTFB, static asset | ~600 ms | ~76 ms |
+
+Per-asset server wait is ~270 ms and the home page needs ~20 assets, so
+they queue into a multi-second blank screen. A 1 KB JS chunk took
+**3.5 s**; a 2 KB chunk took **4.3 s**. Caching and compression are
+already correct (`cache-control: immutable`, gzip 49 KB → 9.7 KB), and
+the Next cache reports `x-nextjs-cache: HIT` — so there is nothing left
+to fix in the app layer.
+
+**The fix (needs Gold, not code): put a CDN in front.** Point the Clutch
+custom domain at Cloudflare (proxied) → Railway. Cloudflare terminates
+in Dallas (~14 ms away, ~30× closer than gru1) and edge-caches every
+`/_next/static/*` asset, which are already `immutable`. This also folds
+into the pending custom-domain decision. Alternative: raise the edge
+routing with Railway support — US East service should not egress via
+gru1 for a US visitor.
+
+**What was fixed in-repo** (commit `c37f6bc`) — real wins, but secondary
+to the routing:
+
+- Photos → WebP @1280px: **568 KB → 86 KB** (−85%), lazy + priority hints
+- Newsreader italic face removed (never painted): fonts **190 KB → 89 KB**
+
+Re-measure after the CDN lands; expect FCP well under 1.5 s.
+
+**Local-dev gotcha (same day):** `~/Documents/Clutch` is subject to
+iCloud "Optimize Mac Storage" eviction. Evicted files re-download at
+~1.3 s each, which makes `next dev` hang indefinitely and `git status`
+time out. Fix: `rm -rf node_modules && npm ci`, or move the repo out of
+`~/Documents`. Commit by explicit path (`git add -- <paths>`) when git
+scanning stalls.
