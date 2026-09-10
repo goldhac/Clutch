@@ -71,7 +71,7 @@ export function Modal({
   return (
     <dialog
       ref={ref}
-      aria-labelledby={titleId.current}
+      aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === ref.current) onClose(); // scrim click — always free
@@ -107,7 +107,7 @@ export function Modal({
         </div>
 
         <h2
-          id={titleId.current}
+          id={titleId}
           className="font-serif text-[27px] leading-[1.12] tracking-[-0.02em] text-[var(--ink-900)]"
         >
           {title}
