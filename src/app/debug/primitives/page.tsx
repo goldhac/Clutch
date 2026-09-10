@@ -10,6 +10,8 @@ import {
   Field,
   FileDrop,
   Modal,
+  ModalOptions,
+  OptionTile,
   Progress,
   SegmentedControl,
   Select,
@@ -192,21 +194,31 @@ export default function PrimitivesGallery() {
             Open modal
           </Button>
         </div>
-        <Modal open={modalOpen} onClose={() => setModalOpen(false)} labelledBy="demo-modal-title">
-          <h3 id="demo-modal-title" className="font-serif text-2xl text-ink-900">
-            Keep the momentum going
-          </h3>
-          <p className="mt-2 text-sm text-ink-600">
-            You&apos;ve used your last credit. Grab a 3-Pack — three sheets, 33% cheaper, never expire.
+        <Modal
+          open={modalOpen}
+          onClose={() => setModalOpen(false)}
+          tone="decision"
+          eyebrow="CREDITS · NONE LEFT"
+          title="Keep the momentum going"
+          footer={{ tint: "plain", text: "previews are always free" }}
+        >
+          <p>
+            You&apos;ve used your last credit. Grab a 3-Pack — three sheets, 33% cheaper, never
+            expire.
           </p>
-          <div className="mt-5 flex justify-end gap-2">
-            <Button variant="ghost" onClick={() => setModalOpen(false)}>
-              Not now
-            </Button>
-            <Button variant="signal" onClick={() => setModalOpen(false)}>
-              Get 3-Pack · $9.99
-            </Button>
-          </div>
+          <ModalOptions>
+            <OptionTile
+              primary
+              label="3-Pack · $9.99"
+              sub="$3.33 a sheet"
+              onClick={() => setModalOpen(false)}
+            />
+            <OptionTile
+              label="Single · $4.99"
+              sub="one sheet, one credit"
+              onClick={() => setModalOpen(false)}
+            />
+          </ModalOptions>
         </Modal>
       </Group>
 
