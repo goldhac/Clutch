@@ -1,0 +1,6 @@
+# Not part of the build — these are reference material that lives in the
+# repo for humans, and shipping them only slows the upload.
+# (Nothing under src/ imports from either.)
+design/
+docs/
+reviews/
