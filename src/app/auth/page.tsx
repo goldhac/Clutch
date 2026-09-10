@@ -217,7 +217,15 @@ export default function AuthPage() {
             WebkitMaskImage: "linear-gradient(180deg, transparent 0%, rgba(0,0,0,.7) 46%, #000 100%)",
           }}
         >
-          <img src="/photos/corridor.jpg" alt="" className="h-full w-full object-cover" />
+          <img
+            src="/photos/corridor.webp"
+            alt=""
+            width={1280}
+            height={715}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         </div>
         <div className="relative max-w-[420px]">
           <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink-400)]">

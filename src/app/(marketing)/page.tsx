@@ -26,9 +26,12 @@ export default function HomePage() {
       {/* ── Hero — the photograph carries the moment, ink scrim the words ── */}
       <section className="relative min-h-[560px] overflow-hidden bg-[var(--ink-900)] lg:min-h-[660px]">
         <img
-          src="/photos/corridor.jpg"
+          src="/photos/corridor.webp"
           alt=""
           aria-hidden
+          width={1280}
+          height={715}
+          fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div
@@ -150,9 +153,13 @@ export default function HomePage() {
       {/* ── What goes in — the photo carries it, no headline ────────────── */}
       <section className="relative h-[320px] overflow-hidden border-y border-[var(--ink-150)] bg-[var(--field)]">
         <img
-          src="/photos/paper-pile.jpg"
+          src="/photos/paper-pile.webp"
           alt=""
           aria-hidden
+          width={1280}
+          height={859}
+          loading="lazy"
+          decoding="async"
           className="absolute inset-0 h-full w-full object-cover"
         />
         <div
@@ -401,7 +408,15 @@ export default function HomePage() {
             WebkitMaskImage: "linear-gradient(95deg, transparent 2%, rgba(0,0,0,.85) 38%, #000 72%)",
           }}
         >
-          <img src="/photos/desk-2am.jpg" alt="" className="h-full w-full object-cover" />
+          <img
+            src="/photos/desk-2am.webp"
+            alt=""
+            width={1280}
+            height={715}
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
         </div>
         <div className="relative mx-auto max-w-[1180px] px-6 pb-24 pt-24 sm:px-10 lg:pb-[116px] lg:pt-32">
           <div className="max-w-[560px]">

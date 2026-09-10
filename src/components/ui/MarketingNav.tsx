@@ -17,26 +17,26 @@ export function MarketingNav() {
             exam reference sheets
           </span>
         </span>
-        <nav className="ml-auto flex items-center gap-1 sm:gap-4">
+        <nav className="ml-auto flex shrink-0 items-center gap-1 sm:gap-4">
           <Link
             href="/faq"
-            className="hidden px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)] sm:inline-block"
+            className="hidden whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)] md:inline-block"
           >
             How it works
           </Link>
           <Link
             href="/pricing"
-            className="px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)]"
+            className="hidden whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)] sm:inline-block"
           >
             Pricing
           </Link>
           <Link
             href="/auth"
-            className="px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)]"
+            className="whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)]"
           >
             Sign in
           </Link>
-          <LinkButton href="/generate" size="md" className="ml-2">
+          <LinkButton href="/generate" size="md" className="ml-2 whitespace-nowrap">
             Make a sheet
           </LinkButton>
         </nav>

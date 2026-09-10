@@ -114,8 +114,12 @@ export default function PricingPage() {
         <Reveal>
           <div className="h-[260px] overflow-hidden rounded-[14px] bg-[var(--ink-100)] sm:h-[340px]">
             <img
-              src="/photos/desk-2am.jpg"
+              src="/photos/desk-2am.webp"
               alt="A study sheet on a desk at night, laptop and coffee beside it"
+              width={1280}
+              height={715}
+              loading="lazy"
+              decoding="async"
               className="h-full w-full object-cover"
             />
           </div>

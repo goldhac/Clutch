@@ -25,9 +25,17 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+/**
+ * Newsreader is display-only: headlines and modal titles, weight 400,
+ * upright. The italics in the sheet (.src / .cex citations) are sans,
+ * so the italic face was downloaded on every page and never painted —
+ * ~60KB of dead weight. Weight + style pinned per the handoff's type
+ * spec ("Newsreader 400 only").
+ */
 const newsreader = Newsreader({
   subsets: ["latin"],
-  style: ["normal", "italic"],
+  weight: ["400"],
+  style: ["normal"],
   variable: "--font-newsreader",
   display: "swap",
 });
