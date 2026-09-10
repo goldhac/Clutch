@@ -11,7 +11,7 @@ export interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
 }
 
 export function Select({ className, invalid, children, ...rest }: SelectProps) {
-  const border = invalid ? "border-[var(--danger)]" : "border-[var(--ink-200)]";
+  const border = invalid ? "border-[var(--danger)]" : "border-[var(--border-input)]";
   return (
     <div className="relative">
       <select

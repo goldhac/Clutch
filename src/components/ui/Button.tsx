@@ -6,65 +6,67 @@ export type ButtonVariant =
   | "soft" // signal-50 tint — secondary signal action
   | "secondary" // neutral outline — cancel / back / make-another
   | "ghost" // text-only — in-flow actions
-  | "danger"; // red outline — destructive
+  | "danger" // red FILL — destructive modal primaries (v2 handoff)
+  | "inverse" // white fill + ink text — primary on ink grounds
+  | "ghostDark"; // outlined ghost for ink grounds (hero secondary)
 
-export type ButtonSize = "sm" | "md" | "lg";
+export type ButtonSize = "sm" | "md" | "lg" | "xl";
 
 /**
- * Button + LinkButton — matches the design handoff's Primitives section.
- * Primary is near-black ink (not indigo); iris "signal" is reserved for
- * paid/upgrade moments. Hover lifts 1px (ease-out, 120ms); active resets.
- *
- * impeccable rules applied: no ghost-card (border + wide shadow) pairing;
- * radius from the 8px control scale; full borders only, never side-stripes.
+ * Button + LinkButton — v2 handoff primitives.
+ * Primary is near-black ink; iris "signal" is reserved for paid moments.
+ * Press feedback is scale(0.98) at 160ms ease-out — the button must feel
+ * like it heard you. Heights follow the handoff: 32 / 40 / 46 / 52.
  */
 
 const BASE =
   "relative inline-flex select-none items-center justify-center gap-1.5 " +
-  "rounded-[var(--r-md)] font-medium leading-none whitespace-nowrap " +
+  "rounded-[var(--r-md)] font-semibold leading-none whitespace-nowrap " +
   "transition-[transform,background-color,border-color,color,box-shadow] " +
-  "duration-[var(--dur-fast)] ease-[var(--ease-out)] " +
-  "hover:-translate-y-px active:translate-y-0 " +
+  "duration-[160ms] ease-[var(--ease-out)] " +
+  "active:scale-[0.98] " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 " +
-  "focus-visible:ring-offset-[var(--paper)] " +
-  "disabled:pointer-events-none disabled:opacity-45 disabled:shadow-none disabled:translate-y-0";
+  "focus-visible:ring-offset-[var(--paper)] focus-visible:ring-[var(--signal-500)] " +
+  "disabled:pointer-events-none disabled:shadow-none";
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
     "bg-[var(--ink-900)] text-white shadow-[var(--sh-sm)] " +
-    "hover:bg-[var(--ink-800)] hover:shadow-[var(--sh-md)] " +
-    "focus-visible:ring-[var(--ink-400)]",
+    "hover:bg-[var(--ink-800)] " +
+    "disabled:bg-[var(--ink-150)] disabled:text-[var(--ink-400)]",
   signal:
     "bg-[var(--signal-500)] text-white shadow-[var(--sh-sm)] " +
-    "hover:bg-[var(--signal-600)] hover:shadow-[var(--sh-md)] " +
-    "focus-visible:ring-[var(--signal-500)]",
+    "hover:bg-[var(--signal-600)] disabled:opacity-45",
   soft:
     "bg-[var(--signal-50)] text-[var(--signal-700)] " +
-    "border border-[var(--signal-100)] hover:bg-[var(--signal-100)] " +
-    "focus-visible:ring-[var(--signal-500)]",
+    "border border-[var(--signal-100)] hover:bg-[var(--signal-100)] disabled:opacity-45",
   secondary:
-    "bg-white text-[var(--ink-800)] border border-[var(--ink-200)] " +
-    "hover:bg-[var(--ink-50)] hover:border-[var(--ink-300)] " +
-    "focus-visible:ring-[var(--ink-400)]",
+    "bg-white text-[var(--ink-800)] border border-[var(--border-input)] " +
+    "hover:bg-[var(--ink-50)] hover:border-[var(--ink-300)] disabled:opacity-45",
   ghost:
-    "bg-transparent text-[var(--ink-700)] hover:bg-[var(--ink-100)] " +
-    "focus-visible:ring-[var(--ink-300)]",
+    "bg-transparent text-[var(--ink-700)] hover:bg-[var(--ink-100)] disabled:opacity-45",
   danger:
-    "bg-white text-[var(--danger)] border border-[var(--danger)]/35 " +
-    "hover:bg-[var(--danger-bg)] hover:border-[var(--danger)]/60 " +
-    "focus-visible:ring-[var(--danger)]",
+    "bg-[var(--conf-low)] text-white shadow-[var(--sh-sm)] " +
+    "hover:brightness-110 disabled:opacity-45",
+  inverse:
+    "bg-white text-[var(--ink-900)] shadow-[var(--sh-sm)] " +
+    "hover:bg-[var(--ink-100)] disabled:opacity-45",
+  ghostDark:
+    "bg-transparent text-[var(--ink-150)] border border-[#3a3a44] " +
+    "hover:border-[var(--ink-500)] hover:text-white disabled:opacity-45",
 };
 
 const SIZES: Record<ButtonSize, string> = {
-  sm: "h-7 px-2.5 text-[13px]",
-  md: "h-9 px-4 text-[14px]",
-  lg: "h-11 px-5 text-[15px]",
+  sm: "h-8 px-3 text-[13px]",
+  md: "h-10 px-4 text-[14px]",
+  lg: "h-[46px] px-5 text-[14.5px]",
+  xl: "h-[52px] px-6 text-[15px]",
 };
 
 function Spinner() {
   return (
     <svg
-      className="h-3.5 w-3.5 animate-[ds-spin_0.7s_linear_infinite]"
+      className="h-3.5 w-3.5 animate-[cl-spin_0.8s_linear_infinite]"
       viewBox="0 0 24 24"
       fill="none"
       aria-hidden

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
+<style>
+  html { background: #f2f2f3; }
+  body { margin: 0; font-family: Geist, system-ui, sans-serif; color: #111114; -webkit-font-smoothing: antialiased; }
+  a { color: #4a46c9; text-decoration: none; }
+  a:hover { color: #5b57e0; text-decoration: underline; }
+  @keyframes cl-pop { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+  @keyframes cl-fade { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#fbfbfa">
+  <div style="max-width:1180px;margin:0 auto;padding:56px 32px 96px">
+    <!-- head -->
+    <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:28px;padding-bottom:22px;border-bottom:1px solid #111114">
+      <div>
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">Clutch · pattern library</div>
+        <h1 style="margin:14px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:48px;line-height:1.02;letter-spacing:-0.03em;color:#111114">Modals &amp; overlays</h1>
+      </div>
+      <p style="margin:0;max-width:38ch;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Every interruption the product is allowed to make, in one place. Click any card to see it over a dimmed page the way a user meets it.</p>
+    </div>
+
+    <!-- anatomy -->
+    <div style="display:flex;flex-wrap:wrap;gap:28px;margin-top:26px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">
+      <span>{{ tally }}</span>
+      <span>420px card · 14px radius</span>
+      <span>scrim rgba(17,17,20,.55)</span>
+      <span>one primary action, always</span>
+    </div>
+
+    <!-- gallery -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:24px;margin-top:36px">
+      <sc-for list="{{ modals }}" as="m" hint-placeholder-count="8">
+        <div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:16px;padding-bottom:9px;border-bottom:1px solid #e6e6ea">
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.05em;color:#111114">{{ m.key }}</span>
+            <span style="font-size:12.5px;color:#6b6b76">{{ m.when }}</span>
+          </div>
+          <div onClick="{{ m.onOpen }}" style="margin-top:14px;padding:28px 24px;border-radius:12px;background:#3a3a44;cursor:pointer">
+            <div style="{{ m.cardStyle }}">
+              <div style="padding:24px 26px 22px">
+                <div style="display:flex;align-items:center;gap:9px">
+                  <span style="{{ m.dotStyle }}"></span>
+                  <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">{{ m.eyebrow }}</span>
+                </div>
+                <h3 style="{{ m.titleStyle }}">{{ m.title }}</h3>
+                <p style="margin:11px 0 0;font-size:13.5px;line-height:1.6;color:#4a4a53;text-wrap:pretty">{{ m.body }}</p>
+
+                <sc-if value="{{ m.hasOptions }}" hint-placeholder-val="{{ false }}">
+                  <div style="display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:18px">
+                    <span style="display:flex;flex-direction:column;gap:2px;padding:12px 13px;border-radius:9px;background:#111114;cursor:pointer">
+                      <span style="font-size:14px;font-weight:600;color:#fff">{{ m.optionA }}</span>
+                      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10.5px;color:#909099">{{ m.optionASub }}</span>
+                    </span>
+                    <span style="display:flex;flex-direction:column;gap:2px;padding:12px 13px;border-radius:9px;border:1px solid #d8d8de;background:#fff;cursor:pointer">
+                      <span style="font-size:14px;font-weight:600;color:#111114">{{ m.optionB }}</span>
+                      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10.5px;color:#6b6b76">{{ m.optionBSub }}</span>
+                    </span>
+                  </div>
+                </sc-if>
+
+                <sc-if value="{{ m.hasActions }}" hint-placeholder-val="{{ true }}">
+                  <div style="display:flex;flex-wrap:wrap;align-items:center;gap:9px;margin-top:20px">
+                    <span style="{{ m.primaryStyle }}">{{ m.primary }}</span>
+                    <span style="flex:none;white-space:nowrap;display:inline-flex;box-sizing:border-box;align-items:center;height:40px;padding:0 16px;border-radius:9px;border:1px solid #d8d8de;background:#fff;font-size:13.5px;font-weight:600;color:#111114;cursor:pointer">{{ m.secondary }}</span>
+                  </div>
+                </sc-if>
+              </div>
+              <div style="{{ m.footStyle }}">{{ m.foot }}</div>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- toasts -->
+    <div style="margin-top:64px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding-bottom:14px;border-bottom:1px solid #111114">
+        <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:30px;line-height:1.08;letter-spacing:-0.025em;color:#111114">Toasts</h2>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">confirmation without interruption · 2.6s, top centre</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:22px">
+        <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="4">
+          <span style="display:inline-flex;align-items:center;gap:9px;padding:11px 16px;border-radius:10px;background:#111114;box-shadow:0 14px 34px rgba(17,17,20,.22)">
+            <span style="{{ t.markStyle }}">{{ t.mark }}</span>
+            <span style="font-size:13px;font-weight:500;color:#fff">{{ t.label }}</span>
+          </span>
+        </sc-for>
+      </div>
+    </div>
+
+    <!-- rules -->
+    <div style="margin-top:64px">
+      <div style="padding-bottom:14px;border-bottom:1px solid #111114">
+        <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:30px;line-height:1.08;letter-spacing:-0.025em;color:#111114">When to interrupt</h2>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:28px;margin-top:24px">
+        <div>
+          <div style="font-size:14.5px;font-weight:600;color:#111114">A modal costs the user their place</div>
+          <p style="margin:9px 0 0;font-size:13.5px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Use one only when the next step needs a decision — money, deletion, or a failure the user has to know about. Progress and success go to toasts.</p>
+        </div>
+        <div>
+          <div style="font-size:14.5px;font-weight:600;color:#111114">Say what it costs, in the modal</div>
+          <p style="margin:9px 0 0;font-size:13.5px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Prices, refunds and what happens to a credit are stated on the card, not one click away. No modal ever hides the free path.</p>
+        </div>
+        <div>
+          <div style="font-size:14.5px;font-weight:600;color:#111114">Dismissal is always free</div>
+          <p style="margin:9px 0 0;font-size:13.5px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Scrim click, Escape and a named secondary action all leave the state untouched. Nothing is charged or deleted by closing a card.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- live overlay -->
+  <sc-if value="{{ isOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(17,17,20,.55);backdrop-filter:blur(2px);animation:cl-fade .16s ease" onClick="{{ onClose }}">
+      <div style="{{ openCardStyle }}">
+        <div style="padding:28px 30px 26px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+            <span style="display:flex;align-items:center;gap:9px">
+              <span style="{{ open.dotStyle }}"></span>
+              <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">{{ open.eyebrow }}</span>
+            </span>
+            <span onClick="{{ onClose }}" style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border-radius:7px;background:#f2f2f3;font-size:12px;color:#4a4a53;cursor:pointer">✕</span>
+          </div>
+          <h3 style="{{ open.titleStyle }}">{{ open.title }}</h3>
+          <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">{{ open.body }}</p>
+
+          <sc-if value="{{ open.hasOptions }}" hint-placeholder-val="{{ false }}">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px">
+              <span onClick="{{ onClose }}" style="display:flex;flex-direction:column;gap:2px;padding:13px 14px;border-radius:10px;background:#111114;cursor:pointer">
+                <span style="font-size:15px;font-weight:600;color:#fff">{{ open.optionA }}</span>
+                <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">{{ open.optionASub }}</span>
+              </span>
+              <span onClick="{{ onClose }}" style="display:flex;flex-direction:column;gap:2px;padding:13px 14px;border-radius:10px;border:1px solid #d8d8de;background:#fff;cursor:pointer">
+                <span style="font-size:15px;font-weight:600;color:#111114">{{ open.optionB }}</span>
+                <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">{{ open.optionBSub }}</span>
+              </span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ open.hasActions }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:22px">
+              <span onClick="{{ onClose }}" style="{{ open.primaryStyle }}">{{ open.primary }}</span>
+              <span onClick="{{ onClose }}" style="flex:none;white-space:nowrap;display:inline-flex;box-sizing:border-box;align-items:center;height:42px;padding:0 17px;border-radius:9px;border:1px solid #d8d8de;background:#fff;font-size:14px;font-weight:600;color:#111114;cursor:pointer">{{ open.secondary }}</span>
+            </div>
+          </sc-if>
+        </div>
+        <div style="{{ open.footStyle }}">{{ open.foot }}</div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;openModal&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;none&quot;,&quot;unlock&quot;,&quot;credits&quot;,&quot;save-signin&quot;,&quot;delete&quot;,&quot;export&quot;,&quot;export-failed&quot;,&quot;generation-failed&quot;,&quot;scan-warning&quot;],&quot;default&quot;:&quot;none&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const MODALS = [
+  {
+    key: "unlock", when: "results · sealed back page", tone: "neutral",
+    eyebrow: "Page 2 of 2 · sealed",
+    title: "73 more items are already written.",
+    body: "The back page is generated, scored and fitted — traps, worked formulas and the exam-verified block. Unlock to read it and export both pages as one PDF.",
+    optionA: "Unlock · $4.99", optionASub: "this sheet, both pages",
+    optionB: "3-Pack · $9.99", optionBSub: "credits never expire",
+    foot: "page 1 stays free, forever · no subscription", footTone: "good"
+  },
+  {
+    key: "credits", when: "generate · no credits left", tone: "neutral",
+    eyebrow: "Out of credits",
+    title: "You have no credits left.",
+    body: "Your last credit went to ITSS 3300 Exam 2 on Sep 8. Buy another or a 3-Pack — the free preview works either way, so you can see this sheet before deciding.",
+    optionA: "Single · $4.99", optionASub: "one sheet",
+    optionB: "3-Pack · $9.99", optionBSub: "$3.33 a sheet",
+    foot: "previews are always free", footTone: "plain"
+  },
+  {
+    key: "save-signin", when: "results · save while signed out", tone: "neutral",
+    eyebrow: "Save to library",
+    title: "Sign in to keep this sheet.",
+    body: "Right now the sheet lives in this browser session only. A magic link keeps it, the pool it came from, and any unlock you have paid for — on any device.",
+    primary: "Email me a link", secondary: "Not now",
+    foot: "no password · we email nothing else", footTone: "plain"
+  },
+  {
+    key: "delete", when: "library · trash icon", tone: "danger",
+    eyebrow: "Delete sheet",
+    title: "Delete “Exam 1 — Intro, ETL, dimensional basics”?",
+    body: "This removes the sheet and the pool it was built from. The credit you already spent is not refunded — deleting is about storage, not money.",
+    primary: "Delete sheet", secondary: "Keep it",
+    foot: "cannot be undone", footTone: "bad"
+  },
+  {
+    key: "export", when: "results · export while locked", tone: "neutral",
+    eyebrow: "Export PDF",
+    title: "What should the PDF contain?",
+    body: "Both pages render in one pass once the sheet is unlocked. The front page on its own is always free to export.",
+    optionA: "Front page", optionASub: "free · 1 page",
+    optionB: "Both pages", optionBSub: "needs unlock",
+    foot: "prints at 100% on A4 landscape, borderless", footTone: "plain"
+  },
+  {
+    key: "export-failed", when: "results · render violated a rule", tone: "danger",
+    eyebrow: "Export failed",
+    title: "The render did not pass the fit check.",
+    body: "One block clipped at the page edge, so we stopped rather than hand you a cut-off sheet. Nothing was charged. Balanced density will fit, or export the front page alone.",
+    primary: "Try Balanced", secondary: "Back to sheet",
+    foot: "error 422 · clip verifier", footTone: "bad"
+  },
+  {
+    key: "generation-failed", when: "generate · engine failed twice", tone: "danger",
+    eyebrow: "Generation failed",
+    title: "We could not build a sheet from that pack.",
+    body: "The engine returned output that failed the contract check twice in a row. Your credit has been refunded automatically — there is nothing to claim.",
+    primary: "Try again", secondary: "Change the pack",
+    foot: "credit refunded · 2 credits available", footTone: "good"
+  },
+  {
+    key: "scan-warning", when: "generate · image-only files", tone: "warn",
+    eyebrow: "Before you generate",
+    title: "Two of your files are image-only scans.",
+    body: "We can OCR them, but quotes and slide numbers from those pages will be less reliable, and nothing from them can be marked exam-verified.",
+    primary: "Generate anyway", secondary: "Swap those files",
+    foot: "11 items would come from those two files", footTone: "warn"
+  }
+];
+
+const TOASTS = [
+  { label: "Saved to My Sheets", mark: "✓", tone: "good" },
+  { label: "Exported · 2-page PDF", mark: "✓", tone: "good" },
+  { label: "Unlocked · both pages are yours", mark: "★", tone: "gold" },
+  { label: "Link resent · works for 15 minutes", mark: "✓", tone: "good" }
+];
+
+const DOT = { neutral: "#5b57e0", danger: "#b4341f", warn: "#a5790a" };
+const FOOT = {
+  good: "background:#f4f9f6;color:#1a7f4b",
+  bad: "background:#fdf0ee;color:#8f2a19",
+  warn: "background:#fdece4;color:#8a4a2f",
+  plain: "background:#fbfbfa;color:#6b6b76"
+};
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { open: props.openModal && props.openModal !== "none" ? props.openModal : null };
+  }
+  componentDidMount() {
+    this.onKey = (e) => { if (e.key === "Escape") this.setState({ open: null }); };
+    window.addEventListener("keydown", this.onKey);
+  }
+  componentWillUnmount() { window.removeEventListener("keydown", this.onKey); }
+
+  shape(m) {
+    const hasOptions = !!m.optionA;
+    return {
+      key: m.key,
+      when: m.when,
+      eyebrow: m.eyebrow,
+      title: m.title,
+      body: m.body,
+      hasOptions,
+      hasActions: !hasOptions,
+      optionA: m.optionA, optionASub: m.optionASub,
+      optionB: m.optionB, optionBSub: m.optionBSub,
+      primary: m.primary, secondary: m.secondary,
+      foot: m.foot,
+      dotStyle: "flex:none;width:7px;height:7px;border-radius:50%;background:" + DOT[m.tone],
+      titleStyle:
+        "margin:13px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.12;letter-spacing:-0.02em;color:#111114;text-wrap:pretty",
+      primaryStyle:
+        "flex:none;white-space:nowrap;display:inline-flex;box-sizing:border-box;align-items:center;height:40px;padding:0 17px;border-radius:9px;font-size:13.5px;font-weight:600;cursor:pointer;color:#fff;background:" +
+        (m.tone === "danger" ? "#b4341f" : "#111114"),
+      footStyle:
+        "padding:12px 26px;border-top:1px solid #e6e6ea;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;" +
+        FOOT[m.footTone],
+      cardStyle:
+        "max-width:420px;margin:0 auto;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 20px 44px rgba(17,17,20,.28)",
+      onOpen: () => this.setState({ open: m.key })
+    };
+  }
+
+  renderVals() {
+    const openKey = this.state.open;
+    const openDef = MODALS.find((m) => m.key === openKey);
+    const open = openDef ? this.shape(openDef) : {};
+    if (openDef) {
+      open.primaryStyle = open.primaryStyle.replace("height:40px", "height:42px").replace("padding:0 17px", "padding:0 18px").replace("font-size:13.5px", "font-size:14px");
+      open.titleStyle = open.titleStyle.replace("font-size:26px", "font-size:29px");
+      open.footStyle = open.footStyle.replace("padding:12px 26px", "padding:13px 30px");
+    }
+
+    return {
+      tally: MODALS.length + " modals · " + TOASTS.length + " toasts",
+      modals: MODALS.map((m) => this.shape(m)),
+      toasts: TOASTS.map((t) => ({
+        label: t.label,
+        mark: t.mark,
+        markStyle: "font-size:12px;color:" + (t.tone === "gold" ? "#f0c14b" : "#4ade80")
+      })),
+      isOpen: !!openDef,
+      open,
+      openCardStyle:
+        "width:100%;max-width:460px;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 30px 70px rgba(17,17,20,.4);animation:cl-pop .2s cubic-bezier(.2,.7,.3,1)",
+      onClose: () => this.setState({ open: null })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

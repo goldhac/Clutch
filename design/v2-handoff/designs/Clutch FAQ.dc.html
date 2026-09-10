@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
+<style>
+  html { background: #fbfbfa; }
+  body { margin: 0; font-family: Geist, system-ui, sans-serif; color: #111114; -webkit-font-smoothing: antialiased; }
+  a { color: #4a46c9; text-decoration: none; }
+  a:hover { color: #5b57e0; text-decoration: underline; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#fbfbfa">
+  <!-- nav -->
+  <div style="border-bottom:1px solid #e6e6ea">
+    <div style="max-width:1040px;margin:0 auto;padding:0 32px;height:64px;display:flex;align-items:center;gap:16px">
+      <span style="display:inline-flex;align-items:center;gap:9px;flex:none">
+        <svg viewBox="60 30 340 440" width="19" height="24" role="img" aria-label="Clutch"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg>
+        <span style="font-size:15px;font-weight:600;letter-spacing:-0.01em">Clutch</span>
+      </span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:22px;flex:none">
+        <span style="font-size:13.5px;color:#4a4a53;cursor:pointer">Pricing</span>
+        <span style="font-size:13.5px;font-weight:600;color:#111114">How it works</span>
+        <span style="font-size:13.5px;color:#4a4a53;cursor:pointer">Sign in</span>
+        <span style="display:inline-flex;box-sizing:border-box;align-items:center;height:36px;padding:0 15px;border-radius:8px;background:#111114;font-size:13.5px;font-weight:600;color:#fff;cursor:pointer;white-space:nowrap">Make a sheet</span>
+      </span>
+    </div>
+  </div>
+
+  <div style="max-width:1040px;margin:0 auto;padding:88px 32px 96px">
+    <!-- head -->
+    <div style="max-width:22ch">
+      <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:64px;line-height:1;letter-spacing:-0.035em;color:#111114;text-wrap:balance">How it works.</h1>
+    </div>
+    <p style="margin:24px 0 0;max-width:52ch;font-size:17px;line-height:1.6;color:#4a4a53;text-wrap:pretty">The short version: upload your materials, we rank what&rsquo;s most likely tested and prove every claim, you print one page.</p>
+
+    <!-- three steps -->
+    <div style="margin-top:64px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:32px;border-top:1px solid #111114;padding-top:26px">
+      <div>
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;color:#6b6b76">01</div>
+        <div style="margin-top:12px;font-size:16px;font-weight:600;letter-spacing:-0.01em;color:#111114">Drop the pack</div>
+        <p style="margin:9px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Slides, review guides, notes and past exams. Everything gets read; past exams count most.</p>
+      </div>
+      <div>
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;color:#6b6b76">02</div>
+        <div style="margin-top:12px;font-size:16px;font-weight:600;letter-spacing:-0.01em;color:#111114">It ranks, then proves</div>
+        <p style="margin:9px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Each item gets a confidence score and a source. A star means a past exam in your own pack asked it.</p>
+      </div>
+      <div>
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;color:#6b6b76">03</div>
+        <div style="margin-top:12px;font-size:16px;font-weight:600;letter-spacing:-0.01em;color:#111114">Print one page</div>
+        <p style="margin:9px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Fitted to a single A4 sheet and clip-verified before you see it. The front page is free.</p>
+      </div>
+    </div>
+
+    <!-- questions -->
+    <div style="margin-top:80px;max-width:720px">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding-bottom:14px;border-bottom:1px solid #111114">
+        <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:32px;line-height:1.08;letter-spacing:-0.025em;color:#111114">Questions</h2>
+        <span onClick="{{ onToggleAll }}" style="flex:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a46c9;cursor:pointer">{{ toggleAllLabel }}</span>
+      </div>
+      <sc-for list="{{ items }}" as="f" hint-placeholder-count="6">
+        <div style="border-bottom:1px solid #e6e6ea">
+          <div onClick="{{ f.onToggle }}" style="display:flex;align-items:flex-start;gap:20px;padding:22px 0;cursor:pointer">
+            <span style="{{ f.qStyle }}">{{ f.q }}</span>
+            <span style="{{ f.signStyle }}">{{ f.sign }}</span>
+          </div>
+          <sc-if value="{{ f.open }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:-6px 0 24px;max-width:60ch;font-size:15px;line-height:1.65;color:#4a4a53;text-wrap:pretty">{{ f.a }}</p>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+
+    <!-- closer -->
+    <div style="margin-top:72px;max-width:720px;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:28px;padding:36px 36px;border-radius:14px;background:#111114">
+      <div>
+        <h2 style="margin:0;max-width:20ch;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:32px;line-height:1.06;letter-spacing:-0.025em;color:#fff">Still deciding? The preview is free.</h2>
+        <p style="margin:12px 0 0;max-width:40ch;font-size:14.5px;line-height:1.6;color:#b8b8bf">See a real sheet from your own files before you spend a credit.</p>
+      </div>
+      <span style="flex:none;display:inline-flex;box-sizing:border-box;align-items:center;height:48px;padding:0 22px;border-radius:9px;background:#5b57e0;font-size:15px;font-weight:600;color:#fff;cursor:pointer;white-space:nowrap">Drop your files</span>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;expandAll&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const FAQS = [
+  {
+    q: "Is this actually a cheat sheet?",
+    a: "It's an exam reference sheet — a single dense page you're allowed to bring when your professor permits notes. Check your exam rules; we make the page, you decide how to use it."
+  },
+  {
+    q: "How does it know what's on the exam?",
+    a: "It reads everything you upload, ranks each topic by how likely it is to be tested, then verifies the top items against patterns in your past exams. Every ranking shows its confidence and its source."
+  },
+  {
+    q: "What files can I upload?",
+    a: "PDF, PPTX and DOCX up to 40 MB each — slides, review guides, past exams, and notes. Past exams carry the most weight. Image-only PDFs get OCR'd automatically."
+  },
+  {
+    q: "Do credits expire?",
+    a: "Never. Single and 3-Pack credits sit in your account until you use them. The Sprint Pass is the only time-boxed option — unlimited sheets for 7 days."
+  },
+  {
+    q: "Is there a subscription?",
+    a: "No. There is no monthly plan anywhere in Clutch. You pay once for what you need, and that's it."
+  },
+  {
+    q: "What if the sheet is wrong?",
+    a: "Every claim is cited so you can check it against the source in one glance. If generation fails, your credit is refunded automatically."
+  }
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { open: props.expandAll ? FAQS.map((_, i) => i) : [0] };
+  }
+
+  renderVals() {
+    const open = this.state.open;
+    const allOpen = open.length === FAQS.length;
+    return {
+      toggleAllLabel: allOpen ? "collapse all" : "expand all",
+      onToggleAll: () => this.setState({ open: allOpen ? [] : FAQS.map((_, i) => i) }),
+      items: FAQS.map((f, i) => {
+        const on = open.includes(i);
+        return {
+          q: f.q,
+          a: f.a,
+          open: on,
+          qStyle:
+            "flex:1;font-size:18px;line-height:1.35;letter-spacing:-0.015em;font-weight:" +
+            (on ? "600" : "500") + ";color:" + (on ? "#111114" : "#1c1c21"),
+          sign: on ? "−" : "+",
+          signStyle:
+            "flex:none;display:flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:15px;line-height:1;background:" +
+            (on ? "#111114" : "#f2f2f3") + ";color:" + (on ? "#fff" : "#4a4a53"),
+          onToggle: () =>
+            this.setState((s) => ({
+              open: s.open.includes(i) ? s.open.filter((x) => x !== i) : [...s.open, i]
+            }))
+        };
+      })
+    };
+  }
+}
+
+</script>
+</body>
+</html>

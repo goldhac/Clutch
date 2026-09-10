@@ -27,28 +27,39 @@
   --paper-2: #f5f5f3;
   --white:   #ffffff;
 
+  /* ── v2 handoff additions ─────────────────────────────────────────── */
+  --surface:      #ffffff; /* cards, inputs, the sheet itself */
+  --field:        #f2f2f3; /* segmented-control troughs, avatar grounds */
+  --border-input: #d8d8de; /* input + secondary-button borders */
+  --scrim: rgba(17, 17, 20, 0.55);
+
   /* ── Brand: ink primary + iris "signal" ───────────────────────────── */
   /* Primary CTAs are near-black ink. Signal = links, focus, highlights. */
   --signal-700: #3a34b8;
-  --signal-600: #4b45d6;
+  --signal-600: #4a46c9;
   --signal-500: #5b57e0;
+  --signal-300: #8a86e8;
   --signal-100: #ecebfb;
   --signal-50:  #f5f4fe;
 
-  /* ── Editorial salmon (FT nod) — proof / verified surfaces ────────── */
+  /* ── Editorial salmon — the caution / nudge callout ───────────────── */
   --salmon:      #fdece4;
   --salmon-line: #f4d3c4;
   --salmon-text: #8a4a2f;
 
   /* ── Confidence tiers (THE trust layer) ───────────────────────────── */
-  --conf-high:    #1a7f4b;
-  --conf-high-bg: #e6f4ec;
-  --conf-med:     #b26a00;
-  --conf-med-bg:  #fbf0dd;
-  --conf-low:     #c0392b;
-  --conf-low-bg:  #fbe9e7;
-  --verified:     #a5790a;
-  --verified-bg:  #fbf3da;
+  /* These carry meaning and may not be reused decoratively.            */
+  --conf-high:      #1a7f4b;
+  --conf-high-bg:   #e6f4ec;
+  --conf-high-bg2:  #f4f9f6; /* quieter tint (past-exam select, footers) */
+  --conf-med:       #a5790a;
+  --conf-med-bg:    #fdf6e3;
+  --conf-med-deep:  #8a4a2f; /* deep text on medium tint */
+  --conf-low:       #b4341f;
+  --conf-low-bg:    #fdf0ee;
+  --conf-low-deep:  #8f2a19; /* deep text on low tint */
+  --verified:       #a5790a;
+  --verified-bg:    #fbf3da;
 
   /* ── Functional ───────────────────────────────────────────────────── */
   --info:       #2f6db3;
@@ -76,12 +87,15 @@
   --r-xl: 18px;
   --r-full: 999px;
 
-  /* ── Shadow (elevation) ───────────────────────────────────────────── */
+  /* ── Shadow (elevation) — v2 handoff scale ────────────────────────── */
   --sh-xs: 0 1px 2px rgba(17, 17, 20, 0.05);
-  --sh-sm: 0 1px 3px rgba(17, 17, 20, 0.07), 0 1px 2px rgba(17, 17, 20, 0.04);
+  --sh-sm: 0 1px 2px rgba(17, 17, 20, 0.08);                              /* raised card */
   --sh-md: 0 4px 12px rgba(17, 17, 20, 0.08), 0 2px 4px rgba(17, 17, 20, 0.04);
-  --sh-lg: 0 12px 32px rgba(17, 17, 20, 0.10), 0 4px 8px rgba(17, 17, 20, 0.05);
-  --sh-xl: 0 24px 60px rgba(17, 17, 20, 0.14), 0 8px 16px rgba(17, 17, 20, 0.06);
+  --sh-lg: 0 20px 44px rgba(17, 17, 20, 0.10);                            /* panel */
+  --sh-xl: 0 24px 60px rgba(17, 17, 20, 0.14), 0 8px 16px rgba(17, 17, 20, 0.06); /* floating sheet */
+  --sh-lifted: 0 44px 88px rgba(17, 17, 20, 0.26), 0 12px 24px rgba(17, 17, 20, 0.08); /* hero sheet */
+  --sh-modal:  0 30px 70px rgba(17, 17, 20, 0.40);
+  --sh-toast:  0 14px 34px rgba(17, 17, 20, 0.22);
 
   /* ── Type stacks (fonts loaded via next/font in layout.tsx) ───────── */
   --sans:  var(--font-geist, "Geist"), -apple-system, BlinkMacSystemFont, sans-serif;
@@ -148,6 +162,22 @@
 @keyframes ds-pulse  { 0%, 100% { opacity: 0.5; } 50% { opacity: 1; } }
 @keyframes ds-rise   { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes ds-shimmer { 100% { background-position: 200% 0; } }
+
+/* ── v2 handoff motion (cl-*) — deliberately restrained ───────────── */
+/* cl-pop:  modal entrance · 200ms cubic-bezier(.2,.7,.3,1)            */
+/* cl-fade: scrim · 160ms ease                                          */
+/* cl-rise: overlay content · 400ms cubic-bezier(.2,.7,.3,1)            */
+/* cl-spin: step spinner · 800ms linear infinite                        */
+/* cl-sweep: indeterminate progress · 1.5s ease-in-out infinite         */
+@keyframes cl-pop  { from { opacity: 0; transform: translateY(10px) scale(0.985); } to { opacity: 1; transform: none; } }
+@keyframes cl-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes cl-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+@keyframes cl-spin { to { transform: rotate(360deg); } }
+@keyframes cl-sweep { from { transform: translateX(-110%); } to { transform: translateX(420%); } }
+
+:root {
+  --ease-pop: cubic-bezier(0.2, 0.7, 0.3, 1); /* the handoff's entrance curve */
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

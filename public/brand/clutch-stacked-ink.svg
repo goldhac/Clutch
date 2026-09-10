@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1000" viewBox="0 0 900 1000">
+  <title>Clutch stacked — system palette</title>
+  <g id="clutch-mark" transform="translate(190 90) scale(1.3)">
+    <path id="sheet-outline" fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path>
+    <path id="page-corner" fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path>
+    <path id="lightning-bolt" fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path>
+    <rect id="line-1" fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect>
+    <rect id="line-2" fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect>
+    <rect id="line-3" fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect>
+  </g>
+  <text id="wordmark" x="450" y="905" text-anchor="middle" fill="#111114" font-size="190" font-family="Geist, Arial, Helvetica, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text>
+</svg>

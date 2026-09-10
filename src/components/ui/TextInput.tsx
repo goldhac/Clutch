@@ -19,7 +19,7 @@ export function TextInput({
   leading,
   ...rest
 }: TextInputProps) {
-  const border = invalid ? "border-[var(--danger)]" : "border-[var(--ink-200)]";
+  const border = invalid ? "border-[var(--danger)]" : "border-[var(--border-input)]";
   const field =
     `h-9 w-full rounded-[var(--r-md)] border ${border} bg-white text-[14px] text-[var(--ink-900)] ` +
     `placeholder:text-[var(--ink-400)] outline-none transition-colors duration-[var(--dur-fast)] ` +

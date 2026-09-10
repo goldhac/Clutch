@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
+<style>
+  html { background: #fbfbfa; }
+  body { margin: 0; font-family: Geist, system-ui, sans-serif; color: #111114; -webkit-font-smoothing: antialiased; }
+  a { color: #4a46c9; text-decoration: none; }
+  a:hover { color: #5b57e0; text-decoration: underline; }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#fbfbfa">
+  <!-- state switcher -->
+  <div style="border-bottom:1px solid #e6e6ea;background:#fff">
+    <div style="max-width:1180px;margin:0 auto;padding:0 32px;height:56px;display:flex;align-items:center;gap:16px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">Edge states</span>
+      <span style="display:flex;gap:3px;padding:3px;border-radius:9px;background:#f2f2f3">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <span onClick="{{ t.onPick }}" style="{{ t.style }}">{{ t.label }}</span>
+        </sc-for>
+      </span>
+      <span style="margin-left:auto;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">{{ route }}</span>
+    </div>
+  </div>
+
+  <!-- ── 404 ─────────────────────────────────────────────── -->
+  <sc-if value="{{ isNotFound }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;align-items:center;justify-content:center;padding:96px 32px 120px">
+      <div style="width:100%;max-width:760px">
+        <span style="display:inline-flex;align-items:center;gap:9px">
+          <svg viewBox="60 30 340 440" width="19" height="24" role="img" aria-label="Clutch"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg>
+          <span style="font-size:15px;font-weight:600;letter-spacing:-0.01em">Clutch</span>
+        </span>
+
+        <div style="margin-top:40px;padding-bottom:18px;border-bottom:1px solid #111114">
+          <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">Error 404</div>
+          <h1 style="margin:16px 0 0;max-width:22ch;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:60px;line-height:1;letter-spacing:-0.035em;color:#111114;text-wrap:balance">This page isn&rsquo;t on the sheet.</h1>
+        </div>
+        <p style="margin:22px 0 0;max-width:46ch;font-size:16px;line-height:1.65;color:#4a4a53;text-wrap:pretty">The link may be old or mistyped. Head back and make a sheet instead.</p>
+
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:32px">
+          <span style="display:inline-flex;align-items:center;height:48px;padding:0 22px;border-radius:9px;background:#111114;font-size:15px;font-weight:600;color:#fff;cursor:pointer">Back home</span>
+          <span style="display:inline-flex;align-items:center;height:48px;padding:0 22px;border-radius:9px;border:1px solid #d8d8de;background:#fff;font-size:15px;font-weight:600;color:#111114;cursor:pointer">Make a sheet</span>
+        </div>
+
+        <div style="margin-top:52px;border-top:1px solid #e6e6ea">
+          <sc-for list="{{ links }}" as="l" hint-placeholder-count="3">
+            <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:15px 0;border-bottom:1px solid #e6e6ea;cursor:pointer">
+              <span style="font-size:15px;font-weight:500;color:#111114">{{ l.label }}</span>
+              <span style="font-size:13.5px;color:#4a4a53">{{ l.note }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ── print: bad token ────────────────────────────────── -->
+  <sc-if value="{{ isPrintError }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;justify-content:center;padding:96px 32px 120px">
+      <div style="width:100%;max-width:560px">
+        <div style="border:1px solid #e6e6ea;border-radius:14px;background:#fff;overflow:hidden;box-shadow:0 20px 44px rgba(17,17,20,.1)">
+          <div style="padding:30px 32px 28px">
+            <div style="display:flex;align-items:center;gap:9px">
+              <span style="flex:none;width:7px;height:7px;border-radius:50%;background:#b4341f"></span>
+              <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">Print target · no pool</span>
+            </div>
+            <h1 style="margin:14px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:30px;line-height:1.1;letter-spacing:-0.02em;color:#111114;text-wrap:pretty">This print link has expired.</h1>
+            <p style="margin:12px 0 0;font-size:14.5px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Print links hold your pool for a few minutes and then drop it, so a sheet can never be rendered from a stale token. Nothing was charged. Export again from the sheet and a fresh link is made.</p>
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-top:24px">
+              <span style="display:inline-flex;align-items:center;height:42px;padding:0 18px;border-radius:9px;background:#111114;font-size:14px;font-weight:600;color:#fff;cursor:pointer">Back to my sheet</span>
+              <span style="display:inline-flex;align-items:center;height:42px;padding:0 17px;border-radius:9px;border:1px solid #d8d8de;background:#fff;font-size:14px;font-weight:600;color:#111114;cursor:pointer">My Sheets</span>
+            </div>
+          </div>
+          <div style="padding:13px 32px;border-top:1px solid #e6e6ea;background:#fdf0ee;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#8f2a19">no-pool · token expired or invalid</div>
+        </div>
+        <p style="margin:20px 0 0;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.6;color:#6b6b76;text-wrap:pretty">/print is a headless render target — a real user only lands here when a token dies mid-export. Everything else on the route is the sheet itself, unstyled by any chrome.</p>
+      </div>
+    </div>
+  </sc-if>
+
+  <!-- ── offline ─────────────────────────────────────────── -->
+  <sc-if value="{{ isOffline }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;align-items:center;justify-content:center;padding:96px 32px 120px">
+      <div style="width:100%;max-width:560px">
+        <span style="display:flex;align-items:center;justify-content:center;width:52px;height:52px;border-radius:50%;background:#f2f2f3;color:#4a4a53">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5a7 7 0 0 1 11-2.5" /><path d="M8.5 16a4 4 0 0 1 6-1" /><path d="M3 3l18 18" /></svg>
+        </span>
+        <h1 style="margin:24px 0 0;max-width:20ch;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:44px;line-height:1.03;letter-spacing:-0.03em;color:#111114;text-wrap:balance">You&rsquo;re offline.</h1>
+        <p style="margin:14px 0 0;max-width:44ch;font-size:15.5px;line-height:1.65;color:#4a4a53;text-wrap:pretty">Sheets you already saved are readable — they live in this browser. Building a new one needs a connection, because the ranking happens on our side.</p>
+        <div style="margin-top:30px;border-top:1px solid #111114">
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid #e6e6ea">
+            <span style="font-size:14.5px;color:#111114">Saved sheets</span>
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;color:#1a7f4b">available</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid #e6e6ea">
+            <span style="font-size:14.5px;color:#111114">Printing an open sheet</span>
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;color:#1a7f4b">available</span>
+          </div>
+          <div style="display:flex;align-items:baseline;justify-content:space-between;gap:20px;padding:14px 0;border-bottom:1px solid #e6e6ea">
+            <span style="font-size:14.5px;color:#111114">Generating and unlocking</span>
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;color:#8f2a19">needs a connection</span>
+          </div>
+        </div>
+        <div style="margin-top:26px">
+          <span style="display:inline-flex;align-items:center;height:44px;padding:0 20px;border-radius:9px;background:#111114;font-size:14.5px;font-weight:600;color:#fff;cursor:pointer">Open My Sheets</span>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;404&quot;,&quot;print-error&quot;,&quot;offline&quot;],&quot;default&quot;:&quot;404&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+const TABS = [
+  { value: "404", label: "404", route: "/*" },
+  { value: "print-error", label: "Print error", route: "/print?token=…" },
+  { value: "offline", label: "Offline", route: "no connection" }
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { screen: props.screen ?? "404" };
+  }
+  renderVals() {
+    const s = this.state.screen;
+    return {
+      tabs: TABS.map((t) => ({
+        label: t.label,
+        onPick: () => this.setState({ screen: t.value }),
+        style:
+          "padding:6px 13px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;" +
+          (s === t.value
+            ? "background:#fff;box-shadow:0 1px 2px rgba(17,17,20,.08);color:#111114"
+            : "color:#4a4a53")
+      })),
+      route: (TABS.find((t) => t.value === s) || TABS[0]).route,
+      isNotFound: s === "404",
+      isPrintError: s === "print-error",
+      isOffline: s === "offline",
+      links: [
+        { label: "Make a sheet", note: "drop your files, one page out" },
+        { label: "Pricing", note: "$4.99 a sheet · no subscription" },
+        { label: "How it works", note: "scores, stars and sources" }
+      ]
+    };
+  }
+}
+
+</script>
+</body>
+</html>

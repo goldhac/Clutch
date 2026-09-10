@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
+<style>
+  html { background: #f2f2f3; }
+  body { margin: 0; font-family: Geist, system-ui, sans-serif; color: #111114; -webkit-font-smoothing: antialiased; }
+  a { color: #4a46c9; text-decoration: none; }
+  a:hover { color: #5b57e0; text-decoration: underline; }
+  select { appearance: none; -webkit-appearance: none; font-family: Geist, sans-serif; }
+  @keyframes cl-spin { to { transform: rotate(360deg); } }
+  @keyframes cl-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes cl-sweep { 0% { transform: translateX(-110%); } 100% { transform: translateX(420%); } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#fbfbfa">
+  <!-- app chrome -->
+  <div style="position:sticky;top:0;z-index:20;border-bottom:1px solid #e6e6ea;background:rgba(251,251,250,.9);backdrop-filter:blur(10px)">
+    <div style="max-width:1180px;margin:0 auto;padding:0 32px;height:60px;display:flex;align-items:center;gap:20px">
+      <span style="display:inline-flex;align-items:center;gap:9px">
+        <svg viewBox="60 30 340 440" width="19" height="24" role="img" aria-label="Clutch"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg>
+        <span style="font-size:15px;font-weight:600;letter-spacing:-0.01em;color:#111114">Clutch</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:2px;padding:3px;border-radius:9px;background:#f2f2f3">
+        <span style="padding:6px 13px;border-radius:6px;background:#fff;box-shadow:0 1px 2px rgba(17,17,20,.08);font-size:13px;font-weight:600;color:#111114">Generate</span>
+        <span style="padding:6px 13px;border-radius:6px;font-size:13px;font-weight:500;color:#6b6b76">My Sheets</span>
+      </span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:14px">
+        <span style="display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:999px;border:1px solid #e6e6ea;background:#fff">
+          <span style="width:6px;height:6px;border-radius:50%;background:#1a7f4b"></span>
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#111114">2 credits</span>
+        </span>
+        <span style="display:flex;align-items:center;justify-content:center;width:30px;height:30px;border-radius:50%;background:#ecebfb;font-size:11px;font-weight:600;color:#4a46c9">AD</span>
+      </span>
+    </div>
+  </div>
+
+  <div style="max-width:1180px;margin:0 auto;padding:44px 32px 96px">
+    <!-- page head -->
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:40px;padding-bottom:22px;border-bottom:1px solid #111114">
+      <div>
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#909099">Step 1 of 2 · build the pack</div>
+        <h1 style="margin:14px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:46px;line-height:1.04;letter-spacing:-0.03em;color:#111114">{{ heading }}</h1>
+      </div>
+      <p style="margin:0;max-width:34ch;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">{{ subhead }}</p>
+    </div>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:44px;align-items:start;margin-top:36px">
+      <!-- ── left: the pack ──────────────────────────────────── -->
+      <div>
+        <div onDragOver="{{ onDragOver }}" onDragLeave="{{ onDragLeave }}" onDrop="{{ onDrop }}" onClick="{{ onPick }}" style="{{ dropStyle }}">
+          <div style="display:flex;align-items:center;gap:16px">
+            <span style="flex:none;display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:10px;background:#111114">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4" /><path d="m7 9 5-5 5 5" /><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" /></svg>
+            </span>
+            <div style="min-width:0">
+              <div style="font-size:16px;font-weight:600;letter-spacing:-0.01em;color:#111114">Drop your course files</div>
+              <div style="margin-top:3px;font-size:14px;line-height:1.5;color:#4a4a53">PDF, PPTX, TXT or MD · up to 40 files · past exams count most</div>
+            </div>
+            <span style="margin-left:auto;flex:none;display:inline-flex;align-items:center;height:38px;padding:0 16px;border-radius:8px;border:1px solid #d8d8de;background:#fff;font-size:14px;font-weight:600;color:#111114">Browse</span>
+          </div>
+        </div>
+
+        <sc-if value="{{ hasFiles }}" hint-placeholder-val="{{ true }}">
+          <div style="margin-top:32px">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 132px 96px 34px;gap:16px;padding-bottom:9px;border-bottom:1px solid #111114;font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:#909099">
+              <span>File</span>
+              <span>Tagged as</span>
+              <span>Authority</span>
+              <span></span>
+            </div>
+            <sc-for list="{{ rows }}" as="row" hint-placeholder-count="4">
+              <div style="display:grid;grid-template-columns:minmax(0,1fr) 132px 96px 34px;gap:16px;align-items:center;padding:15px 0;border-bottom:1px solid #e6e6ea">
+                <div style="display:flex;align-items:center;gap:13px;min-width:0">
+                  <span style="{{ row.kindStyle }}">{{ row.kind }}</span>
+                  <span style="min-width:0">
+                    <span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:500;color:#111114">{{ row.name }}</span>
+                    <span style="display:block;margin-top:2px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">{{ row.meta }}</span>
+                  </span>
+                </div>
+                <span style="position:relative;display:block">
+                  <select value="{{ row.tag }}" onChange="{{ row.onTag }}" style="{{ row.selectStyle }}">
+                    <option value="past_exam">★ Past exam</option>
+                    <option value="review">Review guide</option>
+                    <option value="homework">Homework</option>
+                    <option value="slides">Slides</option>
+                    <option value="notes">Notes</option>
+                    <option value="formula_sheet">Formula sheet</option>
+                  </select>
+                  <span style="position:absolute;right:9px;top:50%;transform:translateY(-50%);pointer-events:none;color:#909099;font-size:9px">▼</span>
+                </span>
+                <span style="display:flex;align-items:center;gap:8px">
+                  <span style="position:relative;flex:1;height:4px;border-radius:2px;background:#e6e6ea;overflow:hidden">
+                    <span style="{{ row.barStyle }}"></span>
+                  </span>
+                  <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">{{ row.weightLabel }}</span>
+                </span>
+                <button type="button" onClick="{{ row.onRemove }}" style="justify-self:end;width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#909099;font-size:13px;cursor:pointer" style-hover="background:#f2f2f3;color:#111114">✕</button>
+              </div>
+            </sc-for>
+
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:14px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">
+              <span>{{ tallyLine }}</span>
+              <span style="cursor:pointer;color:#4a46c9" onClick="{{ onClear }}">clear pack</span>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:13px;margin-top:28px;padding:15px 17px;border:1px solid #f4d3c4;border-radius:10px;background:#fdece4">
+            <span style="flex:none;color:#8a4a2f">★</span>
+            <div style="font-size:13.5px;line-height:1.6;color:#1c1c21;text-wrap:pretty">{{ nudge }}</div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="margin-top:32px;border-top:1px solid #111114">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:20px;align-items:center;padding:15px 0;border-bottom:1px solid #e6e6ea">
+              <span style="font-size:14px;color:#4a4a53"><span style="color:#a5790a">★</span> Past exams, midterms, quizzes</span>
+              <span style="display:flex;align-items:center;gap:8px"><span style="position:relative;flex:1;height:4px;border-radius:2px;background:#e6e6ea;overflow:hidden"><span style="position:absolute;inset:0 0 0 0;width:100%;border-radius:2px;background:#1a7f4b"></span></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">×30</span></span>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:20px;align-items:center;padding:15px 0;border-bottom:1px solid #e6e6ea">
+              <span style="font-size:14px;color:#4a4a53">Review guides and study outlines</span>
+              <span style="display:flex;align-items:center;gap:8px"><span style="position:relative;flex:1;height:4px;border-radius:2px;background:#e6e6ea;overflow:hidden"><span style="position:absolute;inset:0 0 0 0;width:73%;border-radius:2px;background:#5b57e0"></span></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">×22</span></span>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:20px;align-items:center;padding:15px 0;border-bottom:1px solid #e6e6ea">
+              <span style="font-size:14px;color:#4a4a53">Lecture slides and decks</span>
+              <span style="display:flex;align-items:center;gap:8px"><span style="position:relative;flex:1;height:4px;border-radius:2px;background:#e6e6ea;overflow:hidden"><span style="position:absolute;inset:0 0 0 0;width:47%;border-radius:2px;background:#5b57e0"></span></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">×14</span></span>
+            </div>
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 96px;gap:20px;align-items:center;padding:15px 0;border-bottom:1px solid #e6e6ea">
+              <span style="font-size:14px;color:#4a4a53">Your own notes</span>
+              <span style="display:flex;align-items:center;gap:8px"><span style="position:relative;flex:1;height:4px;border-radius:2px;background:#e6e6ea;overflow:hidden"><span style="position:absolute;inset:0 0 0 0;width:33%;border-radius:2px;background:#b8b8bf"></span></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">×10</span></span>
+            </div>
+            <p style="margin:20px 0 0;max-width:52ch;font-size:14px;line-height:1.65;color:#4a4a53;text-wrap:pretty">Everything gets read, but not everything counts the same. Past exams tell us what this professor actually asks — that is what earns a line the star on your sheet.</p>
+            <div style="margin-top:22px">
+              <span onClick="{{ onSample }}" style="display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:#111114;border-bottom:1px solid #111114;padding-bottom:2px;cursor:pointer">Load a sample pack <span style="color:#909099">→</span></span>
+            </div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- ── right: settings + confidence ─────────────────────── -->
+      <div style="position:sticky;top:88px;display:flex;flex-direction:column;gap:18px">
+        <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:20px 20px 6px">
+          <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:#909099">How to build it</div>
+          <div style="margin-top:14px">
+            <div style="font-size:12.5px;font-weight:600;color:#4a4a53">Exam type</div>
+            <div style="display:flex;gap:4px;margin-top:7px;padding:3px;border-radius:9px;background:#f2f2f3">
+              <sc-for list="{{ examTypes }}" as="opt" hint-placeholder-count="3">
+                <span onClick="{{ opt.onPick }}" style="{{ opt.style }}">{{ opt.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="margin-top:18px">
+            <div style="font-size:12.5px;font-weight:600;color:#4a4a53">Density</div>
+            <sc-for list="{{ densities }}" as="d" hint-placeholder-count="3">
+              <div onClick="{{ d.onPick }}" style="{{ d.rowStyle }}">
+                <span style="{{ d.dotStyle }}"></span>
+                <span style="min-width:0">
+                  <span style="display:block;font-size:13.5px;font-weight:600;color:#111114">{{ d.label }}</span>
+                  <span style="display:block;margin-top:1px;font-size:12px;color:#6b6b76">{{ d.note }}</span>
+                </span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:18px;padding-top:16px;border-top:1px solid #e6e6ea">
+            <div style="font-size:12.5px;font-weight:600;color:#4a4a53">Priority</div>
+            <div style="display:flex;gap:4px;margin-top:7px;padding:3px;border-radius:9px;background:#f2f2f3">
+              <sc-for list="{{ priorities }}" as="opt" hint-placeholder-count="3">
+                <span onClick="{{ opt.onPick }}" style="{{ opt.style }}">{{ opt.label }}</span>
+              </sc-for>
+            </div>
+          </div>
+          <div style="margin-top:18px;padding:16px 0;border-top:1px solid #e6e6ea;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <label style="display:block">
+              <span style="display:block;font-size:12.5px;font-weight:600;color:#4a4a53">Course code</span>
+              <input type="text" value="{{ courseCode }}" onChange="{{ onCourse }}" placeholder="ITSS 3300" style="margin-top:6px;width:100%;box-sizing:border-box;height:36px;padding:0 10px;border:1px solid #d8d8de;border-radius:8px;background:#fff;font-family:Geist,sans-serif;font-size:13px;color:#111114" />
+            </label>
+            <label style="display:block">
+              <span style="display:block;font-size:12.5px;font-weight:600;color:#4a4a53">Professor</span>
+              <input type="text" value="{{ professor }}" onChange="{{ onProf }}" placeholder="Ouyang" style="margin-top:6px;width:100%;box-sizing:border-box;height:36px;padding:0 10px;border:1px solid #d8d8de;border-radius:8px;background:#fff;font-family:Geist,sans-serif;font-size:13px;color:#111114" />
+            </label>
+          </div>
+        </div>
+
+        <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:20px">
+          <div style="display:flex;align-items:baseline;justify-content:space-between">
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:0.09em;text-transform:uppercase;color:#909099">Confidence in result</span>
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:20px;font-weight:600;color:{{ confColor }}">{{ confLabel }}</span>
+          </div>
+          <div style="display:flex;gap:2px;margin-top:12px;height:8px;border-radius:4px;overflow:hidden;background:#f2f2f3">
+            <sc-for list="{{ segments }}" as="seg" hint-placeholder-count="4">
+              <span style="{{ seg.style }}"></span>
+            </sc-for>
+          </div>
+          <div style="margin-top:14px;font-size:13px;line-height:1.6;color:#4a4a53;text-wrap:pretty">{{ confNote }}</div>
+        </div>
+
+        <div>
+          <button type="button" onClick="{{ onGenerate }}" style="{{ ctaStyle }}">{{ ctaLabel }}</button>
+          <div style="margin-top:10px;text-align:center;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">{{ ctaNote }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- generating overlay -->
+  <sc-if value="{{ generating }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;background:#111114;padding:24px">
+      <div style="width:100%;max-width:460px;animation:cl-rise .4s cubic-bezier(.2,.7,.3,1)">
+        <div style="text-align:center">
+          <span style="display:inline-flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:11px;background:rgba(255,255,255,.09)">
+            <svg viewBox="60 30 340 440" width="17" height="22" role="img" aria-label="Clutch"><path fill="#ffffff" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg>
+          </span>
+          <h2 style="margin:18px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:34px;line-height:1.05;letter-spacing:-0.02em;color:#fff">Building your sheet</h2>
+          <p style="margin:8px 0 0;font-size:14px;color:#909099">Usually done in under a minute. Hang tight.</p>
+        </div>
+        <div style="margin-top:30px">
+          <sc-for list="{{ steps }}" as="step" hint-placeholder-count="4">
+            <div style="{{ step.rowStyle }}">
+              <span style="{{ step.iconStyle }}">{{ step.icon }}</span>
+              <span style="{{ step.labelStyle }}">{{ step.label }}</span>
+              <span style="{{ step.stateStyle }}">{{ step.state }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="position:relative;margin-top:22px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);overflow:hidden">
+          <span style="position:absolute;top:0;bottom:0;width:28%;border-radius:2px;background:rgba(255,255,255,.6);animation:cl-sweep 1.5s ease-in-out infinite"></span>
+        </div>
+        <div style="margin-top:16px;text-align:center;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;color:#6b6b76">{{ overlayCaption }}</div>
+        <div style="margin-top:26px;text-align:center"><span onClick="{{ onCancel }}" style="font-size:13px;color:#6b6b76;cursor:pointer;border-bottom:1px solid #3a3a44;padding-bottom:2px">Cancel</span></div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;form&quot;,&quot;generating&quot;],&quot;default&quot;:&quot;form&quot;,&quot;tsType&quot;:&quot;\&quot;form\&quot; | \&quot;generating\&quot;&quot;},&quot;startEmpty&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const WEIGHTS = { past_exam: 30, review: 22, homework: 18, slides: 14, notes: 10, formula_sheet: 6 };
+const TAGS = { past_exam: "★ Past exam", review: "Review guide", homework: "Homework", slides: "Slides", notes: "Notes", formula_sheet: "Formula sheet" };
+const TONE = { past_exam: "#1a7f4b", review: "#5b57e0", homework: "#5b57e0", slides: "#8a86e8", notes: "#b8b8bf", formula_sheet: "#b8b8bf" };
+const SAMPLE = [
+  { name: "ITSS3300-lecture-databases.pptx", size: "4.2 MB · 61 slides", tag: "slides" },
+  { name: "Exam-1-Spring-2025.pdf", size: "880 KB · 6 pages", tag: "past_exam" },
+  { name: "Review-guide-midterm-2.pdf", size: "1.1 MB · 14 pages", tag: "review" },
+  { name: "week9-normalization-notes.md", size: "24 KB", tag: "notes" }
+];
+const STEPS = [
+  { label: "Reading your files", hold: 3200 },
+  { label: "Ranking topics by likelihood", hold: 6000 },
+  { label: "Drafting the sheet", hold: 9000 },
+  { label: "Verifying page fit", hold: Infinity }
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const empty = props.startEmpty ?? false;
+    this.state = {
+      files: empty ? [] : SAMPLE.map((f) => ({ ...f })),
+      examType: "mixed",
+      density: "max",
+      priority: "balanced",
+      courseCode: "",
+      professor: "",
+      generating: (props.screen ?? "form") === "generating",
+      step: 0,
+      dragging: false
+    };
+  }
+
+  componentDidMount() { if (this.state.generating) this.runSteps(); }
+  componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
+
+  runSteps() {
+    (this.timers || []).forEach(clearTimeout);
+    this.timers = [];
+    let t = 0;
+    for (let i = 0; i < STEPS.length - 1; i++) {
+      t += STEPS[i].hold;
+      this.timers.push(setTimeout(() => this.setState({ step: i + 1 }), t));
+    }
+  }
+
+  kind(name) {
+    const ext = (name.split(".").pop() || "file").toUpperCase();
+    return ext.length > 4 ? "FILE" : ext;
+  }
+  guess(name) {
+    const n = name.toLowerCase();
+    if (/exam|midterm|final|quiz/.test(n)) return "past_exam";
+    if (/review/.test(n)) return "review";
+    if (/\bhw\d?\b|homework/.test(n)) return "homework";
+    if (/note/.test(n)) return "notes";
+    if (/formula/.test(n)) return "formula_sheet";
+    return "slides";
+  }
+  add(names) {
+    const next = names.map((n) => ({ name: n, size: "just added", tag: this.guess(n) }));
+    this.setState((s) => ({ files: [...s.files, ...next], dragging: false }));
+  }
+
+  renderVals() {
+    const { files, examType, density, priority, generating, step, dragging } = this.state;
+    const n = files.length;
+    const hasFiles = n > 0;
+    const total = files.reduce((s, f) => s + WEIGHTS[f.tag], 0);
+    const conf = Math.min(100, total);
+    const exams = files.filter((f) => f.tag === "past_exam").length;
+    const confColor = conf >= 80 ? "#1a7f4b" : conf >= 50 ? "#a5790a" : "#b4341f";
+
+    const pill = (on) =>
+      "flex:1;text-align:center;padding:7px 4px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;" +
+      (on ? "background:#fff;box-shadow:0 1px 2px rgba(17,17,20,.08);color:#111114" : "color:#6b6b76");
+
+    const group = (list, key) =>
+      list.map((o) => ({
+        label: o.label,
+        style: pill(this.state[key] === o.value),
+        onPick: () => this.setState({ [key]: o.value })
+      }));
+
+    return {
+      heading: hasFiles ? (n === 1 ? "1 file ready" : n + " files ready") : "Make a sheet",
+      subhead: hasFiles
+        ? "Tag each file so it gets weighted correctly. Past exams carry the most, and they are the only thing that can earn a line the star."
+        : "One printable page, ranked by what is most likely to be tested. Drop the pack and we will read all of it.",
+      hasFiles,
+      isEmpty: !hasFiles,
+      dropStyle:
+        "display:block;padding:26px 24px;border-radius:14px;cursor:pointer;transition:background .16s,border-color .16s;" +
+        (dragging
+          ? "border:2px dashed #5b57e0;background:#ecebfb"
+          : "border:2px dashed #d8d8de;background:#fff"),
+      onDragOver: (e) => { e.preventDefault(); if (!dragging) this.setState({ dragging: true }); },
+      onDragLeave: () => this.setState({ dragging: false }),
+      onDrop: (e) => {
+        e.preventDefault();
+        const dropped = Array.from((e.dataTransfer && e.dataTransfer.files) || []).map((f) => f.name);
+        if (dropped.length) this.add(dropped);
+        else this.setState({ dragging: false });
+      },
+      onPick: () => { if (!hasFiles) this.add(SAMPLE.map((f) => f.name)); },
+      onSample: () => this.setState({ files: SAMPLE.map((f) => ({ ...f })) }),
+      onClear: () => this.setState({ files: [] }),
+
+      rows: files.map((f, ix) => ({
+        name: f.name,
+        kind: this.kind(f.name),
+        meta: f.size,
+        tag: f.tag,
+        weightLabel: "×" + WEIGHTS[f.tag],
+        kindStyle:
+          "flex:none;display:flex;align-items:center;justify-content:center;width:36px;height:36px;border-radius:8px;background:#f2f2f3;font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;color:#6b6b76",
+        selectStyle:
+          "width:100%;height:32px;padding:0 26px 0 10px;border-radius:8px;border:1px solid #e6e6ea;background:" +
+          (f.tag === "past_exam" ? "#f4f9f6" : "#fff") +
+          ";font-size:12.5px;font-weight:600;color:" +
+          (f.tag === "past_exam" ? "#1a7f4b" : "#111114") +
+          ";cursor:pointer",
+        barStyle:
+          "position:absolute;left:0;top:0;bottom:0;border-radius:2px;background:" +
+          TONE[f.tag] + ";width:" + Math.round((WEIGHTS[f.tag] / 30) * 100) + "%",
+        onTag: (e) => {
+          const tag = e.target.value;
+          this.setState((s) => ({ files: s.files.map((x, i) => (i === ix ? { ...x, tag } : x)) }));
+        },
+        onRemove: () => this.setState((s) => ({ files: s.files.filter((_, i) => i !== ix) }))
+      })),
+
+      tallyLine:
+        n + (n === 1 ? " file" : " files") + " · " + exams + (exams === 1 ? " past exam" : " past exams") + " · authority total " + total,
+
+      nudge: exams === 0
+        ? "No past exam in the pack. Without one, nothing on your sheet can be marked exam-verified — every line will carry a score, but none will carry the star."
+        : exams === 1
+          ? "One past exam in the pack. A second one is the single biggest lift available: it pushes confidence to 100% and roughly doubles how many lines can earn the star."
+          : exams + " past exams in the pack. That is enough to verify claims against what this professor actually asks.",
+
+      examTypes: group(
+        [{ label: "Conceptual", value: "conceptual" }, { label: "Problem-solving", value: "problem-solving" }, { label: "Mixed", value: "mixed" }],
+        "examType"
+      ),
+      priorities: group(
+        [{ label: "Balanced", value: "balanced" }, { label: "Formulas", value: "formulas" }, { label: "Concepts", value: "concepts" }],
+        "priority"
+      ),
+      densities: [
+        { value: "max", label: "MAX", note: "Fit everything that fits" },
+        { value: "balanced", label: "Balanced", note: "High-yield only, room to breathe" },
+        { value: "essentials", label: "Essentials", note: "Core definitions and formulas" }
+      ].map((d) => {
+        const on = density === d.value;
+        return {
+          label: d.label,
+          note: d.note,
+          onPick: () => this.setState({ density: d.value }),
+          rowStyle:
+            "display:flex;align-items:center;gap:11px;margin-top:7px;padding:10px 12px;border-radius:9px;cursor:pointer;border:1px solid " +
+            (on ? "#111114" : "#e6e6ea") + ";background:" + (on ? "#fbfbfa" : "#fff"),
+          dotStyle:
+            "flex:none;width:14px;height:14px;border-radius:50%;box-sizing:border-box;border:" +
+            (on ? "4px solid #111114" : "1.5px solid #b8b8bf") + ";background:#fff"
+        };
+      }),
+
+      courseCode: this.state.courseCode,
+      professor: this.state.professor,
+      onCourse: (e) => this.setState({ courseCode: e.target.value }),
+      onProf: (e) => this.setState({ professor: e.target.value }),
+
+      confLabel: hasFiles ? conf + "%" : "—",
+      confColor: hasFiles ? confColor : "#b8b8bf",
+      segments: hasFiles
+        ? files.map((f) => ({
+            style: "flex:" + WEIGHTS[f.tag] + ";background:" + TONE[f.tag]
+          }))
+        : [],
+      confNote: hasFiles
+        ? "Built from what you gave us, not from how the sheet looks. " +
+          (conf >= 80 ? "This pack is strong enough to rank confidently." : "Add a past exam or review guide to raise it.")
+        : "Drop files to see how strong the pack is before you spend a credit.",
+
+      ctaStyle:
+        "width:100%;height:52px;border:0;border-radius:10px;font-family:Geist,sans-serif;font-size:15px;font-weight:600;cursor:" +
+        (hasFiles ? "pointer" : "not-allowed") + ";background:" + (hasFiles ? "#111114" : "#e6e6ea") +
+        ";color:" + (hasFiles ? "#fff" : "#909099"),
+      ctaLabel: hasFiles ? "Generate my sheet · 1 credit" : "Add files to generate",
+      ctaNote: hasFiles ? "free preview first · you see it before you pay" : "2 credits left on your account",
+      onGenerate: () => {
+        if (!hasFiles) return;
+        this.setState({ generating: true, step: 0 });
+        this.runSteps();
+      },
+      onCancel: () => {
+        (this.timers || []).forEach(clearTimeout);
+        this.setState({ generating: false, step: 0 });
+      },
+
+      generating,
+      steps: STEPS.map((s, i) => {
+        const done = i < step, on = i === step;
+        return {
+          label: s.label,
+          rowStyle:
+            "display:flex;align-items:center;gap:13px;padding:11px 12px;border-radius:9px;background:" +
+            (on ? "rgba(255,255,255,.06)" : "transparent"),
+          icon: done ? "✓" : on ? "" : "",
+          iconStyle:
+            "flex:none;display:flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;font-size:11px;font-weight:700;" +
+            (done
+              ? "background:#1a7f4b;color:#fff"
+              : on
+                ? "background:rgba(255,255,255,.14);border:2px solid rgba(255,255,255,.5);border-top-color:transparent;animation:cl-spin .8s linear infinite;box-sizing:border-box"
+                : "border:1px solid rgba(255,255,255,.16);color:transparent"),
+          labelStyle: "flex:1;font-size:14.5px;color:" + (done || on ? "#fff" : "#6b6b76"),
+          state: on ? "in progress" : "",
+          stateStyle: "font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76"
+        };
+      }),
+      overlayCaption:
+        "reading " + n + (n === 1 ? " file" : " files") +
+        (exams ? " · verifying against " + exams + (exams === 1 ? " past exam" : " past exams") : "")
+    };
+  }
+}
+
+</script>
+</body>
+</html>

@@ -271,12 +271,30 @@ export function TwoPageSheet({
         {lockBack && (
           <div className="back-lock-overlay print:hidden">
             <div className="back-lock-card">
-              <div className="back-lock-title">The BACK of your sheet is ready</div>
-              <p className="back-lock-sub">
-                {fitInfo ? `${fitInfo.p2} more ranked items` : "More ranked items"} — the
-                second side of the page. Unlock the full front-and-back sheet with Pro.
-              </p>
-              <a href="/pricing" className="back-lock-cta">Unlock with Pro · $4.99</a>
+              <div className="back-lock-body">
+                <div className="back-lock-eyebrow">Page 2 of 2 · sealed</div>
+                <h3 className="back-lock-title">
+                  {fitInfo ? `${fitInfo.p2} more items are already written.` : "The back page is already written."}
+                </h3>
+                <p className="back-lock-sub">
+                  The back page is generated, scored and fitted — the rest of your ranked pool,
+                  traps and worked answers included. Unlock to read it and to export both pages
+                  as one PDF.
+                </p>
+                <div className="back-lock-options">
+                  <a href="/pricing" className="back-lock-opt primary">
+                    <span className="opt-label">Unlock · $4.99</span>
+                    <span className="opt-sub">this sheet, both pages</span>
+                  </a>
+                  <a href="/pricing" className="back-lock-opt secondary">
+                    <span className="opt-label">3-Pack · $9.99</span>
+                    <span className="opt-sub">credits never expire</span>
+                  </a>
+                </div>
+              </div>
+              <div className="back-lock-footer">
+                <span className="ok">✓</span> page 1 stays free, forever · no subscription
+              </div>
             </div>
           </div>
         )}

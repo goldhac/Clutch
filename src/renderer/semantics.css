@@ -501,46 +501,100 @@
   position: relative;
 }
 .back-locked .sheet {
-  filter: blur(4px) saturate(0.85);
   user-select: none;
   pointer-events: none;
 }
+/* v2 seal: a paper gradient veil over the FINISHED page — the top stays
+ * faintly readable on purpose (what you buy is literally what you see),
+ * the bottom is fully sealed. */
 .back-lock-overlay {
   position: absolute;
   inset: 0;
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 5;
+  padding: 24px;
+  background: linear-gradient(
+    180deg,
+    rgba(251, 251, 250, 0.72) 0%,
+    rgba(251, 251, 250, 0.93) 42%,
+    rgba(251, 251, 250, 0.97) 100%
+  );
 }
 .back-lock-card {
-  background: rgba(255, 255, 255, 0.96);
-  border: 1px solid var(--ink-200);
-  border-radius: 10px;
-  box-shadow: 0 12px 40px rgba(17, 17, 20, 0.18);
-  padding: 22px 28px;
-  max-width: 340px;
-  text-align: center;
+  width: 460px;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--border-input);
+  border-radius: 14px;
+  box-shadow: 0 24px 56px rgba(17, 17, 20, 0.2);
+}
+.back-lock-body {
+  padding: 26px 28px 24px;
+}
+.back-lock-eyebrow {
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-500);
 }
 .back-lock-title {
-  font-weight: 700;
-  font-size: 15px;
+  margin-top: 12px;
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
   color: var(--ink-900);
 }
 .back-lock-sub {
-  margin-top: 6px;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--ink-600);
-}
-.back-lock-cta {
-  display: inline-block;
   margin-top: 12px;
-  background: var(--ink-900);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 7px 16px;
-  border-radius: 999px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--ink-600);
+  text-wrap: pretty;
 }
-.back-lock-cta:hover { opacity: 0.9; }
+.back-lock-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 20px;
+}
+.back-lock-opt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 13px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out), background-color 160ms;
+}
+.back-lock-opt:active { transform: scale(0.98); }
+.back-lock-opt.primary { background: var(--ink-900); }
+.back-lock-opt.primary:hover { background: var(--ink-800); }
+.back-lock-opt.primary .opt-label { color: #fff; }
+.back-lock-opt.primary .opt-sub { color: var(--ink-400); }
+.back-lock-opt.secondary {
+  background: #fff;
+  border: 1px solid var(--border-input);
+}
+.back-lock-opt.secondary:hover { background: var(--ink-50); }
+.back-lock-opt .opt-label { font-size: 15px; font-weight: 600; color: var(--ink-900); }
+.back-lock-opt .opt-sub { font-family: var(--mono); font-size: 11px; color: var(--ink-500); }
+.back-lock-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--ink-150);
+  background: var(--paper);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--ink-500);
+}
+.back-lock-footer .ok { color: var(--conf-high); }

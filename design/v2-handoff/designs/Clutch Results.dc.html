@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
+<style>
+  html { background: #e9e9ec; }
+  body { margin: 0; font-family: Geist, system-ui, sans-serif; color: #111114; -webkit-font-smoothing: antialiased; }
+  a { color: #4a46c9; text-decoration: none; }
+  a:hover { color: #5b57e0; text-decoration: underline; }
+  textarea { font-family: Geist, system-ui, sans-serif; }
+  @keyframes cl-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes cl-spin { to { transform: rotate(360deg); } }
+</style>
+</helmet>
+
+<div style="min-height:100vh;background:#e9e9ec">
+  <!-- toolbar -->
+  <div style="position:sticky;top:0;z-index:30;border-bottom:1px solid #d8d8de;background:rgba(251,251,250,.92);backdrop-filter:blur(10px)">
+    <div style="max-width:1320px;margin:0 auto;padding:0 28px;height:58px;display:flex;align-items:center;gap:14px">
+      <span style="display:inline-flex;align-items:center;gap:9px;flex:none">
+        <svg viewBox="60 30 340 440" width="17" height="22" role="img" aria-label="Clutch"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg>
+        <span style="font-size:15px;font-weight:600;letter-spacing:-0.01em">Clutch</span>
+      </span>
+      <span style="color:#b8b8bf">/</span>
+      <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:14px;font-weight:500;color:#1c1c21">ITSS 3300 · Business Intelligence — Exam 2</span>
+      <span style="{{ fitChipStyle }}">{{ fitChip }}</span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:8px;flex:none">
+        <span onClick="{{ onSave }}" style="{{ saveStyle }}">{{ saveLabel }}</span>
+        <span style="display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:8px;border:1px solid #d8d8de;background:#fff;font-size:13px;font-weight:600;color:#111114;cursor:pointer">Make another</span>
+        <span onClick="{{ onExport }}" style="{{ exportStyle }}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" /></svg>
+          {{ exportLabel }}
+        </span>
+      </span>
+    </div>
+    <sc-if value="{{ hasWarning }}" hint-placeholder-val="{{ false }}">
+      <div style="max-width:1320px;margin:0 auto;padding:0 28px 12px">
+        <div style="display:flex;align-items:flex-start;gap:11px;padding:12px 14px;border:1px solid #f4d3c4;border-radius:9px;background:#fdece4">
+          <span style="flex:none;color:#8a4a2f;font-size:13px">★</span>
+          <div style="flex:1;font-size:13px;line-height:1.55;color:#1c1c21">Two source files were image-only scans, so nothing from them could be quoted or cited. 11 items that would have come from them were dropped rather than guessed at.</div>
+          <span onClick="{{ onDismiss }}" style="flex:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#8a4a2f;cursor:pointer;border-bottom:1px solid #e0bfae">dismiss</span>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+
+  <!-- workspace -->
+  <div style="padding:36px 28px 168px">
+    <div style="max-width:1320px;margin:0 auto;display:flex;flex-direction:column;align-items:center;gap:34px">
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:11px">
+        <div style="display:flex;align-items:center;gap:10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">
+          <span>{{ frontLabel }}</span>
+          <span style="color:#b8b8bf">·</span>
+          <span style="color:#909099">{{ frontMeta }}</span>
+        </div>
+        <div style="width:808px;height:572px;overflow:hidden;border-radius:3px;background:#fff;box-shadow:0 30px 60px rgba(17,17,20,.18),0 4px 10px rgba(17,17,20,.08),0 0 0 1px rgba(17,17,20,.06)">
+          <div style="width:1122px;transform:scale(0.72);transform-origin:top left">
+            <dc-import name="Clutch Sheet" hint-size="1122px,794px"></dc-import>
+          </div>
+        </div>
+      </div>
+
+      <sc-if value="{{ twoPage }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:11px">
+          <div style="display:flex;align-items:center;gap:10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#6b6b76">
+            <span>Back · page 2 of 2</span>
+            <span style="color:#b8b8bf">·</span>
+            <span style="{{ backMetaStyle }}">{{ backMeta }}</span>
+          </div>
+          <div style="position:relative;width:808px;height:572px;overflow:hidden;border-radius:3px;background:#fff;box-shadow:0 30px 60px rgba(17,17,20,.18),0 4px 10px rgba(17,17,20,.08),0 0 0 1px rgba(17,17,20,.06)">
+            <div style="width:1122px;transform:scale(0.72);transform-origin:top left;{{ backInkStyle }}">
+              <dc-import name="Clutch Sheet" hint-size="1122px,794px"></dc-import>
+            </div>
+            <sc-if value="{{ locked }}" hint-placeholder-val="{{ true }}">
+              <div style="position:absolute;inset:0;background:linear-gradient(180deg,rgba(251,251,250,.72) 0%,rgba(251,251,250,.93) 42%,rgba(251,251,250,.97) 100%)"></div>
+              <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px">
+                <div style="width:460px;border:1px solid #d8d8de;border-radius:14px;background:#fff;box-shadow:0 24px 56px rgba(17,17,20,.2);overflow:hidden">
+                  <div style="padding:26px 28px 24px">
+                    <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:#909099">Page 2 of 2 · sealed</div>
+                    <h3 style="margin:12px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:30px;line-height:1.1;letter-spacing:-0.02em;color:#111114">73 more items are already written.</h3>
+                    <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">The back page is generated, scored and fitted — traps, worked formulas and the exam-verified block. Unlock to read it and to export both pages as one PDF.</p>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px">
+                      <span onClick="{{ onUnlock }}" style="display:flex;flex-direction:column;gap:2px;padding:13px 14px;border-radius:10px;background:#111114;cursor:pointer">
+                        <span style="font-size:15px;font-weight:600;color:#fff">Unlock · $4.99</span>
+                        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">this sheet, both pages</span>
+                      </span>
+                      <span onClick="{{ onUnlock }}" style="display:flex;flex-direction:column;gap:2px;padding:13px 14px;border-radius:10px;border:1px solid #d8d8de;background:#fff;cursor:pointer">
+                        <span style="font-size:15px;font-weight:600;color:#111114">3-Pack · $9.99</span>
+                        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">credits never expire</span>
+                      </span>
+                    </div>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:12px 28px;border-top:1px solid #e6e6ea;background:#fbfbfa;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">
+                    <span style="color:#1a7f4b">✓</span> page 1 stays free, forever · no subscription
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="display:flex;align-items:center;gap:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">
+        <span>generated by gemini-2.5-pro</span><span style="color:#c8c8ce">·</span><span>{{ statLine }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- dock -->
+  <div style="position:fixed;left:0;right:0;bottom:0;z-index:40;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 20px 22px;pointer-events:none">
+    <sc-if value="{{ editorOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="pointer-events:auto;width:100%;max-width:640px;padding:16px;border-radius:14px;background:#1c1c21;box-shadow:0 20px 50px rgba(17,17,20,.4);animation:cl-rise .22s cubic-bezier(.2,.7,.3,1)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:13px;font-weight:600;color:#fff">Edit in your own words</span>
+          <span onClick="{{ onCloseEditor }}" style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;cursor:pointer">close</span>
+        </div>
+        <textarea value="{{ instruction }}" onChange="{{ onInstruction }}" rows="2" placeholder="shorter questions · more SQL formulas · drop the Tableau section · add a worked example to every trap" style="margin-top:10px;width:100%;box-sizing:border-box;resize:none;padding:11px 12px;border-radius:9px;border:1px solid #3a3a44;background:#111114;font-size:13px;line-height:1.5;color:#fff"></textarea>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:10px">
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">{{ editorNote }}</span>
+          <span onClick="{{ onApplyEdit }}" style="{{ applyStyle }}">{{ applyLabel }}</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ upsellOpen }}" hint-placeholder-val="{{ false }}">
+      <div style="pointer-events:auto;width:100%;max-width:520px;padding:18px 20px;border-radius:14px;background:#fff;border:1px solid #d8d8de;box-shadow:0 20px 50px rgba(17,17,20,.24);animation:cl-rise .22s cubic-bezier(.2,.7,.3,1)">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:16px">
+          <div>
+            <div style="font-size:14px;font-weight:600;color:#111114">Custom edits come with the unlock</div>
+            <p style="margin:6px 0 0;max-width:44ch;font-size:13px;line-height:1.6;color:#4a4a53;text-wrap:pretty">The preset mixes below are free and instant. Rewriting the sheet in your own words re-runs the engine on your pool — that is part of unlocking this sheet.</p>
+          </div>
+          <span onClick="{{ onCloseUpsell }}" style="flex:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;cursor:pointer">close</span>
+        </div>
+        <span onClick="{{ onUnlock }}" style="display:inline-flex;align-items:center;height:38px;margin-top:14px;padding:0 16px;border-radius:9px;background:#111114;font-size:13px;font-weight:600;color:#fff;cursor:pointer">Unlock this sheet · $4.99</span>
+      </div>
+    </sc-if>
+
+    <div style="pointer-events:auto;display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;max-width:100%;padding:9px 12px;border-radius:14px;background:#111114;box-shadow:0 18px 44px rgba(17,17,20,.34),0 2px 6px rgba(17,17,20,.2)">
+      <span style="flex:none;display:flex;align-items:center;gap:2px;padding:3px;border-radius:9px;background:rgba(255,255,255,.08)">
+        <sc-for list="{{ densities }}" as="d" hint-placeholder-count="3">
+          <span onClick="{{ d.onPick }}" style="{{ d.style }}">{{ d.label }}</span>
+        </sc-for>
+      </span>
+      <span style="width:1px;height:26px;background:#2c2c33"></span>
+      <span style="display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px">
+        <sc-for list="{{ presets }}" as="p" hint-placeholder-count="5">
+          <span onClick="{{ p.onPick }}" style="{{ p.style }}">{{ p.label }}</span>
+        </sc-for>
+      </span>
+      <span style="width:1px;height:26px;background:#2c2c33"></span>
+      <span onClick="{{ onOpenEditor }}" style="{{ editBtnStyle }}">{{ editBtnLabel }}</span>
+    </div>
+    <div style="pointer-events:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">{{ dockNote }}</div>
+  </div>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;left:50%;top:76px;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:9px;padding:11px 16px;border-radius:10px;background:#111114;box-shadow:0 14px 34px rgba(17,17,20,.3);animation:cl-rise .2s cubic-bezier(.2,.7,.3,1)">
+      <span style="color:#4ade80;font-size:12px">✓</span>
+      <span style="font-size:13px;font-weight:500;color:#fff">{{ toast }}</span>
+    </div>
+  </sc-if>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;tier&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;free&quot;,&quot;pro&quot;],&quot;default&quot;:&quot;free&quot;,&quot;tsType&quot;:&quot;\&quot;free\&quot; | \&quot;pro\&quot;&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;max&quot;,&quot;balanced&quot;,&quot;essentials&quot;],&quot;default&quot;:&quot;max&quot;,&quot;tsType&quot;:&quot;\&quot;max\&quot; | \&quot;balanced\&quot; | \&quot;essentials\&quot;&quot;},&quot;showWarning&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const PRESETS = ["More formulas", "More concepts", "Problem-heavy", "Concept-heavy", "Reset mix"];
+const DENS = [
+  { value: "max", label: "MAX", pages: 2, items: 204, note: "fits everything the pool supports" },
+  { value: "balanced", label: "Balanced", pages: 1, items: 131, note: "high-yield only, room to breathe" },
+  { value: "essentials", label: "Essentials", pages: 1, items: 78, note: "core definitions and formulas" }
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = {
+      density: props.density ?? "max",
+      tier: props.tier ?? "free",
+      preset: null,
+      instruction: "",
+      editorOpen: false,
+      upsellOpen: false,
+      applying: false,
+      exporting: false,
+      saved: false,
+      warned: props.showWarning ?? true,
+      toast: ""
+    };
+  }
+  componentWillUnmount() { (this.timers || []).forEach(clearTimeout); }
+  flash(msg) {
+    this.timers = this.timers || [];
+    this.setState({ toast: msg });
+    this.timers.push(setTimeout(() => this.setState({ toast: "" }), 2600));
+  }
+
+  renderVals() {
+    const { density, tier, preset, editorOpen, upsellOpen, applying, exporting, saved, warned, toast } = this.state;
+    const d = DENS.find((x) => x.value === density) || DENS[0];
+    const pro = tier === "pro";
+    const twoPage = d.pages === 2;
+    const locked = twoPage && !pro;
+
+    return {
+      fitChip: "Fits at " + d.label.toUpperCase(),
+      fitChipStyle:
+        "flex:none;display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;background:#e6f4ec;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#1a7f4b",
+      hasWarning: warned,
+      onDismiss: () => this.setState({ warned: false }),
+
+      saveLabel: saved ? "Saved ✓" : "Save to library",
+      saveStyle:
+        "display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:8px;border:1px solid " +
+        (saved ? "#cde5d8" : "#d8d8de") + ";background:" + (saved ? "#e6f4ec" : "#fff") +
+        ";font-size:13px;font-weight:600;color:" + (saved ? "#1a7f4b" : "#111114") + ";cursor:pointer",
+      onSave: () => { if (!saved) { this.setState({ saved: true }); this.flash("Saved to My Sheets"); } },
+
+      exportLabel: exporting ? "Rendering…" : locked ? "Export page 1" : "Export PDF",
+      exportStyle:
+        "display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 15px;border-radius:8px;background:#111114;font-size:13px;font-weight:600;color:#fff;cursor:pointer;opacity:" +
+        (exporting ? ".7" : "1"),
+      onExport: () => {
+        if (exporting) return;
+        this.timers = this.timers || [];
+        this.setState({ exporting: true });
+        this.timers.push(setTimeout(() => {
+          this.setState({ exporting: false });
+          this.flash(locked ? "Page 1 exported · 1 page PDF" : "Exported · " + d.pages + "-page PDF");
+        }, 1400));
+      },
+
+      frontLabel: twoPage ? "Front · page 1 of 2" : "One page · front only",
+      frontMeta: d.items + " items · 7 topics · 38 exam-verified",
+      twoPage,
+      locked,
+      backMeta: locked ? "73 items · sealed" : "73 items · unlocked",
+      backMetaStyle: "color:" + (locked ? "#a5790a" : "#1a7f4b"),
+      backInkStyle: locked ? "filter:blur(3px)" : "",
+      onUnlock: () => { this.setState({ tier: "pro", upsellOpen: false }); this.flash("Unlocked · both pages are yours"); },
+
+      statLine: d.items + " items at " + d.label.toUpperCase() + (preset ? " · " + preset.toLowerCase() : "") + " · every line cites a slide",
+
+      densities: DENS.map((x) => ({
+        label: x.label,
+        onPick: () => this.setState({ density: x.value }),
+        style:
+          "flex:none;white-space:nowrap;padding:6px 13px;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;" +
+          (x.value === density ? "background:#fff;color:#111114" : "color:#909099")
+      })),
+
+      presets: PRESETS.map((label) => ({
+        label,
+        onPick: () => this.setState({ preset: preset === label ? null : label }),
+        style:
+          "flex:none;white-space:nowrap;padding:6px 12px;border-radius:999px;font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid " +
+          (preset === label ? "#fff;background:#fff;color:#111114" : "#3a3a44;background:transparent;color:#e6e6ea")
+      })),
+
+      editBtnLabel: pro ? "Edit in your words" : "✦ Edit in your words",
+      editBtnStyle:
+        "flex:none;white-space:nowrap;display:inline-flex;align-items:center;height:34px;padding:0 14px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;" +
+        (pro ? "background:#5b57e0;color:#fff" : "border:1px solid #3a3a44;color:#909099"),
+      onOpenEditor: () =>
+        pro
+          ? this.setState({ editorOpen: !editorOpen, upsellOpen: false })
+          : this.setState({ upsellOpen: !upsellOpen, editorOpen: false }),
+
+      editorOpen: editorOpen && pro,
+      upsellOpen,
+      onCloseEditor: () => this.setState({ editorOpen: false }),
+      onCloseUpsell: () => this.setState({ upsellOpen: false }),
+      instruction: this.state.instruction,
+      onInstruction: (e) => this.setState({ instruction: e.target.value }),
+      editorNote: applying ? "re-running the engine on your pool" : "the sheet is re-fitted after every edit",
+      applyLabel: applying ? "Editing…" : "Apply edit",
+      applyStyle:
+        "display:inline-flex;align-items:center;height:34px;padding:0 15px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;background:" +
+        (this.state.instruction.trim() ? "#fff" : "#2c2c33") + ";color:" +
+        (this.state.instruction.trim() ? "#111114" : "#6b6b76"),
+      onApplyEdit: () => {
+        if (!this.state.instruction.trim() || applying) return;
+        this.timers = this.timers || [];
+        this.setState({ applying: true });
+        this.timers.push(setTimeout(() => {
+          this.setState({ applying: false, editorOpen: false, instruction: "" });
+          this.flash("Sheet re-fitted · still one page");
+        }, 1600));
+      },
+
+      dockNote: preset ? preset + " · applied instantly, no credit" : d.note + " · changes apply instantly",
+      toast
+    };
+  }
+}
+
+</script>
+</body>
+</html>

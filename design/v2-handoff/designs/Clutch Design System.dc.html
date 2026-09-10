@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous" />
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700;800&family=Geist+Mono:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet" />
+<style>
+  body { margin:0; background:#fbfbfa; color:#1c1c21; font-family:Geist,-apple-system,BlinkMacSystemFont,sans-serif; -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; font-feature-settings:'ss01','cv01'; }
+  ::selection { background:#ecebfb; color:#3a34b8; }
+  a { color:#3a34b8; text-decoration:none; }
+  a:hover { color:#4b45d6; }
+  @keyframes ds-climb { from { width:0; } }
+  @keyframes ds-spin { to { transform:rotate(360deg); } }
+  @keyframes ds-pulse { 0%,100% { opacity:.5; } 50% { opacity:1; } }
+  @keyframes ds-rise { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+  @keyframes ds-shimmer { 100% { background-position:200% 0; } }
+  @media (prefers-reduced-motion: reduce) { *,*::before,*::after { animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important; } }
+</style>
+</helmet>
+
+<div style="max-width:1180px;margin:0 auto;padding:0 56px 140px">
+
+  <header style="padding:96px 0 0">
+    <div style="display:flex;align-items:center;gap:10px">
+      <svg viewBox="60 30 340 440" width="22" height="28" role="img" aria-label="Clutch"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg>
+      <span style="font-size:15px;font-weight:600;letter-spacing:-0.01em;color:#111114">Clutch</span>
+      <span style="margin-left:auto;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;color:#909099">v3 · light mode only · aug 2026</span>
+    </div>
+
+    <h1 style="margin:56px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:76px;line-height:1;letter-spacing:-0.025em;color:#111114">Design System</h1>
+
+    <div style="display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:64px;margin-top:36px;padding-bottom:40px">
+      <p style="margin:0;font-size:19px;line-height:1.6;color:#4a4a53;text-wrap:pretty;max-width:56ch">
+        One product, one moment: 2am, forty-eight hours out, stress at its peak. Every surface answers one question and offers one obvious next action. The system below is what makes that feel expensive instead of cheap — a near-black primary, an iris signal reserved for money, and a trust layer that never gets cleaned away.
+      </p>
+      <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;line-height:2;color:#6b6b76;border-left:1px solid #e6e6ea;padding-left:20px">
+        <div>source · src/renderer/tokens.css</div>
+        <div>ui · src/components/ui</div>
+        <div>trust · src/components/trust</div>
+        <div>live · /debug/tokens · /debug/primitives</div>
+      </div>
+    </div>
+    <div style="height:1px;background:#111114"></div>
+  </header>
+
+  <!-- ── 01 COLOR ─────────────────────────────────────────────── -->
+  <section style="padding-top:88px">
+    <div style="display:flex;align-items:baseline;gap:20px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#909099">01</span>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-0.02em;color:#111114">Color</h2>
+    </div>
+    <p style="margin:18px 0 0;max-width:62ch;font-size:15px;line-height:1.6;color:#4a4a53;text-wrap:pretty">
+      Ink is the brand. Primary actions are near-black — the iris <em>signal</em> is spent only on links, focus, and paid moments, so an upgrade prompt reads differently from every other button on the screen.
+    </p>
+
+    <h3 style="margin:48px 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Ink — warm cool-gray</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+    <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:12px">
+      <div><div style="height:76px;border-radius:6px;background:#111114"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-900</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#111114</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#1c1c21"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-800</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#1c1c21</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#2c2c33"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-700</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#2c2c33</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#4a4a53"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-600</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#4a4a53</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#6b6b76"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-500</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#6b6b76</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#909099"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-400</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#909099</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#b8b8bf"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-300</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#b8b8bf</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#d9d9de"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-200</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#d9d9de</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#e6e6ea"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-150</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#e6e6ea</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#f0f0f2"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-100</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#f0f0f2</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#f7f7f8;border:1px solid #e6e6ea"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">ink-50</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#f7f7f8</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#fbfbfa;border:1px solid #e6e6ea"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">paper</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#fbfbfa</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#f5f5f3;border:1px solid #e6e6ea"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">paper-2</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#f5f5f3</div></div>
+      <div><div style="height:76px;border-radius:6px;background:#ffffff;border:1px solid #e6e6ea"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">white</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#ffffff</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:56px">
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Signal — iris</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px">
+          <div><div style="height:76px;border-radius:6px;background:#3a34b8"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">700</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#3a34b8</div></div>
+          <div><div style="height:76px;border-radius:6px;background:#4b45d6"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">600</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#4b45d6</div></div>
+          <div><div style="height:76px;border-radius:6px;background:#5b57e0"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">500</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#5b57e0</div></div>
+          <div><div style="height:76px;border-radius:6px;background:#ecebfb"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">100</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#ecebfb</div></div>
+          <div><div style="height:76px;border-radius:6px;background:#f5f4fe;border:1px solid #ecebfb"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">50</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#f5f4fe</div></div>
+        </div>
+        <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#6b6b76;text-wrap:pretty">Links, focus rings, upgrade. Never the default button fill.</p>
+      </div>
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Salmon — proof surfaces</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+          <div><div style="height:76px;border-radius:6px;background:#fdece4;border:1px solid #f4d3c4"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">salmon</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#fdece4</div></div>
+          <div><div style="height:76px;border-radius:6px;background:#f4d3c4"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">salmon-line</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#f4d3c4</div></div>
+          <div><div style="height:76px;border-radius:6px;background:#8a4a2f"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">salmon-text</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#8a4a2f</div></div>
+        </div>
+        <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#6b6b76;text-wrap:pretty">The editorial tint. Reserved for ★ past-exam evidence — nothing else earns it.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:56px 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Confidence tiers — the trust layer</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1a7f4b;box-shadow:0 0 0 3px #e6f4ec"></span><span style="font-size:14px;font-weight:600;color:#111114">High</span><span style="margin-left:auto;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">≥80%</span></div>
+        <div style="margin-top:14px;height:34px;border-radius:6px;background:#e6f4ec;display:flex;align-items:center;padding:0 10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#1a7f4b">conf .91</div>
+        <div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#1a7f4b · bg #e6f4ec</div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b26a00;box-shadow:0 0 0 3px #fbf0dd"></span><span style="font-size:14px;font-weight:600;color:#111114">Medium</span><span style="margin-left:auto;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">50–79%</span></div>
+        <div style="margin-top:14px;height:34px;border-radius:6px;background:#fbf0dd;display:flex;align-items:center;padding:0 10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#b26a00">conf .64</div>
+        <div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#b26a00 · bg #fbf0dd</div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c0392b;box-shadow:0 0 0 3px #fbe9e7"></span><span style="font-size:14px;font-weight:600;color:#111114">Low</span><span style="margin-left:auto;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">&lt;50%</span></div>
+        <div style="margin-top:14px;height:34px;border-radius:6px;background:#fbe9e7;display:flex;align-items:center;padding:0 10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#c0392b">conf .38</div>
+        <div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#c0392b · bg #fbe9e7</div>
+      </div>
+      <div style="border:1px solid #f4d3c4;border-radius:12px;background:#fff;padding:18px">
+        <div style="display:flex;align-items:center;gap:10px"><span style="font-size:14px;color:#a5790a">★</span><span style="font-size:14px;font-weight:600;color:#111114">Verified</span><span style="margin-left:auto;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">past exam</span></div>
+        <div style="margin-top:14px;height:34px;border-radius:6px;background:#fbf3da;display:flex;align-items:center;padding:0 10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#a5790a">★ Final '19 Q3</div>
+        <div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#a5790a · bg #fbf3da</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:56px">
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Functional</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+          <div><div style="height:56px;border-radius:6px;background:#2f6db3"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">info</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#2f6db3</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#b26a00"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">warn</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#b26a00</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#c0392b"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">danger</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#c0392b</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#1a7f4b"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">success</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">#1a7f4b</div></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Topic palette</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px">
+          <div><div style="height:56px;border-radius:6px;background:#5b57e0"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">1</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#1a7f4b"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">2</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#b26a00"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">3</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#2f6db3"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">4</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#8e44ad"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">5</div></div>
+          <div><div style="height:56px;border-radius:6px;background:#c0392b"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">6</div></div>
+        </div>
+        <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#6b6b76;text-wrap:pretty">Cycles per topic on multi-topic sheets: tinted section bar plus a colored left rule.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 02 TYPE ──────────────────────────────────────────────── -->
+  <section style="padding-top:96px">
+    <div style="display:flex;align-items:baseline;gap:20px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#909099">02</span>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-0.02em;color:#111114">Typography</h2>
+    </div>
+    <p style="margin:18px 0 0;max-width:62ch;font-size:15px;line-height:1.6;color:#4a4a53;text-wrap:pretty">
+      Three faces, three jobs. Newsreader carries authority, Geist carries the interface, Geist Mono carries evidence — every citation, confidence figure, and file count is mono so proof is visually distinct from prose.
+    </p>
+
+    <div style="margin-top:44px;border-top:1px solid #111114">
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">Display</span>
+        <span style="font-family:Newsreader,Georgia,serif;font-weight:400;font-size:56px;line-height:1.05;letter-spacing:-0.02em;color:#111114">Know what's on the exam</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Newsreader 400<br />56 / 1.05 / −.02em</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">H1</span>
+        <span style="font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;color:#111114">Intro Statistics — Exam Reference Sheet</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Newsreader 400<br />40 / 1.1</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">H2</span>
+        <span style="font-size:28px;line-height:1.2;font-weight:600;color:#111114">Most tools summarize. We decide.</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Geist 600<br />28 / 1.2</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">H3</span>
+        <span style="font-size:19px;line-height:1.3;font-weight:600;color:#111114">Confidence intervals</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Geist 600<br />19 / 1.3</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">Body L</span>
+        <span style="font-size:17px;line-height:1.55;color:#4a4a53">Upload your materials. Get a dense, printable sheet that ranks what's most likely tested — and proves every claim.</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Geist 400<br />17 / 1.55</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">Body</span>
+        <span style="font-size:14px;line-height:1.55;color:#4a4a53">Read NOT and EXCEPT twice. They flip the answer.</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Geist 400<br />14 / 1.55</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">Label</span>
+        <span style="font-size:13px;font-weight:550;color:#2c2c33">Exam type</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Geist 550<br />13</span>
+      </div>
+      <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 200px;gap:32px;padding:28px 0;border-bottom:1px solid #e6e6ea;align-items:baseline">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">Mono / cite</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;line-height:1.4;color:#4a4a53">L08 s23 · Final '19 Q3</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.7;color:#6b6b76">Geist Mono 500<br />12 / 1.4</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 03 SPACE / RADIUS / ELEVATION / MOTION ──────────────── -->
+  <section style="padding-top:96px">
+    <div style="display:flex;align-items:baseline;gap:20px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#909099">03</span>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-0.02em;color:#111114">Space, form, motion</h2>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:44px">
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Spacing — 4px base</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">4</span><span style="height:12px;width:4px;background:#111114"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">8</span><span style="height:12px;width:8px;background:#111114"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">12</span><span style="height:12px;width:12px;background:#111114"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">16</span><span style="height:12px;width:16px;background:#111114"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">24</span><span style="height:12px;width:24px;background:#111114"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">32</span><span style="height:12px;width:32px;background:#111114"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">48</span><span style="height:12px;width:48px;background:#111114"></span></div>
+          <div style="display:flex;align-items:center;gap:16px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099;width:28px">64</span><span style="height:12px;width:64px;background:#111114"></span></div>
+        </div>
+      </div>
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Radius</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px">
+          <div><div style="height:56px;background:#f0f0f2;border-radius:4px"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">xs 4</div></div>
+          <div><div style="height:56px;background:#f0f0f2;border-radius:6px"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">sm 6</div></div>
+          <div><div style="height:56px;background:#f0f0f2;border-radius:8px"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">md 8</div></div>
+          <div><div style="height:56px;background:#f0f0f2;border-radius:12px"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">lg 12</div></div>
+          <div><div style="height:56px;background:#f0f0f2;border-radius:18px"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">xl 18</div></div>
+          <div><div style="height:56px;background:#f0f0f2;border-radius:999px"></div><div style="margin-top:8px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">full</div></div>
+        </div>
+        <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#6b6b76;text-wrap:pretty">Controls take 8. Cards take 12. Modals and the sheet frame take 18. Nothing is over-rounded.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:56px 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Elevation</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:28px"></div>
+    <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:20px;padding:8px 0 12px">
+      <div><div style="height:88px;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(17,17,20,.05)"></div><div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">sh-xs</div><div style="font-size:12px;line-height:1.5;color:#909099">chips, hairline lift</div></div>
+      <div><div style="height:88px;border-radius:12px;background:#fff;box-shadow:0 1px 3px rgba(17,17,20,.07),0 1px 2px rgba(17,17,20,.04)"></div><div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">sh-sm</div><div style="font-size:12px;line-height:1.5;color:#909099">buttons, inputs</div></div>
+      <div><div style="height:88px;border-radius:12px;background:#fff;box-shadow:0 4px 12px rgba(17,17,20,.08),0 2px 4px rgba(17,17,20,.04)"></div><div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">sh-md</div><div style="font-size:12px;line-height:1.5;color:#909099">cards, dropdowns</div></div>
+      <div><div style="height:88px;border-radius:12px;background:#fff;box-shadow:0 12px 32px rgba(17,17,20,.10),0 4px 8px rgba(17,17,20,.05)"></div><div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">sh-lg</div><div style="font-size:12px;line-height:1.5;color:#909099">popovers, toasts</div></div>
+      <div><div style="height:88px;border-radius:12px;background:#fff;box-shadow:0 24px 60px rgba(17,17,20,.14),0 8px 16px rgba(17,17,20,.06)"></div><div style="margin-top:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#2c2c33">sh-xl</div><div style="font-size:12px;line-height:1.5;color:#909099">modals, the sheet</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;margin-top:48px">
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Motion</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;line-height:2;color:#4a4a53">
+          <div>dur-fast · 120ms · hovers, chips</div>
+          <div>dur · 200ms · buttons, tabs</div>
+          <div>dur-slow · 360ms · pages, meters</div>
+          <div style="margin-top:8px">ease · cubic-bezier(.2,.6,.2,1)</div>
+          <div>ease-out · cubic-bezier(.16,1,.3,1)</div>
+        </div>
+        <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#6b6b76;text-wrap:pretty">Nothing bounces. Nothing overshoots. <code style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px">prefers-reduced-motion</code> jumps to the end state.</p>
+      </div>
+      <div>
+        <h3 style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Z-index scale</h3>
+        <div style="height:1px;background:#e6e6ea;margin-bottom:20px"></div>
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;line-height:2;color:#4a4a53">
+          <div>100 sticky · nav, app chrome</div>
+          <div>200 dropdown · selects, menus</div>
+          <div>300 overlay · generation loading</div>
+          <div>400 / 410 modal backdrop / modal</div>
+          <div>500 toast · 600 tooltip</div>
+        </div>
+        <p style="margin:16px 0 0;font-size:13px;line-height:1.6;color:#6b6b76;text-wrap:pretty">Never an arbitrary 999.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 04 PRIMITIVES ───────────────────────────────────────── -->
+  <section style="padding-top:96px">
+    <div style="display:flex;align-items:baseline;gap:20px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#909099">04</span>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-0.02em;color:#111114">Primitives</h2>
+    </div>
+    <p style="margin:18px 0 0;max-width:62ch;font-size:15px;line-height:1.6;color:#4a4a53;text-wrap:pretty">
+      Twenty components carry the whole product. Each one exists in code at the path noted beside it — this page is the reference, not a second source of truth.
+    </p>
+
+    <div style="margin-top:44px;border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+      <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+        <span style="font-size:15px;font-weight:600;color:#111114">Button</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/Button.tsx · 6 variants · h28 / h36 / h44 · r8</span>
+      </div>
+      <div style="padding:28px 24px">
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center">
+          <button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:0;border-radius:8px;background:#111114;color:#fff;font-family:inherit;font-size:14px;font-weight:500;line-height:1;box-shadow:0 1px 3px rgba(17,17,20,.07),0 1px 2px rgba(17,17,20,.04);cursor:pointer;transition:background-color 120ms cubic-bezier(.16,1,.3,1),transform 120ms cubic-bezier(.16,1,.3,1)" style-hover="background:#1c1c21;transform:translateY(-1px)">Generate my sheet</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:0;border-radius:8px;background:#5b57e0;color:#fff;font-family:inherit;font-size:14px;font-weight:500;line-height:1;box-shadow:0 1px 3px rgba(17,17,20,.07),0 1px 2px rgba(17,17,20,.04);cursor:pointer;transition:background-color 120ms cubic-bezier(.16,1,.3,1),transform 120ms cubic-bezier(.16,1,.3,1)" style-hover="background:#4b45d6;transform:translateY(-1px)">Unlock with Pro</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:1px solid #ecebfb;border-radius:8px;background:#f5f4fe;color:#3a34b8;font-family:inherit;font-size:14px;font-weight:500;line-height:1;cursor:pointer;transition:background-color 120ms" style-hover="background:#ecebfb">See a sample</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:1px solid #d9d9de;border-radius:8px;background:#fff;color:#1c1c21;font-family:inherit;font-size:14px;font-weight:500;line-height:1;cursor:pointer;transition:background-color 120ms" style-hover="background:#f7f7f8;border-color:#b8b8bf">Make another</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#2c2c33;font-family:inherit;font-size:14px;font-weight:500;line-height:1;cursor:pointer;transition:background-color 120ms" style-hover="background:#f0f0f2">Not now</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:1px solid rgba(192,57,43,.35);border-radius:8px;background:#fff;color:#c0392b;font-family:inherit;font-size:14px;font-weight:500;line-height:1;cursor:pointer;transition:background-color 120ms" style-hover="background:#fbe9e7;border-color:rgba(192,57,43,.6)">Delete sheet</button>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:20px">
+          <button style="display:inline-flex;align-items:center;justify-content:center;height:28px;padding:0 10px;border:0;border-radius:8px;background:#111114;color:#fff;font-family:inherit;font-size:13px;font-weight:500;line-height:1;cursor:pointer">Small</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 16px;border:0;border-radius:8px;background:#111114;color:#fff;font-family:inherit;font-size:14px;font-weight:500;line-height:1;cursor:pointer">Medium</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border:0;border-radius:8px;background:#111114;color:#fff;font-family:inherit;font-size:15px;font-weight:500;line-height:1;cursor:pointer">Drop your files</button>
+          <button style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 16px;border:0;border-radius:8px;background:#111114;color:#fff;font-family:inherit;font-size:14px;font-weight:500;line-height:1;cursor:wait">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style="animation:ds-spin .7s linear infinite"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-opacity=".25" stroke-width="3" /><path d="M21 12a9 9 0 0 0-9-9" stroke="currentColor" stroke-width="3" stroke-linecap="round" /></svg>
+            Generating
+          </button>
+          <button disabled="disabled" style="display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 16px;border:0;border-radius:8px;background:#111114;color:#fff;font-family:inherit;font-size:14px;font-weight:500;line-height:1;opacity:.45">Add files to generate</button>
+        </div>
+        <sc-if value="{{ showSpecs }}" hint-placeholder-val="{{ true }}">
+          <p style="margin:24px 0 0;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.8;color:#909099">primary=ink-900 · signal=iris (paid only) · hover lifts 1px, active resets · focus-visible ring-2 offset-2 · disabled opacity .45, no shadow</p>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+          <span style="font-size:15px;font-weight:600;color:#111114">Chip</span>
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/Chip.tsx · 7 tones</span>
+        </div>
+        <div style="padding:28px 24px">
+          <div style="display:flex;flex-wrap:wrap;gap:8px">
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#f0f0f2;color:#2c2c33;font-size:12px;font-weight:500;line-height:1">Slides</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#fdece4;color:#8a4a2f;font-size:12px;font-weight:500;line-height:1">★ Past exam</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#ecebfb;color:#3a34b8;font-size:12px;font-weight:500;line-height:1">MAX</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#e6f4ec;color:#1a7f4b;font-size:12px;font-weight:500;line-height:1">Verified</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#fbf0dd;color:#b26a00;font-size:12px;font-weight:500;line-height:1">1 credit left</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#fbe9e7;color:#c0392b;font-size:12px;font-weight:500;line-height:1">Failed</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#111114;color:#fff;font-size:12px;font-weight:500;line-height:1">PRO</span>
+            <span style="display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:5px 10px;background:#f0f0f2;color:#2c2c33;font-size:12px;font-weight:500;line-height:1">Review guide
+              <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="opacity:.6"><path d="M6 6l12 12M18 6L6 18" /></svg>
+            </span>
+          </div>
+          <sc-if value="{{ showSpecs }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:20px 0 0;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.8;color:#909099">r-full · 12px/500 · px10 py5 · salmon "exam" tone is the signature: highest-weight file findable at a glance</p>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+          <span style="font-size:15px;font-weight:600;color:#111114">Segmented control &amp; credits</span>
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/SegmentedControl.tsx</span>
+        </div>
+        <div style="padding:28px 24px;display:flex;flex-direction:column;gap:16px;align-items:flex-start">
+          <div style="display:inline-flex;align-items:center;gap:2px;border-radius:8px;background:#f0f0f2;padding:4px">
+            <span style="display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 12px;border-radius:6px;background:#fff;color:#111114;font-size:13px;font-weight:500;box-shadow:0 1px 2px rgba(17,17,20,.05)">MAX</span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 12px;border-radius:6px;color:#6b6b76;font-size:13px;font-weight:500">Balanced</span>
+            <span style="display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 12px;border-radius:6px;color:#6b6b76;font-size:13px;font-weight:500">Essentials</span>
+          </div>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;background:#f0f0f2;color:#2c2c33;font-size:12px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:#1a7f4b"></span>3 credits</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;background:#fbf0dd;color:#b26a00;font-size:12px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:#b26a00"></span>1 credit</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;background:#111114;color:#fff;font-size:12px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:#fff"></span>Sprint Pass</span>
+          </div>
+          <sc-if value="{{ showSpecs }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:4px 0 0;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.8;color:#909099">active = white tile + sh-xs on an ink-100 track · credits pill turns amber at ≤1</p>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+          <span style="font-size:15px;font-weight:600;color:#111114">Fields</span>
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/Field · TextInput · Select</span>
+        </div>
+        <div style="padding:28px 24px;display:flex;flex-direction:column;gap:18px">
+          <label style="display:block">
+            <span style="display:block;margin-bottom:6px;font-size:13px;font-weight:550;color:#2c2c33">Email</span>
+            <input type="email" value="gold@utdallas.edu" style="height:36px;width:100%;box-sizing:border-box;border:1px solid #d9d9de;border-radius:8px;background:#fff;padding:0 12px;font-family:inherit;font-size:14px;color:#111114;outline:none" style-focus="border-color:#5b57e0;box-shadow:0 0 0 2px #ecebfb" />
+            <span style="display:block;margin-top:6px;font-size:12px;color:#6b6b76">No password. We send a magic link.</span>
+          </label>
+          <label style="display:block">
+            <span style="display:block;margin-bottom:6px;font-size:13px;font-weight:550;color:#2c2c33">Exam type</span>
+            <span style="position:relative;display:block">
+              <select style="height:36px;width:100%;box-sizing:border-box;appearance:none;border:1px solid #d9d9de;border-radius:8px;background:#fff;padding:0 32px 0 12px;font-family:inherit;font-size:14px;color:#111114;outline:none">
+                <option>Final — cumulative</option>
+                <option>Midterm</option>
+                <option>Quiz</option>
+              </select>
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#909099" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none"><path d="m6 9 6 6 6-6" /></svg>
+            </span>
+          </label>
+          <label style="display:block">
+            <span style="display:block;margin-bottom:6px;font-size:13px;font-weight:550;color:#2c2c33">Search</span>
+            <span style="position:relative;display:block">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#909099" stroke-width="1.8" stroke-linecap="round" style="position:absolute;left:10px;top:50%;transform:translateY(-50%)"><circle cx="11" cy="11" r="7" /><path d="m20 20-3.5-3.5" /></svg>
+              <input type="search" placeholder="Search your sheets" style="height:36px;width:100%;box-sizing:border-box;border:1px solid #d9d9de;border-radius:8px;background:#fff;padding:0 12px 0 32px;font-family:inherit;font-size:14px;color:#111114;outline:none" />
+            </span>
+          </label>
+          <label style="display:block">
+            <span style="display:block;margin-bottom:6px;font-size:13px;font-weight:550;color:#2c2c33">Course code</span>
+            <input type="text" value="stat 200!!" style="height:36px;width:100%;box-sizing:border-box;border:1px solid #c0392b;border-radius:8px;background:#fff;padding:0 12px;font-family:inherit;font-size:14px;color:#111114;outline:none" />
+            <span style="display:block;margin-top:6px;font-size:12px;color:#c0392b">Letters and numbers only.</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+          <span style="font-size:15px;font-weight:600;color:#111114">File drop</span>
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/FileDrop.tsx · the front door</span>
+        </div>
+        <div style="padding:28px 24px">
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;border:2px dashed #d9d9de;border-radius:12px;background:#f7f7f8;padding:40px 24px;text-align:center;transition:border-color 120ms,background-color 120ms" style-hover="border-color:#5b57e0;background:#f5f4fe">
+            <span style="display:flex;align-items:center;justify-content:center;width:44px;height:44px;border-radius:8px;background:#fff;color:#6b6b76;box-shadow:0 1px 2px rgba(17,17,20,.05)">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><path d="M12 3v13M7 8l5-5 5 5" /></svg>
+            </span>
+            <div>
+              <div style="font-family:Newsreader,Georgia,serif;font-size:19px;color:#111114">Drop your files</div>
+              <div style="margin-top:4px;font-size:13px;color:#6b6b76">Drag files here, or browse · PDF, PPTX, TXT, MD up to 40 MB each</div>
+            </div>
+          </div>
+          <sc-if value="{{ showSpecs }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:20px 0 0;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.8;color:#909099">drag-over → border signal-500 on signal-50 · title is Newsreader 19 — the one serif inside app chrome</p>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:20px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+        <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+          <span style="font-size:15px;font-weight:600;color:#111114">Callout</span>
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/Callout.tsx · 5 variants</span>
+        </div>
+        <div style="padding:28px 24px;display:flex;flex-direction:column;gap:10px">
+          <div style="display:flex;gap:10px;border:1px solid rgba(47,109,179,.2);border-radius:8px;background:#e8f1fb;padding:10px 12px;font-size:13px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#2f6db3" stroke-width="1.8" stroke-linecap="round" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4M12 8h.01" /></svg>
+            <div style="color:#1c1c21"><div style="font-weight:600;color:#111114">Image-only PDF</div>We OCR'd it — accuracy may be lower.</div>
+          </div>
+          <div style="display:flex;gap:10px;border:1px solid rgba(178,106,0,.25);border-radius:8px;background:#fbf0dd;padding:10px 12px;font-size:13px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#b26a00" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
+            <div style="color:#1c1c21"><div style="font-weight:600;color:#111114">5 topics trimmed to fit one page</div>Ranked lowest. Review what came off.</div>
+          </div>
+          <div style="display:flex;gap:10px;border:1px solid rgba(192,57,43,.25);border-radius:8px;background:#fbe9e7;padding:10px 12px;font-size:13px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#c0392b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M12 9v4M12 17h.01M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z" /></svg>
+            <div style="color:#1c1c21"><div style="font-weight:600;color:#111114">Generation failed</div>Your credit was refunded automatically.</div>
+          </div>
+          <div style="display:flex;gap:10px;border:1px solid rgba(26,127,75,.25);border-radius:8px;background:#e6f4ec;padding:10px 12px;font-size:13px">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#1a7f4b" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px"><path d="M20 6 9 17l-5-5" /></svg>
+            <div style="color:#1c1c21"><div style="font-weight:600;color:#111114">Fits at MAX</div>One page, nothing clipped.</div>
+          </div>
+          <div style="display:flex;gap:10px;border:1px solid #f4d3c4;border-radius:8px;background:#fdece4;padding:10px 12px;font-size:13px">
+            <span style="flex:none;color:#8a4a2f">★</span>
+            <div style="color:#1c1c21"><div style="font-weight:600;color:#111114">12 items verified against your past exams</div>Matched to real questions in the pack.</div>
+          </div>
+          <sc-if value="{{ showSpecs }}" hint-placeholder-val="{{ true }}">
+            <p style="margin:8px 0 0;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;line-height:1.8;color:#909099">tinted bg + hairline border of its own hue · never a left-stripe accent in app chrome</p>
+          </sc-if>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+          <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+            <span style="font-size:15px;font-weight:600;color:#111114">Progress</span>
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/Progress.tsx</span>
+          </div>
+          <div style="padding:28px 24px;display:flex;flex-direction:column;gap:22px">
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px"><span style="color:#4a4a53">Confidence in result</span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;color:#1c1c21">72%</span></div>
+              <div style="height:8px;width:100%;border-radius:999px;background:#e6e6ea;overflow:hidden"><div style="height:100%;width:72%;border-radius:999px;background:linear-gradient(90deg,#b26a00,#1a7f4b);animation:ds-climb 360ms cubic-bezier(.16,1,.3,1)"></div></div>
+              <div style="margin-top:6px;font-size:12px;color:#6b6b76">Add a past exam to push confidence past 85%.</div>
+            </div>
+            <div>
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;font-size:13px"><span style="color:#4a4a53">Verifying page fit</span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;color:#1c1c21">3 / 4</span></div>
+              <div style="height:8px;width:100%;border-radius:999px;background:#e6e6ea;overflow:hidden"><div style="height:100%;width:75%;border-radius:999px;background:#111114"></div></div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="height:12px;border-radius:6px;background:linear-gradient(90deg,#f0f0f2 25%,#e6e6ea 37%,#f0f0f2 63%);background-size:400% 100%;animation:ds-shimmer 1.4s ease infinite"></div>
+              <div style="height:12px;width:70%;border-radius:6px;background:linear-gradient(90deg,#f0f0f2 25%,#e6e6ea 37%,#f0f0f2 63%);background-size:400% 100%;animation:ds-shimmer 1.4s ease infinite"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;overflow:hidden">
+          <div style="display:flex;align-items:baseline;gap:12px;padding:20px 24px;border-bottom:1px solid #f0f0f2">
+            <span style="font-size:15px;font-weight:600;color:#111114">Modal</span>
+            <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">ui/Modal.tsx · native &lt;dialog&gt; · r18 · sh-xl</span>
+          </div>
+          <div style="padding:28px 24px;background:#f5f5f3">
+            <div style="max-width:400px;margin:0 auto;border:1px solid #e6e6ea;border-radius:18px;background:#fff;padding:24px;box-shadow:0 24px 60px rgba(17,17,20,.14),0 8px 16px rgba(17,17,20,.06);animation:ds-rise 360ms cubic-bezier(.16,1,.3,1)">
+              <span style="display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:5px 10px;background:#fbf0dd;color:#b26a00;font-size:12px;font-weight:500"><span style="width:6px;height:6px;border-radius:50%;background:#b26a00"></span>0 credits left</span>
+              <h4 style="margin:14px 0 0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:26px;line-height:1.15;color:#111114">Keep the momentum going.</h4>
+              <p style="margin:8px 0 0;font-size:14px;line-height:1.55;color:#4a4a53">Three sheets for $9.99 — $3.33 each, and credits never expire.</p>
+              <div style="display:flex;gap:10px;margin-top:20px">
+                <button style="display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 16px;border:0;border-radius:8px;background:transparent;color:#2c2c33;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer">Not now</button>
+                <button style="display:inline-flex;align-items:center;justify-content:center;height:36px;padding:0 16px;border:0;border-radius:8px;background:#5b57e0;color:#fff;font-family:inherit;font-size:14px;font-weight:500;cursor:pointer;margin-left:auto;box-shadow:0 1px 3px rgba(17,17,20,.07)">Get 3-Pack · $9.99</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 05 TRUST LAYER ──────────────────────────────────────── -->
+  <section style="padding-top:96px">
+    <div style="display:flex;align-items:baseline;gap:20px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#909099">05</span>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-0.02em;color:#111114">The trust layer</h2>
+    </div>
+    <p style="margin:18px 0 0;max-width:62ch;font-size:15px;line-height:1.6;color:#4a4a53;text-wrap:pretty">
+      The moat is not model access — it is the ability to say <em>this is on the exam, here's why</em>. Every ranked item, everywhere it appears, carries three things together: a confidence dot, a ★ if a past exam confirmed it, and a real citation. This is the one part of the system that may never be simplified for looks.
+    </p>
+
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;margin-top:44px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px">
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">01 · CONFIDENCE DOT</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-top:20px">
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1a7f4b;box-shadow:0 0 0 3px #e6f4ec"></span>
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#b26a00;box-shadow:0 0 0 3px #fbf0dd"></span>
+          <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#c0392b;box-shadow:0 0 0 3px #fbe9e7"></span>
+        </div>
+        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Filled circle, tier-colored, optional halo of the tier's own tint. Sizes in px for app chrome; 0.62em inside the sheet so it scales with type.</p>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px">
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">02 · VERIFIED ★</div>
+        <div style="margin-top:16px;font-size:26px;color:#a5790a">★</div>
+        <p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Gold star, shown only when the item's pattern matched a real past exam in the pack. Stripped automatically when the past-exam PDF was image-only — an unearned ★ is worse than none.</p>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px">
+        <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">03 · CITATION</div>
+        <div style="margin-top:18px;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:500;color:#4a4a53">L08 s23 · Final '19 Q3</div>
+        <p style="margin:18px 0 0;font-size:13px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Lecture 08, slide 23; appeared on the 2019 final, question 3. Reads as background, functions as the audit trail.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:56px 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Ranked row — the signature pattern</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:24px"></div>
+    <div style="display:flex;flex-direction:column;gap:8px;max-width:640px">
+      <div style="display:flex;align-items:flex-start;gap:10px;border:1px solid #e6e6ea;border-radius:8px;background:#fff;padding:10px 12px;box-shadow:0 1px 2px rgba(17,17,20,.05)">
+        <span style="margin-top:4px;flex:none;display:inline-block;width:9px;height:9px;border-radius:50%;background:#1a7f4b;box-shadow:0 0 0 3px #e6f4ec"></span>
+        <span style="min-width:0;flex:1">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#111114"><span style="color:#a5790a">★</span>Confidence interval — small-sample mean</span>
+          <span style="display:block;margin-top:2px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">L08 s23 · Final '19 Q3</span>
+        </span>
+        <span style="flex:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">#1</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;border:1px solid #e6e6ea;border-radius:8px;background:#fff;padding:10px 12px;box-shadow:0 1px 2px rgba(17,17,20,.05)">
+        <span style="margin-top:4px;flex:none;display:inline-block;width:9px;height:9px;border-radius:50%;background:#1a7f4b;box-shadow:0 0 0 3px #e6f4ec"></span>
+        <span style="min-width:0;flex:1">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#111114"><span style="color:#a5790a">★</span>z vs t decision</span>
+          <span style="display:block;margin-top:2px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">Guide p.4 · Midterm '22 Q2</span>
+        </span>
+        <span style="flex:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">#2</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;border:1px solid #e6e6ea;border-radius:8px;background:#fff;padding:10px 12px;box-shadow:0 1px 2px rgba(17,17,20,.05)">
+        <span style="margin-top:4px;flex:none;display:inline-block;width:9px;height:9px;border-radius:50%;background:#b26a00;box-shadow:0 0 0 3px #fbf0dd"></span>
+        <span style="min-width:0;flex:1">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#111114">p-value meaning — P(data | H0)</span>
+          <span style="display:block;margin-top:2px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">L11 s12</span>
+        </span>
+        <span style="flex:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">#3</span>
+      </div>
+      <div style="display:flex;align-items:flex-start;gap:10px;border:1px solid #e6e6ea;border-radius:8px;background:#fff;padding:10px 12px;box-shadow:0 1px 2px rgba(17,17,20,.05)">
+        <span style="margin-top:4px;flex:none;display:inline-block;width:9px;height:9px;border-radius:50%;background:#c0392b;box-shadow:0 0 0 3px #fbe9e7"></span>
+        <span style="min-width:0;flex:1">
+          <span style="display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;color:#111114">Bayes rule</span>
+          <span style="display:block;margin-top:2px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">L14 s3</span>
+        </span>
+        <span style="flex:none;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">#4</span>
+      </div>
+    </div>
+
+    <h3 style="margin:56px 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Verified Q-pattern strip — on the sheet</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:24px"></div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+      <div style="border:1px solid #f4d3c4;border-radius:8px;background:#fdece4;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#8a4a2f"><span style="color:#a5790a">★</span>Verified Q-pattern</div>
+        <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#2c2c33">"Construct &amp; interpret a 95% CI" — appeared on 4 of the last 4 finals.</p>
+      </div>
+      <div style="border:1px solid #f4d3c4;border-radius:8px;background:#fdece4;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#8a4a2f"><span style="color:#a5790a">★</span>Verified Q-pattern</div>
+        <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#2c2c33">Hypothesis test with a p-value decision — every past final.</p>
+      </div>
+      <div style="border:1px solid #f4d3c4;border-radius:8px;background:#fdece4;padding:12px 14px">
+        <div style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#8a4a2f"><span style="color:#a5790a">★</span>Verified Q-pattern</div>
+        <p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#2c2c33">z vs t selection given σ known / unknown.</p>
+      </div>
+    </div>
+
+    <h3 style="margin:56px 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Inline citation — in running text</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:24px"></div>
+    <p style="margin:0;max-width:62ch;font-size:15px;line-height:1.7;color:#2c2c33;text-wrap:pretty">
+      For a small sample with unknown σ, use <span style="background:#fbf3da;padding:1px 4px;border-radius:4px">x̄ ± t*(s/√n) with df = n−1</span><sup style="font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;color:#a5790a;margin-left:2px">L08 s23</sup> — and read the question twice for <strong style="font-weight:600">NOT</strong> and <strong style="font-weight:600">EXCEPT</strong>. They flip the answer.
+    </p>
+  </section>
+
+  <!-- ── 06 BRAND ─────────────────────────────────────────────── -->
+  <section style="padding-top:96px">
+    <div style="display:flex;align-items:baseline;gap:20px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#909099">06</span>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-0.02em;color:#111114">Brand</h2>
+    </div>
+    <p style="margin:18px 0 0;max-width:62ch;font-size:15px;line-height:1.6;color:#4a4a53;text-wrap:pretty">
+      The mark is a study sheet with a folded corner, three ruled lines and a bolt through it — the artifact and the speed, in one glyph. The delivered pack shipped with its colors declared as CSS classes that were never defined, so every file rendered flat black; the versions below are repaired and live in <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:13px">assets/brand/</span>.
+    </p>
+
+    <div style="display:flex;gap:12px;margin-top:28px;padding:16px 18px;border:1px solid #f4d3c4;border-radius:8px;background:#fdece4">
+      <span style="flex:none;color:#8a4a2f">★</span>
+      <div style="font-size:14px;line-height:1.6;color:#1c1c21;text-wrap:pretty"><strong style="font-weight:600;color:#111114">One decision left: the palette.</strong> The pack introduces a third blue (electric <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:13px">#1769FF</span>), a navy that is not ink, and a lime that appears nowhere else in the product. Recommendation: adopt the geometry, drop the pack palette, and paint the mark in the system's own three — ink outline, iris bolt, gold fold. Both are below; pick one and the other gets deleted.</div>
+    </div>
+
+    <h3 style="margin:48px 0 4px;margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Recommended — system palette</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:24px"></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:20px;justify-content:space-between">
+        <div style="display:flex;align-items:center;min-height:64px"><svg viewBox="0 0 1240 500" width="232" height="93.54838709677419" role="img"><g><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></g><text x="465" y="330" fill="#111114" font-size="210" font-family="Geist, Arial, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text></svg></div>
+        <div><div style="font-size:13px;font-weight:600;color:#111114">Horizontal</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">clutch-horizontal-ink.svg</div></div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#111114;padding:24px;display:flex;flex-direction:column;gap:20px;justify-content:space-between">
+        <div style="display:flex;align-items:center;min-height:64px"><svg viewBox="0 0 1240 500" width="232" height="93.54838709677419" role="img"><g><path fill="#ffffff" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></g><text x="465" y="330" fill="#ffffff" font-size="210" font-family="Geist, Arial, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text></svg></div>
+        <div><div style="font-size:13px;font-weight:600;color:#fff">Reversed</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">clutch-horizontal-onink.svg</div></div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:20px;justify-content:space-between">
+        <div style="display:flex;align-items:center;justify-content:center;min-height:64px"><svg viewBox="0 0 900 1000" width="96" height="106.66666666666667" role="img"><g transform="translate(190 90) scale(1.3)"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></g><text x="450" y="905" text-anchor="middle" fill="#111114" font-size="190" font-family="Geist, Arial, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text></svg></div>
+        <div><div style="font-size:13px;font-weight:600;color:#111114">Stacked</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">clutch-stacked-ink.svg</div></div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:20px;justify-content:space-between">
+        <div style="display:flex;align-items:center;justify-content:center;gap:20px;min-height:64px"><svg viewBox="60 30 340 440" width="52" height="67.29411764705883" role="img"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg><svg viewBox="60 30 340 440" width="30" height="38.8235294117647" role="img"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg><svg viewBox="60 30 340 440" width="18" height="23.294117647058822" role="img"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg></div>
+        <div><div style="font-size:13px;font-weight:600;color:#111114">Icon · 52 / 30 / 18</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">clutch-icon-ink.svg</div></div>
+      </div>
+    </div>
+
+    <h3 style="margin:48px 0 4px;margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">As supplied — pack palette</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:24px"></div>
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:20px;justify-content:space-between">
+        <div style="display:flex;align-items:center;min-height:64px"><svg viewBox="0 0 1240 500" width="232" height="93.54838709677419" role="img"><g><path fill="#0B245C" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#B7F51A" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#1769FF" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#1769FF" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#1769FF" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#1769FF" x="120" y="205" width="58" height="14" rx="7"></rect></g><text x="465" y="330" fill="#0B245C" font-size="210" font-family="Geist, Arial, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text></svg></div>
+        <div><div style="font-size:13px;font-weight:600;color:#111114">Horizontal color</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">navy · electric blue · lime</div></div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#071536;padding:24px;display:flex;flex-direction:column;gap:20px;justify-content:space-between">
+        <div style="display:flex;align-items:center;min-height:64px"><svg viewBox="0 0 1240 500" width="232" height="93.54838709677419" role="img"><g><path fill="#ffffff" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#B7F51A" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#1769FF" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#1769FF" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#1769FF" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#1769FF" x="120" y="205" width="58" height="14" rx="7"></rect></g><text x="465" y="330" fill="#ffffff" font-size="210" font-family="Geist, Arial, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text></svg></div>
+        <div><div style="font-size:13px;font-weight:600;color:#fff">Dark colorway</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">ground #071536</div></div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px;display:flex;flex-direction:column;gap:20px;justify-content:space-between">
+        <div style="display:flex;align-items:center;min-height:64px"><svg viewBox="0 0 1240 500" width="232" height="93.54838709677419" role="img"><g><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#111114" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#111114" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#111114" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#111114" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#111114" x="120" y="205" width="58" height="14" rx="7"></rect></g><text x="465" y="330" fill="#111114" font-size="210" font-family="Geist, Arial, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text></svg></div>
+        <div><div style="font-size:13px;font-weight:600;color:#111114">Monochrome</div><div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#909099">one-colour print, stamps</div></div>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px">
+        <div style="margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76;margin:0 0 12px">Palette in question</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:4px;background:#0B245C"></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">#0B245C navy</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:4px;background:#1769FF"></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">#1769FF blue</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:4px;background:#B7F51A"></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">#B7F51A lime</span></div>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:22px;height:22px;border-radius:4px;background:#071536"></span><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#4a4a53">#071536 ground</span></div>
+        </div>
+      </div>
+    </div>
+
+    <h3 style="margin:48px 0 4px;margin:0 0 4px;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;color:#6b6b76">Clear space, sizing, misuse</h3>
+    <div style="height:1px;background:#e6e6ea;margin-bottom:24px"></div>
+    <div style="display:grid;grid-template-columns:340px minmax(0,1fr);gap:32px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;background:#fff;padding:24px">
+        <div style="position:relative;padding:26px;background:#f7f7f8;border-radius:8px">
+          <div style="position:absolute;inset:26px;border:1px dashed #b8b8bf;border-radius:4px"></div>
+          <div style="position:relative;display:flex;align-items:center;justify-content:center;padding:14px"><svg viewBox="0 0 1240 500" width="200" height="80.64516129032258" role="img"><g><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></g><text x="465" y="330" fill="#111114" font-size="210" font-family="Geist, Arial, sans-serif" font-weight="700" letter-spacing="-4">Clutch</text></svg></div>
+        </div>
+        <div style="margin-top:14px;font-size:13px;line-height:1.6;color:#4a4a53">Clear space on all four sides equals the height of the folded corner — roughly a quarter of the mark's height. Nothing enters it, including the credits pill.</div>
+      </div>
+      <div style="border-top:1px solid #111114">
+        <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px;padding:18px 0;border-bottom:1px solid #e6e6ea">
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">MIN SIZE</span>
+          <span style="font-size:14px;line-height:1.6;color:#4a4a53">Horizontal lockup no smaller than 104px wide. Below that the ruled lines close up — switch to the icon, which holds down to 16px.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px;padding:18px 0;border-bottom:1px solid #e6e6ea">
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">APP CHROME</span>
+          <span style="font-size:14px;line-height:1.6;color:#4a4a53">Icon at 26px beside the Geist 600 wordmark at 15px — the lockup SVG is for marketing, the icon-plus-text pairing is for product chrome.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px;padding:18px 0;border-bottom:1px solid #e6e6ea">
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">ON PHOTO</span>
+          <span style="font-size:14px;line-height:1.6;color:#4a4a53">Reversed only, and only over ink or a masked dark region. Never the colour lockup on an image.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px;padding:18px 0;border-bottom:1px solid #e6e6ea">
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">NEVER</span>
+          <span style="font-size:14px;line-height:1.6;color:#4a4a53">Re-typeset the wordmark in Newsreader, add a shadow or outline, stretch it, rotate it, place the bolt in a colour the confidence tiers already own (green, gold, red carry meaning on every sheet), or set the mark on salmon.</span>
+        </div>
+        <div style="display:grid;grid-template-columns:150px minmax(0,1fr);gap:24px;padding:18px 0;border-bottom:1px solid #e6e6ea">
+          <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">FILES</span>
+          <span style="font-size:14px;line-height:1.6;color:#4a4a53"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:13px">assets/brand/</span> — nine SVGs. The wordmark is live text set in Geist 700 with an Arial fallback; outline it before handing the files outside the team.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 07 LAWS ─────────────────────────────────────────────── -->
+  <sc-if value="{{ showLaws }}" hint-placeholder-val="{{ true }}">
+  <section style="padding-top:96px">
+    <div style="display:flex;align-items:baseline;gap:20px">
+      <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;font-weight:600;color:#909099">07</span>
+      <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:40px;line-height:1.1;letter-spacing:-0.02em;color:#111114">Laws</h2>
+    </div>
+    <p style="margin:18px 0 0;max-width:62ch;font-size:15px;line-height:1.6;color:#4a4a53;text-wrap:pretty">
+      Tokens make things consistent; these make them feel expensive. Each one is a decision already made — treat them as settled.
+    </p>
+
+    <div style="margin-top:44px;border-top:1px solid #111114">
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">01</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">One obvious action per screen.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Exactly one ink button in view. Everything else is secondary, ghost, or a link. A second primary is a design bug.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">02</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Iris means money.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Signal fills appear on upgrade, unlock, and Pro only. Spend it anywhere else and the paywall stops reading as a moment.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">03</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Border or shadow, never both loud.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">A hairline ink-150 border with sh-xs, or a shadow with no border. The bordered-and-floating "ghost card" is the fastest way to look cheap.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">04</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">No left-stripe accents in app UI.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Callouts get a tint and a hairline of their own hue. The colored left rule belongs to the printed sheet, where it encodes topic — different medium, different rules.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">05</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Evidence is always mono.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Citations, confidence figures, file counts, page counts, credits. If it is a claim about provenance or measurement, it is Geist Mono — the reader learns to trust the shape.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">06</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">The trust triplet is never trimmed.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Dot, ★-if-verified, citation. Not on hover, not behind a "details" toggle, not dropped on mobile.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">07</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Serif for authority, sans for work.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Newsreader on marketing headlines, sheet titles, modal headings, and the file-drop invitation. Never on a button, a label, or a table.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">08</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Nothing bounces.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">120 / 200 / 360ms, one of two eases, no overshoot, no spring. A 1px lift is the entire hover vocabulary.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">09</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Marketing says cheat sheet. The product says reference sheet.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">"Cheat sheet" is search language and lives only on public pages. Inside the app and on the PDF it is an Exam Reference Sheet.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">10</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Voice: decisive, imperative, no hedging.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">"Read NOT and EXCEPT twice. They flip the answer." Not "you may want to consider re-reading."</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">11</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">Light mode only.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">The artifact lives on paper, so the product does too. The single exception is the generating screen — full ink-900, because it is a held breath, not a surface.</span>
+      </div>
+      <div style="display:grid;grid-template-columns:40px minmax(0,1fr) minmax(0,1fr);gap:32px;padding:24px 0;border-bottom:1px solid #e6e6ea">
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;color:#909099">12</span>
+        <span style="font-size:16px;font-weight:600;color:#111114">MAX means MAX.</span>
+        <span style="font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">On the sheet, whitespace is waste. The page is always full, always top-ranked first, never padded to look designed.</span>
+      </div>
+    </div>
+
+    <div style="margin-top:64px;border-radius:18px;background:#111114;padding:44px 48px;color:#fff">
+      <div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;font-weight:600;letter-spacing:0.06em;color:#909099">THE TEST</div>
+      <p style="margin:16px 0 0;max-width:44ch;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:34px;line-height:1.2;letter-spacing:-0.02em">Would a stressed student at 2am know what to do in five seconds, and believe the page?</p>
+      <p style="margin:20px 0 0;max-width:56ch;font-size:15px;line-height:1.6;color:#b8b8bf;text-wrap:pretty">If either answer is no, the screen is not finished — regardless of how well it follows everything above.</p>
+    </div>
+  </section>
+  </sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;showSpecs&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Reference doc&quot;},&quot;showLaws&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Reference doc&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      showSpecs: this.props.showSpecs ?? true,
+      showLaws: this.props.showLaws ?? true,
+    };
+  }
+}
+</script>
+</body>
+</html>

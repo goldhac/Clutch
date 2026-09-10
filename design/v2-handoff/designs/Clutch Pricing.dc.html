@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300..600;1,6..72,300..500&family=Geist:wght@300..700&family=Geist+Mono:wght@400..600&display=swap" rel="stylesheet" />
+<style>
+  html { background: #fbfbfa; }
+  body { margin: 0; font-family: Geist, system-ui, sans-serif; color: #111114; -webkit-font-smoothing: antialiased; }
+  a { color: #4a46c9; text-decoration: none; }
+  a:hover { color: #5b57e0; text-decoration: underline; }
+</style>
+<script src="./image-slot.js"></script>
+</helmet>
+
+<div style="min-height:100vh;background:#fbfbfa">
+  <!-- nav -->
+  <div style="border-bottom:1px solid #e6e6ea">
+    <div style="max-width:1040px;margin:0 auto;padding:0 32px;height:64px;display:flex;align-items:center;gap:16px">
+      <span style="display:inline-flex;align-items:center;gap:9px;flex:none">
+        <svg viewBox="60 30 340 440" width="19" height="24" role="img" aria-label="Clutch"><path fill="#111114" fill-rule="evenodd" d="M70 70 Q70 40 100 40 H300 L390 130 V420 Q390 450 360 450 H100 Q70 450 70 420 Z M110 85 V405 H350 V155 H285 Q260 155 260 130 V85 Z"></path><path fill="#a5790a" d="M270 45 L385 155 H290 Q270 155 270 135 Z"></path><path fill="#5b57e0" d="M235 155 L145 310 H225 L190 460 L330 275 H245 Z"></path><rect fill="#5b57e0" x="120" y="125" width="105" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="165" width="80" height="14" rx="7"></rect><rect fill="#5b57e0" x="120" y="205" width="58" height="14" rx="7"></rect></svg>
+        <span style="font-size:15px;font-weight:600;letter-spacing:-0.01em">Clutch</span>
+      </span>
+      <span style="margin-left:auto;display:flex;align-items:center;gap:22px;flex:none">
+        <span style="font-size:13.5px;font-weight:600;color:#111114">Pricing</span>
+        <span style="font-size:13.5px;color:#4a4a53;cursor:pointer">How it works</span>
+        <span style="font-size:13.5px;color:#4a4a53;cursor:pointer">FAQ</span>
+        <span style="display:inline-flex;align-items:center;height:36px;padding:0 15px;border-radius:8px;background:#111114;font-size:13.5px;font-weight:600;color:#fff;cursor:pointer;white-space:nowrap">Make a sheet</span>
+      </span>
+    </div>
+  </div>
+
+  <div style="max-width:1040px;margin:0 auto;padding:88px 32px 0;text-align:center">
+    <h1 style="margin:0 auto;max-width:20ch;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:64px;line-height:1;letter-spacing:-0.035em;color:#111114;text-wrap:balance">Pay for the sheet, not a subscription.</h1>
+    <p style="margin:22px auto 0;max-width:46ch;font-size:16px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Every sheet starts with a free preview — the whole front page, at full density. Credits never expire, and there is nothing to cancel.</p>
+  </div>
+
+  <!-- prices -->
+  <div style="max-width:1040px;margin:0 auto;padding:64px 32px 0">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));border-top:1px solid #111114">
+      <sc-for list="{{ tiers }}" as="t" hint-placeholder-count="3">
+        <div style="{{ t.colStyle }}">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;min-height:24px">
+            <span style="flex:none;white-space:nowrap;font-size:15px;font-weight:600;letter-spacing:-0.01em;color:#111114">{{ t.name }}</span>
+            <sc-if value="{{ t.pick }}" hint-placeholder-val="{{ false }}">
+              <span style="flex:none;white-space:nowrap;font-family:'Geist Mono',ui-monospace,monospace;font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:#8a4a2f">★ cheapest per sheet</span>
+            </sc-if>
+          </div>
+          <div style="margin-top:18px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:52px;line-height:1;letter-spacing:-0.025em;color:#111114">{{ t.price }}</div>
+          <div style="margin-top:10px;font-family:'Geist Mono',ui-monospace,monospace;font-size:11.5px;color:#6b6b76">{{ t.sub }}</div>
+          <p style="margin:18px 0 26px;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">{{ t.gets }}</p>
+          <span style="{{ t.ctaStyle }}">{{ t.cta }}</span>
+        </div>
+      </sc-for>
+    </div>
+    <div style="margin-top:22px;text-align:center;font-family:'Geist Mono',ui-monospace,monospace;font-size:11.5px;color:#6b6b76">free preview on every sheet · credits never expire · no subscription</div>
+  </div>
+
+  <!-- photo -->
+  <div style="max-width:1040px;margin:0 auto;padding:72px 32px 0">
+    <div style="height:340px;overflow:hidden;border-radius:14px;background:#e9e9ec">
+      <image-slot id="pricing-photo" shape="rect" fit="cover" src="https://d8j0ntlcm91z4.cloudfront.net/user_35jZJYDFRRI6usKmCZ2OIcgXmKv/hf_20260814_051211_20e5261d-1e1c-414f-8486-6c53161c9cd9.png" placeholder="Drop a photo"></image-slot>
+    </div>
+    <div style="margin-top:14px;text-align:center;font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">what $4.99 buys · one printed page, the night before</div>
+  </div>
+
+  <!-- in every sheet -->
+  <div style="max-width:1040px;margin:0 auto;padding:80px 32px 0">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:36px">
+      <div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="width:9px;height:9px;border-radius:50%;background:#1a7f4b;box-shadow:0 0 0 3px #e6f4ec"></span><span style="font-size:14.5px;font-weight:600;color:#111114">Every line scored</span></div>
+        <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Green, gold or red, printed on the page itself.</p>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="color:#a5790a;font-size:14px">★</span><span style="font-size:14.5px;font-weight:600;color:#111114">Exam-verified marks</span></div>
+        <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">The star appears only where a past exam in your pack asked it.</p>
+      </div>
+      <div>
+        <div style="display:flex;align-items:center;gap:9px"><span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;color:#6b6b76">s21</span><span style="font-size:14.5px;font-weight:600;color:#111114">A source on every claim</span></div>
+        <p style="margin:10px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Slide number and file name, so you can check it in two seconds.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- closer -->
+  <div style="max-width:1040px;margin:0 auto;padding:80px 32px 96px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:28px;padding:40px 40px;border-radius:14px;background:#111114">
+      <h2 style="margin:0;max-width:22ch;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:36px;line-height:1.06;letter-spacing:-0.025em;color:#fff">See the sheet before you decide anything.</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;flex:none">
+        <span style="display:inline-flex;box-sizing:border-box;align-items:center;justify-content:center;height:48px;padding:0 22px;border-radius:9px;background:#fff;font-size:15px;font-weight:600;color:#111114;cursor:pointer;white-space:nowrap">Drop your files</span>
+        <span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:11px;text-align:center;color:#909099">no account needed</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;highlight&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;single&quot;,&quot;pack&quot;,&quot;sprint&quot;],&quot;default&quot;:&quot;pack&quot;,&quot;tsType&quot;:&quot;\&quot;single\&quot; | \&quot;pack\&quot; | \&quot;sprint\&quot;&quot;}}">
+const TIERS = [
+  { key: "single", name: "Single", price: "$4.99", sub: "one credit · never expires", gets: "One full sheet at MAX density, scored, sourced and print-ready.", cta: "Start free" },
+  { key: "pack", name: "3-Pack", price: "$9.99", sub: "$3.33 a sheet · three credits", gets: "Three sheets, usable across different courses and terms.", cta: "Get 3-Pack" },
+  { key: "sprint", name: "Sprint Pass", price: "$14.99", sub: "unlimited for 7 days", gets: "Unlimited sheets and priority generation through a stacked finals week.", cta: "Go Sprint" }
+];
+
+class Component extends DCLogic {
+  renderVals() {
+    const highlight = this.props.highlight ?? "pack";
+    return {
+      tiers: TIERS.map((t, i) => {
+        const pick = t.key === highlight;
+        return {
+          name: t.name, price: t.price, sub: t.sub, gets: t.gets, cta: t.cta, pick,
+          colStyle:
+            "display:flex;flex-direction:column;align-items:flex-start;padding:34px 30px 34px " +
+            (i === 0 ? "0" : "30px") +
+            ";border-bottom:1px solid #e6e6ea" +
+            (i > 0 ? ";border-left:1px solid #e6e6ea" : "") +
+            (pick ? ";background:#fff" : ""),
+          ctaStyle:
+            "display:inline-flex;box-sizing:border-box;align-items:center;height:44px;margin-top:auto;padding:0 20px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;" +
+            (pick ? "background:#111114;color:#fff" : "border:1px solid #d8d8de;background:#fff;color:#111114")
+        };
+      })
+    };
+  }
+}
+
+</script>
+</body>
+</html>
