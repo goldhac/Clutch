@@ -1,6 +1,6 @@
 # Podcast Feature — Build Plan (decided)
 
-**Decided:** Sep 10, 2026 · Owner: Gold Nwobu · Research input: `08-PODCAST-FEATURE-RESEARCH.md`
+**Decided:** Sep 10, 2026 · Owner: Gold Nwobu · Research input: `10-PODCAST-FEATURE-RESEARCH.md`
 **Sequencing:** builds AFTER the full redesign (Step 2). Nothing here ships before that.
 **Status:** decisions locked; §9 of the research doc is resolved below.
 

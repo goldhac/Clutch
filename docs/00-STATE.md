@@ -249,3 +249,6 @@ layer AND the pixels.
 | `reviews/09-review-raw.json` | the 3-lens adversarial review of the relevance spec |
 | `design/` | the product-design handoff (gitignored assets, mirrored into tokens.css) |
 | `reference/` | gitignored ground-truth exam packs (CS6320 NLP, CS6360 Big Data) |
+| `10-PODCAST-FEATURE-RESEARCH.md` | Clutch Audio research handoff (repos, TTS options, cost model) |
+| `11-PODCAST-BUILD-PLAN.md` | Clutch Audio decided build plan (crash course + topic episodes) — builds AFTER redesign |
+| `design/v2-handoff/` | **the v2 premium redesign handoff** — implemented on branch `redesign-v2` (all routes rebuilt: tokens, brand mark colorway B, trust layer, modals/toasts, dock) |
