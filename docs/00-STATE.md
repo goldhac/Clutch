@@ -257,6 +257,14 @@ layer AND the pixels.
 
 ## 9. Performance: the São Paulo routing problem (measured 2026-09-10)
 
+> **UPDATE 2026-09-11 — this resolved itself.** Railway's edge now
+> answers from `lax1` (Los Angeles), not `gru1`. Re-measured from the
+> same machine: connect 147 ms → **52 ms**, TLS 301 ms → **111 ms**,
+> static-asset TTFB ~600 ms → **268 ms**. Nothing on our side changed.
+> A CDN is still worth ~4× on static assets (268 ms → ~50 ms at a
+> Dallas edge) but is no longer urgent — **re-check `x-railway-edge`
+> before acting on the numbers below.**
+
 **Symptom:** pages feel slow to load. Measured from Plano TX (Verizon
 Business): production first-contentful-paint **5.2 s**, with only 19 KB
 of HTML and 117 KB of JS. Payload was never the problem.
