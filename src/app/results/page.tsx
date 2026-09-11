@@ -283,7 +283,7 @@ export default function ResultsPage() {
               type="button"
               onClick={onExportClick}
               disabled={exporting}
-              className="inline-flex h-[34px] items-center gap-1.5 rounded-[var(--r-md)] bg-[var(--band)] px-3.5 text-[13px] font-semibold text-white transition-[background-color,transform] duration-[160ms] ease-[var(--ease-out)] hover:bg-[var(--band-2)] active:scale-[0.98] disabled:opacity-60"
+              className="tap inline-flex h-[34px] items-center gap-1.5 rounded-[var(--r-md)] bg-[var(--band)] px-3.5 text-[13px] font-semibold text-white transition-[background-color,transform] duration-[160ms] ease-[var(--ease-out)] hover:bg-[var(--band-2)] active:scale-[0.98] disabled:opacity-60"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
@@ -471,7 +471,7 @@ export default function ResultsPage() {
                 setEditorOpen(false);
               }
             }}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10"
+            className="tap inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
