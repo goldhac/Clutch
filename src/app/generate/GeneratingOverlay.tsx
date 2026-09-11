@@ -48,7 +48,7 @@ export function GeneratingOverlay({
 
   return (
     <div
-      className="fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center bg-[var(--ink-900)] p-6"
+      className="fixed inset-0 z-[var(--z-overlay)] flex items-center justify-center bg-[var(--band)] p-6"
       role="status"
       aria-live="polite"
     >
@@ -60,7 +60,7 @@ export function GeneratingOverlay({
           <h2 className="mt-4 font-serif text-[34px] leading-[1.05] tracking-[-0.02em] text-white">
             Building your sheet
           </h2>
-          <p className="mt-2 text-[14px] text-[var(--ink-400)]">
+          <p className="mt-2 text-[14px] text-[var(--on-band-muted)]">
             Usually done in under a minute. Hang tight.
           </p>
         </div>
@@ -108,7 +108,7 @@ export function GeneratingOverlay({
             <button
               type="button"
               onClick={onCancel}
-              className="border-b border-[#3a3a44] pb-0.5 text-[13px] text-[var(--ink-500)] transition-colors duration-[160ms] hover:text-white"
+              className="border-b border-[var(--band-line)] pb-0.5 text-[13px] text-[var(--ink-500)] transition-colors duration-[160ms] hover:text-white"
             >
               Cancel
             </button>

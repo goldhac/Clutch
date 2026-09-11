@@ -13,7 +13,7 @@ export interface CreditsPillProps {
 export function CreditsPill({ credits, planLabel, className }: CreditsPillProps) {
   const low = credits <= 1 && !planLabel;
   const tone = planLabel
-    ? "bg-[var(--ink-900)] text-white"
+    ? "bg-[var(--band)] text-white"
     : low
       ? "bg-[var(--warn-bg)] text-[var(--warn)]"
       : "bg-[var(--ink-100)] text-[var(--ink-700)]";

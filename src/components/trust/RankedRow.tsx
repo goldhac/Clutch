@@ -21,7 +21,7 @@ export interface RankedRowProps {
 export function RankedRow({ rank, title, conf, verified, src, className }: RankedRowProps) {
   return (
     <div
-      className={`flex items-start gap-2.5 rounded-[var(--r-md)] border border-[var(--ink-150)] bg-white px-3 py-2.5 shadow-[var(--sh-xs)]${className ? ` ${className}` : ""}`}
+      className={`flex items-start gap-2.5 rounded-[var(--r-md)] border border-[var(--ink-150)] bg-[var(--surface)] px-3 py-2.5 shadow-[var(--sh-xs)]${className ? ` ${className}` : ""}`}
     >
       <span className="mt-1 shrink-0">
         <ConfDot conf={conf} ring size={9} />
@@ -34,7 +34,7 @@ export function RankedRow({ rank, title, conf, verified, src, className }: Ranke
         <Citation src={src} className="mt-0.5 block" />
       </div>
       {rank != null && (
-        <span className="shrink-0 font-mono text-[11px] font-semibold text-[var(--ink-400)]">
+        <span className="shrink-0 font-mono text-[11px] font-semibold text-[var(--ink-500)]">
           #{rank}
         </span>
       )}

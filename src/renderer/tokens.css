@@ -29,6 +29,31 @@
 
   /* ── v2 handoff additions ─────────────────────────────────────────── */
   --surface:      #ffffff; /* cards, inputs, the sheet itself */
+
+  /* ── Bands: surfaces that are dark ON PURPOSE ─────────────────────
+   * The footer, hero, results dock, toast and overlay are dark by
+   * design, not because the theme is light. They were reading
+   * --ink-900, which is also the primary TEXT colour — so a dark theme
+   * that inverts the ink scale would flip them to near-white and leave
+   * white text on a white band. Bands get their own tokens and stay
+   * dark in both themes; white-on-band holds either way.
+   */
+  --band:         #111114;
+  --band-2:       #1c1c21;
+  --band-line:    #2c2c33;
+  /* Text ON a band. Bands don't invert, so neither do these — one value
+   * clears 4.5:1 against the band in both appearances (6.8 / 6.2). */
+  --on-band:       #ffffff;
+  --on-band-muted: #9a9aa6;
+  /* translucent page ground for sticky, blurred headers */
+  --paper-glass:   rgba(251, 251, 250, 0.9);
+
+  /* Primary button inverts with the theme (ink on paper, paper on ink)
+   * where a band does not — so it gets its own pair rather than
+   * borrowing either. */
+  --btn-primary-bg: #111114;
+  --btn-primary-fg: #ffffff;
+  --btn-primary-bg-hover: #1c1c21;
   --field:        #f2f2f3; /* segmented-control troughs, avatar grounds */
   --border-input: #d8d8de; /* input + secondary-button borders */
   --scrim: rgba(17, 17, 20, 0.55);
@@ -49,26 +74,26 @@
 
   /* ── Confidence tiers (THE trust layer) ───────────────────────────── */
   /* These carry meaning and may not be reused decoratively.            */
-  --conf-high:      #1a7f4b;
+  --conf-high:      #197d4a;
   --conf-high-bg:   #e6f4ec;
   --conf-high-bg2:  #f4f9f6; /* quieter tint (past-exam select, footers) */
-  --conf-med:       #a5790a;
+  --conf-med:       #8f6908;
   --conf-med-bg:    #fdf6e3;
   --conf-med-deep:  #8a4a2f; /* deep text on medium tint */
   --conf-low:       #b4341f;
   --conf-low-bg:    #fdf0ee;
   --conf-low-deep:  #8f2a19; /* deep text on low tint */
-  --verified:       #a5790a;
+  --verified:       #8f6908;
   --verified-bg:    #fbf3da;
 
   /* ── Functional ───────────────────────────────────────────────────── */
   --info:       #2f6db3;
   --info-bg:    #e8f1fb;
-  --warn:       #b26a00;
+  --warn:       #a05f00;
   --warn-bg:    #fbf0dd;
   --danger:     #c0392b;
   --danger-bg:  #fbe9e7;
-  --success:    #1a7f4b;
+  --success:    #197d4a;
   --success-bg: #e6f4ec;
 
   /* ── Topic palette (multi-topic sheets) ───────────────────────────── */
@@ -184,5 +209,143 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* ── Dark appearance ──────────────────────────────────────────────────
+ * Apple treats dark as a first-class appearance, and its accessibility
+ * guidance asks for contrast to be checked in BOTH. Only the tokens are
+ * redefined here — components keep reading the same names.
+ *
+ * Two things deliberately do NOT invert:
+ *
+ *  1. Bands (--band, --band-2). Footer, hero, dock, toast and overlay
+ *     are dark on purpose. They lift slightly so they still separate
+ *     from the page ground, and white-on-band keeps working.
+ *
+ *  2. The sheet. It is a document built for paper, and paper has no
+ *     dark mode — printing an inverted sheet would burn a page of
+ *     toner. The .sheet subtree restores the light scale below, the way
+ *     a document stays white inside a dark editor.
+ */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink-900: #f3f3f5;
+    --ink-800: #e2e2e8;
+    --ink-700: #cbcbd4;
+    --ink-600: #a6a6b2;
+    --ink-500: #8c8c98;
+    --ink-400: #757580;
+    --ink-300: #5d5d67;
+    --ink-200: #40404a;
+    --ink-150: #33333c;
+    --ink-100: #26262e;
+    --ink-50:  #1c1c23;
+
+    --paper:   #0f0f13;
+    --paper-2: #16161b;
+    --surface: #1a1a21;
+    --field:   #23232b;
+    --border-input: #383842;
+
+    --band:      #1b1b22;
+    --band-2:    #26262f;
+    --band-line: #3a3a45;
+    --paper-glass: rgba(15, 15, 19, 0.9);
+
+    /* primary button inverts — light on dark, as on Apple platforms */
+    --btn-primary-bg:       #f3f3f5;
+    --btn-primary-fg:       #111114;
+    --btn-primary-bg-hover: #ffffff;
+
+    /* Brand + semantics lift for a dark ground. Hues hold; only
+     * lightness moves, so the confidence trio stays green/gold/red. */
+    --signal-700: #b3b0f4;
+    --signal-600: #9d9aef;
+    --signal-500: #8a86e8;
+    --signal-300: #6f6ad6;
+    --signal-100: #262348;
+    --signal-50:  #1d1b38;
+
+    --salmon:      #35241d;
+    --salmon-line: #4d3428;
+    --salmon-text: #f0b99c;
+
+    --conf-high:     #5cc98d;
+    --conf-high-bg:  #14291e;
+    --conf-high-bg2: #131c17;
+    --conf-med:      #dbb45e;
+    --conf-med-bg:   #2b2312;
+    --conf-med-deep: #f0b99c;
+    --conf-low:      #f08a75;
+    --conf-low-bg:   #2e1815;
+    --conf-low-deep: #f5a898;
+    --verified:      #dbb45e;
+    --verified-bg:   #2a2313;
+
+    --info:       #6aa9e8;
+    --info-bg:    #15202e;
+    --warn:       #e0a24d;
+    --warn-bg:    #2a2012;
+    --danger:     #ef8377;
+    --danger-bg:  #2e1816;
+    --success:    #5cc98d;
+    --success-bg: #14291e;
+
+    --scrim: rgba(0, 0, 0, 0.66);
+  }
+
+  /* The sheet is paper. It does not invert. */
+  .sheet,
+  .sheet-wrap {
+    --ink-900: #111114;
+    --ink-800: #1c1c21;
+    --ink-700: #2c2c33;
+    --ink-600: #4a4a53;
+    --ink-500: #6b6b76;
+    --ink-400: #909099;
+    --ink-300: #b8b8bf;
+    --ink-200: #d9d9de;
+    --ink-150: #e6e6ea;
+    --ink-100: #f0f0f2;
+    --ink-50:  #f7f7f8;
+    --paper:   #fbfbfa;
+    --paper-2: #f5f5f3;
+    --surface: #ffffff;
+    --field:   #f2f2f3;
+    --border-input: #d8d8de;
+    --band:    #111114;
+    --band-2:  #1c1c21;
+
+    --signal-700: #3a34b8;
+    --signal-600: #4a46c9;
+    --signal-500: #5b57e0;
+    --signal-300: #8a86e8;
+    --signal-100: #ecebfb;
+    --signal-50:  #f5f4fe;
+
+    --salmon:      #fdece4;
+    --salmon-line: #f4d3c4;
+    --salmon-text: #8a4a2f;
+
+    --conf-high:     #197d4a;
+    --conf-high-bg:  #e6f4ec;
+    --conf-high-bg2: #f4f9f6;
+    --conf-med:      #8f6908;
+    --conf-med-bg:   #fdf6e3;
+    --conf-med-deep: #8a4a2f;
+    --conf-low:      #b4341f;
+    --conf-low-bg:   #fdf0ee;
+    --conf-low-deep: #8f2a19;
+    --verified:      #8f6908;
+    --verified-bg:   #fbf3da;
+
+    --info: #2f6db3;  --info-bg: #e8f1fb;
+    --warn: #a05f00;  --warn-bg: #fbf0dd;
+    --danger: #c0392b; --danger-bg: #fbe9e7;
+    --success: #197d4a; --success-bg: #e6f4ec;
+
+    color: var(--ink-800);
+    background: var(--surface);
   }
 }

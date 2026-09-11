@@ -16,7 +16,7 @@ export function Select({ className, invalid, children, ...rest }: SelectProps) {
     <div className="relative">
       <select
         className={
-          `h-9 w-full appearance-none rounded-[var(--r-md)] border ${border} bg-white ` +
+          `h-9 w-full appearance-none rounded-[var(--r-md)] border ${border} bg-[var(--surface)] ` +
           `pl-3 pr-8 text-[14px] text-[var(--ink-900)] outline-none transition-colors ` +
           `duration-[var(--dur-fast)] focus:border-[var(--signal-500)] ` +
           `focus:ring-2 focus:ring-[var(--signal-100)]` +

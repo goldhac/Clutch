@@ -9,7 +9,7 @@ import { LinkButton } from "./Button";
  */
 export function MarketingNav() {
   return (
-    <header className="sticky top-0 z-[var(--z-sticky)] border-b border-[var(--ink-150)] bg-[rgba(251,251,250,0.9)] backdrop-blur-[10px]">
+    <header className="sticky top-0 z-[var(--z-sticky)] border-b border-[var(--ink-150)] bg-[var(--paper-glass)] backdrop-blur-[10px]">
       <div className="mx-auto flex h-[60px] max-w-[1180px] items-center px-6 sm:px-10">
         <span className="inline-flex items-center">
           <Wordmark />
@@ -20,19 +20,19 @@ export function MarketingNav() {
         <nav className="ml-auto flex shrink-0 items-center gap-1 sm:gap-4">
           <Link
             href="/faq"
-            className="hidden whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)] md:inline-block"
+            className="hidden tap whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)] md:inline-block"
           >
             How it works
           </Link>
           <Link
             href="/pricing"
-            className="hidden whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)] sm:inline-block"
+            className="hidden tap whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)] sm:inline-block"
           >
             Pricing
           </Link>
           <Link
             href="/auth"
-            className="whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)]"
+            className="tap inline-flex items-center whitespace-nowrap px-2 py-2 text-[14px] text-[var(--ink-600)] transition-colors duration-[160ms] hover:text-[var(--ink-900)]"
           >
             Sign in
           </Link>

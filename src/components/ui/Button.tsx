@@ -31,8 +31,8 @@ const BASE =
 
 const VARIANTS: Record<ButtonVariant, string> = {
   primary:
-    "bg-[var(--ink-900)] text-white shadow-[var(--sh-sm)] " +
-    "hover:bg-[var(--ink-800)] " +
+    "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] shadow-[var(--sh-sm)] " +
+    "hover:bg-[var(--btn-primary-bg-hover)] " +
     "disabled:bg-[var(--ink-150)] disabled:text-[var(--ink-400)]",
   signal:
     "bg-[var(--signal-500)] text-white shadow-[var(--sh-sm)] " +
@@ -41,7 +41,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
     "bg-[var(--signal-50)] text-[var(--signal-700)] " +
     "border border-[var(--signal-100)] hover:bg-[var(--signal-100)] disabled:opacity-45",
   secondary:
-    "bg-white text-[var(--ink-800)] border border-[var(--border-input)] " +
+    "bg-[var(--surface)] text-[var(--ink-800)] border border-[var(--border-input)] " +
     "hover:bg-[var(--ink-50)] hover:border-[var(--ink-300)] disabled:opacity-45",
   ghost:
     "bg-transparent text-[var(--ink-700)] hover:bg-[var(--ink-100)] disabled:opacity-45",
@@ -49,16 +49,16 @@ const VARIANTS: Record<ButtonVariant, string> = {
     "bg-[var(--conf-low)] text-white shadow-[var(--sh-sm)] " +
     "hover:brightness-110 disabled:opacity-45",
   inverse:
-    "bg-white text-[var(--ink-900)] shadow-[var(--sh-sm)] " +
+    "bg-[var(--on-band)] text-[var(--band)] shadow-[var(--sh-sm)] " +
     "hover:bg-[var(--ink-100)] disabled:opacity-45",
   ghostDark:
-    "bg-transparent text-[var(--ink-150)] border border-[#3a3a44] " +
-    "hover:border-[var(--ink-500)] hover:text-white disabled:opacity-45",
+    "bg-transparent text-[var(--on-band)] border border-[var(--band-line)] " +
+    "hover:border-[var(--on-band-muted)] hover:text-[var(--on-band)] disabled:opacity-45",
 };
 
 const SIZES: Record<ButtonSize, string> = {
   sm: "h-8 px-3 text-[13px]",
-  md: "h-10 px-4 text-[14px]",
+  md: "h-11 px-4 text-[14px]",
   lg: "h-[46px] px-5 text-[14.5px]",
   xl: "h-[52px] px-6 text-[15px]",
 };

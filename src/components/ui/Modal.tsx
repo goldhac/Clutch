@@ -77,7 +77,7 @@ export function Modal({
         if (e.target === ref.current) onClose(); // scrim click — always free
       }}
       className={
-        "m-auto w-full rounded-[14px] bg-white p-0 shadow-[var(--sh-modal)] " +
+        "m-auto w-full rounded-[14px] bg-[var(--surface)] p-0 shadow-[var(--sh-modal)] " +
         "backdrop:bg-[var(--scrim)] backdrop:backdrop-blur-[2px] " +
         "[&[open]]:animate-[cl-pop_200ms_var(--ease-pop)] " +
         "[&[open]::backdrop]:animate-[cl-fade_160ms_ease]"
@@ -154,8 +154,8 @@ export function OptionTile({ primary, label, sub, onClick, disabled }: OptionTil
         "transition-[transform,background-color,border-color] duration-[160ms] ease-[var(--ease-out)] " +
         "active:scale-[0.98] disabled:pointer-events-none disabled:opacity-45 " +
         (primary
-          ? "bg-[var(--ink-900)] text-white hover:bg-[var(--ink-800)]"
-          : "border border-[var(--border-input)] bg-white text-[var(--ink-900)] hover:border-[var(--ink-300)] hover:bg-[var(--ink-50)]")
+          ? "bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] hover:bg-[var(--btn-primary-bg-hover)]"
+          : "border border-[var(--border-input)] bg-[var(--surface)] text-[var(--ink-900)] hover:border-[var(--ink-300)] hover:bg-[var(--ink-50)]")
       }
     >
       <span className="text-[14px] font-semibold leading-tight">{label}</span>

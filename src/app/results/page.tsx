@@ -250,7 +250,7 @@ export default function ResultsPage() {
       <Toaster />
 
       {/* ── toolbar ─────────────────────────────────────────────────── */}
-      <header className="print:hidden sticky top-0 z-[var(--z-sticky)] border-b border-[var(--border-input)] bg-[rgba(251,251,250,0.92)] backdrop-blur-[10px]">
+      <header className="print:hidden sticky top-0 z-[var(--z-sticky)] border-b border-[var(--border-input)] bg-[var(--paper-glass)] backdrop-blur-[10px]">
         <div className="mx-auto flex h-[58px] max-w-[1320px] items-center gap-3.5 px-4 sm:px-7">
           <Wordmark size="sm" />
           <span aria-hidden className="hidden text-[var(--ink-300)] sm:inline">/</span>
@@ -272,18 +272,18 @@ export default function ResultsPage() {
               type="button"
               onClick={() => void saveToLibrary()}
               disabled={saving || !!savedId}
-              className="hidden h-[34px] items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-white px-3.5 text-[13px] font-semibold text-[var(--ink-900)] transition-[background-color] duration-[160ms] hover:bg-[var(--ink-50)] disabled:opacity-60 sm:inline-flex"
+              className="tap hidden h-[34px] items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-3.5 text-[13px] font-semibold text-[var(--ink-900)] transition-[background-color] duration-[160ms] hover:bg-[var(--ink-50)] disabled:opacity-60 sm:inline-flex"
             >
               {savedId ? "Saved ✓" : saving ? "Saving…" : "Save"}
             </button>
-            <LinkButton href="/generate" variant="secondary" size="sm" className="hidden !h-[34px] sm:inline-flex">
+            <LinkButton href="/generate" variant="secondary" size="sm" className="tap hidden !h-[34px] sm:inline-flex">
               Make another
             </LinkButton>
             <button
               type="button"
               onClick={onExportClick}
               disabled={exporting}
-              className="inline-flex h-[34px] items-center gap-1.5 rounded-[var(--r-md)] bg-[var(--ink-900)] px-3.5 text-[13px] font-semibold text-white transition-[background-color,transform] duration-[160ms] ease-[var(--ease-out)] hover:bg-[var(--ink-800)] active:scale-[0.98] disabled:opacity-60"
+              className="inline-flex h-[34px] items-center gap-1.5 rounded-[var(--r-md)] bg-[var(--band)] px-3.5 text-[13px] font-semibold text-white transition-[background-color,transform] duration-[160ms] ease-[var(--ease-out)] hover:bg-[var(--band-2)] active:scale-[0.98] disabled:opacity-60"
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                 <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
@@ -347,13 +347,13 @@ export default function ResultsPage() {
       {/* ── the dock ────────────────────────────────────────────────── */}
       <div className="print:hidden pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-overlay)] flex flex-col items-center gap-2.5 px-5 pb-[22px]">
         {editorOpen && pro && (
-          <div className="pointer-events-auto w-full max-w-[640px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--ink-800)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
+          <div className="pointer-events-auto w-full max-w-[640px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
             <div className="flex items-center justify-between">
               <span className="text-[13px] font-semibold text-white">Edit in your own words</span>
               <button
                 type="button"
                 onClick={() => setEditorOpen(false)}
-                className="font-mono text-[11px] text-[var(--ink-400)] hover:text-white"
+                className="font-mono text-[11px] text-[var(--on-band-muted)] hover:text-[var(--on-band)]"
               >
                 close
               </button>
@@ -365,7 +365,7 @@ export default function ResultsPage() {
               maxLength={500}
               disabled={tweaking}
               placeholder="shorter questions · more SQL formulas · drop the Tableau section · add a worked example to every trap"
-              className="mt-2.5 w-full resize-none rounded-[9px] border border-[#3a3a44] bg-[var(--ink-900)] px-3 py-[11px] text-[13px] leading-[1.5] text-white outline-none placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)]"
+              className="mt-2.5 w-full resize-none rounded-[9px] border border-[var(--band-line)] bg-[var(--band)] px-3 py-[11px] text-[13px] leading-[1.5] text-white outline-none placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)]"
             />
             <div className="mt-2.5 flex items-center justify-between gap-4">
               <span className="font-mono text-[11px] text-[var(--ink-500)]">
@@ -401,21 +401,21 @@ export default function ResultsPage() {
               <button
                 type="button"
                 onClick={() => setUpsellOpen(false)}
-                className="shrink-0 font-mono text-[11px] text-[var(--ink-400)] hover:text-[var(--ink-900)]"
+                className="shrink-0 font-mono text-[11px] text-[var(--ink-500)] hover:text-[var(--ink-900)]"
               >
                 close
               </button>
             </div>
             <a
               href="/pricing"
-              className="mt-3.5 inline-flex h-[38px] items-center rounded-[9px] bg-[var(--ink-900)] px-4 text-[13px] font-semibold text-white transition-transform duration-[160ms] active:scale-[0.98]"
+              className="mt-3.5 inline-flex h-[38px] items-center rounded-[9px] bg-[var(--band)] px-4 text-[13px] font-semibold text-white transition-transform duration-[160ms] active:scale-[0.98]"
             >
               Unlock this sheet · $4.99
             </a>
           </div>
         )}
 
-        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-3 rounded-[14px] bg-[var(--ink-900)] px-3 py-[9px] shadow-[0_18px_44px_rgba(17,17,20,.34),0_2px_6px_rgba(17,17,20,.2)]">
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-3 rounded-[14px] bg-[var(--band)] px-3 py-[9px] shadow-[0_18px_44px_rgba(17,17,20,.34),0_2px_6px_rgba(17,17,20,.2)]">
           <span className="flex shrink-0 items-center rounded-[9px] bg-white/[0.08] p-[3px]">
             {DENSITY_OPTS.map((d) => (
               <button
@@ -423,10 +423,10 @@ export default function ResultsPage() {
                 type="button"
                 onClick={() => setDensity(d.value)}
                 className={
-                  "rounded-[6px] px-3 py-[5px] text-[12.5px] font-semibold transition-[background-color,color] duration-[160ms] " +
+                  "tap rounded-[6px] px-3 py-[5px] text-[12.5px] font-semibold transition-[background-color,color] duration-[160ms] " +
                   (density === d.value
-                    ? "bg-white text-[var(--ink-900)]"
-                    : "text-[var(--ink-400)] hover:text-white")
+                    ? "bg-white text-[var(--band)]"
+                    : "text-[var(--on-band-muted)] hover:text-[var(--on-band)]")
                 }
               >
                 {d.label}
@@ -441,10 +441,10 @@ export default function ResultsPage() {
                 type="button"
                 onClick={() => applyPreset(p.label, p.patch)}
                 className={
-                  "rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-[160ms] " +
+                  "tap rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-[160ms] " +
                   (activePreset === p.label
-                    ? "border-white bg-white text-[var(--ink-900)]"
-                    : "border-[var(--ink-700)] text-[var(--ink-300)] hover:border-[var(--ink-500)] hover:text-white")
+                    ? "border-white bg-white text-[var(--band)]"
+                    : "border-[var(--band-line)] text-[var(--on-band-muted)] hover:border-[var(--ink-500)] hover:text-[var(--on-band)]")
                 }
               >
                 {p.label}

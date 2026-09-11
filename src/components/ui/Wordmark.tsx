@@ -64,7 +64,7 @@ export function Wordmark({ href = "/", size = "md", markOnly, onInk, className }
     </span>
   );
   return href ? (
-    <Link href={href} className="inline-flex" aria-label="Clutch home">
+    <Link href={href} className="tap inline-flex items-center" aria-label="Clutch home">
       {inner}
     </Link>
   ) : (

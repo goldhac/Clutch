@@ -44,10 +44,10 @@ export function SegmentedControl<T extends string>({
             type="button"
             onClick={() => onChange(o.value)}
             className={
-              `inline-flex items-center justify-center rounded-[7px] font-semibold ${seg} ` +
+              `tap inline-flex items-center justify-center rounded-[7px] font-semibold ${seg} ` +
               `transition-[background-color,color,box-shadow] duration-[160ms] ease-[var(--ease-out)] ` +
               (active
-                ? "bg-white text-[var(--ink-900)] shadow-[var(--sh-sm)]"
+                ? "bg-[var(--surface)] text-[var(--ink-900)] shadow-[var(--sh-sm)]"
                 : "text-[var(--ink-500)] hover:text-[var(--ink-800)]")
             }
           >

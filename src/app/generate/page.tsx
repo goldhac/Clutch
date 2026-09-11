@@ -204,11 +204,11 @@ export default function GeneratePage() {
                 "block cursor-pointer rounded-[14px] border-2 border-dashed px-6 py-[26px] transition-[background-color,border-color] duration-[160ms] " +
                 (dragging
                   ? "border-[var(--signal-500)] bg-[var(--signal-100)]"
-                  : "border-[var(--border-input)] bg-white hover:border-[var(--ink-300)]")
+                  : "border-[var(--border-input)] bg-[var(--surface)] hover:border-[var(--ink-300)]")
               }
             >
               <div className="flex items-center gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-[var(--ink-900)]">
+                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[10px] bg-[var(--band)]">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                     <path d="M12 16V4" />
                     <path d="m7 9 5-5 5 5" />
@@ -393,7 +393,7 @@ export default function GeneratePage() {
 
           {/* ── right: settings + confidence + CTA ──────────────────── */}
           <aside className="flex flex-col gap-[18px] lg:sticky lg:top-[88px]">
-            <div className="rounded-[12px] border border-[var(--ink-150)] bg-white px-5 pb-1.5 pt-5">
+            <div className="rounded-[12px] border border-[var(--ink-150)] bg-[var(--surface)] px-5 pb-1.5 pt-5">
               <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--ink-500)]">
                 How to build it
               </div>
@@ -437,7 +437,7 @@ export default function GeneratePage() {
                         "mt-[7px] flex w-full items-center gap-[11px] rounded-[9px] border px-3 py-2.5 text-left transition-[border-color,background-color] duration-[160ms] " +
                         (on
                           ? "border-[var(--ink-900)] bg-[var(--paper)]"
-                          : "border-[var(--ink-150)] bg-white hover:border-[var(--ink-300)]")
+                          : "border-[var(--ink-150)] bg-[var(--surface)] hover:border-[var(--ink-300)]")
                       }
                     >
                       <span
@@ -488,7 +488,7 @@ export default function GeneratePage() {
                     value={courseCode}
                     onChange={(e) => setCourseCode(e.target.value)}
                     placeholder="ITSS 3300"
-                    className="mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-white px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-400)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
+                    className="mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
                   />
                 </label>
                 <label className="block">
@@ -500,14 +500,14 @@ export default function GeneratePage() {
                     value={professor}
                     onChange={(e) => setProfessor(e.target.value)}
                     placeholder="Ouyang"
-                    className="mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-white px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-400)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
+                    className="mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
                   />
                 </label>
               </div>
             </div>
 
             {/* confidence card */}
-            <div className="rounded-[12px] border border-[var(--ink-150)] bg-white p-5">
+            <div className="rounded-[12px] border border-[var(--ink-150)] bg-[var(--surface)] p-5">
               <div className="flex items-baseline justify-between">
                 <span className="font-mono text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--ink-500)]">
                   Confidence in result
@@ -552,7 +552,7 @@ export default function GeneratePage() {
                 className={
                   "h-[52px] w-full rounded-[10px] text-[15px] font-semibold transition-[transform,background-color] duration-[160ms] ease-[var(--ease-out)] active:scale-[0.99] " +
                   (hasFiles
-                    ? "bg-[var(--ink-900)] text-white hover:bg-[var(--ink-800)]"
+                    ? "bg-[var(--band)] text-white hover:bg-[var(--band-2)]"
                     : "cursor-not-allowed bg-[var(--ink-150)] text-[var(--ink-400)]")
                 }
               >
@@ -587,7 +587,7 @@ function SegPill({
       className={
         "flex-1 rounded-[6px] px-1 py-[7px] text-center text-[12.5px] font-semibold transition-[background-color,color,box-shadow] duration-[160ms] " +
         (active
-          ? "bg-white text-[var(--ink-900)] shadow-[var(--sh-sm)]"
+          ? "bg-[var(--surface)] text-[var(--ink-900)] shadow-[var(--sh-sm)]"
           : "text-[var(--ink-500)] hover:text-[var(--ink-800)]")
       }
     >

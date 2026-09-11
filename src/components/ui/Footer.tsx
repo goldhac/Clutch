@@ -9,21 +9,21 @@ import { Mark } from "./Wordmark";
  */
 export function Footer() {
   return (
-    <footer className="bg-[var(--ink-900)]">
-      <div className="border-t border-[var(--ink-700)]">
+    <footer className="bg-[var(--band)]">
+      <div className="border-t border-[var(--band-line)]">
         <div className="mx-auto flex max-w-[1180px] flex-col gap-5 px-10 py-7 sm:flex-row sm:items-center sm:justify-between">
           <span className="inline-flex items-center gap-[9px]">
             <Mark px={22} onInk />
             <span className="text-[14px] font-semibold text-white">Clutch</span>
           </span>
-          <nav className="flex flex-wrap gap-x-7 gap-y-2 text-[13px] text-[var(--ink-400)]">
-            <Link href="/pricing" className="transition-colors duration-[160ms] hover:text-white">Pricing</Link>
-            <Link href="/faq" className="transition-colors duration-[160ms] hover:text-white">How it works</Link>
-            <Link href="/auth" className="transition-colors duration-[160ms] hover:text-white">Sign in</Link>
-            <Link href="/faq#privacy" className="transition-colors duration-[160ms] hover:text-white">Privacy</Link>
-            <Link href="/faq#terms" className="transition-colors duration-[160ms] hover:text-white">Terms</Link>
+          <nav className="flex flex-wrap items-center gap-x-7 gap-y-4 text-[13px] text-[var(--on-band-muted)]">
+            <Link href="/pricing" className="tap-area transition-colors duration-[160ms] hover:text-[var(--on-band)]">Pricing</Link>
+            <Link href="/faq" className="tap-area transition-colors duration-[160ms] hover:text-[var(--on-band)]">How it works</Link>
+            <Link href="/auth" className="tap-area transition-colors duration-[160ms] hover:text-[var(--on-band)]">Sign in</Link>
+            <Link href="/faq#privacy" className="tap-area transition-colors duration-[160ms] hover:text-[var(--on-band)]">Privacy</Link>
+            <Link href="/faq#terms" className="tap-area transition-colors duration-[160ms] hover:text-[var(--on-band)]">Terms</Link>
           </nav>
-          <span className="font-mono text-[11px] text-[var(--ink-500)]">
+          <span className="font-mono text-[11px] text-[var(--on-band-muted)]">
             © {new Date().getFullYear()} Clutch
           </span>
         </div>

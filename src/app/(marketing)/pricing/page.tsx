@@ -72,7 +72,7 @@ export default function PricingPage() {
                 className={
                   "flex flex-col items-start border-b border-[var(--ink-150)] py-[34px] pr-7 " +
                   (i > 0 ? "sm:border-l sm:border-l-[var(--ink-150)] sm:pl-[30px] " : "") +
-                  ("pick" in t && t.pick ? "bg-white" : "")
+                  ("pick" in t && t.pick ? "bg-[var(--surface)]" : "")
                 }
               >
                 <div className="flex min-h-6 flex-wrap items-center gap-x-2.5 gap-y-2">
@@ -175,7 +175,7 @@ export default function PricingPage() {
       {/* closer card */}
       <div className="mx-auto max-w-[1040px] px-6 pb-24 pt-16 sm:px-8 lg:pt-20">
         <Reveal>
-          <div className="flex flex-wrap items-center justify-between gap-7 rounded-[14px] bg-[var(--ink-900)] p-8 sm:p-10">
+          <div className="flex flex-wrap items-center justify-between gap-7 rounded-[14px] bg-[var(--band)] p-8 sm:p-10">
             <h2 className="max-w-[22ch] font-serif text-[clamp(1.75rem,3.5vw,2.25rem)] leading-[1.06] tracking-[-0.025em] text-white">
               See the sheet before you decide anything.
             </h2>
@@ -183,7 +183,7 @@ export default function PricingPage() {
               <LinkButton href="/generate" variant="inverse" size="lg" className="!rounded-[9px]">
                 Drop your files
               </LinkButton>
-              <span className="text-center font-mono text-[11px] text-[var(--ink-400)]">
+              <span className="text-center font-mono text-[11px] text-[var(--on-band-muted)]">
                 no account needed
               </span>
             </div>

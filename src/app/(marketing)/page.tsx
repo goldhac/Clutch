@@ -24,7 +24,7 @@ export default function HomePage() {
   return (
     <>
       {/* ── Hero — the photograph carries the moment, ink scrim the words ── */}
-      <section className="relative min-h-[560px] overflow-hidden bg-[var(--ink-900)] lg:min-h-[660px]">
+      <section className="relative min-h-[560px] overflow-hidden bg-[var(--band)] lg:min-h-[660px]">
         <img
           src="/photos/corridor.webp"
           alt=""
@@ -45,7 +45,7 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-[1180px] px-6 pb-24 pt-20 sm:px-10 lg:pt-24">
           <div className="max-w-[560px]">
             <Reveal>
-              <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink-400)]">
+              <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-band-muted)]">
                 48 hours out
               </div>
             </Reveal>
@@ -59,7 +59,7 @@ export default function HomePage() {
             </Reveal>
             <Reveal delay={150}>
               <p
-                className="mt-6 max-w-[44ch] text-[17px] leading-[1.6] text-[var(--ink-300)]"
+                className="mt-6 max-w-[44ch] text-[17px] leading-[1.6] text-[var(--on-band-muted)]"
                 style={{ textWrap: "pretty" }}
               >
                 Drop in your slides, review guides and past exams. Get one printable page, ranked
@@ -76,11 +76,11 @@ export default function HomePage() {
                   See a real sheet
                 </LinkButton>
               </div>
-              <div className="mt-5 flex items-center gap-3.5 font-mono text-[12px] text-[var(--ink-500)]">
+              <div className="mt-5 flex items-center gap-3.5 font-mono text-[12px] text-[var(--on-band-muted)]">
                 <span>free preview</span>
-                <span aria-hidden className="text-[#3a3a44]">·</span>
+                <span aria-hidden className="text-[var(--on-band-muted)] opacity-50">·</span>
                 <span>no subscription</span>
-                <span aria-hidden className="text-[#3a3a44]">·</span>
+                <span aria-hidden className="text-[var(--on-band-muted)] opacity-50">·</span>
                 <span>$4.99 to unlock</span>
               </div>
             </Reveal>
@@ -126,7 +126,7 @@ export default function HomePage() {
             </div>
             <Link
               href="/results?g=mis-final&tier=free"
-              className="group mt-6 inline-flex items-center gap-2.5 text-[15px] font-semibold text-[var(--ink-900)]"
+              className="tap group mt-6 inline-flex items-center gap-2.5 text-[15px] font-semibold text-[var(--ink-900)]"
             >
               <span className="border-b border-[var(--ink-900)] pb-0.5">See the whole page</span>
               <span aria-hidden className="text-[var(--ink-400)] transition-transform duration-[160ms] ease-[var(--ease-out)] group-hover:translate-x-1">
@@ -205,7 +205,7 @@ export default function HomePage() {
           </Reveal>
 
           <Reveal delay={100}>
-            <div className="border border-t-0 border-[var(--ink-150)] bg-white">
+            <div className="border border-t-0 border-[var(--ink-150)] bg-[var(--surface)]">
               {/* the specimen */}
               <div className="border-b border-[var(--ink-150)] bg-[var(--paper)] px-6 py-10 sm:px-14 sm:py-12">
                 <div className="mx-auto max-w-[760px]">
@@ -266,7 +266,7 @@ export default function HomePage() {
                 </div>
                 <div className="p-7 sm:p-8">
                   <div className="flex items-center gap-2.5">
-                    <span aria-hidden className="font-mono text-[11px] text-[var(--ink-300)]">s21</span>
+                    <span aria-hidden className="font-mono text-[11px] text-[var(--ink-500)]">s21</span>
                     <span className="font-mono text-[11px] font-semibold tracking-[0.06em] text-[var(--ink-500)]">
                       03 · SOURCE
                     </span>
@@ -283,7 +283,7 @@ export default function HomePage() {
       </section>
 
       {/* ── How it works — editorial three-up on the ranking rules ─────── */}
-      <section className="border-t border-[var(--ink-150)] bg-white">
+      <section className="border-t border-[var(--ink-150)] bg-[var(--surface)]">
         <div className="mx-auto max-w-[1180px] px-6 py-16 sm:px-10 lg:py-[88px]">
           <Reveal>
             <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end lg:gap-10">
@@ -368,7 +368,7 @@ export default function HomePage() {
           </Reveal>
           <div className="mt-10 grid gap-5 sm:grid-cols-3">
             <Reveal delay={0}>
-              <Link href="/pricing" className="block rounded-[12px] border border-[var(--ink-150)] bg-white p-7 transition-[transform,box-shadow,border-color] duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-[var(--ink-300)] hover:shadow-[var(--sh-md)]">
+              <Link href="/pricing" className="block rounded-[12px] border border-[var(--ink-150)] bg-[var(--surface)] p-7 transition-[transform,box-shadow,border-color] duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-[var(--ink-300)] hover:shadow-[var(--sh-md)]">
                 <div className="text-[14px] font-semibold text-[var(--ink-900)]">Single</div>
                 <div className="mt-3 font-serif text-[44px] leading-none text-[var(--ink-900)]">$4.99</div>
                 <div className="mt-2.5 text-[14px] text-[var(--ink-500)]">One full sheet, one credit.</div>
@@ -376,10 +376,10 @@ export default function HomePage() {
               </Link>
             </Reveal>
             <Reveal delay={70}>
-              <Link href="/pricing" className="block rounded-[12px] border border-[var(--ink-900)] bg-white p-7 shadow-[var(--sh-lg)] transition-[transform,box-shadow] duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5">
+              <Link href="/pricing" className="block rounded-[12px] border border-[var(--ink-900)] bg-[var(--surface)] p-7 shadow-[var(--sh-lg)] transition-[transform,box-shadow] duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5">
                 <div className="flex items-center gap-2.5">
                   <span className="text-[14px] font-semibold text-[var(--ink-900)]">3-Pack</span>
-                  <span className="rounded-full bg-[var(--ink-900)] px-2 py-0.5 text-[11px] font-semibold text-white">Best value</span>
+                  <span className="rounded-full bg-[var(--band)] px-2 py-0.5 text-[11px] font-semibold text-white">Best value</span>
                 </div>
                 <div className="mt-3 font-serif text-[44px] leading-none text-[var(--ink-900)]">$9.99</div>
                 <div className="mt-2.5 text-[14px] text-[var(--ink-500)]">Three sheets. One midterm season.</div>
@@ -387,7 +387,7 @@ export default function HomePage() {
               </Link>
             </Reveal>
             <Reveal delay={140}>
-              <Link href="/pricing" className="block rounded-[12px] border border-[var(--ink-150)] bg-white p-7 transition-[transform,box-shadow,border-color] duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-[var(--ink-300)] hover:shadow-[var(--sh-md)]">
+              <Link href="/pricing" className="block rounded-[12px] border border-[var(--ink-150)] bg-[var(--surface)] p-7 transition-[transform,box-shadow,border-color] duration-200 ease-[var(--ease-out)] hover:-translate-y-0.5 hover:border-[var(--ink-300)] hover:shadow-[var(--sh-md)]">
                 <div className="text-[14px] font-semibold text-[var(--ink-900)]">Sprint Pass</div>
                 <div className="mt-3 font-serif text-[44px] leading-none text-[var(--ink-900)]">$14.99</div>
                 <div className="mt-2.5 text-[14px] text-[var(--ink-500)]">Unlimited for 7 days, priority queue.</div>
@@ -399,7 +399,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Closer — ink, the 2am desk under a diagonal mask ───────────── */}
-      <section className="relative overflow-hidden bg-[var(--ink-900)]">
+      <section className="relative overflow-hidden bg-[var(--band)]">
         <div
           aria-hidden
           className="absolute bottom-0 right-0 top-0 hidden w-[58%] lg:block"
@@ -426,7 +426,7 @@ export default function HomePage() {
               </h2>
             </Reveal>
             <Reveal delay={90}>
-              <p className="mt-6 max-w-[42ch] text-[16px] leading-[1.65] text-[var(--ink-300)]">
+              <p className="mt-6 max-w-[42ch] text-[16px] leading-[1.65] text-[var(--on-band-muted)]">
                 Free preview on every sheet — you see the real thing, at full density, before you
                 pay for it.
               </p>
@@ -434,7 +434,7 @@ export default function HomePage() {
                 <LinkButton href="/generate" variant="inverse" size="xl" className="!px-6">
                   Drop your files
                 </LinkButton>
-                <span className="font-mono text-[11px] text-[var(--ink-500)]">
+                <span className="font-mono text-[11px] text-[var(--on-band-muted)]">
                   no account needed to preview
                 </span>
               </div>

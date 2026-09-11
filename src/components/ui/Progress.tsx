@@ -23,7 +23,7 @@ const FILL: Record<ProgressTone, string> = {
   confidence:
     "bg-[linear-gradient(90deg,var(--conf-med),var(--conf-high))]",
   signal: "bg-[var(--signal-500)]",
-  ink: "bg-[var(--ink-900)]",
+  ink: "bg-[var(--band)]",
 };
 
 export function Progress({

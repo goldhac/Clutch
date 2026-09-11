@@ -33,7 +33,7 @@ const TONES: Record<ChipTone, string> = {
   success: "bg-[var(--conf-high-bg)] text-[var(--conf-high)]",
   warn: "bg-[var(--warn-bg)] text-[var(--warn)]",
   danger: "bg-[var(--danger-bg)] text-[var(--danger)]",
-  ink: "bg-[var(--ink-900)] text-white",
+  ink: "bg-[var(--band)] text-white",
 };
 
 export function Chip({ tone = "neutral", children, onRemove, removeLabel, className }: ChipProps) {

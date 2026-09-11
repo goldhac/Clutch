@@ -115,7 +115,7 @@ export default function FaqPage() {
                   </span>
                   <span
                     aria-hidden
-                    className="mt-0.5 shrink-0 font-mono text-[15px] text-[var(--ink-400)] transition-transform duration-200 ease-[var(--ease-out)]"
+                    className="mt-0.5 shrink-0 font-mono text-[15px] text-[var(--ink-500)] transition-transform duration-200 ease-[var(--ease-out)]"
                     style={{ transform: isOpen ? "rotate(45deg)" : "none" }}
                   >
                     +
@@ -138,12 +138,12 @@ export default function FaqPage() {
 
         {/* closer */}
         <Reveal>
-          <div className="mt-[72px] flex max-w-[720px] flex-wrap items-center justify-between gap-7 rounded-[14px] bg-[var(--ink-900)] p-9">
+          <div className="mt-[72px] flex max-w-[720px] flex-wrap items-center justify-between gap-7 rounded-[14px] bg-[var(--band)] p-9">
             <div>
               <h2 className="max-w-[20ch] font-serif text-[32px] leading-[1.06] tracking-[-0.025em] text-white">
                 Still deciding? The preview is free.
               </h2>
-              <p className="mt-3 max-w-[40ch] text-[14.5px] leading-[1.6] text-[var(--ink-300)]">
+              <p className="mt-3 max-w-[40ch] text-[14.5px] leading-[1.6] text-[var(--on-band-muted)]">
                 See a real sheet from your own files before you spend a credit.
               </p>
             </div>

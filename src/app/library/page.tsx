@@ -1,19 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { AppChrome, LinkButton, Modal, ModalActions, Button, toast } from "@/components/ui";
+import { useEffect, useRef, useState } from "react";
+import { AppChrome, LinkButton, Button, toast } from "@/components/ui";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
 /**
  * /library — v2 handoff: hairline LIST (not cards) under an ink-ruled
  * page head with search + sort + New sheet. Each row: mini sheet
  * thumbnail (topic color bars + line texture), title, mono meta, open +
- * delete actions. Delete goes through the destructive modal (red dot,
- * red primary, "cannot be undone" footer). Signed-out state is the
- * editorial two-column pitch.
+ * delete actions. Delete is immediate and undoable — the row goes at
+ * once and the toast carries Undo for UNDO_GRACE — rather than passing
+ * through a confirmation modal. Signed-out state is the editorial
+ * two-column pitch.
  *
- * Supabase logic unchanged: RLS-owned rows, open seeds clutch:last,
- * delete is optimistic with rollback.
+ * Supabase logic unchanged: RLS-owned rows, open seeds clutch:last.
+ * The row-level delete is held for the undo window and flushed on
+ * unmount, so leaving the page still resolves it.
  */
 interface SheetRow {
   id: string;
@@ -64,7 +66,7 @@ function SheetThumb() {
           <span key={c} className="h-[3px] flex-1 rounded-[1px]" style={{ background: c }} />
         ))}
       </span>
-      <span className="mx-1 mt-1 block h-1 rounded-[1px] bg-[var(--ink-900)]" />
+      <span className="mx-1 mt-1 block h-1 rounded-[1px] bg-[var(--band)]" />
       <span className="mx-1 mb-1.5 mt-[3px] flex gap-[2px]">
         {widths.map((col, ci) => (
           <span key={ci} className="flex flex-1 flex-col gap-[1.5px]">
@@ -78,6 +80,10 @@ function SheetThumb() {
   );
 }
 
+/** Held delete window. Outlasts the actionable toast (7s) so Undo is
+ *  always reachable for as long as the control is on screen. */
+const UNDO_GRACE = 7400;
+
 export default function LibraryPage() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<Sort>("recent");
@@ -85,7 +91,7 @@ export default function LibraryPage() {
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [email, setEmail] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<SheetRow | null>(null);
+  const pendingUndo = useRef<Map<string, number>>(new Map());
 
   useEffect(() => {
     const supabase = supabaseBrowser();
@@ -122,23 +128,62 @@ export default function LibraryPage() {
     window.location.href = "/results";
   }
 
-  async function deleteSheet(row: SheetRow) {
-    setPendingDelete(null);
-    const prev = rows;
-    setRows((r) => (r ? r.filter((x) => x.id !== row.id) : r));
+  /**
+   * Delete is optimistic with a real undo window rather than a
+   * confirmation dialog: the row leaves the list at once, the row-level
+   * delete is held for UNDO_GRACE, and the toast's Undo cancels it. A
+   * dialog interrupts everyone to guard against a rare mistake; undo
+   * guards without interrupting.
+   *
+   * Anything still pending is committed on unmount, so navigating away
+   * (or closing the tab) resolves the delete instead of silently
+   * abandoning it.
+   */
+  async function commitDelete(row: SheetRow) {
+    pendingUndo.current.delete(row.id);
     const { error: delErr } = await supabaseBrowser().from("sheets").delete().eq("id", row.id);
     if (delErr) {
       setError(delErr.message);
-      setRows(prev ?? null);
-    } else {
-      toast("Sheet deleted");
+      setRows((r) => (r ? [row, ...r.filter((x) => x.id !== row.id)] : r));
     }
+  }
+
+  function deleteSheet(row: SheetRow) {
+    setRows((r) => (r ? r.filter((x) => x.id !== row.id) : r));
+
+    const timer = window.setTimeout(() => void commitDelete(row), UNDO_GRACE);
+    pendingUndo.current.set(row.id, timer);
+
+    toast("Sheet deleted", "check", {
+      label: "Undo",
+      onAction: () => {
+        const t = pendingUndo.current.get(row.id);
+        if (t !== undefined) {
+          clearTimeout(t);
+          pendingUndo.current.delete(row.id);
+        }
+        setRows((r) => (r ? [row, ...r.filter((x) => x.id !== row.id)] : [row]));
+      },
+    });
   }
 
   async function signOut() {
     await supabaseBrowser().auth.signOut();
     window.location.reload();
   }
+
+  useEffect(() => {
+    const pending = pendingUndo.current;
+    return () => {
+      // Commit anything still held so leaving the page resolves the
+      // delete rather than abandoning it.
+      pending.forEach((timer, id) => {
+        clearTimeout(timer);
+        void supabaseBrowser().from("sheets").delete().eq("id", id);
+      });
+      pending.clear();
+    };
+  }, []);
 
   const filtered = (rows ?? [])
     .filter((i) => i.title.toLowerCase().includes(q.toLowerCase()))
@@ -181,7 +226,7 @@ export default function LibraryPage() {
                     value={q}
                     onChange={(e) => setQ(e.target.value)}
                     placeholder="Search sheets"
-                    className="h-9 w-[190px] rounded-[9px] border border-[var(--border-input)] bg-white pl-8 pr-3 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-400)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
+                    className="h-9 w-[190px] rounded-[9px] border border-[var(--border-input)] bg-[var(--surface)] pl-8 pr-3 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
                   />
                 </span>
                 <span className="flex shrink-0 items-center rounded-[9px] bg-[var(--field)] p-[3px]">
@@ -198,7 +243,7 @@ export default function LibraryPage() {
                       className={
                         "rounded-[6px] px-3 py-1.5 text-[12.5px] font-semibold transition-[background-color,color,box-shadow] duration-[160ms] " +
                         (sort === value
-                          ? "bg-white text-[var(--ink-900)] shadow-[var(--sh-sm)]"
+                          ? "bg-[var(--surface)] text-[var(--ink-900)] shadow-[var(--sh-sm)]"
                           : "text-[var(--ink-500)] hover:text-[var(--ink-800)]")
                       }
                     >
@@ -251,7 +296,7 @@ export default function LibraryPage() {
                 </span>
               </div>
             </div>
-            <div className="rounded-[12px] border border-[var(--ink-150)] bg-white p-5">
+            <div className="rounded-[12px] border border-[var(--ink-150)] bg-[var(--surface)] p-5">
               <div className="font-mono text-[10px] font-semibold uppercase tracking-[0.09em] text-[var(--ink-500)]">
                 Kept with the sheet
               </div>
@@ -302,7 +347,7 @@ export default function LibraryPage() {
               <span className="font-mono text-[12px] font-semibold tracking-[0.04em] text-[var(--ink-900)]">
                 ALL SHEETS
               </span>
-              <span className="shrink-0 font-mono text-[11px] text-[var(--ink-400)]">
+              <span className="shrink-0 font-mono text-[11px] text-[var(--ink-500)]">
                 {filtered.length} shown
               </span>
             </div>
@@ -340,15 +385,15 @@ export default function LibraryPage() {
                         <button
                           type="button"
                           onClick={() => openSheet(row)}
-                          className="inline-flex h-8 items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-white px-3.5 text-[13px] font-semibold text-[var(--ink-900)] transition-[background-color,border-color] duration-[160ms] hover:bg-[var(--ink-50)]"
+                          className="inline-flex h-8 items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-3.5 text-[13px] font-semibold text-[var(--ink-900)] transition-[background-color,border-color] duration-[160ms] hover:bg-[var(--ink-50)]"
                         >
                           Open
                         </button>
                         <button
                           type="button"
-                          onClick={() => setPendingDelete(row)}
+                          onClick={() => deleteSheet(row)}
                           aria-label={`delete ${row.title}`}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-[var(--r-md)] border border-[var(--ink-150)] bg-white text-[var(--ink-400)] transition-[color,border-color] duration-[160ms] hover:border-[var(--conf-low)]/40 hover:text-[var(--conf-low)]"
+                          className="tap inline-flex h-8 w-8 items-center justify-center rounded-[var(--r-md)] border border-[var(--ink-150)] bg-[var(--surface)] text-[var(--ink-500)] transition-[color,border-color] duration-[160ms] hover:border-[var(--conf-low)]/40 hover:text-[var(--conf-low)]"
                         >
                           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                             <path d="M4 7h16M9 7V4h6v3M6 7l1 14h10l1-14" />
@@ -362,29 +407,6 @@ export default function LibraryPage() {
         )}
       </div>
 
-      {/* ── delete modal (destructive: red dot, red primary, bad footer) ── */}
-      <Modal
-        open={pendingDelete !== null}
-        onClose={() => setPendingDelete(null)}
-        tone="destructive"
-        eyebrow="DELETE · MY SHEETS"
-        title="Delete this sheet?"
-        footer={{ tint: "bad", text: "cannot be undone" }}
-      >
-        <p>
-          <strong className="text-[var(--ink-900)]">{pendingDelete?.title}</strong> and the pool it
-          was built from will be removed from your library. Exports you already downloaded stay
-          yours.
-        </p>
-        <ModalActions>
-          <Button variant="danger" size="md" onClick={() => pendingDelete && void deleteSheet(pendingDelete)}>
-            Delete sheet
-          </Button>
-          <Button variant="secondary" size="md" onClick={() => setPendingDelete(null)}>
-            Keep it
-          </Button>
-        </ModalActions>
-      </Modal>
     </AppChrome>
   );
 }

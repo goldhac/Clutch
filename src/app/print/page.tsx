@@ -68,7 +68,7 @@ export default async function PrintPage({
             <div className="mt-5 flex gap-3">
               <a
                 href="/results"
-                className="inline-flex h-10 items-center rounded-[var(--r-md)] bg-[var(--ink-900)] px-4 text-[14px] font-semibold text-white"
+                className="inline-flex h-10 items-center rounded-[var(--r-md)] bg-[var(--band)] px-4 text-[14px] font-semibold text-white"
               >
                 Back to my sheet
               </a>

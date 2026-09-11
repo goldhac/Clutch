@@ -33,7 +33,7 @@ export function AppChrome({
   return (
     <div className="min-h-screen bg-[var(--paper)]">
       <Toaster />
-      <header className="sticky top-0 z-[var(--z-sticky)] border-b border-[var(--ink-150)] bg-[rgba(251,251,250,0.9)] backdrop-blur-[10px]">
+      <header className="sticky top-0 z-[var(--z-sticky)] border-b border-[var(--ink-150)] bg-[var(--paper-glass)] backdrop-blur-[10px]">
         <div className="mx-auto flex h-[60px] max-w-[1180px] items-center gap-4 px-8">
           <Wordmark />
 
@@ -46,9 +46,9 @@ export function AppChrome({
                   href={t.href}
                   aria-current={on ? "page" : undefined}
                   className={
-                    `rounded-[7px] px-3.5 py-1.5 text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-[160ms] ` +
+                    `tap inline-flex items-center rounded-[7px] px-3.5 py-1.5 text-[13px] font-semibold transition-[background-color,color,box-shadow] duration-[160ms] ` +
                     (on
-                      ? "bg-white text-[var(--ink-900)] shadow-[var(--sh-sm)]"
+                      ? "bg-[var(--surface)] text-[var(--ink-900)] shadow-[var(--sh-sm)]"
                       : "text-[var(--ink-500)] hover:text-[var(--ink-800)]")
                   }
                 >

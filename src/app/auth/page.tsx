@@ -101,7 +101,7 @@ export default function AuthPage() {
               <button
                 type="button"
                 onClick={() => void signInWithGoogle()}
-                className="mt-8 flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[9px] border border-[var(--border-input)] bg-white text-[14px] font-medium text-[var(--ink-800)] transition-[background-color,transform] duration-[160ms] ease-[var(--ease-out)] hover:bg-[var(--ink-50)] active:scale-[0.99]"
+                className="mt-8 flex h-[46px] w-full items-center justify-center gap-2.5 rounded-[9px] border border-[var(--border-input)] bg-[var(--surface)] text-[14px] font-medium text-[var(--ink-800)] transition-[background-color,transform] duration-[160ms] ease-[var(--ease-out)] hover:bg-[var(--ink-50)] active:scale-[0.99]"
               >
                 <GoogleG /> Continue with Google
               </button>
@@ -129,14 +129,14 @@ export default function AuthPage() {
                     setEmail(e.target.value);
                     setInvalid(false);
                   }}
-                  className="h-[46px] w-full rounded-[9px] border border-[var(--border-input)] bg-white px-3.5 text-[14.5px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-400)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
+                  className="h-[46px] w-full rounded-[9px] border border-[var(--border-input)] bg-[var(--surface)] px-3.5 text-[14.5px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
                 />
                 <button
                   type="submit"
                   className={
                     "mt-2.5 flex h-[46px] w-full items-center justify-center rounded-[9px] text-[14.5px] font-semibold transition-[background-color,color,opacity,transform] duration-[160ms] ease-[var(--ease-out)] active:scale-[0.99] " +
                     (ok
-                      ? "bg-[var(--ink-900)] text-white hover:bg-[var(--ink-800)]"
+                      ? "bg-[var(--band)] text-white hover:bg-[var(--band-2)]"
                       : "bg-[var(--ink-150)] text-[var(--ink-500)]")
                   }
                   style={{ opacity: sending ? 0.75 : 1 }}
@@ -208,7 +208,7 @@ export default function AuthPage() {
       </div>
 
       {/* ── right: why an account (ink, corridor photo) ───────────── */}
-      <div className="relative hidden flex-col justify-center overflow-hidden bg-[var(--ink-900)] px-11 py-14 min-[720px]:flex">
+      <div className="relative hidden flex-col justify-center overflow-hidden bg-[var(--band)] px-11 py-14 min-[720px]:flex">
         <div
           aria-hidden
           className="absolute inset-0 opacity-50"
@@ -228,7 +228,7 @@ export default function AuthPage() {
           />
         </div>
         <div className="relative max-w-[420px]">
-          <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink-400)]">
+          <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--on-band-muted)]">
             Why an account
           </div>
           <h2
@@ -237,18 +237,18 @@ export default function AuthPage() {
           >
             Your sheets follow you.
           </h2>
-          <div className="mt-[30px] border-t border-[var(--ink-700)]">
-            <div className="border-b border-[var(--ink-700)] py-[15px] text-[14.5px] leading-[1.5] text-[var(--ink-150)]">
+          <div className="mt-[30px] border-t border-[var(--band-line)]">
+            <div className="border-b border-[var(--band-line)] py-[15px] text-[14.5px] leading-[1.5] text-[var(--on-band)]">
               Every saved sheet, on any device
             </div>
-            <div className="border-b border-[var(--ink-700)] py-[15px] text-[14.5px] leading-[1.5] text-[var(--ink-150)]">
+            <div className="border-b border-[var(--band-line)] py-[15px] text-[14.5px] leading-[1.5] text-[var(--on-band)]">
               The pool and density each was built from
             </div>
-            <div className="py-[15px] text-[14.5px] leading-[1.5] text-[var(--ink-150)]">
+            <div className="py-[15px] text-[14.5px] leading-[1.5] text-[var(--on-band)]">
               Credits and unlocks you already paid for
             </div>
           </div>
-          <div className="mt-[26px] font-mono text-[11px] text-[var(--ink-400)]">
+          <div className="mt-[26px] font-mono text-[11px] text-[var(--on-band-muted)]">
             the preview needs no account · sign in only to keep things
           </div>
         </div>

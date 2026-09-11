@@ -24,7 +24,7 @@ export function Card({
   return (
     <Tag
       className={
-        `rounded-[var(--r-lg)] border border-[var(--ink-150)] bg-white ${bare ? "" : "p-4"}` +
+        `rounded-[var(--r-lg)] border border-[var(--ink-150)] bg-[var(--surface)] ${bare ? "" : "p-4"}` +
         (interactive
           ? " cursor-pointer transition-[transform,box-shadow] duration-[var(--dur)] ease-[var(--ease-out)] " +
             "hover:-translate-y-[3px] hover:shadow-[var(--sh-lg)]"

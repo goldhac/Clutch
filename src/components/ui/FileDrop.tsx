@@ -63,7 +63,7 @@ export function FileDrop({
       />
       <span
         className={`flex h-11 w-11 items-center justify-center rounded-[var(--r-md)] transition-colors ${
-          over ? "bg-[var(--signal-100)] text-[var(--signal-600)]" : "bg-white text-[var(--ink-500)] shadow-[var(--sh-xs)]"
+          over ? "bg-[var(--signal-100)] text-[var(--signal-600)]" : "bg-[var(--surface)] text-[var(--ink-500)] shadow-[var(--sh-xs)]"
         }`}
       >
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

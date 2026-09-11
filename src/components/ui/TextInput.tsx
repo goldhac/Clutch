@@ -21,8 +21,8 @@ export function TextInput({
 }: TextInputProps) {
   const border = invalid ? "border-[var(--danger)]" : "border-[var(--border-input)]";
   const field =
-    `h-9 w-full rounded-[var(--r-md)] border ${border} bg-white text-[14px] text-[var(--ink-900)] ` +
-    `placeholder:text-[var(--ink-400)] outline-none transition-colors duration-[var(--dur-fast)] ` +
+    `h-9 w-full rounded-[var(--r-md)] border ${border} bg-[var(--surface)] text-[14px] text-[var(--ink-900)] ` +
+    `placeholder:text-[var(--ink-500)] outline-none transition-colors duration-[var(--dur-fast)] ` +
     `focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]`;
 
   if (leading) {
