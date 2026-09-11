@@ -93,37 +93,50 @@ body {
   color: var(--signal-700);
 }
 
-/* ── Touch targets ────────────────────────────────────────────────────
- * Apple's HIG sets a different control minimum per input device:
- * 44×44pt for touch (iOS, iPadOS, watchOS) but 28×28pt for pointing
- * devices (macOS). So the fix is pointer-aware rather than a blanket
- * size bump — controls keep their compact rendered size under a mouse,
- * where they already clear 28pt, and grow to 44pt wherever the pointer
- * is coarse.
+/* ── Control minimum sizes ────────────────────────────────────────────
+ * Apple's HIG sets a MINIMUM PER INPUT DEVICE, not one number:
+ *
+ *     iOS / iPadOS / watchOS   44 × 44 pt
+ *     macOS (pointing device)  28 × 28 pt
+ *     visionOS                 60 × 60 pt
+ *
+ * So both floors apply — a control that's fine under a mouse can still
+ * be too small for a thumb, and a 17px link fails BOTH. Encode the
+ * pointer floor unconditionally and raise it where the pointer is
+ * coarse. (An earlier version only had the coarse rule, which silently
+ * did nothing on desktop and left 17px and 22px controls in place.)
  *
  *   .tap       grows the control itself (buttons, chips, segments)
- *   .tap-area  grows only the HIT area via an overlay, for links sitting
- *              in dense rows where real padding would reflow the layout
+ *   .tap-area  grows only the HIT area via an overlay, for links in
+ *              dense rows where real padding would reflow the layout
  *
- * Rows using .tap-area need ≥44px of vertical rhythm between them or the
- * overlays collide — check the gap before adding it.
+ * Rows using .tap-area need at least the floor's worth of vertical
+ * rhythm between them, or adjacent overlays collide.
  */
+.tap {
+  min-height: 28px;
+  min-width: 28px;
+}
+
+.tap-area {
+  position: relative;
+}
+.tap-area::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 28px;
+  transform: translateY(-50%);
+}
+
 @media (pointer: coarse) {
   .tap {
     min-height: 44px;
     min-width: 44px;
   }
-
-  .tap-area {
-    position: relative;
-  }
   .tap-area::after {
-    content: "";
-    position: absolute;
-    left: 0;
-    right: 0;
-    top: 50%;
     height: 44px;
-    transform: translateY(-50%);
   }
 }
