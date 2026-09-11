@@ -17,6 +17,25 @@ import { supabaseBrowser } from "@/lib/supabase/client";
  */
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+/**
+ * Auth failures reach us as raw strings — "Failed to fetch" when the
+ * backend is unreachable, provider text otherwise. Neither tells a
+ * student what happened or what to do, so translate the ones we can
+ * recognise and keep the original only as a trailing detail.
+ */
+function humanAuthError(raw: string): string {
+  const e = raw.toLowerCase();
+  if (e.includes("failed to fetch") || e.includes("networkerror") || e.includes("load failed"))
+    return "We couldn't reach the server. Check your connection and try again — nothing was sent.";
+  if (e.includes("rate") || e.includes("too many") || e.includes("429"))
+    return "Too many links requested. Wait a minute, then try again.";
+  if (e.includes("invalid") && e.includes("email"))
+    return "That address was rejected. Check the spelling and try again.";
+  if (e.includes("signups not allowed") || e.includes("disabled"))
+    return "New sign-ups are paused right now. Try again later.";
+  return `We couldn't send the link. ${raw}`;
+}
+
 export default function AuthPage() {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
@@ -62,7 +81,7 @@ export default function AuthPage() {
         resentTimer.current = window.setTimeout(() => setResent(false), 3000);
       }
     } catch (e) {
-      setAuthError(e instanceof Error ? e.message : String(e));
+      setAuthError(humanAuthError(e instanceof Error ? e.message : String(e)));
     } finally {
       setSending(false);
     }
@@ -78,7 +97,7 @@ export default function AuthPage() {
       });
       if (error) throw error;
     } catch (e) {
-      setAuthError(e instanceof Error ? e.message : String(e));
+      setAuthError(humanAuthError(e instanceof Error ? e.message : String(e)));
     }
   }
 
