@@ -1,387 +1,391 @@
 # Clutch Audio — Product Requirements
 
-**Status:** draft for sign-off · **Owner:** Gold Nwobu · **Written:** Sep 11, 2026
-**Inputs:** `10-PODCAST-FEATURE-RESEARCH.md` (research) · `11-PODCAST-BUILD-PLAN.md` (decisions)
-**Sequencing:** builds after the v2 redesign, which shipped Sep 11.
+**Status:** v2, ready to build · **Owner:** Gold Nwobu · **Rewritten:** Sep 11, 2026
+**Inputs:** `10-…RESEARCH.md` · `11-…BUILD-PLAN.md` · **`reference/exam-prep/` — the hand-built
+precedent, which outranks both** · reference repos read directly (see §11)
 
-This PRD is the buildable layer under those two. 10 answers *what's possible*, 11 answers
-*what we chose*. This answers **what exactly gets built, how we know it works, and what
-happens when it doesn't.**
-
-> **One decision needs your sign-off before Phase 1: §4, the script input problem.**
-> Everything else here is specified.
+> **v2 changes the shape of the feature.** v1 had audio as a companion downstream of a sheet.
+> It isn't. It's the front door, and it's a *sibling* of the sheet, not a child. The reason is
+> in `reference/exam-prep/BUILD-LOG.md` §B.6 — see §3.
 
 ---
 
-## 1. Summary
+## 1. What this is
 
-**One sentence:** Clutch Audio turns a finished sheet into a listenable walkthrough — a
-15–30 minute crash course that makes every line on your sheet *understandable*, plus 5–8
-minute topic episodes for the parts that still don't land.
+**Drop in a semester of notes. Get a podcast series, ordered by what's actually on the exam.**
 
-The sheet is the at-the-desk artifact. Audio is the away-from-desk companion: **learn it on
-the bus, confirm it on the sheet.**
+One episode per topic, ~10 minutes, two hosts, with the exam-likely questions asked *at you*
+mid-episode. Topics too thin to stand alone get merged. Playback order follows exam weight,
+not lecture order.
 
----
-
-## 2. Why this, why now
-
-**The gap in the product today.** The sheet is deliberately terse — "if it takes ink, it
-earns it." That density is the feature at the exam desk and a bug the week before it. A
-student who doesn't already understand `Var(X) = E[X²] − (E[X])²` gets no help from seeing
-it compressed onto one line. The sheet tells you *what* will be tested and *how confident*
-we are. It does not teach.
-
-**Why audio specifically.** Study time before an exam is not all desk time. Commutes, walks,
-laundry, the gym — hours where a sheet is useless and a podcast isn't. This is the only
-format that reaches that time.
-
-**Why we can do it better than a NotebookLM clone.** Every clone converts raw documents to
-chat. We have something none of them do: **a ranked, scored, exam-aware pool.** We know which
-items are likely to be tested, which are exam-verified, which are traps, and what the answers
-are. That turns a generic summary podcast into a *prioritised revision session with built-in
-quizzing*. The moat is the pool, not the pipeline.
+This is the productised version of what Gold already built by hand for two courses
+(CS 6320 NLP, CS 6360 Big Data — 28 topic folders, 14 generated podcasts). The workflow is
+proven; this makes it a product.
 
 ---
 
-## 3. Users, jobs, and scope
+## 2. Why audio is the front door, not an add-on
 
-### Primary user
-The student who already generated a sheet and has 48 hours to go. Has the sheet. Doesn't
-fully understand all of it.
+**The job.** Study time before an exam is not all desk time. Commutes, the gym, walking,
+laundry. Hours where a sheet is useless and a podcast isn't. That time is currently unserved
+by every study tool including ours.
 
-### Jobs to be done
-| # | Job | Format |
+**Why we win against NotebookLM and its clones.** They convert documents to conversation. We
+convert documents to *a prioritised revision series that quizzes you*. The difference comes
+from the pool: we know what's likely tested, what's exam-verified, what the traps are, and
+what the answers are. Reading three reference implementations (§11) confirmed **none of them
+have any retrieval or quizzing at all.** That's the moat, and it's not close.
+
+**Why it's the front door.** "Turn my lecture notes into podcasts" is a thing students already
+want and already search for. "Generate a one-page reference sheet" needs explaining. The audio
+is the easier sell; the sheet is the thing they keep.
+
+---
+
+## 3. The architecture correction (this is the important part)
+
+`11-PODCAST-BUILD-PLAN.md` had the podcast reading the sheet. **`BUILD-LOG.md` §B.6 says
+that's exactly wrong**, from direct experience:
+
+> *"**Don't upload the cheatsheet** — too terse, NotebookLM produces a worse podcast from it
+> than from full slides."*
+
+That experiment has already been run by hand. The compressed artifact makes **worse** audio
+than the raw source. So:
+
+```
+bulk upload
+  └─ ingest + topic split          (parse/ingest.ts — exists)
+       ├─→ AUDIO   ← full source text per topic
+       └─→ SHEET   ← full source text per topic   (engine/rank.ts — exists)
+```
+
+Audio and sheet are **siblings off one ingest**, never a chain. Two consequences:
+
+1. **The "we don't persist source text" problem disappears** for this flow. At upload we're
+   holding the text. No new retention, no migration, no privacy surface.
+2. It only returns for the *later* feature — "make audio for a sheet I saved last week."
+   Deferred to v2 of the feature; see §10.
+
+---
+
+## 4. Rules taken from the hand-built precedent
+
+All of these come from `BUILD-LOG.md` §B.6, which is failure-tested rather than theorised.
+
+| Rule | Source | Why |
 |---|---|---|
-| J1 | "Make me understand what's on my sheet, hands-free." | Crash Course |
-| J2 | "I still don't get *this one topic*." | Topic Episode |
-| J3 | "Test me on the likely questions without me reading them." | Retrieval segments (both) |
-| J4 | "Remind me where people lose points." | Trap moments (both) |
+| **One topic = one source.** Don't blend lectures. | §B.6 | *"diluting with multiple sources reduces focus"* |
+| **Merge only when too thin.** `<5 min` of material → combine with one supplementary source. | §B.6 failure modes | Padding a thin topic produces exactly the waffle that makes AI podcasts unlistenable |
+| **Never generate from the compressed artifact.** | §B.6 | The cheatsheet experiment above |
+| **~10 minutes per topic episode.** | §B.6 goal | v1 of this PRD said 5–8; the proven number is 10 |
+| **Priority-ordered playback**, T1/T2/T3 prefixes. | §B.6 | Exam weight, not lecture order |
+| **Two hosts: A drives, B asks the listener's question.** | `podcast-script.md` | Independently matches podcastfy's `main summarizer` + `questioner/clarifier` |
 
-### Non-goals for v1 — explicitly out of scope
-- Voice cloning or user-selected voices. Two fixed Clutch voices.
-- Languages other than English.
-- More than two speakers (Gemini multi-speaker caps at 2).
-- Editing the script by hand before generation.
-- Public/shareable episode links or an RSS feed.
-- Offline download outside the browser's own audio caching.
-- Transcripts as a first-class surface (we *generate* one; displaying it is a fast-follow).
-- Audio for anything other than a sheet the user owns.
+### The script format — lifted from `11-attention/podcast-script.md`
 
----
+That file is the target. It is better than both reference implementations for teaching, and
+the structure is deliberate:
 
-## 4. ⚠ The script input problem — DECISION REQUIRED
+1. **Cold open** naming the stake, ≤ 60 s — *"the architecture behind basically every modern
+   NLP system. We'll keep it concrete."*
+2. **B asks the motivating question first** — *"What problem does attention even solve?"*
+   Motivation before mechanism.
+3. **A concrete worked example**, carried through the whole episode ("The cat sat on the mat").
+4. **Analogies that do real work** — attention as a student translating with the textbook
+   open; Q/K/V as a search engine.
+5. **B voices the listener's actual confusion** — *"Now here's the thing that confused me…"*
+6. **The mechanism, with why it matters** — √d_k explained via *gradients die*, not as trivia.
+7. **Recap before close.**
+8. **Listener homework** pointing back at the written artifact — *"Compute scaled dot-product
+   attention by hand on three tokens. The notes file has the example."*
 
-**`11-PODCAST-BUILD-PLAN.md` §1 states the episode input is "full ingested source text
-filtered per topic (we keep it from `ingest.ts`)". We do not keep it.**
+That last beat is the *learn-it-on-the-bus, confirm-it-on-the-sheet* loop, already invented.
+**Keep it.** It is the single cheapest thing that makes audio part of the product rather than
+a side feature.
 
-Verified in the code:
-- `src/app/api/generate/route.ts` ingests the pack, passes text to `generateSheet()`, and
-  returns only `{ content, meta, warnings, pack }` — where `pack` carries *filename, tag and
-  char count only*, never the text.
-- `public.sheets` stores `title`, `content` (the pool), `ctx`. No source text column.
-- Ingested text exists only in server memory for the life of one request.
+### Added to the precedent: mandatory retrieval
 
-So the crash course's stated job — *explain the sheet's dense lines from the fuller notes* —
-has no fuller notes to work from unless we change something.
-
-### Options
-
-| | Approach | Cost | Script quality ceiling |
-|---|---|---|---|
-| **A** | **Pool-only.** Script from the pool alone. | Zero schema change. Ships now. | Bounded. The pool is richer than it looks — `topic.why`, `concept.def` + `ex`, `formula.vars`/`when`/`trap`/`ex`, `question.q` + `a` — but it's all *already compressed*. Risk: audio that restates the sheet rather than explaining it. |
-| **B** | **Persist raw source text** per sheet. | New storage; a privacy surface (we'd be holding students' course materials indefinitely); packs run to hundreds of KB. | Highest. Full context to teach from. |
-| **C** | **Persist a per-topic teaching brief**, written at generate time while the text is still in memory. | One extra cheap LLM call during generation (~$0.01), one new column. No raw-material retention. | Near-B. Purpose-built for exactly this job. |
-
-### Recommendation: **C**
-
-At `generateSheet()` time we already hold the full text and have already paid to understand
-it. Emitting a compact per-topic brief (target ~150–250 words per topic: what this topic
-actually *is*, the intuition, the worked mechanics) costs one small call and gives the audio
-pipeline what it needs without us becoming a warehouse of other people's lecture slides.
-
-It also degrades gracefully: sheets generated *before* this ships have no brief, so they fall
-back to **A** (pool-only) rather than failing. Which means A is implemented either way, as
-the fallback path.
-
-**If you pick A**, the crash course's promise narrows honestly to "walks your sheet in
-priority order and quizzes you" rather than "makes it understandable", and §5 copy changes
-to match. **Tell me which and I'll finalise §5–§8 around it.** The rest of this PRD is
-written to be correct under either.
+The hand-built scripts recap but don't quiz. We add **one retrieval beat per episode**:
+question → genuine pause → answer → why. Retrieval practice beats re-exposure for delayed
+recall under time control ([Roediger & Karpicke
+2006](https://journals.sagepub.com/doi/10.1111/j.1467-9280.2006.01693.x)). We can do this and
+the clones can't, because we have answered questions in the pool. **This is the feature that
+makes it revision rather than content.**
 
 ---
 
-## 5. The formats
+## 5. Scope
 
-### Format A — Crash Course (flagship)
+### v1 — the front door
+1. Upload a bulk of notes (multi-file, a semester's worth).
+2. Ingest → split into topics → rank by exam weight.
+3. Generate one ~10 min episode per topic, thin topics merged.
+4. Priority-ordered playlist with a chaptered player.
+5. Free preview → Pro unlock.
 
-One episode per sheet. Walks the sheet in priority order, topic by topic.
-
-| Property | Spec |
-|---|---|
-| Length | Scales with sheet: ~2–4 min/topic. 6 topics ≈ 15–20 min. **Hard cap 30 min.** |
-| Structure | Cold open ≤ 60 s → per-topic chapters → closer |
-| Chapters | One per topic, at topic boundaries, topic-coloured in the player |
-| Retrieval | **Exactly one** per topic chapter — question, genuine pause beat, answer, why |
-| Traps | Woven in where the topic has trap items |
-| Hosts | Two, fixed. One plays slightly naive and asks what the listener would ask. |
-
-**Why 30 minutes is the cap:** completion is 74% for 20–40 min episodes and drops to 58%
-past 45 ([PodRewind](https://podrewind.com/blog/podcast-completion-rate-analysis)). Chapters
-exist because learner-paced segments beat one continuous unit — Mayer's segmenting principle
-([Cambridge](https://www.cambridge.org/core/books/abs/multimedia-learning/segmenting-principle/37240877DDA0362355ADB39936027982),
-[2023 study](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC10759450/)). Conveniently the
-pedagogy and the engineering want the same cut points: topic seams are also where TTS
-chunking puts its prosody resets, so the seams are least audible exactly where we need them.
-
-**Why retrieval is mandatory, not decorative:** retrieval practice beats re-exposure for
-delayed-test performance under time control ([Roediger & Karpicke
-2006](https://journals.sagepub.com/doi/10.1111/j.1467-9280.2006.01693.x)). This is the line
-between Clutch Audio and "audio notes" — and no NotebookLM clone does it, because none of
-them have answered questions to quiz from.
-
-### Format B — Topic Episodes (drill-down)
-
-5–8 minutes, one per topic, priority-ordered. Same rules; retrieval block near the end
-rather than mid-chapter. For the topic that still didn't land.
-
-### Shared rules
-- Cold open ≤ 60 s, opening on the exam stake ("this topic is roughly 20% of your exam"),
-  never on pleasantries. Intros over 90 s nearly double drop-off.
-- Two named, consistent Clutch voices (Gemini prebuilt pair, e.g. Kore + Puck).
-- English only.
-- **Never invent.** Same rule as the sheet engine: if the pool doesn't support a claim, the
-  script doesn't make it. No confident audio about something we can't cite.
+### Deliberately not in v1
+- Audio for an existing saved sheet *(the §3 source-text problem — v2)*.
+- The 15–30 min whole-course crash course *(v2; it's the audio CLUTCH.md, and it needs the
+  per-topic episodes to exist first)*.
+- Voice cloning or user-chosen voices. Two fixed Clutch voices.
+- Languages other than English. More than two speakers.
+- Public/shareable links, RSS, transcripts as a surface (script is persisted, not shown).
 
 ---
 
 ## 6. Functional requirements
 
-Numbered for traceability to issues and tests.
+### Ingest + topic split
+- **FR-1** Accepts a multi-file upload (PDF, PPTX, DOCX, TXT) reusing `parse/ingest.ts`.
+- **FR-2** Splits the pack into topics. Default: **one source file = one topic**, matching the
+  precedent. Filename is the topic hint.
+- **FR-3** Estimates per-topic material depth. A topic below the threshold for ~5 minutes of
+  audio is **merged** with its nearest-neighbour thin topic, never padded (§4).
+- **FR-4** A merged episode names both topics in its title and is chaptered at the seam.
+- **FR-5** Topics are ranked by exam weight using the existing `scoreItem()` / `ScoreCtx`.
+- **FR-6** The user sees the detected topic list, with merges shown, **and can edit it before
+  generating.** Wrong splits are the most expensive failure — one bad split wastes a whole
+  episode's credits.
 
 ### Generation
-- **FR-1** A signed-in Pro user can generate a crash course from any sheet they own.
-- **FR-2** A signed-in Pro user can generate a topic episode for any topic on a sheet they own.
-- **FR-3** Generation is asynchronous. The request returns a job id immediately; it never
-  blocks a request cycle.
-- **FR-4** Client polls job status and renders queued / running / done / failed.
-- **FR-5** Credits are decremented **server-side**, on job acceptance, before work starts:
-  crash course **3**, topic episode **1**.
-- **FR-6** A failed job **refunds** its credits exactly once. Refund is idempotent.
-- **FR-7** Regeneration is allowed and costs full price. No silent free retries.
-- **FR-8** A user may have at most **2 running jobs** concurrently; further requests queue.
-- **FR-9** Generating an episode that already exists replaces it only after the new one
-  succeeds. A failed regeneration leaves the previous episode intact.
-
-### Pipeline
-- **FR-10** The pipeline is: outline → script → TTS → mux → store. The **outline stage is
-  never skipped** — one-shot scripts are the documented reason clones sound flat.
-- **FR-11** The script conforms to a Zod contract (`PodcastScript`), validated with the same
-  validate → quote-offending-value → retry-once pattern as `SheetContent`.
-- **FR-12** TTS uses **single-pass multi-speaker** per chunk. Per-line generation and
-  concatenation is forbidden — it produces audible voice drift.
-- **FR-13** Chunk boundaries fall on topic/beat seams only.
-- **FR-14** Chunks are crossfaded, not butt-joined.
-- **FR-15** Output is MP3, 128 kbps mono, with duration and chapter markers persisted.
-- **FR-16** Every stage logs tokens and cost to `podcast_costs`, from day one.
+- **FR-7** Generation is asynchronous; the request returns a job id.
+- **FR-8** The pipeline is outline → script → TTS → mux → store. **The outline stage is never
+  skipped.**
+- **FR-9** Script conforms to `PodcastScriptSchema` (Zod), validated with the existing
+  validate → quote-offending-value → retry-once pattern.
+- **FR-10** **Every episode contains exactly one retrieval triple** (q → pause → a), enforced
+  by the schema, not by the prompt.
+- **FR-11** Dialogue lines are capped at ~100 characters (≈5–8 s of speech) — the pacing rule
+  from `open-notebooklm`, which prevents the monologue-y output long lines produce.
+- **FR-12** TTS is **single-pass multi-speaker per chunk**. Per-line generation and
+  concatenation is forbidden — it causes audible voice drift.
+- **FR-13** Chunk boundaries fall on beat seams only; chunks are crossfaded.
+- **FR-14** Output MP3 128 kbps mono, duration and chapter offsets persisted.
+- **FR-15** Every stage logs tokens and cost to `podcast_costs`.
 
 ### Entitlement
-- **FR-17** Free users see the player with the crash course's **first 90 seconds**, which
-  fades mid-sentence into an unlock card — the same pattern as the blurred back page.
-- **FR-18** The 90-second preview is a **separately stored clip**, not a range request
-  against the full file. The full audio must never be delivered to an unentitled client.
-- **FR-19** Entitlement is enforced server-side on the signed-URL grant, never in the client.
-- **FR-20** Signed URLs expire in ≤ 1 hour.
+- **FR-16** Credits debit **server-side on job acceptance**: 1 credit per episode.
+- **FR-17** A failed job refunds exactly once; refund is idempotent.
+- **FR-18** Free users get the first episode's **first 90 seconds** as a *separately stored
+  clip*. The full object is never delivered to an unentitled client.
+- **FR-19** Signed URLs are granted only after a server-side entitlement check, TTL ≤ 1 h.
+- **FR-20** Max 2 running jobs per user; the rest queue.
 
 ### Data
-- **FR-21** Episodes are owner-scoped by RLS, matching the `sheets` policy set.
-- **FR-22** Deleting a sheet deletes its episodes and their audio objects.
-- **FR-23** Audio objects are private; access only via signed URL.
+- **FR-21** Episodes are owner-scoped by RLS, mirroring the `sheets` policy set.
+- **FR-22** Deleting a series deletes its episodes and their audio objects.
 
 ---
 
 ## 7. Data model
 
-### `public.podcasts`
-| column | type | notes |
-|---|---|---|
-| `id` | uuid pk | `gen_random_uuid()` |
-| `user_id` | uuid → `auth.users` | RLS subject |
-| `sheet_id` | uuid → `public.sheets` | `on delete cascade` (FR-22) |
-| `kind` | text | check `('crash','topic')` |
-| `topic` | text null | required when `kind='topic'`; exact copy of a `topics[].name` |
-| `status` | text | check `('queued','running','done','failed')` |
-| `error` | text null | user-safe failure reason |
-| `duration_s` | int null | |
-| `chapters` | jsonb null | `[{title, startS, topicIndex}]` |
-| `audio_path` | text null | storage key, full episode |
-| `preview_path` | text null | storage key, 90 s clip (FR-18) |
-| `script` | jsonb null | retained for transcript fast-follow + debugging |
-| `credits_spent` | int | for idempotent refund (FR-6) |
-| `refunded` | bool default false | |
-| `created_at` / `updated_at` | timestamptz | |
+**`public.podcast_series`** — `id`, `user_id`, `title`, `course_code`, `ctx` jsonb (the
+`ScoreCtx`), `topics` jsonb (detected + user-edited split, with merge record), `created_at`.
 
-Unique partial index on `(sheet_id, kind, topic)` where `status <> 'failed'` — one live
-episode per slot (FR-9).
+**`public.podcasts`** — `id`, `user_id`, `series_id` → cascade, `topic`, `topic_index`,
+`priority` (`T1|T2|T3`), `status` (`queued|running|done|failed`), `error`, `duration_s`,
+`chapters` jsonb, `audio_path`, `preview_path`, `script` jsonb, `credits_spent`, `refunded`,
+timestamps. Unique partial index on `(series_id, topic_index)` where `status <> 'failed'`.
 
-### `public.podcast_costs`
-`id`, `podcast_id` → cascade, `stage` (`outline'|'script'|'tts'`), `model`, `tokens_in`,
-`tokens_out`, `cost_usd` numeric(10,6), `ms`, `created_at`.
+**`public.podcast_costs`** — `podcast_id` → cascade, `stage`, `model`, `tokens_in`,
+`tokens_out`, `cost_usd numeric(10,6)`, `ms`. **From day one** — every cost figure in docs 10
+and 11 is a third-party estimate, and this is how they stop being estimates.
 
-Exists from day one specifically to check §7 of the research doc against reality. Every cost
-number in 10 and 11 is an estimate from third-party pricing trackers; this table is how they
-stop being estimates.
-
-### Storage
-Bucket `podcasts`, **private**, owner-prefixed keys `{user_id}/{podcast_id}.mp3` and
-`…-preview.mp3`. No bucket exists today — creating it is part of Phase 1.
-
-### Migration to `sheets` (only if §4 → C)
-`ALTER TABLE public.sheets ADD COLUMN topic_briefs jsonb` — `[{topic, brief}]`, nullable, so
-existing sheets keep working on the pool-only fallback.
+**Storage** — private bucket `podcasts`, keys `{user_id}/{podcast_id}.mp3` and `…-preview.mp3`.
+No bucket exists on the project today; creating it is part of Phase 1.
 
 ---
 
 ## 8. Architecture
 
-Corrects the research doc's stack assumption: Clutch is **Next.js 15 on Railway + Supabase**,
-not FastAPI. Ingestion and condensing already exist in the sheet engine.
+Clutch is **Next.js 15 on Railway + Supabase** — not the FastAPI the research doc assumed.
 
 ```
-POST /api/podcast          → validate · entitle · debit · enqueue        → { jobId }
-GET  /api/podcast/:id      → status · chapters · signed URL when done
+POST /api/audio/analyze   → ingest · split · rank · return editable topic list  (sync, fast)
+POST /api/audio/generate  → entitle · debit · enqueue N jobs                    → { seriesId }
+GET  /api/audio/:seriesId → per-episode status · signed URLs when done
 worker (pg-boss)
-   ├─ outline   LLMClient  → beats JSON            → podcast_costs
-   ├─ script    LLMClient  → PodcastScript (Zod)   → podcast_costs
-   ├─ tts       TTSProvider→ PCM per chunk         → podcast_costs
-   ├─ mux       ffmpeg     → crossfade · MP3 · 90s preview
-   └─ store     Supabase Storage → rows updated → status=done
+   ├─ outline   LLMClient   → beats JSON
+   ├─ script    LLMClient   → PodcastScript (Zod)
+   ├─ tts       TTSProvider → PCM per chunk
+   ├─ mux       ffmpeg      → crossfade · MP3 · 90s preview
+   └─ store     Supabase Storage
 ```
 
-**New code**
-- `src/contract/podcast-script.ts` — `PodcastScriptSchema`, mirroring `sheet-content.ts`.
-- `src/engine/podcast.ts` — outline + script calls via the existing `LLMClient`.
-- `src/engine/tts/` — `TTSProvider` interface + `GeminiTTSProvider`. The interface is the
-  only preparation we do for self-hosting; `VibeVoiceProvider` is not built now.
-- `src/lib/audio.ts` — ffmpeg wrapper (crossfade, MP3 encode, preview cut).
-- `src/worker/` — pg-boss registration and the job handler.
+Concern split follows the NVIDIA blueprint (API / agent / ingest / TTS as separate units) —
+minus the microservices, because we're one app.
 
-**New dependencies:** `pg-boss`, `@google/genai` (if not already present), and **ffmpeg in
-the Dockerfile** — currently absent; add it the same way poppler was added for the PDF path.
+**New code:** `src/contract/podcast-script.ts` (Zod), `src/engine/podcast.ts` (outline +
+script), `src/engine/tts.ts` (a ~50-line `speak()` wrapper — see below), `src/worker/`.
 
-**Worker placement:** starts as a second process in the Railway container. If it contends
-with the web process for CPU during Phase 1, it moves to its own Railway service. Decide from
-observed behaviour, not up front.
+**TTS is a dependency, not a build.** `@speech-sdk/core`'s `generateConversation()` already
+does the hard parts (§11): native multi-speaker transport where the provider offers one,
+RMS loudness normalisation, per-turn retries, MP3 output, and word timestamps carrying
+`turnIndex`. That last one gives us **chapter offsets for free** — no manual PCM→WAV→ffmpeg
+crossfade chain, which was most of the original Phase 1.
 
-**Reuses, unchanged:** `LLMClient`, `scoreItem`/`ScoreCtx` for priority ordering, the
-`tk-0..9` topic colour system (10 slots, mapped to `--topic-indigo` … `--topic-gold`), the
-`/api/tweak` entitlement pattern, and the `safeParse` → retry contract discipline.
+We still write one thin `speak()` wrapper over it. The SDK is pre-1.0 (0.29.0, 49 stars); the
+wrapper is the single file we'd change if it churns or we drop it.
+
+**New deps:** `pg-boss`, `@speech-sdk/core`. **ffmpeg may no longer be needed** — confirm in
+Phase 0 whether the SDK's MP3 output covers us; if it does, the Dockerfile is untouched.
+
+**Reused unchanged:** `parse/ingest.ts`, `LLMClient`, `scoreItem`, the `/api/tweak`
+entitlement pattern, the `tk-0..9` topic colours.
 
 ---
 
 ## 9. Surface
 
-**`/results` and `/library`:** a "Listen" card below the sheet.
+**`/audio`** — new route, the front door.
+- Drop zone → "analysing your notes" → **editable topic list** with detected priority, merge
+  badges, per-episode credit cost, total.
+- Generate → series page with per-episode rows: topic colour, priority chip, duration, status
+  (queued / writing the script / recording / ready / failed+retry).
+- Player: play/pause, scrub, chapters, 1×/1.25×/1.5×, download (Pro).
+- Free: first episode plays 90 s, fades mid-sentence into the unlock card.
+- Cross-sell: *"These notes can also make a reference sheet →"*, seeding the existing flow.
 
-- Row 1: **Crash Course** — duration, status, play. Visually dominant.
-- Rows 2…n: one per topic in priority order, each carrying its topic colour, duration, play.
-- States per row: `not generated` (with credit cost) · `queued` · `running` (with stage:
-  "writing the script" / "recording") · `ready` · `failed` (with retry).
-- Player: play/pause, scrub, **chapter list**, 1×/1.25×/1.5× speed, download (Pro).
-- Free tier: crash-course row plays 90 s then fades into the unlock card.
-
-**Empty state:** a sheet with no episodes shows the crash-course row with its cost and a
-one-line description of what it is — the row *is* the pitch.
-
-**Accessibility:** all controls meet the 44 pt touch floor via the `.tap` utility added in
-the HIG pass. Player state changes announce via `aria-live`. Chapter list is keyboard
-navigable.
+**Accessibility:** 44 pt targets via `.tap`; `aria-live` for state; keyboard-navigable
+chapters; contrast passing in both themes with `--on-band-*` on the dark player.
 
 ---
 
-## 10. Failure modes
+## 10. Costs, and what v1 deliberately defers
 
-| Failure | Behaviour |
-|---|---|
-| LLM returns invalid script JSON | Retry once with the offending value quoted (existing pattern). Second failure → job failed, credits refunded. |
-| TTS partial failure (chunk 4 of 7) | Retry that chunk twice. Then fail the job — never ship a gapped episode. |
-| Script exceeds 30-minute cap | Trim at a chapter boundary during outline, not after TTS. Cheaper and cleaner. |
-| Sheet deleted mid-job | Job detects missing sheet, aborts, refunds. |
-| Supabase paused / unreachable | Job fails with a user-safe message. **This happens** — the project paused on Sep 11 and took auth down with it. |
-| ffmpeg missing in container | Caught by a Phase 1 smoke test, not by a user. |
-| User spends last credits, job fails | Refund restores them. Verified by test, not by inspection. |
-| Two tabs request the same episode | Unique partial index rejects the second. |
+Per episode (10 min): 15k audio tokens ≈ **$0.09** TTS at $6/M + ~$0.03 LLM ≈ **$0.12**.
+A 14-topic series ≈ **$1.70**. At 1 credit/episode that needs credit pricing above ~$0.15
+to hold margin — **settle in the Stripe session**, and the $6/M figure is single-sourced in
+doc 10 and must be verified first (§12, Phase 0).
+
+**Deferred to v2 of the feature:**
+1. **Audio from a saved sheet.** Needs the §3 source-text decision; only matters once people
+   have sheets they want to re-listen to.
+2. **The crash course.** The 15–30 min whole-course walkthrough — the audio `CLUTCH.md`.
+   It composes from per-topic episodes, so it needs them to exist and be good first.
 
 ---
 
-## 11. Success metrics
+## 11. The reference landscape (searched Sep 11, not inherited from doc 10)
 
-Instrumented from launch, judged at 4 weeks:
+Doc 10's list was an Aug 8 snapshot and **missed the biggest repos in the space**. Re-searched
+and read directly. The field splits into three groups, and the distinction matters:
 
-| Metric | Target | Why |
+### Group 1 — wrappers that drive Google's NotebookLM (a trap for production)
+| Repo | Stars | Pushed |
 |---|---|---|
-| Generation success rate | ≥ 95% | Below this the credit model feels like theft. |
-| Median generation time, crash course | ≤ 4 min | Longer and users abandon the tab. |
-| p50 completion rate | ≥ 60% | Below the 74% podcast benchmark is expected for a study product; below 60% means the format is wrong. |
-| Preview → unlock conversion | ≥ 8% | The 90 s preview is the whole funnel. |
-| Actual COGS per crash course | ≤ $0.35 | Every cost figure in 10/11 is a third-party estimate. `podcast_costs` is the check. |
-| Episodes per generating user | ≥ 2 | One-and-done means it didn't help. |
+| `teng-lin/notebooklm-py` | **19.3k** | Sep 8 2026 |
+| `PleasePrompto/notebooklm-skill` | 7.8k | Sep 10 2026 |
+| `PleasePrompto/notebooklm-mcp` | 3.4k | Sep 10 2026 |
+
+These are unofficial API / browser automation against Google's product — none of them
+generate audio themselves. **Not viable as a product dependency**: unofficial access, no SLA,
+ToS exposure at scale, and our differentiator (retrieval from our own pool) is impossible
+when Google writes the script.
+
+**But `notebooklm-py` is an excellent Phase 0 accelerator.** It's exactly the flow Gold ran by
+hand (`BUILD-LOG.md` §B.6, via Claude in Chrome). Use it to mass-generate reference episodes
+from the `reference/exam-prep/` PDFs, as the benchmark our pipeline must match. Prototype
+dependency only; never ships.
+
+### Group 2 — actual pipelines
+| Repo | Stars | Pushed | Verdict |
+|---|---|---|---|
+| **`CaviraOSS/PageLM`** | 2.0k | Aug 29 2026 | **Closest competitor — same category, and TypeScript.** Study materials → quizzes, flashcards, notes, podcasts. Read its `services/podcast` + `utils/tts`. |
+| `souzatharsis/podcastfy` | 6.5k | May 2026 (stale) | Roles `main summarizer` + `questioner/clarifier` — independently the same as Gold's A/B split. |
+| `gabrielchua/open-notebooklm` | 2.6k | **Dec 2024 — 21 months stale** | The ≤100-char-per-line rule and `<scratchpad>` brainstorm-first. Host-interviews-guest framing is wrong for peer teaching. |
+| `NVIDIA-AI-Blueprints/pdf-to-podcast` | 875 | Jun 2026 | Concern separation only. Microservices are overkill for one Next.js app. |
+
+**What PageLM does that we should not copy:** one-shot script generation with no outline stage
+(the documented #1 cause of flat output), JSON extracted by brace-matching rather than a
+schema, no exam awareness, no retrieval. We beat it on all four.
+
+### Group 3 — the genuinely useful dependency
+
+**`@speech-sdk/core`** (Apache-2.0, v0.29.0, 57 versions since Apr 2026, last publish Aug 24)
+— from **Jellypod**, a real AI-podcast company. This is the `TTSProvider` abstraction I was
+about to hand-write, already built and maintained:
+
+- `generateConversation({ turns })` — **picks a native multi-speaker transport where the
+  provider has one**, falling back to stitching. That is precisely the voice-drift problem
+  doc 10 warns about, solved upstream.
+- RMS loudness normalisation across turns.
+- Word timestamps carrying `turnIndex` → **chapter offsets for free**.
+- `output: { format: "mp3" }` → no manual PCM→WAV→ffmpeg chain.
+- Per-turn retries, concurrency, inter-turn gap control.
+- 14 providers, so swapping Gemini → ElevenLabs → self-hosted is a string change.
+
+It also **settles doc 10's "verify the model IDs" action**: current Gemini TTS ids are
+`gemini-3.1-flash-tts-preview` (latest, audio tags), `gemini-2.5-flash-preview-tts` (default),
+`gemini-2.5-pro-preview-tts`. Voices include `Kore`, `Puck`, `Charon`, `Fenrir`, `Aoede`.
+
+**Risk:** pre-1.0 (0.29.0) and only 49 stars, so the API may churn. Mitigated by keeping our
+own thin `speak()` wrapper around it — one file to change if we drop it. That wrapper is the
+only TTS abstraction we write.
+
+## 12. Build plan
+
+### Phase 0 — prove the format · ½ day · ~$0 · **gate**
+The only phase that can kill the feature. Do it first, alone.
+
+1. Verify the **single-sourced $6/M price** on ai.google.dev. (Model IDs are already settled
+   by §11 — the SDK carries current ones.)
+2. Generate a benchmark episode for `11-attention` **using `notebooklm-py`** against the same
+   source PDFs — the mechanised version of what Gold did by hand. This is the bar.
+3. Generate the same topic through our prompt (`generateConversation`, two voices) and compare
+   three ways: against the NotebookLM benchmark, against the hand-written
+   `11-attention/podcast-script.md`, and on whether the retrieval beat and homework close land.
+4. Confirm the SDK's MP3 output is good enough to skip ffmpeg.
+
+`11-attention` is the right test case precisely because it has source PDFs *and* a
+human-written target script already sitting in the repo.
+
+**Gate:** it teaches, not recites. If not, stop — no pipeline fixes a broken format.
+
+### Phase 1 — pipeline · **1.5–2 days** (was 2–3; the SDK removes the audio-muxing work)
+Tables, RLS, bucket, pg-boss, `podcast.ts`, the `speak()` wrapper, **CLI harness first**
+(`gen-podcast --pack=… --topic=N`). Drivable with no UI.
+**Done when:** CLI yields a playable chaptered episode from a real pack; `podcast_costs` has a
+row per stage; a broken TTS key fails the job and refunds once.
+
+### Phase 2 — topic split + the front door · 2 days
+`/api/audio/analyze`, the editable topic list with merges, `/audio` route, generate flow.
+**Done when:** a 14-file pack yields a correct editable topic list with sane merges, and the
+user can fix a bad split before spending a credit.
+
+### Phase 3 — player + gate · 2 days
+Series page, chaptered player, 90 s preview, polling, credits.
+**Done when:** free hears exactly 90 s and the full object is unreachable by direct URL; Pro
+generates, plays, downloads; 44 pt + contrast pass in both themes.
+
+### Phase 4 — hardening · 1–2 days
+Real costs vs estimates, retries, regeneration, concurrency.
+**Done when:** 20 consecutive generations, ≥95% success, no credit drift, COGS ≤ $0.15/episode.
+
+**Total ≈ 7–9 working days**, with Phase 0 as a hard gate.
 
 ---
 
-## 12. Risks
+## 13. Risks
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| **Audio restates the sheet instead of teaching it** | **Highest** | This is the §4 decision. Phase 0 must produce a listenable crash course *before* any pipeline is built. |
-| Gemini TTS model IDs / pricing have churned | High | Phase 0 verifies live against ai.google.dev. The $6/M figure in doc 10 is **single-sourced** and explicitly flagged there. |
-| Two-speaker cap is limiting | Low | Two hosts is the proven NotebookLM dynamic; not a real constraint for v1. |
-| Generation cost exceeds estimates | Medium | `podcast_costs` from day one; credit prices are adjustable before Stripe lands. |
-| Worker starves the web process | Medium | Separate Railway service if observed. |
-| Supabase free tier pauses | Medium | Already bit us. Needs a keep-warm or paid tier regardless of this feature. |
-| Students expect a transcript | Low | Script is persisted; surfacing it is a small fast-follow. |
-
----
-
-## 13. Phases and acceptance
-
-### Phase 0 — prove the format (½ day, ~$0)
-Not a build phase. A quality gate.
-- Verify live Gemini TTS model IDs and pricing.
-- By hand, from the MIS sample pool, generate a 3-chapter crash course and one topic episode.
-- Iterate the script prompt until chapter handoffs and retrieval beats land naturally.
-
-**Gate:** Gold listens end to end and agrees it teaches rather than recites. **If it doesn't,
-stop** — no amount of pipeline fixes a format that doesn't work. This gate is the single most
-valuable half-day in the plan.
-
-### Phase 1 — pipeline (2–3 days)
-Tables, RLS, bucket, pg-boss, `podcast.ts`, `TTSProvider`, ffmpeg, CLI harness first
-(`gen-podcast --sheet=… --kind=crash`), mirroring `gen-cli`.
-
-**Acceptance:** CLI produces a playable chaptered MP3 from a real sheet; `podcast_costs` has
-one row per stage; a deliberately broken TTS key fails the job and refunds credits.
-
-### Phase 2 — surface (2 days)
-API routes, playlist card, player, chapters, preview gate, polling UI, credit display.
-
-**Acceptance:** Free user hears exactly 90 s then the unlock card, and the full object is not
-reachable without entitlement (verified by direct URL attempt, not by UI inspection). Pro
-user generates, polls, plays, downloads. All controls pass the 44 pt floor.
-
-### Phase 3 — hardening
-Real costs vs estimates, retry/timeout behaviour, regeneration, concurrency cap.
-
-**Acceptance:** 20 consecutive generations with ≥ 95% success and no credit drift.
+| Audio recites instead of teaching | **Highest** | Phase 0 gate, benchmarked against a hand-written script that already works |
+| Topic split is wrong | **High** | FR-6: user edits before spending credits. A bad split wastes a whole episode. |
+| Gemini TTS IDs / pricing churned | High | Phase 0 verifies; $6/M is single-sourced in doc 10 |
+| A 14-episode series is a big first bill | Medium | Per-episode credits + generate-selected-topics-only |
+| Supabase free tier pauses | Medium | Already bit us Sep 11; needs keep-warm or paid tier regardless |
+| Worker starves the web process | Medium | Separate Railway service if observed |
+| `@speech-sdk/core` is pre-1.0 and small (49★) | Medium | One thin `speak()` wrapper is the only contact surface; swapping it out is a single file. Apache-2.0, so vendoring is permitted if it's abandoned. |
 
 ---
 
 ## 14. Open decisions
 
-| # | Decision | Needed by | Default if unanswered |
+| # | Decision | By | Default |
 |---|---|---|---|
-| **D1** | **§4 script input: A, B or C** | **Before Phase 1** | C, falling back to A for old sheets |
-| D2 | Both formats in v1, or crash course first? | End of Phase 0 | Crash course first; topic episodes fast-follow (shared pipeline, prompt + UI only) |
-| D3 | Exact credit prices | Stripe session | 3 / 1 as specified |
-| D4 | Worker in-container or own service | During Phase 1 | In-container until proven otherwise |
-| D5 | Transcript surfaced in v1? | Phase 2 | No — persisted, not shown |
+| D1 | ~~Script input~~ | — | **Resolved.** Full source, per `BUILD-LOG.md` §B.6 |
+| D2 | Topic split: one file = one topic, or LLM-detected within files? | Phase 2 | One file = one topic (the precedent), LLM only for multi-topic files |
+| D3 | Credit price per episode | Stripe session | 1 credit; needs > ~$0.15 to hold margin |
+| D4 | Worker in-container or own service | Phase 1 | In-container until proven otherwise |
