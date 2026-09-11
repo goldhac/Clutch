@@ -219,7 +219,7 @@ export default function AuthPage() {
           )}
 
           <p className="mt-11 text-[12.5px] text-[var(--ink-500)]">
-            <Link href="/" className="transition-colors duration-[160ms] hover:text-[var(--ink-900)]">
+            <Link href="/" className="tap-area transition-colors duration-[160ms] hover:text-[var(--ink-900)]">
               ← Back home
             </Link>
           </p>

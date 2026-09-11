@@ -34,9 +34,25 @@ export default function HomePage() {
           fetchPriority="high"
           className="absolute inset-0 h-full w-full object-cover"
         />
+        {/* Hero scrim. The 97deg gradient is tuned for the DESKTOP text
+         * column, which occupies roughly the left half — dark where the
+         * words are, clearing to show the photograph on the right. At
+         * phone widths the text spans the full width and its right half
+         * crossed into the clear end, landing the body copy on the
+         * brightly-lit paper in the shot. So narrow viewports get a
+         * vertical scrim instead, which doesn't care how wide the text
+         * runs. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0"
+          className="pointer-events-none absolute inset-0 sm:hidden"
+          style={{
+            background:
+              "linear-gradient(180deg, rgba(17,17,20,.92) 0%, rgba(17,17,20,.86) 58%, rgba(17,17,20,.62) 100%)",
+          }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 hidden sm:block"
           style={{
             background:
               "linear-gradient(97deg, rgba(17,17,20,.96) 0%, rgba(17,17,20,.9) 32%, rgba(17,17,20,.42) 68%, rgba(17,17,20,.08) 100%)",
@@ -76,12 +92,12 @@ export default function HomePage() {
                   See a real sheet
                 </LinkButton>
               </div>
-              <div className="mt-5 flex items-center gap-3.5 font-mono text-[12px] text-[var(--on-band-muted)]">
-                <span>free preview</span>
-                <span aria-hidden className="text-[var(--on-band-muted)] opacity-50">·</span>
-                <span>no subscription</span>
-                <span aria-hidden className="text-[var(--on-band-muted)] opacity-50">·</span>
-                <span>$4.99 to unlock</span>
+              <div className="mt-5 flex flex-wrap items-center gap-x-3.5 gap-y-1 font-mono text-[12px] text-[var(--on-band-muted)]">
+                <span className="whitespace-nowrap">free preview</span>
+                <span aria-hidden className="hidden opacity-50 sm:inline">·</span>
+                <span className="whitespace-nowrap">no subscription</span>
+                <span aria-hidden className="hidden opacity-50 sm:inline">·</span>
+                <span className="whitespace-nowrap">$4.99 to unlock</span>
               </div>
             </Reveal>
           </div>

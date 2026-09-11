@@ -380,7 +380,7 @@ export default function GeneratePage() {
                 </p>
                 <Link
                   href="/results?g=mis-final&tier=free"
-                  className="group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-[var(--ink-900)]"
+                  className="tap group mt-5 inline-flex items-center gap-2 text-[14px] font-semibold text-[var(--ink-900)]"
                 >
                   <span className="border-b border-[var(--ink-900)] pb-0.5">
                     See a sheet made from a sample pack
@@ -488,7 +488,7 @@ export default function GeneratePage() {
                     value={courseCode}
                     onChange={(e) => setCourseCode(e.target.value)}
                     placeholder="ITSS 3300"
-                    className="mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
+                    className="tap mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
                   />
                 </label>
                 <label className="block">
@@ -500,7 +500,7 @@ export default function GeneratePage() {
                     value={professor}
                     onChange={(e) => setProfessor(e.target.value)}
                     placeholder="Ouyang"
-                    className="mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
+                    className="tap mt-1.5 h-9 w-full rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-2.5 text-[13px] text-[var(--ink-900)] outline-none transition-colors duration-[160ms] placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)] focus:ring-2 focus:ring-[var(--signal-100)]"
                   />
                 </label>
               </div>
@@ -585,7 +585,7 @@ function SegPill({
       type="button"
       onClick={onClick}
       className={
-        "flex-1 rounded-[6px] px-1 py-[7px] text-center text-[12.5px] font-semibold transition-[background-color,color,box-shadow] duration-[160ms] " +
+        "tap flex-1 rounded-[6px] px-1 py-[7px] text-center text-[12.5px] font-semibold transition-[background-color,color,box-shadow] duration-[160ms] " +
         (active
           ? "bg-[var(--surface)] text-[var(--ink-900)] shadow-[var(--sh-sm)]"
           : "text-[var(--ink-500)] hover:text-[var(--ink-800)]")
