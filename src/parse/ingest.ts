@@ -28,6 +28,9 @@ export interface IngestResult {
   visionChars: number;
   /** How many images were transcribed. */
   visionImages: number;
+  /** Vision-pass token usage, for cost accounting (absent when it didn't run). */
+  visionInputTokens?: number;
+  visionOutputTokens?: number;
   warnings: string[];
 }
 
@@ -36,6 +39,20 @@ export interface IngestOptions {
   vision?: boolean;
   /** Cap the images we'll transcribe for one document. */
   maxVisionImages?: number;
+  /**
+   * Which pages the vision pass reads.
+   *
+   *   "sparse"  (default) — only pages where text extraction failed: scanned
+   *             PDFs, near-empty picture pages, image-heavy low-text slides.
+   *             Cheap; what the sheet engine has always used.
+   *   "figures" — every page/slide, asking only for VISUAL content. Catches
+   *             diagrams that sit on pages that also have a title and labels,
+   *             which "sparse" never reads (Phase 0: 37-page attention lecture,
+   *             0 chars from its Q/K/V and Transformer figures). Vector
+   *             drawings are caught too, since pages are rendered, not scanned
+   *             for embedded images.
+   */
+  visionMode?: "sparse" | "figures";
 }
 
 /** A PDF page with far less text than its neighbours is a picture page. */
@@ -72,7 +89,9 @@ export async function ingestDocument(
     let visionImages = 0;
 
     if (useVision) {
-      const heavy = imageHeavySlides(doc);
+      const figures = opts.visionMode === "figures";
+      const cap = opts.maxVisionImages ?? (figures ? 60 : maxImages);
+      const heavy = figures ? doc.slides.filter((sl) => sl.images.length > 0) : imageHeavySlides(doc);
       const images: VisionImage[] = [];
       for (const s of heavy) {
         // Largest image on the slide is the content one.
@@ -84,11 +103,14 @@ export async function ingestDocument(
             label: `Slide ${s.index}`,
           });
         }
-        if (images.length >= maxImages) break;
+        if (images.length >= cap) break;
       }
       if (images.length > 0) {
         try {
-          const v = await transcribeImages(images, { documentName: filename });
+          const v = await transcribeImages(images, {
+            documentName: filename,
+            mode: figures ? "figures" : "transcribe",
+          });
           if (v.text) {
             text += markVisionText(filename, v.text);
             visionChars = v.text.length;
@@ -120,12 +142,20 @@ export async function ingestDocument(
     let visionChars = 0;
     let visionImages = 0;
 
+    let visionInputTokens: number | undefined;
+    let visionOutputTokens: number | undefined;
+
     if (useVision) {
       const scanned = pageCount > 0 && charCount < pageCount * 100;
-      const sparse = scanned ? [] : sparsePdfPages(baseText, pageCount);
+      // A scan has no text layer to protect, so it always gets full transcription.
+      const figures = opts.visionMode === "figures" && !scanned;
+      const cap = opts.maxVisionImages ?? (figures ? 60 : maxImages);
+      const allPages = (n: number) => Array.from({ length: Math.min(pageCount, n) }, (_, i) => i + 1);
       const targets = scanned
-        ? Array.from({ length: Math.min(pageCount, maxImages) }, (_, i) => i + 1)
-        : sparse.slice(0, maxImages);
+        ? allPages(cap)
+        : figures
+          ? allPages(cap)
+          : sparsePdfPages(baseText, pageCount).slice(0, cap);
 
       if (targets.length > 0) {
         if (!(await rasterizerAvailable())) {
@@ -135,7 +165,9 @@ export async function ingestDocument(
           );
         } else {
           try {
-            const pages = await rasterizePdf(buf, { pages: targets });
+            // Ingest has already applied its own cap; the rasterizer's default of 12
+            // would otherwise silently truncate (figures mode read pages 1–12 of 37).
+            const pages = await rasterizePdf(buf, { pages: targets, maxPages: targets.length });
             if (pages.length > 0) {
               const v = await transcribeImages(
                 pages.map((p) => ({
@@ -143,12 +175,14 @@ export async function ingestDocument(
                   mimeType: p.mimeType,
                   label: `Page ${p.page}`,
                 })),
-                { documentName: filename },
+                { documentName: filename, mode: figures ? "figures" : "transcribe" },
               );
+              visionImages = v.imagesSent;
+              visionInputTokens = v.inputTokens;
+              visionOutputTokens = v.outputTokens;
               if (v.text) {
                 text += markVisionText(filename, v.text);
                 visionChars = v.text.length;
-                visionImages = v.imagesSent;
               }
             }
           } catch (e) {
@@ -161,7 +195,16 @@ export async function ingestDocument(
       }
     }
 
-    return { text, charCount: text.length, units: pageCount, visionChars, visionImages, warnings };
+    return {
+      text,
+      charCount: text.length,
+      units: pageCount,
+      visionChars,
+      visionImages,
+      visionInputTokens,
+      visionOutputTokens,
+      warnings,
+    };
   }
 
   // ── Plain text / markdown ───────────────────────────────────────────

@@ -1,26 +1,30 @@
 /**
  * Phase 0 prototype — Clutch Audio quality gate (issue #1).
  *
- * NOT the pipeline. A single throwaway script that answers one question:
- * can we generate a two-host episode that teaches as well as the
- * NotebookLM Audio Overviews Gold already liked?
+ * NOT the pipeline. A throwaway script answering one question: can we generate
+ * a two-host episode that teaches as well as the NotebookLM Audio Overviews
+ * Gold already liked?
  *
- *   one lecture PDF → ingest (text + vision) → outline → script → TTS → WAV + MP3
+ *   lecture PDF → ingest (text + figures) → section map + outline → script → TTS → WAV + MP3
  *
- * Mirrors BUILD-LOG.md §B.6's NotebookLM recipe on purpose: one source PDF
- * per episode, nothing else fed in, so the output is directly comparable
- * to a NotebookLM episode generated from the same file.
+ * Mirrors BUILD-LOG.md §B.6's NotebookLM recipe: one source PDF, nothing else,
+ * so the output is directly comparable to a NotebookLM episode from the same file.
+ *
+ * Round 3 changes (see FINDINGS.md):
+ *   - COVERAGE: the outline maps the lecture's sections first and gives every
+ *     major one airtime, validated — rounds 1–2 narrowed 37 pages to one idea.
+ *   - FIGURES: ingest runs vision in "figures" mode, so diagrams and rendered
+ *     equations on text-bearing pages are read (rounds 1–2 got 0 chars of them).
+ *   - EAR: dialogue is validated for markdown / code / math symbols and rewritten,
+ *     because round 2 contained `W_i` and *exact* that a voice may read literally.
+ *   - LENGTH: default 24 min — NotebookLM's Default Deep Dive on this PDF is 24:00.
  *
  * Usage:
  *   npx tsx scripts/phase0/episode.ts --pdf reference/exam-prep/21-attn.pdf
  *   npx tsx scripts/phase0/episode.ts --reuse scripts/phase0/out/<run> --tts gemini-2.5-flash-preview-tts
  *
- * Flags:
- *   --pdf       source lecture (required unless --reuse)
- *   --minutes   target length (default 10 — D5 in the PRD asks 10 vs ~23)
- *   --tts       TTS model (default gemini-3.1-flash-tts-preview)
- *   --reuse     re-voice an existing run's script.json with another TTS model
- *   --no-vision skip the diagram-reading pass
+ * Flags: --pdf  --minutes (default 24)  --tts (default gemini-3.1-flash-tts-preview)
+ *        --reuse <run dir>  --vision sparse|figures|off (default figures)
  */
 import { config as loadDotenv } from "dotenv";
 loadDotenv({ path: ".env.local", quiet: true });
@@ -43,20 +47,21 @@ const flag = (name: string) => {
 };
 const PDF = flag("pdf");
 const REUSE = flag("reuse");
-const MINUTES = Number(flag("minutes") ?? 10);
+const MINUTES = Number(flag("minutes") ?? 24);
 const TTS_MODEL = flag("tts") ?? "gemini-3.1-flash-tts-preview";
-const VISION = !argv.includes("--no-vision");
+const VISION = (flag("vision") ?? "figures") as "sparse" | "figures" | "off";
 const API_KEY = process.env.GEMINI_API_KEY;
 
 if (!API_KEY) throw new Error("GEMINI_API_KEY missing from .env.local");
 if (!PDF && !REUSE) throw new Error("pass --pdf <lecture.pdf> or --reuse <run dir>");
 
-/** Official list prices, ai.google.dev/gemini-api/docs/pricing, checked 2026-09-14. */
+/** Official list prices, ai.google.dev/gemini-api/docs/pricing, checked 2026-09-14/15. */
 const TTS_OUTPUT_PRICE_PER_M: Record<string, number> = {
   "gemini-3.1-flash-tts-preview": 20,
   "gemini-2.5-flash-preview-tts": 10,
   "gemini-2.5-pro-preview-tts": 20,
 };
+const PRO_IN = 1.25, PRO_OUT = 10, FLASH_IN = 0.3, FLASH_OUT = 2.5;
 
 const VOICE_A = "Kore"; // drives, explains
 const VOICE_B = "Puck"; // curious, asks the listener's question
@@ -64,8 +69,12 @@ const RETRIEVAL_PAUSE_MS = 2500;
 const BLOCK_GAP_MS = 250;
 /** SDK packs Gemini dialogue at 2,500 chars incl. "SpeakerN: " labels; stay under it. */
 const MAX_BLOCK_CHARS = 2200;
-/** Measured on run 1: 782 words → 5.58 min of Gemini dialogue, pauses included. */
+/** Measured in rounds 1–2: 140 wpm of Gemini dialogue, pauses included. */
 const WORDS_PER_MINUTE = 140;
+/** Every section at or above this share of the lecture must get airtime. */
+const MAJOR_SECTION_WEIGHT = 0.08;
+/** One retrieval beat per ~8 minutes: 1 at 10 min, 3 at 24. */
+const RETRIEVALS = Math.max(1, Math.min(3, Math.round(MINUTES / 8)));
 
 const t0 = Date.now();
 const log = (msg: string) => console.log(`[${((Date.now() - t0) / 1000).toFixed(1)}s] ${msg}`);
@@ -80,18 +89,22 @@ const BEAT_KINDS = [
 const OutlineSchema = z.object({
   title: z.string(),
   stake: z.string(),
-  running_example: z.string(),
+  through_line: z.string(),
+  sections: z
+    .array(z.object({ name: z.string(), pages: z.string(), weight: z.number(), summary: z.string() }))
+    .min(2),
   beats: z
     .array(
       z.object({
         kind: z.enum(BEAT_KINDS),
+        section: z.string(),
         goal: z.string(),
         source_points: z.array(z.string()),
         est_seconds: z.number(),
       }),
     )
-    .min(6),
-  retrieval: z.object({ question: z.string(), answer: z.string(), why: z.string() }),
+    .min(8),
+  retrievals: z.array(z.object({ section: z.string(), question: z.string(), answer: z.string(), why: z.string() })).min(1),
   homework: z.string(),
 });
 type Outline = z.infer<typeof OutlineSchema>;
@@ -102,37 +115,49 @@ const LineSchema = z.object({
   kind: z.enum([...BEAT_KINDS, "retrieval-question", "retrieval-attempt", "retrieval-answer"]),
   text: z.string().min(1),
 });
-const ScriptSchema = z.object({ lines: z.array(LineSchema).min(20) });
+const ScriptSchema = z.object({ lines: z.array(LineSchema).min(40) });
 type Line = z.infer<typeof LineSchema>;
 
-/* ── prompts — this is the quality lever the gate is testing ─────── */
+/* ── prompts — the quality lever the gate is testing ─────────────── */
 
 const OUTLINE_SYSTEM = `You are the producer of Clutch Audio, a two-host study podcast.
-Plan ONE episode of about ${MINUTES} minutes that teaches the provided lecture to a student
-roughly 48 hours before their exam.
+Plan ONE episode of about ${MINUTES} minutes that walks a student through the ENTIRE provided
+lecture, roughly 48 hours before their exam.
 
-Beat order, strictly:
-  open → motivation → example → (3–6 beats mixing analogy / mechanism / confusion) → retrieval → recap → homework
+STEP 1 — MAP THE LECTURE FIRST. List its sections in lecture order: name, page range, the share
+of the lecture it takes up (weights sum to ~1.0), and a one-line summary. The source includes
+transcribed figures and equations; use them. Do not skip a section because another is more
+interesting.
 
-- open: name what this idea unlocks and why a student needs it, in one breath. No greetings,
-  no claims about what the exam will contain.
-- motivation: the problem this idea exists to solve, before any mechanism.
-- example: ONE concrete case from the source that the whole episode keeps returning to.
-- analogy: only analogies that genuinely explain the mechanism.
-- confusion: the specific thing students get wrong or find confusing here.
-- mechanism: how it works AND what breaks without it.
+STEP 2 — ALLOCATE TIME ACROSS ALL OF IT. est_seconds per section roughly proportional to its
+weight. EVERY section with weight >= ${MAJOR_SECTION_WEIGHT} MUST get at least one teaching beat.
+This is a walkthrough of the lecture, not a deep dive into one favourite idea.
+
+STEP 3 — BEATS, in lecture order:
+  open → [per section: motivation / example / analogy / mechanism / confusion as it needs] → recap → homework
+with exactly ${RETRIEVALS} retrieval beat(s), each placed right after the section it tests,
+spread across the episode.
+
+- open: what this lecture unlocks and why a student needs it, in one breath. No greetings.
+- through_line: the single story connecting the sections (e.g. how each idea fixes the previous
+  one's problem). The hosts use it to transition between sections.
+- motivation: the problem an idea exists to solve, before any mechanism.
+- example / analogy: concrete, from the source; analogies only if they genuinely explain.
+- confusion: the specific thing students get wrong here.
+- mechanism: how it works AND what breaks without it. Use the figures and equations.
 - retrieval: an exam-style question fully answerable from the source.
 - homework: a concrete ~5-minute task the student can do with their own notes.
 
 Use ONLY facts present in the source. est_seconds across beats should sum to about ${MINUTES * 60}.
 
 TRUST: never claim a topic "will" or "will definitely" be on the exam, or give exam weightings,
-unless the source itself says so. A lecture alone is not exam evidence. State why it matters
-instead (e.g. "it's the core mechanism inside the Transformer").
+unless the source itself says so. A lecture alone is not exam evidence.
 
 Return JSON exactly:
-{"title":"","stake":"","running_example":"","beats":[{"kind":"","goal":"","source_points":[""],"est_seconds":0}],
- "retrieval":{"question":"","answer":"","why":""},"homework":""}`;
+{"title":"","stake":"","through_line":"",
+ "sections":[{"name":"","pages":"","weight":0,"summary":""}],
+ "beats":[{"kind":"","section":"","goal":"","source_points":[""],"est_seconds":0}],
+ "retrievals":[{"section":"","question":"","answer":"","why":""}],"homework":""}`;
 
 const SCRIPT_SYSTEM = (words: number) => `You write the dialogue for a Clutch Audio episode.
 
@@ -145,36 +170,45 @@ HOSTS
 - B is curious and slightly naive: asks exactly what the listener is wondering, restates ideas in
   their own words, sometimes gets it slightly wrong so A can correct it, pushes back when something
   sounds too neat.
-- BALANCE: B carries at least 40% of the words. B contributes substance — restatements, guesses,
-  objections, connecting back to the example — not a stream of "Okay." / "Right." A bare one-word
-  acknowledgement is allowed at most once every six or so lines.
+- BALANCE: B carries at least 40% of the words, with substance — restatements, guesses, objections,
+  connections back to earlier sections — not a stream of "Okay." / "Right." A bare one-word
+  acknowledgement at most once every six or so lines.
+
+WRITE FOR THE EAR — this text is spoken aloud by a voice, never read
+- NO markdown, code or symbols of any kind: no backticks, asterisks, underscores, hashes, carets,
+  braces, dollar signs, equals signs, or math characters like √ ∑ ⊕ × ÷ → ≤.
+- Say formulas the way a good lecturer says them out loud:
+    "W sub i times q", "head i is attention applied to W-i-q, U-i-k and V-i-v",
+    "the softmax of Q times K-transpose, divided by the square root of d-k, all times V".
+- Before saying a formula, say in plain words what it does; then say it; then say why it matters.
+  Never read a long formula symbol by symbol without that framing.
+- Emphasis comes from word choice and rhythm, never from asterisks.
 
 SPEECH
 - Short turns. Each line at most 140 characters. A long explanation becomes several short turns,
   with B reacting in between.
 - Natural back-channels ("yeah", "right", "mm", "oh — okay", "wait, so…"), occasional
-  self-corrections and gentle interruptions. Sparingly: at most one filler every few turns.
-- No greetings, no "welcome back", no show name, no music or sound-effect cues. Open mid-thought
-  on the stake.
+  self-corrections and gentle interruptions. Sparingly.
+- No greetings, no "welcome back", no show name, no music or sound-effect cues. Open mid-thought.
 
 TEACHING
+- Walk the WHOLE lecture in order, following the outline's sections and through_line. Use the
+  through_line to transition: each section should feel like it answers the previous one's problem.
 - Teach, don't recite. Always say WHY, and what breaks without each idea.
-- Keep returning to the running example from the outline.
-- Retrieval beat, in exactly this shape, using kinds retrieval-question / retrieval-attempt /
-  retrieval-answer:
-    A (retrieval-question): turns to the LISTENER and asks the exam question directly, e.g.
-      "Okay, pause here and try this one yourself: …"
-    B (retrieval-attempt): has a real go at it — partly right.
+- Use the figures and diagrams: describe what the picture shows in words a listener can see.
+- Each retrieval beat, in exactly this shape (kinds retrieval-question / retrieval-attempt /
+  retrieval-answer), right after the section it tests:
+    A (retrieval-question): turns to the LISTENER: "Okay, pause here and try this one yourself: …"
+    B (retrieval-attempt): a real go at it — partly right.
     A (retrieval-answer): the full answer and why it's right. B may react.
-- Finish with a quick recap, then the homework framed as something to do with their notes.
+- Finish with a recap across all sections, then the homework framed as something to do with notes.
 
 RULES
 - Use ONLY facts from the source and outline. Never invent numbers, names or results.
 - TRUST: never say a topic "will" or "will definitely" be on the exam, and never state exam
-  weightings, unless the source says so. Say why it matters instead. Clutch never fakes confidence.
-- LENGTH IS A HARD REQUIREMENT: about ${words} words in total. Follow the per-beat word budgets
-  given with the outline. Reach length by teaching more deeply — more worked steps on the running
-  example, more of B testing their understanding — never by padding, repetition or filler.
+  weightings, unless the source says so. Clutch never fakes confidence.
+- LENGTH IS A HARD REQUIREMENT: about ${words} words in total, following the per-beat budgets.
+  Reach length by teaching more deeply — never by padding, repetition or filler.
 - "beat" is the 0-based index of the outline beat the line belongs to.
 
 Return JSON exactly: {"lines":[{"speaker":"A","beat":0,"kind":"open","text":""}]}`;
@@ -183,6 +217,41 @@ const DELIVERY = `Two friends studying together in a quiet room. Relaxed, warm a
 Conversational pace with natural pauses and quick reactions, like overhearing a good conversation —
 not a presenter or narrator. Speaker1 explains with quiet confidence; Speaker2 is curious and
 reacts quickly.`;
+
+/* ── validation ──────────────────────────────────────────────────── */
+
+/** Characters that mean a line was written for the eye, not the ear. */
+const EYE_ONLY = /[`*_#^$\\{}=√∑∏⊕⊗×÷≤≥≠≈∈∉→←↔∀∃∂∇∞]|\b[A-Za-z]_[A-Za-z0-9]|\b\w+\^\w/;
+
+const countWords = (ls: Line[]) => ls.reduce((n, l) => n + l.text.split(/\s+/).length, 0);
+const norm = (x: string) => x.toLowerCase().trim();
+
+function coverageGaps(outline: Outline) {
+  const covered = new Set(outline.beats.map((b) => norm(b.section)));
+  return outline.sections
+    .filter((s) => s.weight >= MAJOR_SECTION_WEIGHT && !covered.has(norm(s.name)))
+    .map((s) => s.name);
+}
+
+function scriptIssues(ls: Line[], words: number) {
+  const issues: string[] = [];
+  const got = countWords(ls);
+  if (got < words * 0.85) {
+    issues.push(`LENGTH: the draft is ${got} words; the requirement is ~${words}. Deepen the teaching to reach it.`);
+  }
+  const eye = ls.filter((l) => EYE_ONLY.test(l.text));
+  if (eye.length) {
+    issues.push(
+      `WRITTEN FOR THE EYE: ${eye.length} line(s) contain markdown, code or math symbols a voice would read ` +
+        `literally. Rewrite each in spoken words:\n` +
+        eye.slice(0, 25).map((l) => `  - "${l.text}"`).join("\n"),
+    );
+  }
+  if (!ls.some((l) => l.kind === "retrieval-question")) {
+    issues.push(`RETRIEVAL: no retrieval-question lines; ${RETRIEVALS} retrieval beat(s) are required.`);
+  }
+  return issues;
+}
 
 /* ── helpers ─────────────────────────────────────────────────────── */
 
@@ -202,7 +271,7 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 4): Pro
       return await fn();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      const retryable = /429|rate|quota|503|UNAVAILABLE|overloaded|timeout/i.test(msg);
+      const retryable = /429|rate|quota|503|UNAVAILABLE|overloaded|timeout|Unexpected token|JSON/i.test(msg);
       if (!retryable || i >= tries) throw e;
       const wait = 8000 * i;
       log(`${label}: ${msg.slice(0, 90)} — retry ${i}/${tries - 1} in ${wait / 1000}s`);
@@ -211,7 +280,6 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 4): Pro
   }
 }
 
-/** Read a RIFF WAV into its PCM payload + format. */
 function readWav(buf: Uint8Array) {
   const dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
   let sampleRate = 24000, channels = 1, bits = 16, off = 12, pcm: Uint8Array | null = null;
@@ -247,10 +315,8 @@ function writeWav(pcm: Uint8Array, sampleRate: number, channels: number, bits: n
 }
 
 /**
- * Group lines into TTS blocks. Seams fall on beat boundaries (where a prosody
- * reset is least audible), each block stays under the SDK's dialogue budget,
- * and a seam is forced right after the retrieval question so a real silence
- * can be inserted there.
+ * Beat-aligned TTS blocks under the SDK's dialogue budget, with a seam forced
+ * after each fully-asked retrieval question so a real silence can go there.
  */
 function toBlocks(lines: Line[]) {
   const blocks: { lines: Line[]; pauseAfterMs: number }[] = [];
@@ -262,14 +328,13 @@ function toBlocks(lines: Line[]) {
     chars = 0;
   };
   lines.forEach((line, i) => {
-    const cost = line.text.length + 11; // "SpeakerN: " + newline
+    const cost = line.text.length + 11;
     const newBeat = cur.length > 0 && line.beat !== cur[cur.length - 1].beat;
     if (cur.length && (chars + cost > MAX_BLOCK_CHARS || (newBeat && chars > MAX_BLOCK_CHARS * 0.6))) {
       flush(BLOCK_GAP_MS);
     }
     cur.push(line);
     chars += cost;
-    // Pause after the question is fully asked — a multi-line question must not be split by silence.
     if (line.kind === "retrieval-question" && lines[i + 1]?.kind !== "retrieval-question") {
       flush(RETRIEVAL_PAUSE_MS);
     }
@@ -304,7 +369,7 @@ async function measureTokenRate(model: string) {
   if (!res.ok) throw new Error(`token probe ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const json = (await res.json()) as {
     candidates?: { content?: { parts?: { inlineData?: { data: string; mimeType: string } }[] } }[];
-    usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number };
+    usageMetadata?: { candidatesTokenCount?: number };
   };
   const part = json.candidates?.[0]?.content?.parts?.find((p) => p.inlineData)?.inlineData;
   if (!part) throw new Error("token probe returned no audio");
@@ -321,7 +386,8 @@ async function main() {
   let runDir: string;
   let outline: Outline;
   let lines: Line[];
-  const report: Record<string, unknown> = { ttsModel: TTS_MODEL, targetMinutes: MINUTES };
+  const report: Record<string, unknown> = { round: 3, ttsModel: TTS_MODEL, targetMinutes: MINUTES, vision: VISION };
+  let llmCost = 0;
 
   if (REUSE) {
     runDir = REUSE;
@@ -330,94 +396,131 @@ async function main() {
     log(`reusing script from ${runDir} (${lines.length} lines) — re-voicing with ${TTS_MODEL}`);
   } else {
     const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    runDir = join("scripts/phase0/out", `${basename(PDF!, ".pdf")}-${stamp}`);
+    runDir = join("scripts/phase0/out", `${basename(PDF!, ".pdf")}-r3-${stamp}`);
     mkdirSync(runDir, { recursive: true });
 
-    log(`ingesting ${PDF} (vision ${VISION ? "on" : "off"})`);
-    const ing = await ingestDocument(basename(PDF!), readFileSync(PDF!), { vision: VISION });
+    log(`ingesting ${PDF} (vision: ${VISION})`);
+    const tIngest = Date.now();
+    const ing = await ingestDocument(basename(PDF!), readFileSync(PDF!), {
+      vision: VISION !== "off",
+      visionMode: VISION === "off" ? undefined : VISION,
+    });
     writeFileSync(join(runDir, "source.txt"), ing.text);
-    log(`  ${ing.units} pages · ${ing.charCount} chars (${ing.visionChars} from diagrams)`);
-    report.source = { pages: ing.units, chars: ing.charCount, visionChars: ing.visionChars };
+    const visionCost = ((ing.visionInputTokens ?? 0) * FLASH_IN + (ing.visionOutputTokens ?? 0) * FLASH_OUT) / 1e6;
+    llmCost += visionCost;
+    log(`  ${ing.units} pages · ${ing.charCount} chars · ${ing.visionImages} pages read by vision → +${ing.visionChars} chars · ${((Date.now() - tIngest) / 1000).toFixed(1)}s · $${visionCost.toFixed(4)}`);
+    report.source = {
+      pages: ing.units, chars: ing.charCount, visionPagesSent: ing.visionImages,
+      visionChars: ing.visionChars, visionCostUSD: +visionCost.toFixed(4), warnings: ing.warnings,
+    };
 
     const llm = new GeminiClient();
+    const addCost = (u: { inputTokens?: number; outputTokens?: number }) =>
+      (llmCost += ((u.inputTokens ?? 0) * PRO_IN + (u.outputTokens ?? 0) * PRO_OUT) / 1e6);
 
-    log("outline…");
-    const o = await withRetry("outline", () =>
-      llm.generate({
-        system: OUTLINE_SYSTEM,
-        user: `LECTURE SOURCE (${basename(PDF!)}):\n\n${ing.text}`,
-        model: GEMINI_PRO,
-        temperature: 0.5,
-      }),
+    /* outline, with coverage validated */
+    const outlineUser = `LECTURE SOURCE (${basename(PDF!)}):\n\n${ing.text}`;
+    log("outline (section map first)…");
+    let o = await withRetry("outline", () =>
+      llm.generate({ system: OUTLINE_SYSTEM, user: outlineUser, model: GEMINI_PRO, temperature: 0.5, maxOutputTokens: 32768 }),
     );
+    addCost(o.usage);
     outline = parseJson(o.text, OutlineSchema, "outline");
+    let gaps = coverageGaps(outline);
+    if (gaps.length) {
+      log(`  outline skipped major section(s): ${gaps.join(" · ")} — replanning`);
+      const prev = outline;
+      o = await withRetry("outline replan", () =>
+        llm.generate({
+          system: OUTLINE_SYSTEM,
+          user: `${outlineUser}\n\nYOUR PREVIOUS OUTLINE gave no beats to these major sections: ${gaps.join("; ")}. ` +
+            `Replan so EVERY section with weight >= ${MAJOR_SECTION_WEIGHT} gets at least one teaching beat.\n\n` +
+            `PREVIOUS OUTLINE:\n${JSON.stringify(prev)}`,
+          model: GEMINI_PRO, temperature: 0.5, maxOutputTokens: 32768,
+        }),
+      );
+      addCost(o.usage);
+      outline = parseJson(o.text, OutlineSchema, "outline");
+      gaps = coverageGaps(outline);
+    }
     writeFileSync(join(runDir, "outline.json"), JSON.stringify(outline, null, 2));
-    log(`  "${outline.title}" · ${outline.beats.length} beats`);
+    log(`  "${outline.title}" · ${outline.sections.length} sections · ${outline.beats.length} beats · ${outline.retrievals.length} retrievals · uncovered major: ${gaps.length ? gaps.join(", ") : "none"}`);
+    for (const sec of outline.sections) {
+      const secs = outline.beats.filter((b) => norm(b.section) === norm(sec.name)).reduce((n, b) => n + b.est_seconds, 0);
+      log(`    ${(sec.weight * 100).toFixed(0).padStart(3)}%  ${String(Math.round(secs)).padStart(4)}s  ${sec.name}  (pp. ${sec.pages})`);
+    }
 
+    /* script, with length / ear / retrieval validated */
     const words = MINUTES * WORDS_PER_MINUTE;
     const plannedS = outline.beats.reduce((n, b) => n + b.est_seconds, 0) || MINUTES * 60;
     const budgets = outline.beats
-      .map((b, i) => `  beat ${i} (${b.kind}): ~${Math.round((b.est_seconds / plannedS) * words)} words`)
+      .map((b, i) => `  beat ${i} (${b.kind}, ${b.section}): ~${Math.round((b.est_seconds / plannedS) * words)} words`)
       .join("\n");
     const baseUser = `OUTLINE:\n${JSON.stringify(outline, null, 2)}\n\nPER-BEAT WORD BUDGETS (total ~${words}):\n${budgets}\n\nLECTURE SOURCE:\n${ing.text}`;
-    const countWords = (ls: Line[]) => ls.reduce((n, l) => n + l.text.split(/\s+/).length, 0);
 
     log(`script (~${words} words)…`);
     let s = await withRetry("script", () =>
-      llm.generate({ system: SCRIPT_SYSTEM(words), user: baseUser, model: GEMINI_PRO, temperature: 0.8, maxOutputTokens: 32768 }),
+      llm.generate({ system: SCRIPT_SYSTEM(words), user: baseUser, model: GEMINI_PRO, temperature: 0.8, maxOutputTokens: 65536 }),
     );
+    addCost(s.usage);
     lines = parseJson(s.text, ScriptSchema, "script").lines;
-    const attempts: number[] = [countWords(lines)];
+    const attempts: { words: number; eyeLines: number }[] = [
+      { words: countWords(lines), eyeLines: lines.filter((l) => EYE_ONLY.test(l.text)).length },
+    ];
 
-    // Same validate → feed back → retry discipline as the sheet contract, applied to length.
-    for (let attempt = 1; attempt <= 2 && countWords(lines) < words * 0.85; attempt++) {
-      const got = countWords(lines);
-      log(`  draft ${attempt} is ${got} words (${Math.round((got / words) * 100)}% of target) — expanding`);
-      const draft = JSON.stringify({ lines });
-      s = await withRetry("script expand", () =>
+    for (let attempt = 1; attempt <= 2; attempt++) {
+      const issues = scriptIssues(lines, words);
+      if (!issues.length) break;
+      log(`  draft ${attempt}: ${issues.map((i) => i.split(":")[0]).join(" · ")} — revising`);
+      const prev = lines;
+      s = await withRetry("script revise", () =>
         llm.generate({
           system: SCRIPT_SYSTEM(words),
-          user: `${baseUser}\n\nYOUR PREVIOUS DRAFT was ${got} words; the requirement is ~${words}. Rewrite the FULL script to reach it by deepening the teaching (more worked steps on the running example, more of B testing understanding). Keep what works. Do not pad or repeat.\n\nPREVIOUS DRAFT:\n${draft}`,
-          model: GEMINI_PRO,
-          temperature: 0.8,
-          maxOutputTokens: 32768,
+          user: `${baseUser}\n\nYOUR PREVIOUS DRAFT failed these checks:\n\n${issues.join("\n\n")}\n\n` +
+            `Rewrite the FULL script fixing every issue. Keep what already works.\n\nPREVIOUS DRAFT:\n${JSON.stringify({ lines: prev })}`,
+          model: GEMINI_PRO, temperature: 0.7, maxOutputTokens: 65536,
         }),
       );
+      addCost(s.usage);
       lines = parseJson(s.text, ScriptSchema, "script").lines;
-      attempts.push(countWords(lines));
+      attempts.push({ words: countWords(lines), eyeLines: lines.filter((l) => EYE_ONLY.test(l.text)).length });
     }
     writeFileSync(join(runDir, "script.json"), JSON.stringify({ lines }, null, 2));
-
-    const transcript = lines.map((l) => `**${l.speaker === "A" ? "A" : "B"}** ${l.text}`).join("\n\n");
-    writeFileSync(join(runDir, "transcript.md"), `# ${outline.title}\n\n${transcript}\n`);
+    writeFileSync(
+      join(runDir, "transcript.md"),
+      `# ${outline.title}\n\n${lines.map((l) => `**${l.speaker}** ${l.text}`).join("\n\n")}\n`,
+    );
 
     const wordCount = countWords(lines);
     const bWords = countWords(lines.filter((l) => l.speaker === "B"));
-    const overclaims = lines.filter((l) => /\b(definitely|certainly|guaranteed|will be)\b.*\bexam\b|\bexam\b.*\b(definitely|guaranteed)\b/i.test(l.text)).map((l) => l.text);
-    const long = lines.filter((l) => l.text.length > 140).length;
-    const kinds = new Set(lines.map((l) => l.kind));
+    const eyeLines = lines.filter((l) => EYE_ONLY.test(l.text));
+    const overclaims = lines.filter((l) =>
+      /\b(definitely|certainly|guaranteed|will be)\b.*\bexam\b|\bexam\b.*\b(definitely|guaranteed)\b/i.test(l.text));
+    const taughtSections = new Set(
+      lines.map((l) => outline.beats[l.beat]?.section).filter((x): x is string => !!x).map(norm),
+    );
     report.script = {
       lines: lines.length,
       words: wordCount,
-      linesOver140Chars: long,
-      hasRetrievalTriple: ["retrieval-question", "retrieval-attempt", "retrieval-answer"].every((k) => kinds.has(k as Line["kind"])),
-      hasHomework: kinds.has("homework"),
-      wordAttempts: attempts,
+      attempts,
       hostBShareOfWords: +(bWords / wordCount).toFixed(2),
-      examOverclaims: overclaims,
-      llmUsage: { outline: o.usage, script: s.usage },
+      eyeOnlyLinesRemaining: eyeLines.map((l) => l.text),
+      examOverclaims: overclaims.map((l) => l.text),
+      retrievalQuestions: lines.filter((l) => l.kind === "retrieval-question").length,
+      sections: outline.sections.map((sec) => ({ name: sec.name, weight: sec.weight, taught: taughtSections.has(norm(sec.name)) })),
+      uncoveredMajorSections: coverageGaps(outline),
     };
-    log(`  ${lines.length} lines · ${wordCount} words · B ${Math.round((bWords / wordCount) * 100)}% · ${long} over 140 chars · ${overclaims.length} exam overclaims`);
+    log(`  ${lines.length} lines · ${wordCount} words · B ${Math.round((bWords / wordCount) * 100)}% · ${eyeLines.length} eye-only lines · ${overclaims.length} overclaims · ${outline.sections.filter((sec) => taughtSections.has(norm(sec.name))).length}/${outline.sections.length} sections taught`);
   }
 
-  /* TTS: beat-aligned blocks through the SDK's native Gemini dialogue path */
+  /* TTS */
   const blocks = toBlocks(lines);
   log(`TTS with ${TTS_MODEL}: ${blocks.length} blocks`);
   const pcmParts: Uint8Array[] = [];
   let fmt = { sampleRate: 24000, channels: 1, bits: 16 };
-  const chapters: { beat: number; kind: string; startS: number }[] = [];
+  const chapters: { section: string; startS: number }[] = [];
   let cursorS = 0;
-  let lastBeat = -1;
+  let lastSection = "";
 
   for (const [i, block] of blocks.entries()) {
     const result = await withRetry(`block ${i + 1}`, () =>
@@ -432,24 +535,23 @@ async function main() {
     fmt = { sampleRate: wav.sampleRate, channels: wav.channels, bits: wav.bits };
     const bytesPerSecond = (wav.sampleRate * wav.channels * wav.bits) / 8;
 
-    if (block.lines[0].beat !== lastBeat) {
-      chapters.push({ beat: block.lines[0].beat, kind: block.lines[0].kind, startS: Math.round(cursorS) });
-      lastBeat = block.lines[block.lines.length - 1].beat;
+    const section = outline.beats[block.lines[0].beat]?.section ?? "";
+    if (section && section !== lastSection) {
+      chapters.push({ section, startS: Math.round(cursorS) });
+      lastSection = section;
     }
     pcmParts.push(wav.pcm);
     cursorS += wav.pcm.length / bytesPerSecond;
-
     if (block.pauseAfterMs > 0) {
-      const silence = new Uint8Array(Math.round((bytesPerSecond * block.pauseAfterMs) / 1000) & ~1);
-      pcmParts.push(silence);
+      pcmParts.push(new Uint8Array(Math.round((bytesPerSecond * block.pauseAfterMs) / 1000) & ~1));
       cursorS += block.pauseAfterMs / 1000;
     }
     log(`  block ${i + 1}/${blocks.length} · ${(wav.pcm.length / bytesPerSecond).toFixed(1)}s · ${result.metadata.latencyMs}ms`);
   }
 
   const total = new Uint8Array(pcmParts.reduce((n, p) => n + p.length, 0));
-  let o2 = 0;
-  for (const p of pcmParts) { total.set(p, o2); o2 += p.length; }
+  let off = 0;
+  for (const p of pcmParts) { total.set(p, off); off += p.length; }
 
   const tag = TTS_MODEL.replace(/[^a-z0-9.]+/gi, "-");
   const wavPath = join(runDir, `episode-${tag}.wav`);
@@ -457,32 +559,27 @@ async function main() {
   writeFileSync(wavPath, writeWav(total, fmt.sampleRate, fmt.channels, fmt.bits));
   const durationS = total.length / ((fmt.sampleRate * fmt.channels * fmt.bits) / 8);
   log(`episode: ${(durationS / 60).toFixed(2)} min`);
-
-  // Local convenience for listening only — production output is the SDK's (issue #4).
   if (existsSync("/opt/homebrew/bin/ffmpeg")) {
     execFileSync("/opt/homebrew/bin/ffmpeg", ["-y", "-loglevel", "error", "-i", wavPath, "-b:a", "128k", mp3Path]);
     log(`mp3: ${mp3Path}`);
   }
 
-  /* Measured, not assumed: the token rate docs 10/11 took on faith */
   log("measuring real billed tokens per second…");
   const probe = await withRetry("token probe", () => measureTokenRate(TTS_MODEL));
   const price = TTS_OUTPUT_PRICE_PER_M[TTS_MODEL];
-  const perMin = price ? (probe.tokensPerSecond * 60 * price) / 1e6 : null;
+  const ttsCost = price ? (probe.tokensPerSecond * durationS * price) / 1e6 : 0;
   report.tts = {
     blocks: blocks.length,
     durationMinutes: +(durationS / 60).toFixed(2),
     chapters,
     measuredTokensPerSecond: +probe.tokensPerSecond.toFixed(2),
-    listPricePerMOutput: price,
-    ttsCostPerAudioMinuteUSD: perMin && +perMin.toFixed(4),
-    ttsCostThisEpisodeUSD: perMin && +((perMin * durationS) / 60).toFixed(3),
-    ttsCostAt23MinUSD: perMin && +(perMin * 23).toFixed(3),
+    ttsCostUSD: +ttsCost.toFixed(3),
   };
+  report.costUSD = { llmAndVision: +llmCost.toFixed(3), tts: +ttsCost.toFixed(3), total: +(llmCost + ttsCost).toFixed(3) };
   writeFileSync(join(runDir, `report-${tag}.json`), JSON.stringify(report, null, 2));
 
   log(`done → ${runDir}`);
-  console.log(JSON.stringify(report.tts, null, 2));
+  console.log(JSON.stringify({ tts: report.tts, cost: report.costUSD }, null, 2));
 }
 
 main().catch((e) => {

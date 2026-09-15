@@ -52,29 +52,60 @@ misconception and resolving it is exactly what the clones cannot do.
 **Grounding check passed:** "Q, K and V are sent through simple feed forward layers" matches
 line 567 of the lecture verbatim.
 
-## 4. Open problems
+## 4. Round 3 — all three fixes (2026-09-15)
 
-1. **Written for the eye, not the ear.** Round 2 lines contain `W_i`, `` `head_i` ``,
-   `attention(W_i q, U_i k, V_i v)`, `*exact*`. A voice may read symbols literally.
-   *Needs Gold's ear at ~2:00–4:00.* Fix if confirmed: "speak formulas in words; no markdown,
-   code or symbols."
+Target matched to the benchmark: **24 min**, so length stops being a confound.
 
-2. **Coverage — our outline narrowed the lecture to one idea.** NotebookLM's summary of the
-   same PDF covers attention for NMT, the **pointer-generator network** (copying), **coverage
-   vectors**, generalized Q/K/V attention, multi-head attention, the **Transformer**, and
-   positional embeddings. Both our rounds taught **multi-head attention only**. B.6's goal is a
-   walkthrough of the *topic*, i.e. the whole lecture. Fix: the outline must map the lecture's
-   sections first and allocate time across them, rather than picking its favourite subtopic.
+| | Round 2 | Round 3 | Benchmark |
+|---|---|---|---|
+| Duration | 8.9 min | **21.1 min** | 24:00 |
+| Sections of the lecture taught | 1 of 6 | **6 of 6** | whole lecture |
+| Diagram/equation content read | 0 chars | **+8,107 chars** (37 pages) | reads figures |
+| Eye-only lines (`W_i`, `*x*`) | 5 | **0** | — |
+| Exam overclaims | 0 | 0 | — |
+| Retrieval questions | 1 | **3**, one per section block | **none** |
+| Host B share | 38% | **31% ⚠** | — |
+| Cost | ~$0.40 | **$1.10** ($0.29 LLM+vision, $0.81 TTS) | Pro plan |
 
-3. **Diagrams are not read.** Ingest vision only fires on scanned PDFs or pages with under
-   ~25% of the document's average text, capped at 10 images. Every page of this lecture has a
-   title and labels, so **0 characters came from diagrams** — including the Q/K/V and
-   Transformer figures. Round 2's homework even points the student at the Encoder/Decoder
-   slides it never saw. Affects **sheets too**. Fix once in the shared ingest: read pages that
-   *contain figures*, not pages that *lack text*.
+Chapters: 0:00 unknown words · 2:12 copy network · 7:47 coverage · 12:28 generalized attention ·
+14:43 multi-head · 16:19 Transformer.
 
-4. **Episode length (D5).** B.6 targets ~10 min; `00-meta/game-plan.md` records ~5 h across
-   13 files ≈ 23 min each. NotebookLM's Default length on this PDF will be the tie-breaker.
+**Fix 1 — coverage.** The outline now maps sections first (with weights) and every section ≥8%
+must get a beat, validated with a replan. It covered all six on the first try — the same shape as
+NotebookLM's own summary of the PDF. Transitions carry a through-line: each section is framed as
+the fix for the previous one's problem ("we've been adding fixes — now let's step back and
+generalize").
+
+**Fix 2 — diagrams (shared ingest, `src/parse/`).** New `visionMode: "figures"` renders every
+page and asks only for *visual* content, with its own prompt so slide text isn't duplicated
+(0 of 105 lines duplicated). Sheets keep the old `"sparse"` default — unchanged until decided.
+- Finds 16 of 37 pages with visual content. Raster-image detection would have found 7: **11 were
+  vector diagrams** only rendering catches.
+- It recovered **equations the text layer never had cleanly** — scaled dot-product attention,
+  the pointer-generator probability, coverage — the most testable lines in a CS lecture. The
+  **sheet engine has been missing these too.**
+- Reads real diagrams accurately (p. 35: the full Transformer block — embeddings + positional
+  encoding, multi-head attention → Add & Norm → feed-forward → Add & Norm, skip connections).
+- ~27–36 s and **~$0.01** per 37-page lecture on Gemini Flash.
+- **Bug found and fixed:** `rasterizePdf` silently capped at 12 pages; first test only saw 1–12.
+
+**Fix 3 — ear.** Prompt rules (frame → say → why; "W sub i") plus a validator rejecting
+backticks, asterisks, underscores, `=`, `^` and math symbols, with rewrite-and-retry. It caught
+all 5 bad lines in round 2's script and no false positives on dashes/ellipses. Round 3 needed
+**two** revisions (9 → 2 → 0 eye-only lines). Result: *"p-gen times p-vocab of w, plus one minus
+p-gen, times the sum of attention scores…"* then B: *"p-gen is like a dial between generating and
+copying."*
+
+**Regression — host balance.** B fell from 38% to 31%. Balance is requested in the prompt but
+not *validated*, and two rewrites optimised for what was validated. Lesson for the real contract
+(#3): every quality rule that matters must be a check, not a request.
+
+### Still open
+1. **Gold's listen** — does it teach, and how does it compare to the 24-min NotebookLM episode?
+2. **Sheets + figures mode** — worth turning on (equations!), but it adds ~30 s to a synchronous
+   request. Needs a sheet A/B before flipping production.
+3. **Balance** — add B-share to the validator.
+4. **Cost lever** — three Pro drafts cost $0.29; the same tokens on 2.5 Flash would be ~$0.07.
 
 ## 5. NotebookLM benchmark
 
@@ -86,9 +117,14 @@ NotebookLM's own customisation surface, worth borrowing later:
 formats **Deep Dive / Brief / Critique / Debate**, lengths **Short / Default / Long**, and a
 free-text *"What should the AI hosts focus on?"* box.
 
-*Duration and Gold's verdict: pending.*
+**Result: "How Attention Networks Taught Machines to Read" — 24:00.** That settles D5 by
+evidence: NotebookLM's *Default* Deep Dive on one lecture is ~24 min, matching `game-plan.md`'s
+~23 min/episode. B.6's "~10 min" was aspirational. Rounds 1–2 (5.6 / 8.9 min) were under half.
+
+*Gold's verdict: pending.*
 
 ## 6. Spend
 
-~$0.28 (round 1) + ~$0.40 (round 2) ≈ **$0.70** on the Gemini key. NotebookLM generation
+~$0.28 (round 1) + ~$0.40 (round 2) + $1.10 (round 3) + ~$0.02 (vision tests) ≈ **$1.80** on the
+Gemini key. NotebookLM generation
 draws on Gold's Pro plan allowance, not API spend.

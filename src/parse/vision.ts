@@ -70,9 +70,48 @@ export interface VisionResult {
   outputTokens?: number;
 }
 
+/**
+ * Figures mode: for pages whose TEXT was already extracted. The transcribe
+ * prompt above assumes nothing on the page is machine-readable and copies
+ * every bullet — on a normal slide that would duplicate its text into the
+ * pack. This prompt reads only what exists as a picture: diagrams, charts,
+ * architecture figures, matrix/arrow drawings, image-only tables, and the
+ * labels written inside them.
+ */
+const FIGURES_SYSTEM = `
+You are a diagram-reading engine for a study-tool ingest pipeline.
+
+Each image is a slide or document page whose ordinary TEXT (title, bullet
+points, paragraphs) has ALREADY been extracted separately. Do NOT repeat it.
+
+Your ONLY job is to capture what exists as VISUAL content:
+1. Diagrams and figures: name what it depicts, every box/node and its label,
+   and what the arrows or connections show (what flows into what, in what order).
+2. Charts: chart type, axes, series, printed values and callouts, then one line
+   on what it demonstrates.
+3. Matrices, grids, heatmaps: dimensions, row/column labels, and any values.
+4. Tables drawn as images: reproduce as a markdown table, every cell exact.
+5. Formulas that appear only inside a figure: transcribe as closely as plain
+   text allows.
+6. If the page has no visual content beyond ordinary text, or the image is
+   decorative (logo, stock photo, background), write exactly:
+   SKIP — no visual content
+7. NEVER invent or infer what is not visible. Missing is safe; fabricated is not.
+
+Output plain text. Start each image with "### <label>" using the label given.
+No preamble, no summary at the end.
+`.trim();
+
+export type VisionMode = "transcribe" | "figures";
+
 export interface VisionOptions {
   client?: LLMClient;
   model?: string;
+  /**
+   * "transcribe" (default): the page has no extractable text — copy everything.
+   * "figures": the text is already extracted — describe only visual content.
+   */
+  mode?: VisionMode;
   /** Context so the model knows the course/topic (improves label reading). */
   documentName?: string;
 }
@@ -104,13 +143,15 @@ export async function transcribeImages(
       `You are given ${chunk.length} image(s), in order:`,
       labels,
       "",
-      "Transcribe each one under its own '### <label>' heading.",
+      opts.mode === "figures"
+        ? "For each one, under its own '### <label>' heading, describe only its visual content."
+        : "Transcribe each one under its own '### <label>' heading.",
     ]
       .filter(Boolean)
       .join("\n");
 
     const res = await client.generate({
-      system: VISION_SYSTEM,
+      system: opts.mode === "figures" ? FIGURES_SYSTEM : VISION_SYSTEM,
       user,
       images: chunk.map(({ base64, mimeType }) => ({ base64, mimeType })),
       plainText: true,
@@ -127,7 +168,7 @@ export async function transcribeImages(
   const text = parts
     .join("\n\n")
     .split(/\n(?=### )/)
-    .filter((block) => !/SKIP — no readable content/i.test(block))
+    .filter((block) => !/SKIP — no (readable|visual) content/i.test(block))
     .join("\n")
     .trim();
 
