@@ -160,8 +160,8 @@ makes it revision rather than content.**
   from `open-notebooklm`, which prevents the monologue-y output long lines produce.
 - **FR-12** TTS is **single-pass multi-speaker per chunk**. Per-line generation and
   concatenation is forbidden — it causes audible voice drift.
-- **FR-13** Chunk boundaries fall on beat seams only; chunks are crossfaded.
-- **FR-14** Output MP3 128 kbps mono, duration and chapter offsets persisted.
+- **FR-13** Chapter offsets derive from the SDK's word timestamps (`turnIndex`), not from hand-tracked chunk durations.
+- **FR-14** Output MP3 (SDK `output: { format: "mp3" }`); duration and chapter offsets persisted.
 - **FR-15** Every stage logs tokens and cost to `podcast_costs`.
 
 ### Entitlement
@@ -208,8 +208,9 @@ GET  /api/audio/:seriesId → per-episode status · signed URLs when done
 worker (pg-boss)
    ├─ outline   LLMClient   → beats JSON
    ├─ script    LLMClient   → PodcastScript (Zod)
-   ├─ tts       TTSProvider → PCM per chunk
-   ├─ mux       ffmpeg      → crossfade · MP3 · 90s preview
+   ├─ speak     @speech-sdk/core generateConversation → MP3 + word timestamps
+   │                                                  (turnIndex → chapter offsets)
+   ├─ preview   cut first 90 s as its own object
    └─ store     Supabase Storage
 ```
 
@@ -243,11 +244,11 @@ entitlement pattern, the `tk-0..9` topic colours.
   badges, per-episode credit cost, total.
 - Generate → series page with per-episode rows: topic colour, priority chip, duration, status
   (queued / writing the script / recording / ready / failed+retry).
-- Player: play/pause, scrub, chapters, 1×/1.25×/1.5×, download (Pro).
+- Player: play/pause, scrub, chapters, 1×/1.25×/1.5× — **defaulting to 1.5×**, the speed the NLP game plan records actually listening at — download (Pro).
 - Free: first episode plays 90 s, fades mid-sentence into the unlock card.
 - Cross-sell: *"These notes can also make a reference sheet →"*, seeding the existing flow.
 
-**Accessibility:** 44 pt targets via `.tap`; `aria-live` for state; keyboard-navigable
+**Accessibility:** controls meet both HIG floors via `.tap` — 28 pt under a pointer, 44 pt under touch; `aria-live` for state; keyboard-navigable
 chapters; contrast passing in both themes with `--on-band-*` on the dark player.
 
 ---
@@ -388,4 +389,5 @@ Real costs vs estimates, retries, regeneration, concurrency.
 | D1 | ~~Script input~~ | — | **Resolved.** Full source, per `BUILD-LOG.md` §B.6 |
 | D2 | Topic split: one file = one topic, or LLM-detected within files? | Phase 2 | One file = one topic (the precedent), LLM only for multi-topic files |
 | D3 | Credit price per episode | Stripe session | 1 credit; needs > ~$0.15 to hold margin |
+| **D5** | **Episode length: ~10 min or ~23 min?** | **Phase 0** | **Your own notes disagree.** `BUILD-LOG.md` §B.6 targets ~10 min, but `00-meta/game-plan.md` records "~5 hours of podcast audio across 13 m4a files" — ≈23 min each. Cost scales linearly, so this roughly doubles COGS. Settle by ear in Phase 0. |
 | D4 | Worker in-container or own service | Phase 1 | In-container until proven otherwise |

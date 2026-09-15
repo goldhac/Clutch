@@ -2,7 +2,7 @@
 
 **This is the continue-here document.** A fresh session should read this top-to-bottom, then go straight to §7 "Next action." Everything below is current as of commit `40fd440` (R1 complete). Update this file's §3 status table + §7 whenever a phase lands.
 
-Owner: **Gold Nwobu** (`akporkofi11@gmail.com`). Repo: **`/Users/goldnwbou/Documents/Clutch/`** (folder is "Clutch", product is **CramSheet**). GitHub: **https://github.com/goldhac/Clutch** (public). Live: **https://cramsheet-production.up.railway.app** (Railway, auto-builds on `railway up`).
+Owner: **Gold Nwobu** (`akporkofi11@gmail.com`). Repo: **`/Users/goldnwbou/Code/Clutch/`** (folder is "Clutch", product is **CramSheet**). GitHub: **https://github.com/goldhac/Clutch** (public). Live: **https://cramsheet-production.up.railway.app** (Railway, auto-builds on `railway up`).
 
 ---
 
@@ -105,14 +105,14 @@ The one thing left half-done. Spec: [`09-RELEVANCE-AND-FIT.md`](09-RELEVANCE-AND
 6. **No root `page.tsx`:** home lives in `src/app/(marketing)/page.tsx`; there MUST be a `src/app/not-found.tsx` or `next build` fails prerendering `/404` with a misleading `<Html> import` error.
 7. **Multicol overflow is HORIZONTAL** (fixed-height `column-fill:auto` + `overflow:hidden`): a clipped item lands in an off-screen column to the RIGHT, never "below." Any fit measurement MUST test `rect.right > cols.right`. (This sank the first fit design.)
 8. **Browser MCP re-asks which browser** most turns — expect an AskUserQuestion before screenshots; the session browser is usually "browswer".
-9. **Harness project path** still says `pepelwerk_agents` but the code is at `~/Documents/Clutch/`. Run everything from `~/Documents/Clutch/`.
+9. **Harness project path** still says `pepelwerk_agents` but the code is at `~/Code/Clutch/`. Run everything from `~/Code/Clutch/`.
 
 ---
 
 ## 6. How to run
 
 ```bash
-cd ~/Documents/Clutch
+cd ~/Code/Clutch
 npm run dev              # http://localhost:3000  (restart after config changes)
 npm run typecheck        # tsc --noEmit
 npm run lint
@@ -309,7 +309,15 @@ to the routing:
 
 Re-measure after the CDN lands; expect FCP well under 1.5 s.
 
-**Local-dev gotcha (same day):** `~/Documents/Clutch` is subject to
+**RESOLVED 2026-09-14 — repo moved to `~/Code/Clutch`.** Everything below is history.
+Measured before/after: `tsc` timeout → 2 s, `next build` timeout → 15 s, `git status`
+5-min timeout → 0 s, `npm ci` → 5 s. The move found 1,338 of 1,545 files evicted (87%) and
+15 iCloud sync-conflict duplicates inside `.git/` (`index 2…7`, `refs/.../main 2`), all
+stale — fallout from the `index.lock` timeouts. Railway's project link is keyed by absolute
+path and had to be re-linked. **Don't move it back under ~/Documents or ~/Desktop** —
+Desktop & Documents iCloud sync is on for this machine (`FXICloudDriveDesktop = 1`).
+
+**Local-dev gotcha (same day, now historical):** `~/Documents/Clutch` was subject to
 iCloud "Optimize Mac Storage" eviction. Evicted files re-download at
 ~1.3 s each, which makes `next dev` hang indefinitely and `git status`
 time out. Fix: `rm -rf node_modules && npm ci`, or move the repo out of
