@@ -255,10 +255,31 @@ chapters; contrast passing in both themes with `--on-band-*` on the dark player.
 
 ## 10. Costs, and what v1 deliberately defers
 
-Per episode (10 min): 15k audio tokens ≈ **$0.09** TTS at $6/M + ~$0.03 LLM ≈ **$0.12**.
-A 14-topic series ≈ **$1.70**. At 1 credit/episode that needs credit pricing above ~$0.15
-to hold margin — **settle in the Stripe session**, and the $6/M figure is single-sourced in
-doc 10 and must be verified first (§12, Phase 0).
+> **Rewritten 2026-09-15 from Phase 0 measurements.** The previous figures ($6/M TTS,
+> 25 tokens/sec, ~$0.12/episode) were all third-party estimates and **all three were wrong.**
+
+**Measured / official inputs**
+| Input | Value | Source |
+|---|---|---|
+| `gemini-3.1-flash-tts-preview` output | **$20 / 1M** | ai.google.dev pricing, checked 2026-09-14 |
+| `gemini-2.5-flash-preview-tts` output | **$10 / 1M** | same |
+| `gemini-2.5-pro` (script) | $1.25 in / $10 out per 1M · **no free tier** | same |
+| `gemini-2.5-flash` (script) | $0.30 in / $2.50 out per 1M | same |
+| Billed audio tokens | **32.0 / second** | measured twice in Phase 0 (32.02, 32.05) — doc 10 assumed 25 |
+| Speaking pace | **140 words / minute**, pauses included | measured, run 1 |
+| Script tokens, one episode | ~10.2k in / ~4.6k out | measured, run 2 (outline + script) |
+
+**Per episode** (TTS rate measured on 3.1; 2.5 assumed same token rate — unverified)
+| Configuration | 10 min | ~23 min |
+|---|---|---|
+| 3.1 Flash TTS + 2.5 Pro script *(what Phase 0 used)* | **$0.44** | $0.94 |
+| 3.1 Flash TTS + 2.5 Flash script | $0.40 | $0.90 |
+| 2.5 Flash TTS + 2.5 Flash script | **$0.21** | $0.46 |
+
+A 13-episode series at 10 min: **$2.70–$5.70**. That is **2–4× the old estimate**, and D5
+(10 vs 23 min) doubles it again. **Credit pricing must clear ~$0.25–$0.45 per episode**, not
+the $0.15 previously written here — settle in the Stripe session, and decide the TTS model on
+whether 3.1's quality is worth 2× (Phase 0 can A/B it by re-voicing the same script).
 
 **Deferred to v2 of the feature:**
 1. **Audio from a saved sheet.** Needs the §3 source-text decision; only matters once people

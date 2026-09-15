@@ -51,3 +51,6 @@ Thumbs.db
 # Private reference / ground-truth test packs (never push student materials)
 /reference/
 /_private/
+
+# Phase 0 audio prototype outputs (large WAV/MP3, regenerable)
+scripts/phase0/out/
