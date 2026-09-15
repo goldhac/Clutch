@@ -28,6 +28,13 @@ const VISION_MODEL = "gemini-2.5-flash";
 /** Cap per call so one monster deck can't blow the request size. */
 const MAX_IMAGES_PER_CALL = 8;
 
+/**
+ * Batches in flight at once for one document. Figures mode reads every page,
+ * so sequential batches cost ~30 s on a 37-page lecture; 4 in parallel keeps
+ * it near one batch's latency while staying far under Flash's paid RPM.
+ */
+const VISION_CONCURRENCY = 4;
+
 const VISION_SYSTEM = `
 You are an OCR + diagram-reading engine for a study-tool ingest pipeline.
 
@@ -66,6 +73,8 @@ export interface VisionResult {
   text: string;
   /** How many images were actually sent. */
   imagesSent: number;
+  /** Labels of images whose batch failed twice — their content was NOT read. */
+  failedLabels?: string[];
   inputTokens?: number;
   outputTokens?: number;
 }
@@ -117,8 +126,11 @@ export interface VisionOptions {
 }
 
 /**
- * Transcribe a batch of images. Batches of MAX_IMAGES_PER_CALL, sequential
- * (parallel calls on a personal API key hit rate limits fast).
+ * Transcribe a batch of images. Batches of MAX_IMAGES_PER_CALL, up to
+ * VISION_CONCURRENCY at a time, output kept in page order. A batch that fails
+ * is retried once; if it fails again its pages are reported in failedLabels
+ * and the rest still come back — one flaky call must not discard every
+ * diagram in the document. Throws only when every batch failed.
  */
 export async function transcribeImages(
   images: VisionImage[],
@@ -132,11 +144,7 @@ export async function transcribeImages(
     chunks.push(images.slice(i, i + MAX_IMAGES_PER_CALL));
   }
 
-  const parts: string[] = [];
-  let inTok = 0;
-  let outTok = 0;
-
-  for (const chunk of chunks) {
+  const callChunk = (chunk: VisionImage[]) => {
     const labels = chunk.map((c, i) => `Image ${i + 1} = "${c.label}"`).join("\n");
     const user = [
       opts.documentName ? `Document: ${opts.documentName}` : "",
@@ -150,7 +158,7 @@ export async function transcribeImages(
       .filter(Boolean)
       .join("\n");
 
-    const res = await client.generate({
+    return client.generate({
       system: opts.mode === "figures" ? FIGURES_SYSTEM : VISION_SYSTEM,
       user,
       images: chunk.map(({ base64, mimeType }) => ({ base64, mimeType })),
@@ -159,10 +167,58 @@ export async function transcribeImages(
       temperature: 0.1, // transcription, not creativity
       maxOutputTokens: 8192,
     });
-    parts.push(res.text.trim());
-    inTok += res.usage.inputTokens ?? 0;
-    outTok += res.usage.outputTokens ?? 0;
+  };
+
+  type Outcome =
+    | { ok: true; text: string; inTok: number; outTok: number }
+    | { ok: false; error: unknown };
+  const outcomes: Outcome[] = new Array(chunks.length);
+  let next = 0;
+  const worker = async () => {
+    while (next < chunks.length) {
+      const idx = next++;
+      for (let attempt = 1; ; attempt++) {
+        try {
+          const res = await callChunk(chunks[idx]);
+          outcomes[idx] = {
+            ok: true,
+            text: res.text.trim(),
+            inTok: res.usage.inputTokens ?? 0,
+            outTok: res.usage.outputTokens ?? 0,
+          };
+          break;
+        } catch (error) {
+          if (attempt >= 2) {
+            outcomes[idx] = { ok: false, error };
+            break;
+          }
+          await new Promise((r) => setTimeout(r, 2000));
+        }
+      }
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(VISION_CONCURRENCY, chunks.length) }, worker),
+  );
+
+  if (outcomes.every((o) => !o.ok)) {
+    const first = outcomes[0] as { ok: false; error: unknown };
+    throw first.error instanceof Error ? first.error : new Error(String(first.error));
   }
+
+  const parts: string[] = [];
+  const failedLabels: string[] = [];
+  let inTok = 0;
+  let outTok = 0;
+  outcomes.forEach((o, idx) => {
+    if (o.ok) {
+      parts.push(o.text);
+      inTok += o.inTok;
+      outTok += o.outTok;
+    } else {
+      failedLabels.push(...chunks[idx].map((c) => c.label));
+    }
+  });
 
   // Drop the model's own SKIP markers so they don't pollute the pack.
   const text = parts
@@ -172,7 +228,13 @@ export async function transcribeImages(
     .join("\n")
     .trim();
 
-  return { text, imagesSent: images.length, inputTokens: inTok, outputTokens: outTok };
+  return {
+    text,
+    imagesSent: images.length,
+    failedLabels: failedLabels.length ? failedLabels : undefined,
+    inputTokens: inTok,
+    outputTokens: outTok,
+  };
 }
 
 /** Wrap a transcription so downstream steps can see its provenance. */

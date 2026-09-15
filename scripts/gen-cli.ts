@@ -62,6 +62,8 @@ interface CliArgs {
   examType: ExamType;
   priority: PriorityMode;
   outPath?: string;
+  /** A/B only: the pre-2026-09-15 sparse vision pass instead of figures. */
+  sparse: boolean;
   /** Number of pool-deepening passes to run after the first call (0-3). */
   topup: number;
   /** Skip the vision/OCR pass for image-only pages+slides. */
@@ -86,6 +88,7 @@ function parseArgs(argv: string[]): CliArgs {
     outPath: get("out"),
     topup: Math.min(3, Math.max(0, Number.parseInt(get("topup") ?? "0", 10) || 0)),
     noVision: rest.includes("--no-vision"),
+    sparse: rest.includes("--sparse"),
   };
 }
 
@@ -126,10 +129,10 @@ async function main() {
     const filename = path.basename(file);
     const tag = guessTag(filename);
     try {
-      // ingestDocument reads the text layer AND (when the text layer is
-      // thin for a page/slide that carries pictures) transcribes the image
-      // content via the vision pass. --no-vision skips it.
-      const r = await ingestDocument(filename, buf, { vision: !args.noVision });
+      // ingestDocument reads the text layer AND, in figures mode (same as
+      // /api/generate), every page's diagrams, charts and rendered equations
+      // via the vision pass. --no-vision skips it.
+      const r = await ingestDocument(filename, buf, { vision: !args.noVision, visionMode: args.sparse ? "sparse" : "figures" });
       const unit = filename.toLowerCase().endsWith(".pptx") ? "sl" : "p";
       const vis = r.visionImages
         ? ` +vision(${r.visionImages} img, ${r.visionChars}c)`

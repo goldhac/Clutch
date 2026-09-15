@@ -23,8 +23,10 @@
  *   npx tsx scripts/phase0/episode.ts --pdf reference/exam-prep/21-attn.pdf
  *   npx tsx scripts/phase0/episode.ts --reuse scripts/phase0/out/<run> --tts gemini-2.5-flash-preview-tts
  *
+ *   npx tsx scripts/phase0/episode.ts --reuse scripts/phase0/out/<run> --intro-only
+ *
  * Flags: --pdf  --minutes (default 24)  --tts (default gemini-3.1-flash-tts-preview)
- *        --reuse <run dir>  --vision sparse|figures|off (default figures)
+ *        --reuse <run dir>  --vision sparse|figures|off (default figures)  --intro-only
  */
 import { config as loadDotenv } from "dotenv";
 loadDotenv({ path: ".env.local", quiet: true });
@@ -50,10 +52,13 @@ const REUSE = flag("reuse");
 const MINUTES = Number(flag("minutes") ?? 24);
 const TTS_MODEL = flag("tts") ?? "gemini-3.1-flash-tts-preview";
 const VISION = (flag("vision") ?? "figures") as "sparse" | "figures" | "off";
+/** With --reuse: rewrite and voice only the intro, spliced onto the run's existing opening. */
+const INTRO_ONLY = argv.includes("--intro-only");
 const API_KEY = process.env.GEMINI_API_KEY;
 
 if (!API_KEY) throw new Error("GEMINI_API_KEY missing from .env.local");
 if (!PDF && !REUSE) throw new Error("pass --pdf <lecture.pdf> or --reuse <run dir>");
+if (INTRO_ONLY && !REUSE) throw new Error("--intro-only needs --reuse <run dir>");
 
 /** Official list prices, ai.google.dev/gemini-api/docs/pricing, checked 2026-09-14/15. */
 const TTS_OUTPUT_PRICE_PER_M: Record<string, number> = {
@@ -138,9 +143,13 @@ STEP 3 — BEATS, in lecture order:
 with exactly ${RETRIEVALS} retrieval beat(s), each placed right after the section it tests,
 spread across the episode.
 
-- open: what this lecture unlocks and why a student needs it, in one breath. No greetings.
-- through_line: the single story connecting the sections (e.g. how each idea fixes the previous
-  one's problem). The hosts use it to transition between sections.
+- open: the episode's INTRO, est_seconds 45-75. A hook taken from this lecture, a one-line welcome,
+  the route through EVERY section told as one story (the through_line), and what the student will be
+  able to explain by the end. It teaches nothing yet: the first section's teaching starts next beat.
+- through_line: the single story connecting the sections (e.g. how each idea fixes a problem left
+  open). The hosts use it to transition between sections. Only say one idea CAUSES the next problem
+  when the source says so; otherwise it is simply the next problem (intro v2 claimed the copy network
+  causes repetition; the lecture says encoder-decoders in general repeat).
 - motivation: the problem an idea exists to solve, before any mechanism.
 - example / analogy: concrete, from the source; analogies only if they genuinely explain.
 - confusion: the specific thing students get wrong here.
@@ -158,6 +167,29 @@ Return JSON exactly:
  "sections":[{"name":"","pages":"","weight":0,"summary":""}],
  "beats":[{"kind":"","section":"","goal":"","source_points":[""],"est_seconds":0}],
  "retrievals":[{"section":"","question":"","answer":"","why":""}],"homework":""}`;
+
+/**
+ * Round 3's episode opened mid-thought ("So the biggest headache…") because the
+ * prompt said "no greetings, open mid-thought". Gold: "did not hear a good intro".
+ * NotebookLM spends its first minute orienting the listener; so does this.
+ */
+const INTRO_RULES = `THE INTRO — beat 0, kind "open". About 45-75 seconds: 100-200 words. In these seconds the listener
+decides whether to keep going, so it has five parts, in this order:
+  1. HOOK (1-2 lines, A): one concrete, surprising puzzle, failure or scenario taken from THIS lecture.
+     Never "have you ever wondered", never a definition, never a generic claim about AI or the field.
+  2. WELCOME (1 short line): "Welcome to Clutch." plus what today's episode is about, in plain words.
+     The only time the show is named.
+  3. MAP (2-4 lines, both hosts): the route through the lecture told as one story using the
+     through_line, naming EVERY section in order in plain words, each as the answer to the previous
+     one's problem. B reacts, guesses what the next fix must be, or connects the pieces. Never a list
+     read aloud. B speaks at least 3 of the intro's lines: it is a conversation from the first second.
+  4. PROMISE (1-2 lines): two or three SPECIFIC things the listener will be able to explain by the end,
+     named concretely from the lecture (e.g. "why the Transformer can train in parallel"), never
+     "how it all works". Plus a heads-up that the hosts will stop a few times to quiz them: when that
+     happens, pause and actually answer.
+  5. HANDOFF (1 line): launches the first section.
+The intro teaches nothing yet: no mechanisms, no formulas. Warm and inviting, never salesy.
+Never say one idea causes the next problem unless the source says so.`;
 
 const SCRIPT_SYSTEM = (words: number) => `You write the dialogue for a Clutch Audio episode.
 
@@ -189,7 +221,9 @@ SPEECH
   with B reacting in between.
 - Natural back-channels ("yeah", "right", "mm", "oh — okay", "wait, so…"), occasional
   self-corrections and gentle interruptions. Sparingly.
-- No greetings, no "welcome back", no show name, no music or sound-effect cues. Open mid-thought.
+- No music or sound-effect cues. After the intro, never re-greet or re-introduce the show.
+
+${INTRO_RULES}
 
 TEACHING
 - Walk the WHOLE lecture in order, following the outline's sections and through_line. Use the
@@ -218,6 +252,10 @@ Conversational pace with natural pauses and quick reactions, like overhearing a 
 not a presenter or narrator. Speaker1 explains with quiet confidence; Speaker2 is curious and
 reacts quickly.`;
 
+/** Added for the intro block only. */
+const INTRO_DELIVERY = `This is the opening of the episode: a touch more energy and warmth, like two friends glad the
+listener showed up, then settling into the relaxed pace.`;
+
 /* ── validation ──────────────────────────────────────────────────── */
 
 /** Characters that mean a line was written for the eye, not the ear. */
@@ -233,7 +271,49 @@ function coverageGaps(outline: Outline) {
     .map((s) => s.name);
 }
 
-function scriptIssues(ls: Line[], words: number) {
+/** Words too generic to prove a section was previewed ("Copy Network" → "copy"). */
+const GENERIC = new Set([
+  "introduction", "intro", "overview", "problem", "problems", "section", "lecture", "part", "basics",
+  "summary", "conclusion", "attention", "model", "models", "network", "networks", "vector", "with",
+  "from", "into", "that", "this", "their", "what", "about",
+]);
+
+/** Section names the intro never mentions, matched on a 6-letter stem of their distinctive words. */
+function sectionsMissingFromIntro(introText: string, outline: Outline) {
+  const text = introText.toLowerCase();
+  return outline.sections
+    .filter((sec) => {
+      const keys = sec.name.toLowerCase().split(/[^a-z]+/).filter((w) => w.length >= 4 && !GENERIC.has(w));
+      return keys.length > 0 && !keys.some((w) => text.includes(w.slice(0, 6)));
+    })
+    .map((sec) => sec.name);
+}
+
+/** The intro's shape is checked, not requested — round 3 showed requests drift. */
+function introIssues(ls: Line[], outline: Outline) {
+  const intro = ls.filter((l) => l.beat === 0);
+  const text = intro.map((l) => l.text).join(" ");
+  const words = countWords(intro);
+  const problems: string[] = [];
+  if (words < 100 || words > 200) problems.push(`it is ${words} words; it must be 100-200`);
+  if (!/\bwelcome\b/i.test(text)) problems.push(`it has no one-line welcome`);
+  const missing = sectionsMissingFromIntro(text, outline);
+  if (missing.length > 1) problems.push(`the MAP never mentions: ${missing.join("; ")}`);
+  if (!/\bpause\b/i.test(text)) problems.push(`it never tells the listener to pause and answer when quizzed`);
+  const bLines = intro.filter((l) => l.speaker === "B").length;
+  if (bLines < 3) problems.push(`B speaks ${bLines} line(s); B needs at least 3, so it is a conversation`);
+  if (/how (this|it) all works|everything you need/i.test(text)) {
+    problems.push(`the PROMISE is vague; name two or three specific things the listener will be able to explain`);
+  }
+  if (intro.some((l) => EYE_ONLY.test(l.text) || /\bsoftmax\b.*\btimes\b/i.test(l.text))) {
+    problems.push(`it teaches mechanics or formulas; save them for the sections`);
+  }
+  return problems.length
+    ? [`INTRO (beat 0): ${problems.join("; ")}. Rewrite it following THE INTRO rules exactly.`]
+    : [];
+}
+
+function scriptIssues(ls: Line[], words: number, outline: Outline) {
   const issues: string[] = [];
   const got = countWords(ls);
   if (got < words * 0.85) {
@@ -247,6 +327,7 @@ function scriptIssues(ls: Line[], words: number) {
         eye.slice(0, 25).map((l) => `  - "${l.text}"`).join("\n"),
     );
   }
+  issues.push(...introIssues(ls, outline));
   if (!ls.some((l) => l.kind === "retrieval-question")) {
     issues.push(`RETRIEVAL: no retrieval-question lines; ${RETRIEVALS} retrieval beat(s) are required.`);
   }
@@ -330,7 +411,7 @@ function toBlocks(lines: Line[]) {
   lines.forEach((line, i) => {
     const cost = line.text.length + 11;
     const newBeat = cur.length > 0 && line.beat !== cur[cur.length - 1].beat;
-    if (cur.length && (chars + cost > MAX_BLOCK_CHARS || (newBeat && chars > MAX_BLOCK_CHARS * 0.6))) {
+    if (cur.length && (chars + cost > MAX_BLOCK_CHARS || (newBeat && (chars > MAX_BLOCK_CHARS * 0.6 || cur[cur.length - 1].beat === 0)))) {
       flush(BLOCK_GAP_MS);
     }
     cur.push(line);
@@ -379,10 +460,104 @@ async function measureTokenRate(model: string) {
   return { seconds, outTokens, tokensPerSecond: outTokens / seconds };
 }
 
+/* ── intro-only preview ──────────────────────────────────────────── */
+
+/** Seconds of the run's existing episode played after the new intro. */
+const PREVIEW_TAIL_S = 80;
+
+async function introOnly(google: ReturnType<typeof createGoogle>, runDir: string) {
+  const outline: Outline = JSON.parse(readFileSync(join(runDir, "outline.json"), "utf8"));
+  const oldLines: Line[] = JSON.parse(readFileSync(join(runDir, "script.json"), "utf8")).lines;
+  const source = readFileSync(join(runDir, "source.txt"), "utf8");
+  const firstSection = oldLines.slice(0, 12).map((l) => `${l.speaker}: ${l.text}`).join("\n");
+
+  const llm = new GeminiClient();
+  let cost = 0;
+  const system = `You write the INTRO of a Clutch Audio episode: two hosts, A drives and explains, B is curious and
+restates things in their own words. It must sound like a great NotebookLM Audio Overview: two sharp,
+warm friends, never a presenter or a radio ad.
+
+${INTRO_RULES}
+
+WRITE FOR THE EAR: no markdown, symbols or math characters. Each line at most 140 characters.
+TRUST: use only facts from the outline and source; never say anything "will" be on the exam.
+
+Return JSON exactly: {"lines":[{"speaker":"A","beat":0,"kind":"open","text":""}]}`;
+  const user = `OUTLINE:\n${JSON.stringify(outline, null, 2)}\n\n` +
+    `THE EPISODE AFTER YOUR INTRO already exists and begins:\n${firstSection}\n\n` +
+    `Your HANDOFF must lead straight into that first line. Do not use its examples (the name example, ` +
+    `the UNK token) as your hook; pick a different concrete one from the source.\n\nLECTURE SOURCE:\n${source}`;
+
+  const IntroSchema = z.object({ lines: z.array(LineSchema).min(4) });
+  const attempts: { words: number; issues: string[] }[] = [];
+  let lines: Line[] = [];
+  for (let attempt = 0; attempt <= 2; attempt++) {
+    const prevIssues = attempts.at(-1)?.issues ?? [];
+    const res = await withRetry("intro", () =>
+      llm.generate({
+        system,
+        user: attempt === 0 ? user
+          : `${user}\n\nYOUR PREVIOUS INTRO failed:\n${prevIssues.join("\n")}\n\nPREVIOUS INTRO:\n${JSON.stringify({ lines })}`,
+        model: GEMINI_PRO, temperature: 0.8, maxOutputTokens: 16384,
+      }),
+    );
+    cost += ((res.usage.inputTokens ?? 0) * PRO_IN + (res.usage.outputTokens ?? 0) * PRO_OUT) / 1e6;
+    lines = parseJson(res.text, IntroSchema, "intro").lines.map((l) => ({ ...l, beat: 0, kind: "open" as const }));
+    const issues = introIssues(lines, outline);
+    attempts.push({ words: countWords(lines), issues });
+    log(`  intro draft ${attempt + 1}: ${countWords(lines)} words · ${issues.length ? issues.join(" ") : "passes"}`);
+    if (!issues.length) break;
+  }
+
+  const md = lines.map((l) => `**${l.speaker}** ${l.text}`).join("\n\n");
+  writeFileSync(join(runDir, "intro.json"), JSON.stringify({ lines }, null, 2));
+  writeFileSync(join(runDir, "intro-transcript.md"), `# Intro — ${outline.title}\n\n${md}\n`);
+  console.log(`\n${md}\n`);
+
+  log(`voicing intro with ${TTS_MODEL}…`);
+  const result = await withRetry("intro TTS", () =>
+    generateConversation({
+      model: google(TTS_MODEL),
+      instructions: `${DELIVERY}\n${INTRO_DELIVERY}`,
+      turns: lines.map((l) => ({ voice: l.speaker === "A" ? VOICE_A : VOICE_B, text: l.text })),
+      output: { format: "wav" },
+    }),
+  );
+  const intro = readWav(result.audio.uint8Array);
+  const tag = TTS_MODEL.replace(/[^a-z0-9.]+/gi, "-");
+  const episode = readWav(readFileSync(join(runDir, `episode-${tag}.wav`)));
+  const bps = (intro.sampleRate * intro.channels * intro.bits) / 8;
+  if (episode.sampleRate !== intro.sampleRate) throw new Error("intro and episode sample rates differ");
+  const introS = intro.pcm.length / bps;
+
+  const gap = new Uint8Array(Math.round(bps * 0.35) & ~1);
+  const tail = episode.pcm.subarray(0, Math.round(bps * PREVIEW_TAIL_S) & ~1);
+  const joined = new Uint8Array(intro.pcm.length + gap.length + tail.length);
+  joined.set(intro.pcm, 0);
+  joined.set(tail, intro.pcm.length + gap.length);
+  const wavPath = join(runDir, "intro-preview.wav");
+  const mp3Path = join(runDir, "intro-preview.mp3");
+  writeFileSync(wavPath, writeWav(joined, intro.sampleRate, intro.channels, intro.bits));
+  execFileSync("/opt/homebrew/bin/ffmpeg", [
+    "-y", "-loglevel", "error", "-i", wavPath,
+    "-af", `afade=t=out:st=${(joined.length / bps - 2.5).toFixed(2)}:d=2.5`, "-b:a", "128k", mp3Path,
+  ]);
+
+  const ttsCost = (32 * introS * (TTS_OUTPUT_PRICE_PER_M[TTS_MODEL] ?? 0)) / 1e6;
+  const report = {
+    introSeconds: +introS.toFixed(1), attempts, previewSeconds: +(joined.length / bps).toFixed(1),
+    costUSD: { llm: +cost.toFixed(3), tts: +ttsCost.toFixed(3), total: +(cost + ttsCost).toFixed(3) },
+  };
+  writeFileSync(join(runDir, "intro-report.json"), JSON.stringify(report, null, 2));
+  log(`intro ${introS.toFixed(1)}s → preview ${mp3Path}`);
+  console.log(JSON.stringify(report, null, 2));
+}
+
 /* ── run ─────────────────────────────────────────────────────────── */
 
 async function main() {
   const google = createGoogle({ apiKey: API_KEY });
+  if (INTRO_ONLY) return introOnly(google, REUSE!);
   let runDir: string;
   let outline: Outline;
   let lines: Line[];
@@ -469,7 +644,7 @@ async function main() {
     ];
 
     for (let attempt = 1; attempt <= 2; attempt++) {
-      const issues = scriptIssues(lines, words);
+      const issues = scriptIssues(lines, words, outline);
       if (!issues.length) break;
       log(`  draft ${attempt}: ${issues.map((i) => i.split(":")[0]).join(" · ")} — revising`);
       const prev = lines;
@@ -526,7 +701,7 @@ async function main() {
     const result = await withRetry(`block ${i + 1}`, () =>
       generateConversation({
         model: google(TTS_MODEL),
-        instructions: DELIVERY,
+        instructions: block.lines[0].beat === 0 ? `${DELIVERY}\n${INTRO_DELIVERY}` : DELIVERY,
         turns: block.lines.map((l) => ({ voice: l.speaker === "A" ? VOICE_A : VOICE_B, text: l.text })),
         output: { format: "wav" },
       }),

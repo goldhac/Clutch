@@ -297,7 +297,30 @@ function tryParseJsonAndValidate(raw: string): ParseResult {
     };
   }
 
-  const result = safeParseSheetContent(parsed);
+  let result = safeParseSheetContent(parsed);
+  // An extra key the schema doesn't know ("a_long" beside "a") carries no
+  // trust risk, but .strict() rejects the whole sheet for it — a ~90 s retry,
+  // or a failed generation when the retry repeats it (2026-09-15, attention
+  // lecture). Drop unknown keys and revalidate; every other rule still applies.
+  if (!result.success && result.error.issues.some((i) => i.code === "unrecognized_keys")) {
+    const dropped: string[] = [];
+    for (const issue of result.error.issues) {
+      if (issue.code !== "unrecognized_keys") continue;
+      const owner = issue.path.reduce<unknown>(
+        (acc, k) => (acc && typeof acc === "object" ? (acc as Record<string, unknown>)[String(k)] : undefined),
+        parsed,
+      );
+      if (!owner || typeof owner !== "object") continue;
+      for (const key of issue.keys) {
+        delete (owner as Record<string, unknown>)[key];
+        dropped.push([...issue.path, key].join("."));
+      }
+    }
+    if (dropped.length) {
+      console.warn(`[engine] dropped unknown key(s): ${dropped.join(", ")}`);
+      result = safeParseSheetContent(parsed);
+    }
+  }
   if (!result.success) {
     // Include the OFFENDING VALUE, not just the path. "traps.5.text is
     // bad" gives the model nothing to work with on retry; quoting the

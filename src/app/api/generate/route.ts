@@ -75,8 +75,8 @@ export async function POST(req: NextRequest) {
   const professor = form.get("professor")?.toString().trim() || undefined;
 
   // Collect file_N / tag_N pairs. UI sends them in parallel arrays.
-  const pack: PackFile[] = [];
-  const ingestWarnings: string[] = [];
+  // Validate everything before spending any model calls.
+  const uploads: { file: File; tag: FileTag }[] = [];
   let i = 0;
   while (form.has(`file_${i}`)) {
     const file = form.get(`file_${i}`);
@@ -86,24 +86,37 @@ export async function POST(req: NextRequest) {
     if (!VALID_TAGS.has(tag)) {
       return badRequest(`bad tag for file ${file.name}: ${tag}`);
     }
-    const buf = Buffer.from(await file.arrayBuffer());
-    const name = file.name.toLowerCase();
-    if (!/\.(pdf|txt|md|pptx)$/.test(name)) {
+    if (!/\.(pdf|txt|md|pptx)$/.test(file.name.toLowerCase())) {
       return badRequest(
         `unsupported file type for "${file.name}". Supported: PDF, PPTX, .txt, .md.`,
       );
     }
-    try {
-      // Full ingest: text layer + SmartArt/notes (PPTX) + vision pass for
-      // content that only exists as pixels — same pipeline as gen-cli.
-      const r = await ingestDocument(file.name, buf, { vision: true });
-      ingestWarnings.push(...r.warnings);
-      pack.push({ tag, filename: file.name, text: r.text });
-    } catch (e) {
+    uploads.push({ file, tag });
+  }
+
+  // Full ingest: text layer + SmartArt/notes (PPTX) + a figures-mode vision
+  // pass that reads every page's diagrams, charts and rendered equations —
+  // the lines a text layer drops (Phase 0: scaled dot-product attention was
+  // missing from the attention lecture's text). Files run in parallel so the
+  // vision cost is ~one lecture's latency, not one per file.
+  const ingested = await Promise.allSettled(
+    uploads.map(async ({ file, tag }) => {
+      const buf = Buffer.from(await file.arrayBuffer());
+      const r = await ingestDocument(file.name, buf, { vision: true, visionMode: "figures" });
+      return { tag, filename: file.name, text: r.text, warnings: r.warnings };
+    }),
+  );
+  const pack: PackFile[] = [];
+  const ingestWarnings: string[] = [];
+  for (const [ix, result] of ingested.entries()) {
+    if (result.status === "rejected") {
       return badRequest(
-        `failed to extract "${file.name}": ${(e as Error).message}`,
+        `failed to extract "${uploads[ix].file.name}": ${(result.reason as Error).message}`,
       );
     }
+    const { warnings, ...file } = result.value;
+    ingestWarnings.push(...warnings);
+    pack.push(file);
   }
 
   if (pack.length === 0) {

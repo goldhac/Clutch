@@ -82,8 +82,9 @@ page and asks only for *visual* content, with its own prompt so slide text isn't
 - Finds 16 of 37 pages with visual content. Raster-image detection would have found 7: **11 were
   vector diagrams** only rendering catches.
 - It recovered **equations the text layer never had cleanly** — scaled dot-product attention,
-  the pointer-generator probability, coverage — the most testable lines in a CS lecture. The
-  **sheet engine has been missing these too.**
+  the pointer-generator probability, coverage — the most testable lines in a CS lecture.
+  ~~The sheet engine has been missing these too.~~ **Wrong — see §7:** Pro rebuilt all of them
+  from the garbled text layer on the sparse sheet.
 - Reads real diagrams accurately (p. 35: the full Transformer block — embeddings + positional
   encoding, multi-head attention → Add & Norm → feed-forward → Add & Norm, skip connections).
 - ~27–36 s and **~$0.01** per 37-page lecture on Gemini Flash.
@@ -102,8 +103,7 @@ not *validated*, and two rewrites optimised for what was validated. Lesson for t
 
 ### Still open
 1. **Gold's listen** — does it teach, and how does it compare to the 24-min NotebookLM episode?
-2. **Sheets + figures mode** — worth turning on (equations!), but it adds ~30 s to a synchronous
-   request. Needs a sheet A/B before flipping production.
+2. ~~**Sheets + figures mode**~~ — shipped 2026-09-15, see §7.
 3. **Balance** — add B-share to the validator.
 4. **Cost lever** — three Pro drafts cost $0.29; the same tokens on 2.5 Flash would be ~$0.07.
 
@@ -123,8 +123,55 @@ evidence: NotebookLM's *Default* Deep Dive on one lecture is ~24 min, matching `
 
 *Gold's verdict: pending.*
 
+## 7. Round 3 follow-ups (2026-09-15): intro + figures mode for sheets
+
+### The intro
+Gold: *"did not hear a good intro."* Round 3 opened mid-thought ("So the biggest headache…")
+because both prompts said **"no greetings, open mid-thought."** Fixed as a structured, validated
+intro: HOOK (from this lecture) → WELCOME → MAP (every section, as a story) → PROMISE (specific)
+→ HANDOFF. `--intro-only --reuse <run>` rewrites just the intro and splices it onto the run's
+existing audio: ~$0.08 per try instead of $1.10.
+
+| | v1 | v2 |
+|---|---|---|
+| Hook | "many airports were forced to close" (lecture's coverage example) | same |
+| B's lines | 1 of 7 | **4 of 10** (asks, guesses the next fix) |
+| Promise | "explain how this all works" | **Q/K/V, and why Transformers train in parallel** |
+| Length | 61 s | 71 s |
+| Validator catches | 202 words (>200) | 212 words (>200) |
+
+Checks added after v1: B speaks ≥3 intro lines; vague promises rejected. **v2 grounding slip:**
+"[copying] causes repetition" — the lecture says encoder-decoders in general repeat. Cause: the
+through-line framing "each idea fixes the previous one's problem" invites invented causality.
+Rule added to both prompts. Phase 1 needs a claims check, not just shape checks.
+
+### Figures mode for sheets — A/B on 21-attn.pdf, same settings (max · mixed · balanced)
+
+| | Sparse (old) | Figures (new) |
+|---|---|---|
+| Vision chars added | 0 | ~9,900 |
+| Formulas | 15 | 15 (+ attention-with-coverage) |
+| Concepts / traps / questions / tables | 18 / 12 / 18 / 5 | **25 / 16 / 30 / 6** |
+| Topics | 4 | 5 |
+| Input tokens | 13.1k | 20.0k (+~$0.01) |
+| Ingest latency | 0.1 s | ~30 s one lecture · **19 s for a 3-lecture pack** (parallel) |
+
+- **Correction:** the sparse sheet already had every key equation — Pro rebuilds them from the
+  broken text layer. Figures mode didn't rescue formulas here; it made the sheet **broader**
+  (+12 questions, +7 concepts, +4 traps). Its real value is diagram-only content on other packs.
+- N=1 per arm; item counts vary run to run.
+- **Sturdiness work shipped with it:**
+  - vision batches run 4 at a time, each retried once; a failed batch loses only its pages (with
+    a warning) instead of every diagram in the file;
+  - `/api/generate` ingests files in parallel and validates all uploads before any model call;
+  - warning when a PDF exceeds the 60-page vision cap;
+  - **engine drops unknown keys** before validating. The first figures sheet *failed* after
+    the model twice added `a_long` beside `a`; strict schemas turned harmless noise into a dead
+    sheet. Real rules (citations, trust, table shape) still reject — tested with a fake client.
+- Both sheets still needed one engine retry for other slips — worth its own look.
+
 ## 6. Spend
 
-~$0.28 (round 1) + ~$0.40 (round 2) + $1.10 (round 3) + ~$0.02 (vision tests) ≈ **$1.80** on the
-Gemini key. NotebookLM generation
+~$0.28 (round 1) + ~$0.40 (round 2) + $1.10 (round 3) + ~$0.02 (vision tests) + $0.16 (two intro
+previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) ≈ **$2.45** on the Gemini key. NotebookLM generation
 draws on Gold's Pro plan allowance, not API spend.

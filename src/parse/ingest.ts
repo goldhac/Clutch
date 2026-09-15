@@ -44,13 +44,14 @@ export interface IngestOptions {
    *
    *   "sparse"  (default) — only pages where text extraction failed: scanned
    *             PDFs, near-empty picture pages, image-heavy low-text slides.
-   *             Cheap; what the sheet engine has always used.
+   *             Cheap; the sheet engine used it until 2026-09-15.
    *   "figures" — every page/slide, asking only for VISUAL content. Catches
    *             diagrams that sit on pages that also have a title and labels,
    *             which "sparse" never reads (Phase 0: 37-page attention lecture,
    *             0 chars from its Q/K/V and Transformer figures). Vector
    *             drawings are caught too, since pages are rendered, not scanned
-   *             for embedded images.
+   *             for embedded images. /api/generate, gen-cli and Clutch Audio
+   *             all use this.
    */
   visionMode?: "sparse" | "figures";
 }
@@ -116,6 +117,12 @@ export async function ingestDocument(
             visionChars = v.text.length;
             visionImages = v.imagesSent;
           }
+          if (v.failedLabels) {
+            warnings.push(
+              `${filename}: vision could not read ${v.failedLabels.join(", ")} after a retry; ` +
+                `diagrams there are missing.`,
+            );
+          }
         } catch (e) {
           warnings.push(
             `${filename}: vision pass failed (${e instanceof Error ? e.message : String(e)}); ` +
@@ -156,6 +163,11 @@ export async function ingestDocument(
         : figures
           ? allPages(cap)
           : sparsePdfPages(baseText, pageCount).slice(0, cap);
+      if ((scanned || figures) && pageCount > cap) {
+        warnings.push(
+          `${filename}: vision read pages 1–${cap} of ${pageCount}; figures after page ${cap} were not read.`,
+        );
+      }
 
       if (targets.length > 0) {
         if (!(await rasterizerAvailable())) {
@@ -183,6 +195,12 @@ export async function ingestDocument(
               if (v.text) {
                 text += markVisionText(filename, v.text);
                 visionChars = v.text.length;
+              }
+              if (v.failedLabels) {
+                warnings.push(
+                  `${filename}: vision could not read ${v.failedLabels.join(", ")} after a retry; ` +
+                    `diagrams there are missing.`,
+                );
               }
             }
           } catch (e) {
