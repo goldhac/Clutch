@@ -203,8 +203,58 @@ https://claude.ai/artifact/U1JTFBqziFxGd62gNP168u
 - Round 4 plan (each with a check): voice check per block, rhythm limits, analogy spine,
   curiosity transitions, show wrapper beats, must-say list, airtime vs weight, claims check.
 
+## 9. Round 4 — every fix as a check (2026-09-15)
+
+Run: `scripts/phase0/out/21-attn-r4-2026-09-15T21-44-42` · **22:50** · 244 lines · 3,599 words heard.
+
+| | NotebookLM | Round 3 | **Round 4** |
+|---|---|---|---|
+| Turns per minute | 10.5 | 5.8 | **10.7** |
+| Median turn · longest | 16 w · 65 w | 23 w · 91 w | **15 w · 37 w** |
+| Speaking pace | 179 wpm | 150 wpm | **158 wpm** |
+| Host B share | 48% | 31% | **41%** |
+| Wrong-voice lines (independent by-voice transcript) | — | 37 of 145 | **0** (per-block verified) |
+| Retrieval questions | 0 | 3 | **3**, each with A's pickup after the pause |
+| Unsupported claims (checker) | — | not run | **0 of 54** (+4 caught by hand, see below) |
+| Wrapper | intro · recap · relevance · teaser · sign-off | none | **intro · midpoint recap · relevance · recap · homework · outro w/ teaser** |
+| Sections' airtime vs lecture share | — | Transformer 17% vs 28% | **all within ±40%** |
+
+Everything the transcript comparison (§8) asked for is now a check in `episode.ts`, and each one
+failed at least once on the way here — which is the point:
+
+- **Voices — root cause found with `--smoke`.** A Gemini multi-speaker block that OPENS with
+  Speaker2 comes out with swapped voices **3 times out of 3**; a block that opens with Speaker1 is
+  clean 3/3. The SDK relabels speakers by first appearance per block, so round 3's B-first blocks
+  were doomed. Fix: direct TTS calls with fixed labels (Speaker1 = A always), every block starts
+  with an A line (an A line is carried across the seam; after a retrieval pause A speaks a short
+  pickup), blocks ≤ 1,500 chars, and a by-voice transcription of every block with re-takes
+  (10 re-takes in 23 blocks; the three residual flags were re-voiced with `--revoice`, which cuts
+  the WAV at the exact-zero gaps and splices). One-word lines ("How?", "Got it.") are unreliable for
+  both the voice model and the checker — lengthened to 4-5 words.
+- **Full rewrites regress.** Draft 1 failed 7 checks; each "rewrite the full script" fixed some and
+  broke others (4 drafts, still 3 failing). Added a **patch mode** (replace line *n* with 1-3
+  lines) — converged in 7 patches. Two checks were also wrong and made the loop unwinnable:
+  the must-say cue wanted `d_k` while the script correctly said "d-k" (now hyphen-insensitive), and
+  strict alternation forbade A asking the quiz right after A's own explanation (now allowed; the
+  question opens its own block). The opener rule was relaxed to "B's question is the section's
+  first *or* second line" after the patcher oscillated on one seam.
+- **The claims checker missed the causal slip again.** 54 claims "supported" — yet four lines said
+  copying *created* the repetition problem (the lecture: encoder-decoders in general repeat and
+  delete). Fixed by hand; the checker prompt now says topic order is not causation and names
+  "creates / introduces / leads to" as claims to verify. **Still an open risk for Phase 1**: a
+  claims check needs its own evaluation set, not just a prompt.
+- **Also caught by hand:** "Okay, B, what do you think?" — the script label spoken as a name (new
+  LABELS check), and a patch that left B's opening question duplicated.
+
+**Cost, round 4:** ≈ **$3.9** (script drafting + 14 patch/claims calls ≈ $2.3 across the killed and
+resumed runs — the killed runs wrote no report, so this is an estimate; TTS $0.94 + targeted
+re-voicing $0.34 + voice checks $0.10; three transcriptions $0.18; smoke tests ≈ $0.05). Running
+total ≈ **$6.6**. A clean run of this pipeline is ≈ $1.6 (LLM ≈ $0.6, TTS ≈ $0.9, checks ≈ $0.1).
+
+*Gold's verdict on round 4: pending.*
+
 ## 6. Spend
 
 ~$0.28 (round 1) + ~$0.40 (round 2) + $1.10 (round 3) + ~$0.02 (vision tests) + $0.16 (two intro
-previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) + $0.07 (intro v3) + $0.16 (three transcriptions) ≈ **$2.70** on the Gemini key. NotebookLM generation
+previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) + $0.07 (intro v3) + $0.16 (three transcriptions) ≈ **$2.70** through §8; round 4 (§9) adds ≈ $3.9 → ≈ **$6.6** on the Gemini key. NotebookLM generation
 draws on Gold's Pro plan allowance, not API spend.
