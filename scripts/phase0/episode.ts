@@ -143,7 +143,7 @@ STEP 3 — BEATS, in lecture order:
 with exactly ${RETRIEVALS} retrieval beat(s), each placed right after the section it tests,
 spread across the episode.
 
-- open: the episode's INTRO, est_seconds 45-75. A hook taken from this lecture, a one-line welcome,
+- open: the episode's INTRO, est_seconds 30-50. A hook taken from this lecture, a one-line welcome,
   the route through EVERY section told as one story (the through_line), and what the student will be
   able to explain by the end. It teaches nothing yet: the first section's teaching starts next beat.
 - through_line: the single story connecting the sections (e.g. how each idea fixes a problem left
@@ -173,19 +173,18 @@ Return JSON exactly:
  * prompt said "no greetings, open mid-thought". Gold: "did not hear a good intro".
  * NotebookLM spends its first minute orienting the listener; so does this.
  */
-const INTRO_RULES = `THE INTRO — beat 0, kind "open". About 45-75 seconds: 100-200 words. In these seconds the listener
-decides whether to keep going, so it has five parts, in this order:
-  1. HOOK (1-2 lines, A): one concrete, surprising puzzle, failure or scenario taken from THIS lecture.
+const INTRO_RULES = `THE INTRO — beat 0, kind "open". About 30-50 seconds: 70-120 words. In these seconds the listener
+decides whether to keep going, so it has five parts, in this order, and every line earns its place:
+  1. HOOK (1 line, A): one concrete, surprising puzzle, failure or scenario taken from THIS lecture.
      Never "have you ever wondered", never a definition, never a generic claim about AI or the field.
   2. WELCOME (1 short line): "Welcome to Clutch." plus what today's episode is about, in plain words.
      The only time the show is named.
-  3. MAP (2-4 lines, both hosts): the route through the lecture told as one story using the
-     through_line, naming EVERY section in order in plain words, each as the answer to the previous
-     one's problem. B reacts, guesses what the next fix must be, or connects the pieces. Never a list
-     read aloud. B speaks at least 3 of the intro's lines: it is a conversation from the first second.
-  4. PROMISE (1-2 lines): two or three SPECIFIC things the listener will be able to explain by the end,
+  3. MAP (2-3 short lines, both hosts): the route through the lecture as one quick story using the
+     through_line, naming EVERY section in order in plain words. B reacts or guesses the next step.
+     Never a list read aloud. B speaks at least 2 of the intro's lines: a conversation from the start.
+  4. PROMISE (1 line): two SPECIFIC things the listener will be able to explain by the end,
      named concretely from the lecture (e.g. "why the Transformer can train in parallel"), never
-     "how it all works". Plus a heads-up that the hosts will stop a few times to quiz them: when that
+     "how it all works". Plus a brief heads-up that the hosts will stop a few times to quiz them: when that
      happens, pause and actually answer.
   5. HANDOFF (1 line): launches the first section.
 The intro teaches nothing yet: no mechanisms, no formulas. Warm and inviting, never salesy.
@@ -295,13 +294,14 @@ function introIssues(ls: Line[], outline: Outline) {
   const text = intro.map((l) => l.text).join(" ");
   const words = countWords(intro);
   const problems: string[] = [];
-  if (words < 100 || words > 200) problems.push(`it is ${words} words; it must be 100-200`);
+  // v2 was 190 words / 71 s; Gold: "calm, maybe could be a bit shorter".
+  if (words < 70 || words > 120) problems.push(`it is ${words} words; it must be 70-120`);
   if (!/\bwelcome\b/i.test(text)) problems.push(`it has no one-line welcome`);
   const missing = sectionsMissingFromIntro(text, outline);
   if (missing.length > 1) problems.push(`the MAP never mentions: ${missing.join("; ")}`);
   if (!/\bpause\b/i.test(text)) problems.push(`it never tells the listener to pause and answer when quizzed`);
   const bLines = intro.filter((l) => l.speaker === "B").length;
-  if (bLines < 3) problems.push(`B speaks ${bLines} line(s); B needs at least 3, so it is a conversation`);
+  if (bLines < 2) problems.push(`B speaks ${bLines} line(s); B needs at least 2, so it is a conversation`);
   if (/how (this|it) all works|everything you need/i.test(text)) {
     problems.push(`the PROMISE is vague; name two or three specific things the listener will be able to explain`);
   }

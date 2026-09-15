@@ -170,8 +170,41 @@ Rule added to both prompts. Phase 1 needs a claims check, not just shape checks.
     sheet. Real rules (citations, trust, table shape) still reject — tested with a fake client.
 - Both sheets still needed one engine retry for other slips — worth its own look.
 
+## 8. Transcript comparison vs NotebookLM (2026-09-15)
+
+Gold: intro "calm, maybe could be a bit shorter" → v3 is **47 s / 112 words** (limit now 70–120
+words, B ≥2 lines). The "copy causes repetition" slip survived the prompt rule — needs a claims check.
+
+Both episodes transcribed from audio (`transcribe.ts`, Gemini 2.5 Flash, ~$0.05 each). Report:
+https://claude.ai/artifact/U1JTFBqziFxGd62gNP168u
+
+| | NotebookLM | Clutch r3 |
+|---|---|---|
+| Duration / words | 24:00 / 4,301 | 21:07 / 3,171 |
+| Turns per minute | **10.5** | 5.8 |
+| Median turn · longest | **16 w** · 65 w | 23 w · 91 w |
+| Turns ≤5 words | **26%** | 7% |
+| Pace | **179 wpm** | 150 wpm |
+| Retrieval questions | 0 | **3** |
+| Lecture points (26): yes / partly / no | 16 / 7 / 3 | **18** / 1 / 7 |
+| Wrong-voice lines | — | **37 of 145 (26%)** |
+
+- **Voice swaps (critical, new):** a voice-labelled transcript puts 37 lines in the wrong host's
+  voice, in runs (16:18–18:40 worst). The SDK maps voices correctly; runs begin after back-to-back
+  same-speaker lines or role-breaking lines. Not explained by which host opens a block.
+- **NotebookLM wins on sound:** rhythm, 9 recurring analogies with callbacks, curiosity/pushback
+  transitions, show wrapper (recap before the Transformer, "why it matters", next-lecture teaser,
+  sign-off), and breadth (trade-offs, matrix packing, ELMo/BERT).
+- **Clutch wins on study value:** spoken formulas, mechanism depth (sum over repeats, pointer =
+  attention, coverage in energy *and* loss), 3 quizzes, fewer wrong claims. NotebookLM teaches a
+  p-gen misconception ("the dial turns to copy when a word is unseen") and embellishes examples.
+- **Clutch misses:** softmax(QKᵀ/√dₖ)·V (vision read it; script never used it), Transformer
+  trade-offs, 17% airtime for a 28% section, invented "50,000 words", no ending.
+- Round 4 plan (each with a check): voice check per block, rhythm limits, analogy spine,
+  curiosity transitions, show wrapper beats, must-say list, airtime vs weight, claims check.
+
 ## 6. Spend
 
 ~$0.28 (round 1) + ~$0.40 (round 2) + $1.10 (round 3) + ~$0.02 (vision tests) + $0.16 (two intro
-previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) ≈ **$2.45** on the Gemini key. NotebookLM generation
+previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) + $0.07 (intro v3) + $0.16 (three transcriptions) ≈ **$2.70** on the Gemini key. NotebookLM generation
 draws on Gold's Pro plan allowance, not API spend.
