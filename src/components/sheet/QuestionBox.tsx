@@ -16,6 +16,12 @@ export function QuestionBox({ question: q, bare = false }: QuestionBoxProps) {
   // A True/False sheet prints FALSE statements on purpose. Mark the verdict BEFORE the statement
   // so a skimming eye never takes a false claim for a fact. Hidden with the answers (self-test).
   const verdict = q.kind === "T/F" ? /^\s*(true|false)\b/i.exec(q.a)?.[1].toLowerCase() : undefined;
+  // Claim check: in a FALSE statement the lie usually lives in one absolute word. Mark it, so the
+  // sheet teaches the pattern ("always" → look for the exception), not just this one answer.
+  const statement =
+    verdict === "false" && !q.q.includes("*")
+      ? q.q.replace(/\b(always|never|all|none|only|every|must|cannot|entirely|solely|exclusively|any|no)\b/i, "*$1*")
+      : q.q;
   const inner = (
     <>
       <VerifiedStar verified={q.verified} />
@@ -24,7 +30,7 @@ export function QuestionBox({ question: q, bare = false }: QuestionBoxProps) {
           {verdict === "false" ? "✗" : "✓"}
         </span>
       )}
-      <span className="kind">{q.kind}</span> <InlineText text={q.q} />{" "}
+      <span className="kind">{q.kind}</span> <InlineText text={statement} />{" "}
       <span className="ans">
         <span className="ans-arrow">→</span> <InlineText text={q.a} />
       </span>{" "}

@@ -218,6 +218,26 @@ export default function ResultsPage() {
     });
   }
 
+  /**
+   * Re-weights the sheet for another exam format: free and instant (scoring, section shares, and
+   * traps on for True/False). The WORDING of the questions only changes through an edit or a re-make.
+   */
+  function setFormat(examFormat: NonNullable<ScoreCtx["examFormat"]>) {
+    setStash((prev) => {
+      if (!prev) return prev;
+      const examType = examFormat === "problems" ? "problem-solving" : examFormat === "mixed" ? "mixed" : "conceptual";
+      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), examFormat, examType } };
+      try {
+        sessionStorage.setItem("clutch:last", JSON.stringify(next));
+      } catch {
+        /* still applies for this visit */
+      }
+      return next;
+    });
+    setCtxPatch({});
+    setActivePreset(null);
+  }
+
   function setOrder(order: "course" | "priority") {
     setStash((prev) => {
       if (!prev) return prev;
@@ -237,6 +257,7 @@ export default function ResultsPage() {
       if (a.type === "view") setView((v) => ({ ...v, [a.key]: a.on }));
       else if (a.type === "sources") setView((v) => ({ ...v, sources: a.value }));
       else if (a.type === "order") setOrder(a.value);
+      else if (a.type === "format") setFormat(a.value);
       else if (a.type === "density") setDensity(a.value);
       else if (a.type === "preset") applyPreset(a.label, a.patch);
       else if (a.type === "figure") setView((v) => ({ ...v, figures: [...new Set([...(v.figures ?? (content ? defaultFigureIds(content) : [])), a.id])] }));
@@ -561,6 +582,25 @@ export default function ResultsPage() {
               </button>
             ))}
           </span>
+          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
+          <label className={(dockOpen ? "flex" : "hidden") + " shrink-0 items-center gap-1.5 sm:flex"}>
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Format</span>
+            <select
+              id="dock-exam-format"
+              value={effectiveCtx.examFormat ?? "mixed"}
+              onChange={(e) => {
+                setFormat(e.target.value as NonNullable<ScoreCtx["examFormat"]>);
+                toast("Sheet re-weighted for that format. Ask Edit with Clutch to reword the questions too.");
+              }}
+              className="tap rounded-[8px] bg-white/[0.08] px-2 py-[5px] text-[12px] font-semibold text-white focus:outline-none focus:ring-1 focus:ring-white/40"
+            >
+              <option className="text-black" value="mixed">Mixed</option>
+              <option className="text-black" value="multiple-choice">Multiple choice</option>
+              <option className="text-black" value="true-false">True / False</option>
+              <option className="text-black" value="short-answer">Short answer</option>
+              <option className="text-black" value="problems">Problems</option>
+            </select>
+          </label>
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
           <span className={(dockOpen ? "flex" : "hidden") + " shrink-0 items-center gap-1.5 sm:flex"} role="group" aria-label="Topic order">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Order</span>

@@ -48,11 +48,14 @@ For every figure return:
              any body text beside it
 - "caption": a short title for it (use the figure's own caption or the slide title)
 - "what":    one line on what it shows
+- "kind":    "diagram" (architecture, flow, process, annotated drawing) | "chart" (plot, graph,
+             heat map) | "table" | "photo" (a photograph or rendered scene, including example
+             inputs/outputs of a vision model) | "screenshot" (of an app, web page or code)
 - "importance": 1-5. 5 = the central diagram of the topic that a student would want on a
              one-page exam sheet (an architecture, a process, a key plot). 3 = useful
              illustration. 1 = decorative or redundant with the text.
 
-Return JSON exactly: {"figures":[{"image":1,"box_2d":[0,0,0,0],"caption":"","what":"","importance":3}]}
+Return JSON exactly: {"figures":[{"image":1,"box_2d":[0,0,0,0],"caption":"","what":"","kind":"diagram","importance":3}]}
 Return {"figures":[]} when there are none. Never invent a figure.
 `.trim();
 
@@ -62,9 +65,21 @@ const DetectSchema = z.object({
     box_2d: z.array(z.number()).length(4),
     caption: z.string(),
     what: z.string(),
+    kind: z.string().optional(),
     importance: z.number(),
   })),
 });
+
+/**
+ * A photo explains almost nothing at one inch wide, and a results deck can carry dozens of
+ * them (the 12-slide vision deck offered 12 "figures", 11 of them example photos). Photos and
+ * screenshots survive only when the model rates them essential; drawn figures need a 3.
+ */
+const PICTURE_KINDS = new Set(["photo", "screenshot", "other"]);
+const MIN_IMPORTANCE_DRAWN = 3;
+const MIN_IMPORTANCE_PICTURE = 5;
+/** Slides that tile many pictures: keep the best two. */
+const MAX_PER_PAGE = 2;
 
 export interface DetectedFigure {
   /** PDF page or PPTX slide number. */
@@ -76,6 +91,8 @@ export interface DetectedFigure {
   caption: string;
   what: string;
   importance: number;
+  /** diagram | chart | table | photo | screenshot */
+  kind: string;
 }
 
 export interface CroppedFigure extends DetectedFigure {
@@ -123,7 +140,10 @@ export async function detectFigures(
           const [ymin, xmin, ymax, xmax] = f.box_2d.map((n) => Math.max(0, Math.min(1000, n)));
           if (ymax <= ymin || xmax <= xmin) continue;
           if (((ymax - ymin) * (xmax - xmin)) / 1e6 < MIN_BOX_SHARE) continue;
-          out.push({ page, index, box: [ymin, xmin, ymax, xmax], caption: f.caption.trim(), what: f.what.trim(), importance: Math.round(f.importance) });
+          const kind = (f.kind ?? "diagram").toLowerCase();
+          const importance = Math.round(f.importance);
+          if (importance < (PICTURE_KINDS.has(kind) ? MIN_IMPORTANCE_PICTURE : MIN_IMPORTANCE_DRAWN)) continue;
+          out.push({ page, index, box: [ymin, xmin, ymax, xmax], caption: f.caption.trim(), what: f.what.trim(), importance, kind });
         }
       } catch {
         // One failed batch loses only its own pages' figures.
@@ -131,8 +151,17 @@ export async function detectFigures(
     }
   };
   await Promise.all(Array.from({ length: Math.min(CONCURRENCY, chunks.length) }, worker));
-  out.sort((a, b) => a.page - b.page || a.box[0] - b.box[0]);
-  return { figures: out, inputTokens: inTok, outputTokens: outTok };
+  // At most MAX_PER_PAGE per page, best first; then back to document order.
+  const perPage = new Map<number, number>();
+  const kept = [...out]
+    .sort((a, b) => b.importance - a.importance)
+    .filter((f) => {
+      const n = perPage.get(f.page) ?? 0;
+      perPage.set(f.page, n + 1);
+      return n < MAX_PER_PAGE;
+    })
+    .sort((a, b) => a.page - b.page || a.box[0] - b.box[0]);
+  return { figures: kept, inputTokens: inTok, outputTokens: outTok };
 }
 
 /** Page sizes in PostScript points, from `pdfinfo` ("Page    3 size: 362.8 x 272.1 pts"). */

@@ -22,6 +22,8 @@ import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
 import type { CroppedFigure } from "@/parse/figures";
 import { attachFigures } from "@/engine/attach-figures";
+import { detectExamFormat } from "@/engine/detect-format";
+import { repairForFormat } from "@/engine/format-repair";
 import {
   EXAM_FORMATS,
   examTypeFor,
@@ -136,14 +138,30 @@ export async function POST(req: NextRequest) {
     return badRequest("upload at least one file");
   }
 
+  // The student left it on Mixed and gave us a past exam: read the format off the exam itself.
+  let format = examFormat;
+  let detectedFrom: string | undefined;
+  if (examFormat === "mixed") {
+    for (const f of pack.filter((x) => x.tag === "past_exam")) {
+      const d = detectExamFormat(f.text);
+      if (d.format !== "mixed") {
+        format = d.format;
+        detectedFrom = f.filename;
+        console.warn(`[/api/generate] format detected from ${f.filename}: ${d.format} ${JSON.stringify(d.signals)}`);
+        break;
+      }
+    }
+  }
+  const type = detectedFrom ? examTypeFor(format) : examType;
+
   const started = Date.now();
-  const packSummary = `format=${examFormat} · ` + pack.map((f) => `${f.tag}:${f.filename}(${f.text.length}c)`).join(", ");
+  const packSummary = `format=${format}${detectedFrom ? "(detected)" : ""} · ` + pack.map((f) => `${f.tag}:${f.filename}(${f.text.length}c)`).join(", ");
   try {
     const result = await generateSheet({
       pack,
       density,
-      examType,
-      examFormat,
+      examType: type,
+      examFormat: format,
       priority,
       courseContext: { code: courseCode, professor },
     });
@@ -152,7 +170,11 @@ export async function POST(req: NextRequest) {
         `warnings=${result.warnings.length} · figures=${packFigures.reduce((n, f) => n + f.figures.length, 0)} · ${packSummary}`,
     );
     // Diagrams ride along with the sheet; the student chooses which to place (issue #15).
-    const content = attachFigures(result.content, packFigures);
+    const packText = pack.map((f) => `===== ${f.filename} [${f.tag}] =====\n${f.text}`).join("\n\n").slice(0, 400_000);
+    // A format sheet must have the format's shape; patch it in a few seconds when it doesn't.
+    const shaped = await repairForFormat(result.content, format, { packText, files: pack.map((f) => f.filename) });
+    if (shaped.repaired) console.warn(`[/api/generate] format repair · ${shaped.repaired}`);
+    const content = attachFigures(shaped.content, packFigures);
     return Response.json({
       content,
       meta: result.meta,
@@ -160,7 +182,11 @@ export async function POST(req: NextRequest) {
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),
       // The student's own text, so "Edit with Clutch" can ADD grounded lines later (issue #14).
       // Kept client-side for the session; capped to stay inside sessionStorage.
-      packText: pack.map((f) => `===== ${f.filename} [${f.tag}] =====\n${f.text}`).join("\n\n").slice(0, 400_000),
+      packText,
+      // What the sheet was actually built for — differs from the form when we read it off a past exam.
+      examFormat: format,
+      examType: type,
+      formatDetectedFrom: detectedFrom,
     });
   } catch (e) {
     const secs = ((Date.now() - started) / 1000).toFixed(0);

@@ -15,8 +15,11 @@ const EXAM_FORMAT_OPTIONS: [string, ExamFormat][] = [
   ["Short answer", "short-answer"],
   ["Problems", "problems"],
 ];
+const FORMAT_WORDS: Record<ExamFormat, string> = {
+  mixed: "mixed", "multiple-choice": "multiple-choice", "true-false": "True/False", "short-answer": "short-answer", problems: "problem-solving",
+};
 const EXAM_FORMAT_NOTES: Record<ExamFormat, string> = {
-  mixed: "A balanced sheet. If a past exam is in the pack, we follow its mix.",
+  mixed: "A balanced sheet. Tag a past exam and we read its format off it for you.",
   "multiple-choice": "Built around easily-confused pairs and why the tempting option is wrong.",
   "true-false": "Built around where each claim stops being true: always, never, only. Traps start on.",
   "short-answer": "Definitions plus the two or three points a grader looks for.",
@@ -151,7 +154,10 @@ export default function GeneratePage() {
 
       const res = await fetch("/api/generate", { method: "POST", body: fd, signal: ctrl.signal });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
-      const payload = (await res.json()) as { content: unknown; meta: unknown; warnings?: string[]; packText?: string };
+      const payload = (await res.json()) as {
+        content: unknown; meta: unknown; warnings?: string[]; packText?: string;
+        examFormat?: ExamFormat; examType?: typeof examType; formatDetectedFrom?: string;
+      };
       try {
         // Separate key: losing this (quota) only disables grounded "add" edits, never the sheet.
         if (payload.packText) sessionStorage.setItem("clutch:pack", payload.packText);
@@ -164,14 +170,19 @@ export default function GeneratePage() {
         JSON.stringify({
           content: payload.content,
           meta: payload.meta,
-          warnings: payload.warnings ?? [],
+          warnings: [
+            ...(payload.formatDetectedFrom
+              ? [`We read "${payload.formatDetectedFrom}" as a ${FORMAT_WORDS[payload.examFormat ?? "mixed"]} exam and built the sheet for that. You can change the format on this page.`]
+              : []),
+            ...(payload.warnings ?? []),
+          ],
           density,
           // Scoring context for Layer A (relevance.ts): file tags drive
           // source-authority, examType/priority drive the multipliers.
           ctx: {
             files: files.map((f) => ({ name: f.file.name, tag: f.tag })),
-            examType,
-            examFormat,
+            examType: payload.examType ?? examType,
+            examFormat: payload.examFormat ?? examFormat,
             priority,
           },
           savedAt: new Date().toISOString(),

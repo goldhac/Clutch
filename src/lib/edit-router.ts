@@ -16,6 +16,7 @@ export type FreeAction =
   | { type: "density"; value: "max" | "balanced" | "essentials" }
   | { type: "preset"; label: string; patch: { priority?: "formulas" | "concepts" | "balanced"; examType?: "mixed" } }
   | { type: "figure"; id: string; on: boolean }
+  | { type: "format"; value: "mixed" | "multiple-choice" | "true-false" | "short-answer" | "problems" }
   | { type: "figures-off" }
   | { type: "open-diagrams" };
 
@@ -79,6 +80,19 @@ export function routeInstruction(raw: string, figures: { id: string; caption: st
   } else if (/\breset( the)?( mix| sheet| everything)?\b/.test(t) && t.length < 30) {
     actions.push({ type: "preset", label: "Reset mix", patch: { priority: "balanced", examType: "mixed" } });
     said.push("mix reset");
+  }
+
+  // "switch to true/false", "multiple choice mode", "it's a short answer exam"
+  if (/\b(exam|format|mode|switch|make it|it'?s an?)\b/.test(t)) {
+    const format = /\btrue\s*(\/|or|and)?\s*false\b|\bt\s*\/\s*f\b/.test(t) ? "true-false"
+      : /\bmultiple[- ]choice\b|\bmcq\b/.test(t) ? "multiple-choice"
+      : /\bshort[- ]answer\b/.test(t) ? "short-answer"
+      : /\bproblems?\b|\bproblem[- ]solving\b|\bcalculations?\b/.test(t) ? "problems"
+      : /\bmixed\b/.test(t) ? "mixed" : null;
+    if (format) {
+      actions.push({ type: "format", value: format });
+      said.push(`sheet weighted for a ${format.replace("-", " ")} exam (to reword the questions themselves, ask me to rewrite them for that format)`);
+    }
   }
 
   if (/\b(diagrams?|figures?|pictures?|images?)\b/.test(t) && figures.length) {
