@@ -54,3 +54,4 @@ Thumbs.db
 
 # Phase 0 audio prototype outputs (large WAV/MP3, regenerable)
 scripts/phase0/out/
+scripts/.audit/

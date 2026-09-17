@@ -29,6 +29,7 @@ import {
   buildUserPrompt,
   type EnginePromptInput,
 } from "./prompt";
+import { normalizeDraft } from "./normalize";
 import { sanitizeForTrust, type PackFileMeta } from "./sanitize";
 
 export class EngineError extends Error {
@@ -300,7 +301,7 @@ const SALVAGE_MIN_KEPT = 0.6;
  *   2026-09-17. An item that fails a rule is removed, never loosened: the sheet
  *   that ships still passes every rule.
  */
-function tryParseJsonAndValidate(raw: string, maxDrop = 0): ParseResult {
+export function tryParseJsonAndValidate(raw: string, maxDrop = 0): ParseResult {
   // Strip code fences if the model added them despite being told not to.
   const cleaned = raw
     .trim()
@@ -317,6 +318,12 @@ function tryParseJsonAndValidate(raw: string, maxDrop = 0): ParseResult {
       error: `Not valid JSON: ${e instanceof Error ? e.message : String(e)}. ` +
         `First 200 chars: ${cleaned.slice(0, 200)}`,
     };
+  }
+
+  // Deterministic clean-up of the slips the model makes most (see normalize.ts).
+  const fixed = normalizeDraft(parsed);
+  if (fixed.confRespelled + fixed.confDowngraded + fixed.kindsFilled + fixed.trapKeysRemoved > 0) {
+    console.log(`[engine] normalized draft: ${JSON.stringify(fixed)}`);
   }
 
   let result = safeParseSheetContent(parsed);

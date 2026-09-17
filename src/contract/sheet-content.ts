@@ -167,7 +167,14 @@ export type Question = z.infer<typeof QuestionSchema>;
 export const TableSchema = z
   .object({
     title: z.string().min(1),
-    cols: z.array(z.string().min(1)).min(2, "compare/contrast tables need ≥2 columns"),
+    // The first header may be blank: a matrix table's top-left corner labels nothing
+    // (co-occurrence, confusion and CKY tables — 5 rejections in the 2026-09-17 audit).
+    cols: z
+      .array(z.string())
+      .min(2, "compare/contrast tables need ≥2 columns")
+      .refine((cols) => cols.every((c, i) => i === 0 || c.trim().length > 0), {
+        message: "only the first column header may be blank",
+      }),
     rows: z
       .array(z.array(z.string()))
       .min(1, "table needs at least one row"),
@@ -195,7 +202,8 @@ export const TrapSchema = z
     text: z
       .string()
       .min(1)
-      .refine((t) => /false|incorrect|wrong|not\b/i.test(t), {
+      // "…is a mistake" and "never…" name the falsity as plainly as "is FALSE" does.
+      .refine((t) => /false|incorrect|wrong|not\b|n't\b|never|mistake|myth|misconception|error\b/i.test(t), {
         message:
           'trap text must name the falsity (output spec §4): "X is FALSE because Y", ' +
           'not vague "be careful about X"',
