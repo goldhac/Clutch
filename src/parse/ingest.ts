@@ -18,6 +18,7 @@ import { extractText } from "./text";
 import { extractPptx, imageHeavySlides, type PptxDoc } from "./pptx";
 import { rasterizePdf, rasterizerAvailable } from "./rasterize";
 import { markVisionText, transcribeImages, type VisionImage } from "./vision";
+import { cropFigures, detectFigures, type CroppedFigure } from "./figures";
 
 export interface IngestResult {
   text: string;
@@ -31,6 +32,8 @@ export interface IngestResult {
   /** Vision-pass token usage, for cost accounting (absent when it didn't run). */
   visionInputTokens?: number;
   visionOutputTokens?: number;
+  /** Diagrams cut out of the document (issue #15); only when `figures` was requested. */
+  figures?: CroppedFigure[];
   warnings: string[];
 }
 
@@ -54,6 +57,12 @@ export interface IngestOptions {
    *             all use this.
    */
   visionMode?: "sparse" | "figures";
+  /**
+   * Also locate and crop the document's diagrams so the student can place them on the
+   * sheet. PDF only for now. Runs alongside the figures vision pass on the same rendered
+   * pages, so it adds cost (~$0.005 a lecture) but no waiting.
+   */
+  figures?: boolean;
 }
 
 /** A PDF page with far less text than its neighbours is a picture page. */
@@ -151,6 +160,7 @@ export async function ingestDocument(
 
     let visionInputTokens: number | undefined;
     let visionOutputTokens: number | undefined;
+    let croppedFigures: CroppedFigure[] = [];
 
     if (useVision) {
       const scanned = pageCount > 0 && charCount < pageCount * 100;
@@ -181,6 +191,12 @@ export async function ingestDocument(
             // would otherwise silently truncate (figures mode read pages 1–12 of 37).
             const pages = await rasterizePdf(buf, { pages: targets, maxPages: targets.length });
             if (pages.length > 0) {
+              // Figure detection shares the rendered pages and runs beside the reading pass.
+              const cropping = opts.figures && figures
+                ? detectFigures(pages, { documentName: filename })
+                    .then((d) => cropFigures(buf, d.figures))
+                    .catch(() => [] as CroppedFigure[])
+                : Promise.resolve([] as CroppedFigure[]);
               const v = await transcribeImages(
                 pages.map((p) => ({
                   base64: p.base64,
@@ -189,6 +205,7 @@ export async function ingestDocument(
                 })),
                 { documentName: filename, mode: figures ? "figures" : "transcribe" },
               );
+              croppedFigures = await cropping;
               visionImages = v.imagesSent;
               visionInputTokens = v.inputTokens;
               visionOutputTokens = v.outputTokens;
@@ -221,6 +238,7 @@ export async function ingestDocument(
       visionImages,
       visionInputTokens,
       visionOutputTokens,
+      figures: croppedFigures.length ? croppedFigures : undefined,
       warnings,
     };
   }

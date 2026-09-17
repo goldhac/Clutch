@@ -128,6 +128,24 @@
 .sheet .qq .verdict.v-true { color: var(--conf-high); }
 .view-no-ans .sheet .qq .verdict,
 .sheet.view-no-ans .qq .verdict { display: none; }
+/* A diagram the student placed (issue #15): one column wide, never split across columns. */
+.sheet .sheet-figure {
+  margin: 1.2pt 0 1.6pt 0;
+  break-inside: avoid;
+}
+.sheet .sheet-figure img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 0.4pt solid var(--ink-200);
+  background: #fff;
+}
+.sheet .sheet-figure figcaption {
+  margin-top: 0.6pt;
+  font-size: 0.86em;
+  font-weight: 600;
+  line-height: 1.2;
+}
 /* Self-test mode: the questions stay, the answers go. */
 .view-no-ans .sheet .qq .ans,
 .sheet.view-no-ans .qq .ans { display: none; }

@@ -58,6 +58,8 @@ export interface ViewOptions {
   tags: boolean;
   /** Answers to the likely questions. Off = self-test mode. */
   answers: boolean;
+  /** Ids of the diagrams placed on the sheet (issue #15). Undefined = our one-figure default. */
+  figures?: string[];
 }
 
 export const DEFAULT_VIEW: ViewOptions = { traps: false, sources: "off", tags: false, answers: true };

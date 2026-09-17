@@ -6,6 +6,7 @@ import type { Concept, Formula, Question, SheetTable, Trap } from "@/contract/sh
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
 import { courseOrder, topicSpans } from "./course-order";
+import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
@@ -116,6 +117,7 @@ export function FittedSheet({
   }, [placed, bench, content.topics.length, topicAssign]);
 
   const benchIds = useMemo(() => new Set(bench.map((b) => b.id)), [bench]);
+  const figures = useMemo(() => selectedFigures(content, view.figures), [content, view.figures]);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const [hiddenIds, setHiddenIds] = useState<Set<string>>(benchIds);
@@ -239,7 +241,7 @@ export function FittedSheet({
       window.removeEventListener("resize", onResize);
     };
     // view.sources / view.tags change line heights through CSS: re-measure.
-  }, [topicGroups, benchIds, density, cols5, view.sources, view.tags, view.answers, groupOrder, ctx.order]);
+  }, [topicGroups, benchIds, density, cols5, view.sources, view.tags, view.answers, groupOrder, ctx.order, figures]);
 
   const hide = (id: string) => hiddenIds.has(id);
   const groupVisible = (g: Record<Section, Scored[]>) =>
@@ -304,7 +306,8 @@ export function FittedSheet({
 
         {groupOrder.map((ti) => {
           const g = topicGroups[ti];
-          if (!g || !groupVisible(g)) return null;
+          const groupFigures = figures.filter((f) => figureTopicIndex(f, content) === ti);
+          if (!g || (!groupVisible(g) && groupFigures.length === 0)) return null;
           const tk = topicAssign.topicColor(ti);
           const topicName = content.topics[ti]?.name;
           return (
@@ -315,6 +318,9 @@ export function FittedSheet({
                   {spans[ti] && <span className="topic-span">{spans[ti]}</span>}
                 </h2>
               )}
+              {groupFigures.map((f) => (
+                <FigureLeaf key={f.id} figure={f} hidden={hide(figureFitId(f))} className={tk} />
+              ))}
               {sectionFlow.map((section) =>
                 g[section].map((it) => (
                   <FitLeaf key={it.id} it={it} hidden={hide(it.id)} className={tk}>
@@ -344,7 +350,7 @@ export function FittedSheet({
       </div>
 
       <footer className="sheet-foot">
-        {counts.formulas} formulas · {counts.concepts} concepts · {counts.traps} traps ·{" "}
+        {counts.formulas} formulas · {counts.concepts} concepts ·{counts.traps > 0 && <> {counts.traps} traps ·</>}{" "}
         {counts.questions} questions · {counts.verified} verified · {density.toUpperCase()}
         {keyLine && <div className="src-key">{keyLine}</div>}
       </footer>

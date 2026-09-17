@@ -8,6 +8,7 @@ import { useEffect, useMemo, useState } from "react";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
+import { defaultFigureIds } from "@/components/sheet/Figures";
 import { LinkButton, Wordmark, Toaster, toast, Modal, ModalOptions, OptionTile } from "@/components/ui";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
@@ -71,6 +72,7 @@ export default function ResultsPage() {
   const [editorOpen, setEditorOpen] = useState(false);
   // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
   const [dockOpen, setDockOpen] = useState(false);
+  const [trayOpen, setTrayOpen] = useState(false);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [tweaking, setTweaking] = useState(false);
   const [tweakError, setTweakError] = useState<string | null>(null);
@@ -228,6 +230,16 @@ export default function ResultsPage() {
     });
   }
 
+  function toggleFigure(id: string) {
+    if (!content) return;
+    setView((current) => {
+      const chosen = new Set(current.figures ?? defaultFigureIds(content));
+      if (chosen.has(id)) chosen.delete(id);
+      else chosen.add(id);
+      return { ...current, figures: [...chosen] };
+    });
+  }
+
   function applyPreset(label: string, patch: Partial<ScoreCtx>) {
     setCtxPatch(patch);
     setActivePreset(label);
@@ -241,11 +253,12 @@ export default function ResultsPage() {
       const res = await fetch("/api/tweak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, instruction: instruction.trim() }),
+        // Diagrams are images the engine never sees: keep them out of the prompt, put them back after.
+        body: JSON.stringify({ content: { ...content, figures: undefined }, instruction: instruction.trim() }),
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
-      const payload = (await res.json()) as { content: unknown };
-      const next = { ...stash, content: payload.content };
+      const payload = (await res.json()) as { content: Record<string, unknown> };
+      const next = { ...stash, content: { ...payload.content, figures: content.figures } };
       setStash(next);
       sessionStorage.setItem("clutch:last", JSON.stringify(next));
       setInstruction("");
@@ -398,6 +411,48 @@ export default function ResultsPage() {
 
       {/* ── the dock ────────────────────────────────────────────────── */}
       <div className="print:hidden pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-overlay)] flex flex-col items-center gap-2.5 px-5 pb-[22px]">
+        {trayOpen && content?.figures && content.figures.length > 0 && (
+          <div className="pointer-events-auto w-full max-w-[720px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
+            <div className="flex items-center justify-between">
+              <span className="text-[13px] font-semibold text-white">Diagrams from your files</span>
+              <button
+                type="button"
+                onClick={() => setTrayOpen(false)}
+                className="font-mono text-[11px] text-[var(--on-band-muted)] hover:text-[var(--on-band)]"
+              >
+                close
+              </button>
+            </div>
+            <p className="mt-1 text-[12px] leading-[1.5] text-[var(--on-band-muted)]">
+              Each diagram takes the room of roughly 10–18 lines; the lowest-ranked lines make way. Free and instant.
+            </p>
+            <div className="mt-3 flex gap-3 overflow-x-auto pb-1">
+              {content.figures.map((f) => {
+                const on = (viewOf(effectiveCtx).figures ?? defaultFigureIds(content)).includes(f.id);
+                return (
+                  <button
+                    key={f.id}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => toggleFigure(f.id)}
+                    className={
+                      "tap w-[150px] shrink-0 rounded-[10px] border p-2 text-left transition-[border-color,background-color] duration-[160ms] " +
+                      (on ? "border-white bg-white/10" : "border-[var(--band-line)] hover:border-[var(--ink-500)]")
+                    }
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={f.image} alt={f.what || f.caption} className="h-[84px] w-full rounded-[6px] bg-white object-contain" />
+                    <span className="mt-1.5 line-clamp-2 block text-[11.5px] font-medium leading-[1.3] text-white">{f.caption}</span>
+                    <span className="mt-0.5 flex items-center justify-between font-mono text-[10px] text-[var(--on-band-muted)]">
+                      <span className="truncate">{f.src.replace(/^.*\s(p\d+)$/, "$1")}</span>
+                      <span className={on ? "text-white" : ""}>{on ? "on sheet ✓" : "add"}</span>
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
         {editorOpen && pro && (
           <div className="pointer-events-auto w-full max-w-[640px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
             <div className="flex items-center justify-between">
@@ -576,6 +631,23 @@ export default function ResultsPage() {
               })}
             </span>
           </span>
+          {content?.figures && content.figures.length > 0 && (
+            <button
+              type="button"
+              aria-expanded={trayOpen}
+              onClick={() => {
+                setTrayOpen((v) => !v);
+                setEditorOpen(false);
+                setUpsellOpen(false);
+              }}
+              className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
+            >
+              Diagrams
+              <span className="rounded-full bg-white/15 px-1.5 py-px font-mono text-[10.5px]">
+                {(viewOf(effectiveCtx).figures ?? defaultFigureIds(content)).length}/{content.figures.length}
+              </span>
+            </button>
+          )}
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
           <button
             type="button"

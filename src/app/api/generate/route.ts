@@ -20,6 +20,8 @@
 import { type NextRequest } from "next/server";
 import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
+import type { CroppedFigure } from "@/parse/figures";
+import { attachFigures } from "@/engine/attach-figures";
 import {
   EXAM_FORMATS,
   examTypeFor,
@@ -111,21 +113,23 @@ export async function POST(req: NextRequest) {
   const ingested = await Promise.allSettled(
     uploads.map(async ({ file, tag }) => {
       const buf = Buffer.from(await file.arrayBuffer());
-      const r = await ingestDocument(file.name, buf, { vision: true, visionMode: "figures" });
-      return { tag, filename: file.name, text: r.text, warnings: r.warnings };
+      const r = await ingestDocument(file.name, buf, { vision: true, visionMode: "figures", figures: true });
+      return { tag, filename: file.name, text: r.text, warnings: r.warnings, figures: r.figures ?? [] };
     }),
   );
   const pack: PackFile[] = [];
   const ingestWarnings: string[] = [];
+  const packFigures: { filename: string; figures: CroppedFigure[] }[] = [];
   for (const [ix, result] of ingested.entries()) {
     if (result.status === "rejected") {
       return badRequest(
         `failed to extract "${uploads[ix].file.name}": ${(result.reason as Error).message}`,
       );
     }
-    const { warnings, ...file } = result.value;
+    const { warnings, figures, ...file } = result.value;
     ingestWarnings.push(...warnings);
     pack.push(file);
+    if (figures.length) packFigures.push({ filename: file.filename, figures });
   }
 
   if (pack.length === 0) {
@@ -145,10 +149,12 @@ export async function POST(req: NextRequest) {
     });
     console.log(
       `[/api/generate] 200 in ${((Date.now() - started) / 1000).toFixed(0)}s · retried=${result.meta.retried} · ` +
-        `warnings=${result.warnings.length} · ${packSummary}`,
+        `warnings=${result.warnings.length} · figures=${packFigures.reduce((n, f) => n + f.figures.length, 0)} · ${packSummary}`,
     );
+    // Diagrams ride along with the sheet; the student chooses which to place (issue #15).
+    const content = attachFigures(result.content, packFigures);
     return Response.json({
-      content: result.content,
+      content,
       meta: result.meta,
       warnings: [...ingestWarnings, ...result.warnings],
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),

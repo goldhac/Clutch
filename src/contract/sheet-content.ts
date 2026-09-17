@@ -238,6 +238,28 @@ export type ExamFormat = z.infer<typeof ExamFormatSchema>;
  * Top-level SheetContent
  * ────────────────────────────────────────────────────────────────────── */
 
+/**
+ * A diagram cut out of the student's own materials (issue #15). Attached by the server after
+ * generation — the engine never writes these — and placed only when the student picks it.
+ */
+export const FigureSchema = z
+  .object({
+    id: z.string().min(1),
+    caption: z.string(),
+    what: z.string(),
+    /** "21-attn.pdf p35" — same citation style as every other line. */
+    src: z.string().min(1),
+    importance: z.number(),
+    /** data:image/jpeg;base64,… — capped so a sheet stays small enough to store and post. */
+    image: z.string().startsWith("data:image/").max(400_000),
+    w: z.number().int().positive(),
+    h: z.number().int().positive(),
+    /** Owning topic — exact topics[].name. */
+    topic: z.string().min(1).optional(),
+  })
+  .strict();
+export type SheetFigure = z.infer<typeof FigureSchema>;
+
 export const SheetContentSchema = z
   .object({
     title: z
@@ -256,6 +278,7 @@ export const SheetContentSchema = z
     tables: z.array(TableSchema).optional(),
     traps: z.array(TrapSchema),
     questions: z.array(QuestionSchema),
+    figures: z.array(FigureSchema).max(12).optional(),
   })
   .strict();
 

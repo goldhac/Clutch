@@ -6,12 +6,14 @@ import type {
   Formula,
   Question,
   SheetContent,
+  SheetFigure,
   SheetTable,
   Trap,
 } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
 import { courseOrder, topicSpans } from "./course-order";
+import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
@@ -118,7 +120,11 @@ export function TwoPageSheet({
     [base.topics, ctx.order, ctx.files],
   );
 
-  const allIds = useMemo(() => new Set(allItems.map((i) => i.id)), [allItems]);
+  const figures = useMemo(() => selectedFigures(content, view.figures), [content, view.figures]);
+  const allIds = useMemo(
+    () => new Set([...allItems.map((i) => i.id), ...figures.map(figureFitId)]),
+    [allItems, figures],
+  );
 
   const rootRef = useRef<HTMLDivElement>(null);
   // page1Ids = visible on page 1; page2Ids = visible on page 2.
@@ -252,7 +258,7 @@ export function TwoPageSheet({
       window.removeEventListener("resize", onResize);
     };
     // view.sources / view.tags change line heights through CSS: re-measure.
-  }, [allIds, topicGroups, view.sources, view.tags, view.answers, groupOrder, ctx.order]);
+  }, [allIds, topicGroups, view.sources, view.tags, view.answers, groupOrder, ctx.order, figures]);
 
   const counts = {
     formulas: content.formulas.length,
@@ -277,6 +283,7 @@ export function TwoPageSheet({
         spans={spans}
         sectionFlow={sectionFlow}
         keyLine={keyLine}
+        figures={figures}
         visible={page1Ids}
         topicAssign={topicAssign}
         totalRanked={totalRanked}
@@ -293,6 +300,7 @@ export function TwoPageSheet({
         spans={spans}
         sectionFlow={sectionFlow}
         keyLine={keyLine}
+        figures={figures}
           visible={page2Ids}
           topicAssign={topicAssign}
           totalRanked={totalRanked}
@@ -348,6 +356,7 @@ function SheetPage({
   spans,
   sectionFlow,
   keyLine,
+  figures,
   visible,
   topicAssign,
   totalRanked,
@@ -365,6 +374,8 @@ function SheetPage({
   sectionFlow: ("formulas" | "tables" | "concepts")[];
   /** "① file · ② file" when sources are compact, else "". */
   keyLine: string;
+  /** Diagrams the student placed. */
+  figures: SheetFigure[];
   visible: Set<string>;
   topicAssign: ReturnType<typeof assignTopics>;
   totalRanked: number;
@@ -414,13 +425,14 @@ function SheetPage({
         {order.map((ti) => {
           const g = groups[ti];
           if (!g) return null;
-          const hasAny = DISPLAY_ORDER.some((s) => g[s].length > 0);
+          const groupFigures = figures.filter((f) => figureTopicIndex(f, content) === ti);
+          const hasAny = groupFigures.length > 0 || DISPLAY_ORDER.some((s) => g[s].length > 0);
           if (!hasAny) return null;
           // The section (and its leaves) is ALWAYS in the DOM — the fit
           // pass measures by toggling styles, so unmounting by state would
           // make page 2's items invisible to measurement. Visibility is
           // style-driven; the fit pass syncs it live, this mirrors it.
-          const shown = groupVisible(g);
+          const shown = groupVisible(g) || groupFigures.some((f) => !hide(figureFitId(f)));
           const tk = topicAssign.topicColor(ti);
           const topicName = content.topics[ti]?.name;
           return (
@@ -435,6 +447,9 @@ function SheetPage({
                   {spans[ti] && <span className="topic-span">{spans[ti]}</span>}
                 </h2>
               )}
+              {groupFigures.map((f) => (
+                <FigureLeaf key={f.id} figure={f} hidden={hide(figureFitId(f))} className={tk} />
+              ))}
               {sectionFlow.map((section) =>
                 g[section].map((it) => (
                   <FitLeaf key={it.id} it={it} hidden={hide(it.id)} className={tk}>
