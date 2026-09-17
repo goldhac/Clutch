@@ -114,7 +114,18 @@ export default function LibraryPage() {
       .catch((e) => setError(e instanceof Error ? e.message : String(e)));
   }, []);
 
-  function openSheet(row: SheetRow) {
+  async function openSheet(row: SheetRow) {
+    // pack_text is fetched here, for the one sheet being opened — never in the list query,
+    // where forty sheets' worth of lecture text would ride along for nothing.
+    try {
+      const { data } = await supabaseBrowser().from("sheets").select("pack_text").eq("id", row.id).single();
+      const text = (data as { pack_text?: string | null } | null)?.pack_text;
+      if (text) sessionStorage.setItem("clutch:pack", text);
+      else sessionStorage.removeItem("clutch:pack");
+    } catch {
+      // Without it the sheet still opens; the editor just can't add new grounded lines.
+      try { sessionStorage.removeItem("clutch:pack"); } catch { /* ignore */ }
+    }
     sessionStorage.setItem(
       "clutch:last",
       JSON.stringify({
@@ -369,10 +380,10 @@ export default function LibraryPage() {
                       key={row.id}
                       className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-b border-[var(--ink-150)] py-4 sm:gap-5"
                     >
-                      <button type="button" onClick={() => openSheet(row)} aria-label={`open ${row.title}`}>
+                      <button type="button" onClick={() => void openSheet(row)} aria-label={`open ${row.title}`}>
                         <SheetThumb />
                       </button>
-                      <button type="button" onClick={() => openSheet(row)} className="min-w-0 text-left">
+                      <button type="button" onClick={() => void openSheet(row)} className="min-w-0 text-left">
                         <span className="block truncate text-[15px] font-semibold tracking-[-0.01em] text-[var(--ink-900)]">
                           {row.title}
                         </span>
@@ -384,7 +395,7 @@ export default function LibraryPage() {
                       <span className="flex items-center gap-[7px]">
                         <button
                           type="button"
-                          onClick={() => openSheet(row)}
+                          onClick={() => void openSheet(row)}
                           className="inline-flex h-8 items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-3.5 text-[13px] font-semibold text-[var(--ink-900)] transition-[background-color,border-color] duration-[160ms] hover:bg-[var(--ink-50)]"
                         >
                           Open

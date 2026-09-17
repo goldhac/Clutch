@@ -9,6 +9,7 @@
 import { type NextRequest } from "next/server";
 import { safeParseSheetContent } from "@/contract/sheet-content";
 import { proposeEdit } from "@/engine/edit";
+import { judgeEditLimit, judgeInMemory, type LimitVerdict } from "@/lib/edit-limit";
 import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -35,12 +36,48 @@ export async function POST(req: NextRequest) {
   }
 
   // Same entitlement as /api/tweak: content edits are a Pro feature (no credits ledger yet).
+  // Then the rate limit, counted per user in public.edit_events (rows a client can add but never
+  // delete, so the limit cannot be reset from the browser).
+  let record: (outcome: "proposed" | "failed" | "limited", ops: number) => Promise<void> = async () => {};
+  let verdict: LimitVerdict;
   if (process.env.NODE_ENV === "production") {
     const supabase = await supabaseServer();
     const { data: userRes } = await supabase.auth.getUser();
     if (!userRes.user) return new Response("Sign in required for content edits.", { status: 401 });
-    const { data: profile } = await supabase.from("profiles").select("tier").eq("id", userRes.user.id).single();
+    const uid = userRes.user.id;
+    const { data: profile } = await supabase.from("profiles").select("tier").eq("id", uid).single();
     if (profile?.tier !== "pro") return new Response("Content edits are a Pro feature. Upgrade to unlock.", { status: 403 });
+
+    record = async (outcome, ops) => {
+      const { error } = await supabase.from("edit_events").insert({ user_id: uid, instruction, outcome, ops });
+      if (error) console.error(`[/api/edit] could not record the event: ${error.message}`);
+    };
+    const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
+    const { data: recent, error: countErr } = await supabase
+      .from("edit_events")
+      .select("created_at")
+      .eq("user_id", uid)
+      .neq("outcome", "limited")
+      .gte("created_at", dayAgo)
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (countErr) {
+      // Fail closed on the expensive path: an unreadable ledger must not mean unlimited model calls.
+      console.error(`[/api/edit] rate-limit read failed: ${countErr.message}`);
+      return new Response("Edits are briefly unavailable. Nothing on your sheet changed. Please try again in a minute.", { status: 503 });
+    }
+    const times = (recent ?? []).map((r) => new Date(r.created_at as string).getTime());
+    verdict = judgeEditLimit(times.filter((t) => Date.now() - t < 3_600_000), times.length);
+  } else {
+    verdict = judgeInMemory(req.headers.get("x-forwarded-for") ?? "local");
+  }
+  if (!verdict.ok) {
+    await record("limited", 0);
+    console.warn(`[/api/edit] 429 · "${instruction.slice(0, 80)}"`);
+    return new Response(verdict.message, {
+      status: 429,
+      headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": String(verdict.retryAfterS ?? 3600) },
+    });
   }
 
   const parsed = safeParseSheetContent(b.content);
@@ -57,8 +94,10 @@ export async function POST(req: NextRequest) {
       `[/api/edit] 200 in ${((Date.now() - started) / 1000).toFixed(0)}s · ops=${p.ops.length} dropped=${p.dropped.length} · ` +
         `pack=${packText ? packText.length + "c" : "none"} · "${instruction.slice(0, 80)}"`,
     );
+    await record("proposed", p.ops.length);
     return Response.json({ reply: p.reply, ops: p.ops, dropped: p.dropped, proposed: p.proposed });
   } catch (err) {
+    await record("failed", 0); // a failed proposal still cost a model call
     console.error(`[/api/edit] 422 after ${((Date.now() - started) / 1000).toFixed(0)}s · "${instruction.slice(0, 80)}"`, err);
     return new Response(
       "I couldn't turn that into a safe edit. Nothing on your sheet changed. Try saying it another way.",

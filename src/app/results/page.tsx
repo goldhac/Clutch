@@ -321,6 +321,14 @@ export default function ResultsPage() {
         window.location.href = "/auth?next=" + encodeURIComponent("/results");
         return;
       }
+      // The student's own text goes with the sheet, so reopening it later can still add
+      // grounded lines through Edit with Clutch. Absent when the session never had it.
+      let packText: string | null = null;
+      try {
+        packText = sessionStorage.getItem("clutch:pack");
+      } catch {
+        packText = null;
+      }
       const { data, error: insErr } = await supabase
         .from("sheets")
         .insert({
@@ -328,6 +336,7 @@ export default function ResultsPage() {
           title: content.title,
           content: content as unknown as Record<string, unknown>,
           ctx: effectiveCtx as unknown as Record<string, unknown>,
+          pack_text: packText ? packText.slice(0, 400_000) : null,
         })
         .select("id")
         .single();
