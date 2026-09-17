@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 0 — independent measurement of an episode from its by-voice transcript.
 
-  python3 scripts/phase0/measure.py <run dir> <duration seconds>
+  python3 scripts/phase0/measure.py <run dir> <duration seconds> [transcript file name]
 
 Reads <run>/heard-by-voice.md (WOMAN = host A, MAN = host B) and <run>/script.json,
 prints the conversational stats used in FINDINGS §8 and the count of script lines
@@ -12,7 +12,8 @@ import json, re, sys
 
 run, dur = sys.argv[1], float(sys.argv[2])
 turns = []
-for line in open(f"{run}/heard-by-voice.md"):
+heard = sys.argv[3] if len(sys.argv) > 3 else "heard-by-voice.md"
+for line in open(f"{run}/{heard}"):
     m = re.match(r"\[(\d+):(\d+)\]\s*(WOMAN|MAN):\s*(.*)", line.strip())
     if m:
         turns.append((int(m[1]) * 60 + int(m[2]), m[3], m[4]))

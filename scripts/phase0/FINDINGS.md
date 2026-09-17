@@ -253,8 +253,40 @@ total ≈ **$6.6**. A clean run of this pipeline is ≈ $1.6 (LLM ≈ $0.6, TTS 
 
 *Gold's verdict on round 4: pending.*
 
+## 10. Fish Audio A/B — same script, second voice provider (2026-09-17)
+
+`--tts fish:s2.1-pro-free` voices the exact round 4 script through Fish Audio's dialogue endpoint
+(`POST api.fish.audio/v1/tts`, `<|speaker:0|>` / `<|speaker:1|>` tags, `reference_id: [A, B]`).
+
+| | Gemini 3.1 Flash TTS | Fish Audio S2.1 Pro |
+|---|---|---|
+| Price for this episode | **$0.86** (42.9k audio tokens × $20/M) | **$0.36** list (23.7k UTF-8 bytes × $15/M) · **$0** on `s2.1-pro-free` (fair use, no SLA, to 2026-11-30) |
+| Wall-clock, 23 blocks, 3 at a time | ~6 min | **~3-4 min** |
+| B-first block smoke test (3 takes) | swapped **3 of 3** | clean **3 of 3** |
+| Wrong-voice lines, independent whole-episode pass | 0 (after 10 re-takes + 5 targeted re-voicings + 2 line rewrites) | **0** (first pass: 1 real slip in the intro; second pass clean) |
+| Duration / pace | 22:50 · 158 wpm | **20:55 · 172 wpm** (NotebookLM: 179) |
+| Delivery control | one free-text instruction per block | per-line bracket cues (`[curious]`, `[excited]`) — not used yet |
+| Billing | audio tokens, measured after the fact | text bytes, known before the call |
+
+- **Not swap-proof:** Fish's first pass swallowed B's six-word line into A's voice in the intro.
+  Fresh takes of that block were clean 3 of 3. Keep the per-block check whatever the provider.
+- **The checker had two bugs this exposed.** (1) A line whose key didn't match ("Ouyang" heard as
+  "Oyang") was silently *unchecked* — now several keys per line and an unfindable line triggers a
+  re-take. (2) Global matching let B's restatement match inside A's paragraph — three identical
+  false flags on every take; matching is now sequential. The whole-episode pass (`measure.py`)
+  stays the referee: both whole-file and per-block transcribers produce occasional artefacts, so
+  a flag counts only when two views agree.
+- **`--revoice` cannot splice Fish audio:** Fish emits exact digital silence between turns (84
+  zero-runs vs 22 block seams), so seams can't be found by silence. Phase 1 should keep per-block
+  audio files instead of cutting the assembled WAV.
+- **Voice rights:** the Fish library is dominated by clones of named people and characters. The
+  A/B uses two generic library voices ("Sarah", "Verity"); for launch, use licensed or
+  purpose-made house voices and read the commercial terms.
+- **Open:** Gold's ear on naturalness (the actual gate), bracket cues driven by beat kind, and
+  Fish's undocumented limits (max text per request, sample rates).
+
 ## 6. Spend
 
 ~$0.28 (round 1) + ~$0.40 (round 2) + $1.10 (round 3) + ~$0.02 (vision tests) + $0.16 (two intro
-previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) + $0.07 (intro v3) + $0.16 (three transcriptions) ≈ **$2.70** through §8; round 4 (§9) adds ≈ $3.9 → ≈ **$6.6** on the Gemini key. NotebookLM generation
+previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) + $0.07 (intro v3) + $0.16 (three transcriptions) ≈ **$2.70** through §8; round 4 (§9) adds ≈ $3.9 → ≈ **$6.6**; the Fish A/B (§10) adds ≈ $0.35 of Gemini-side checks and transcriptions (Fish itself: $0) → ≈ **$7.0**. NotebookLM generation
 draws on Gold's Pro plan allowance, not API spend.

@@ -63,6 +63,10 @@ const PDF = flag("pdf");
 const REUSE = flag("reuse");
 const MINUTES = Number(flag("minutes") ?? 24);
 const TTS_MODEL = flag("tts") ?? "gemini-3.1-flash-tts-preview";
+/** "fish:<model>" routes voicing to Fish Audio's dialogue endpoint (A/B against Gemini, 2026-09-17). */
+const FISH = TTS_MODEL.startsWith("fish:");
+const FISH_MODEL = FISH ? TTS_MODEL.slice(5) : "";
+const FISH_API_KEY = process.env.FISH_API_KEY;
 const VISION = (flag("vision") ?? "figures") as "sparse" | "figures" | "off";
 /** With --reuse: rewrite and voice only the intro, spliced onto the run's existing opening. */
 const INTRO_ONLY = argv.includes("--intro-only");
@@ -73,6 +77,7 @@ const REVOICE = (flag("revoice") ?? "").split(",").map(Number).filter((n) => n >
 const API_KEY = process.env.GEMINI_API_KEY;
 
 if (!API_KEY) throw new Error("GEMINI_API_KEY missing from .env.local");
+if (FISH && !FISH_API_KEY) throw new Error("FISH_API_KEY missing from .env.local");
 if (!PDF && !REUSE && !SMOKE) throw new Error("pass --pdf <lecture.pdf> or --reuse <run dir>");
 if (INTRO_ONLY && !REUSE) throw new Error("--intro-only needs --reuse <run dir>");
 
@@ -83,6 +88,16 @@ const TTS_OUTPUT_PRICE_PER_M: Record<string, number> = {
   "gemini-2.5-pro-preview-tts": 20,
 };
 const PRO_IN = 1.25, PRO_OUT = 10, FLASH_IN = 0.3, FLASH_OUT = 2.5, FLASH_AUDIO_IN = 1.0;
+/** Fish Audio bills text, not audio: $15 / M UTF-8 bytes on every paid model; s2.1-pro-free is $0 (fair use). */
+const FISH_PRICE_PER_M_BYTES = 15;
+/**
+ * Fish voice library ids (api.fish.audio/model, sorted by use). Chosen for the role and for NOT
+ * being a clone of a named real person — most of the top of that library is celebrity clones.
+ *   A: "Sarah" — female, young, conversational/narration, 8.5k likes.
+ *   B: "Verity" — male, young, energetic and friendly, conversational.
+ */
+const FISH_VOICE_A = "933563129e564b19a115bedd57b7406a";
+const FISH_VOICE_B = "711cf3ed00ab441a8f54a45058047b7a";
 const BASE = "https://generativelanguage.googleapis.com/v1beta";
 const CHECK_MODEL = "gemini-2.5-flash";
 
@@ -695,6 +710,7 @@ function toBlocks(lines: Line[]) {
 
 /** One block of dialogue → PCM. Speaker1/Speaker2 are fixed to A/B regardless of who speaks first. */
 async function ttsBlock(lines: Line[], instructions: string) {
+  if (FISH) return fishBlock(lines);
   const transcript = lines.map((l) => `${l.speaker === "A" ? "Speaker1" : "Speaker2"}: ${l.text}`).join("\n");
   const res = await fetch(`${BASE}/models/${TTS_MODEL}:generateContent?key=${API_KEY}`, {
     method: "POST",
@@ -720,6 +736,26 @@ async function ttsBlock(lines: Line[], instructions: string) {
   const sampleRate = Number(/rate=(\d+)/.exec(part.mimeType)?.[1] ?? 24000);
   const pcm = new Uint8Array(Buffer.from(part.data, "base64"));
   return { pcm, sampleRate, outTokens: json.usageMetadata?.candidatesTokenCount ?? 0 };
+}
+
+/**
+ * Fish Audio dialogue: one request, explicit per-line speaker tags, voices by index. No delivery
+ * instructions field — expression is per-line bracket cues, left out here so the A/B compares the
+ * raw voices. outTokens carries the billed unit for this provider: UTF-8 bytes of text.
+ */
+async function fishBlock(lines: Line[]) {
+  const text = lines.map((l) => `<|speaker:${l.speaker === "A" ? 0 : 1}|>${l.text}`).join("\n");
+  const res = await fetch("https://api.fish.audio/v1/tts", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${FISH_API_KEY}`, "Content-Type": "application/json", model: FISH_MODEL },
+    body: JSON.stringify({
+      text, reference_id: [FISH_VOICE_A, FISH_VOICE_B], format: "wav", sample_rate: 24000,
+      normalize: true, latency: "normal", temperature: 0.7, top_p: 0.7,
+    }),
+  });
+  if (!res.ok) throw new Error(`fish tts ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const wav = readWav(new Uint8Array(await res.arrayBuffer()));
+  return { pcm: wav.pcm, sampleRate: wav.sampleRate, outTokens: Buffer.byteLength(text, "utf8") };
 }
 
 const VOICE_CHECK_PROMPT = `Transcribe this two-host audio VERBATIM. Label every paragraph by the VOICE, judged only by
@@ -753,11 +789,21 @@ async function voiceCheck(lines: Line[], pcm: Uint8Array, sampleRate: number) {
     voice: m[1].toUpperCase(), text: m[2].toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " "),
   }));
   let matched = 0;
+  let cursor = 0;
   const wrong: string[] = [];
   for (const l of lines) {
-    const k = keyOf(l.text, Math.min(5, wordsOf(l.text)));
-    const hit = paras.find((p) => p.text.includes(k));
+    // Several keys per line: a name the transcriber spells differently ("Ouyang" → "Oyang") made the
+    // first-words key miss, and an unmatched line is an unchecked line (Fish intro, 2026-09-17).
+    const w = l.text.toLowerCase().replace(/[^a-z0-9\s]/g, " ").split(/\s+/).filter(Boolean);
+    const keys = [w.slice(0, 5), w.slice(-4), w.slice(1, 5), w.slice(Math.max(0, w.length - 5), -1)]
+      .filter((k) => k.length >= Math.min(3, w.length)).map((k) => k.join(" "));
+    // Sequential: search only from the last matched paragraph forward, a few paragraphs deep. B often
+    // restates A's words, so a global search matched B's line inside A's paragraph (3 identical false
+    // flags on every take of the Fish run, all cleared by the whole-episode pass).
+    const idx = paras.findIndex((p, i) => i >= cursor && i <= cursor + 3 && keys.some((k) => p.text.includes(k)));
+    const hit = idx >= 0 ? paras[idx] : undefined;
     if (!hit) continue;
+    cursor = idx;
     matched++;
     if (hit.voice !== (l.speaker === "A" ? "WOMAN" : "MAN")) wrong.push(`${l.speaker}: ${l.text.slice(0, 60)}`);
   }
@@ -776,9 +822,12 @@ async function voiceBlock(lines: Line[], instructions: string, label: string, ma
     const check = await withRetry(`${label} voice check`, () => voiceCheck(lines, tts.pcm, tts.sampleRate));
     checkCost += check.cost;
     const cand = { ...tts, wrong: check.wrong, matched: check.matched };
-    if (!best || cand.wrong.length < best.wrong.length) best = cand;
-    const conclusive = check.matched >= Math.ceil(lines.length * 0.5);
-    if (check.wrong.length === 0 || !conclusive) break;
+    if (!best || cand.wrong.length < best.wrong.length || (cand.wrong.length === best.wrong.length && cand.matched > best.matched)) best = cand;
+    // A line no key can find was probably swallowed into the other host's turn: re-take for that too.
+    const unmatched = lines.length - check.matched;
+    if (check.wrong.length === 0 && unmatched === 0) break;
+    if (check.wrong.length === 0 && attempt >= 1) break; // unmatched only: one extra take, then accept
+    if (check.wrong.length === 0) { log(`  ${label}: ${unmatched} line(s) not found in the by-voice transcript — one more take`); continue; }
     log(`  ${label}: ${check.wrong.length} line(s) in the wrong voice (${check.matched}/${lines.length} matched) — re-voicing`);
   }
   return { ...best!, checkCost, attempts };
@@ -1130,7 +1179,7 @@ async function main() {
     writeFileSync(wavPath, writeWav(total, wav.sampleRate));
     const mp3Path = join(runDir, `episode-${tag}.mp3`);
     execFileSync("/opt/homebrew/bin/ffmpeg", ["-y", "-loglevel", "error", "-i", wavPath, "-b:a", "128k", mp3Path]);
-    const cost = (ttsTokens * (TTS_OUTPUT_PRICE_PER_M[TTS_MODEL] ?? 0)) / 1e6 + checkCost;
+    const cost = (FISH ? 0 : (ttsTokens * (TTS_OUTPUT_PRICE_PER_M[TTS_MODEL] ?? 0)) / 1e6) + checkCost;
     log(`re-voiced blocks ${REVOICE.join(", ")} · ${(total.length / bps / 60).toFixed(2)} min · ${wrongRemaining} wrong-voice line(s) remaining · $${cost.toFixed(3)}`);
     return;
   }
@@ -1185,7 +1234,10 @@ async function main() {
     log(`mp3: ${mp3Path}`);
   }
 
-  const ttsCost = (ttsTokens * (TTS_OUTPUT_PRICE_PER_M[TTS_MODEL] ?? 0)) / 1e6;
+  const ttsCost = FISH
+    ? (ttsTokens * (FISH_MODEL.endsWith("-free") ? 0 : FISH_PRICE_PER_M_BYTES)) / 1e6
+    : (ttsTokens * (TTS_OUTPUT_PRICE_PER_M[TTS_MODEL] ?? 0)) / 1e6;
+  if (FISH) report.fish = { model: FISH_MODEL, voices: { A: FISH_VOICE_A, B: FISH_VOICE_B }, textBytes: ttsTokens, listPriceUSD: +((ttsTokens * FISH_PRICE_PER_M_BYTES) / 1e6).toFixed(3) };
   report.tts = {
     blocks: blocks.length, durationMinutes: +(durationS / 60).toFixed(2), chapters,
     billedTokens: ttsTokens, tokensPerSecond: +(ttsTokens / durationS).toFixed(2),
