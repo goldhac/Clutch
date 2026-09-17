@@ -506,6 +506,11 @@
 @media print {
   .two-page { display: block; gap: 0; }
   .two-page .sheet[data-page="1"] { break-after: page; page-break-after: always; }
+  /* Free export: page 1 only. The back page is removed from the print entirely, so no
+     blank or blurred second page can leak out of the PDF. */
+  .front-only .two-page .sheet[data-page="2"],
+  .front-only .two-page .back-locked { display: none; }
+  .front-only .two-page .sheet[data-page="1"] { break-after: auto; page-break-after: auto; }
 }
 
 /* ── COLOR KEY strip (the proven sheet's top line) — full-width row of

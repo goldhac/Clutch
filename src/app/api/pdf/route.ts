@@ -27,6 +27,7 @@ import { assertPageCount, PageCountError } from "@/lib/pdf-verify";
 import { safeParseSheetContent } from "@/contract/sheet-content";
 import { putPool, dropPool } from "@/lib/pool-store";
 import { EMPTY_CTX } from "@/components/sheet/relevance";
+import { supabaseServer } from "@/lib/supabase/server";
 
 // Playwright spawns Chromium subprocesses — Node runtime, not Edge.
 export const runtime = "nodejs";
@@ -228,8 +229,27 @@ export async function POST(req: NextRequest) {
     );
   }
   const isSplit = b.page === "front" || b.page === "back";
-  // Front/back = the two-page document in one pass.
-  const pages: 1 | 2 = isSplit ? 2 : 1;
+
+  // The back page is the paid part. Until 2026-09-17 only the CLIENT decided who got it, and even
+  // the free "front page" export sent page:"front", which printed both pages — so every export
+  // leaked the back page. The server now decides from the signed-in profile.
+  // Outside production there is no sign-in: entitled, unless a test asks for the free path.
+  let entitledToBack = process.env.NODE_ENV !== "production" && (b as { asFree?: boolean }).asFree !== true;
+  if (isSplit && !entitledToBack) {
+    try {
+      const supabase = await supabaseServer();
+      const { data: userRes } = await supabase.auth.getUser();
+      if (userRes.user) {
+        const { data: profile } = await supabase.from("profiles").select("tier").eq("id", userRes.user.id).single();
+        entitledToBack = profile?.tier === "pro";
+      }
+    } catch {
+      entitledToBack = false;
+    }
+  }
+  const frontOnly = isSplit && !entitledToBack;
+  // Front/back = the two-page document in one pass; a free account gets page 1 of it.
+  const pages: 1 | 2 = isSplit && !frontOnly ? 2 : 1;
 
   const ctx = b.ctx && typeof b.ctx === "object" ? (b.ctx as typeof EMPTY_CTX) : EMPTY_CTX;
   const token = putPool(parsed.data, ctx);
@@ -239,6 +259,8 @@ export async function POST(req: NextRequest) {
     printUrl.searchParams.set("density", density);
     if (b.cols5) printUrl.searchParams.set("cols", "5");
     if (isSplit) printUrl.searchParams.set("page", b.page!);
+    if (frontOnly) printUrl.searchParams.set("only", "front");
+    console.warn(`[/api/pdf] ${isSplit ? (frontOnly ? "front only (free)" : "both pages (pro)") : `single ${density}`}`);
 
     const pdf = await renderToPdf({
       targetUrl: printUrl.toString(),

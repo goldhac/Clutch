@@ -30,6 +30,7 @@ export default async function PrintPage({
     density?: string | string[];
     cols?: string | string[];
     page?: string | string[];
+    only?: string | string[];
   }>;
 }) {
   const sp = await searchParams;
@@ -91,8 +92,10 @@ export default async function PrintPage({
   if (page === "front" || page === "back") {
     // One two-page document, filled sequentially by real measurement —
     // Playwright prints both pages in a single pass (pages=2 assert).
+    // only=front: the account isn't entitled to the back page, so it is left out of the print
+    // (decided by /api/pdf from the signed-in profile, never by the client).
     return (
-      <div className="sheet-page">
+      <div className={first(sp.only) === "front" ? "sheet-page front-only" : "sheet-page"}>
         <TwoPageSheet content={stored.content} ctx={stored.ctx} cols5={false} />
       </div>
     );
