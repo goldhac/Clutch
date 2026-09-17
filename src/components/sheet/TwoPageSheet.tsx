@@ -64,6 +64,13 @@ export interface TwoPageSheetProps {
   /** Free-tier preview: the BACK page renders (real content, real fit)
    * but blurred behind an unlock card — the conversion surface. */
   lockBack?: boolean;
+  /**
+   * One flow across both sides (default when the back is unlocked): a topic appears ONCE, its
+   * lines run down the columns, and when the front's 7 columns are full the flow carries on in
+   * the back's. Off = the older model (front = best of the whole pool, back = the rest), kept for
+   * accounts that only get the front page, whose one page must still cover every topic.
+   */
+  continuous?: boolean;
   /** Called after every fit with how much of the back page's width its columns actually use (0–1). */
   onFit?: (info: { front: number; back: number; backFill: number }) => void;
 }
@@ -76,6 +83,7 @@ export function TwoPageSheet({
   cols5 = false,
   debug = false,
   lockBack = false,
+  continuous: continuousProp,
   onFit,
 }: TwoPageSheetProps) {
   const view = useMemo(() => viewOf(ctx), [ctx]);
@@ -131,6 +139,8 @@ export function TwoPageSheet({
     [allItems, figures],
   );
 
+  const continuous = (continuousProp ?? !lockBack) && !cols5;
+  const [contTopic, setContTopic] = useState<string | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   // A ref, so a new callback identity from the parent never re-runs the measuring effect.
   const onFitRef = useRef(onFit);
@@ -239,7 +249,46 @@ export function TwoPageSheet({
       return visible;
     };
 
+    const runContinuous = () => {
+      // ONE fit over the 14-column flow rendered in the front page; the back page holds the same
+      // flow shifted left by a page, so it only has to mirror what is visible.
+      const all = fitPage(sheets[0], allIds);
+      const front = sheets[0].querySelector<HTMLElement>(".cols")!;
+      const back = sheets[1].querySelector<HTMLElement>(".cols")!;
+      const backById = new Map<string, HTMLElement>();
+      for (const el of Array.from(back.querySelectorAll<HTMLElement>("[data-fit-id]"))) backById.set(el.dataset.fitId!, el);
+      const pageEdge = sheets[0].querySelector<HTMLElement>(".cols-window")!.getBoundingClientRect().right;
+      const flowBox = front.getBoundingClientRect();
+      const p1 = new Set<string>(), p2 = new Set<string>();
+      let right = pageEdge, firstBack: HTMLElement | null = null;
+      for (const el of Array.from(front.querySelectorAll<HTMLElement>("[data-fit-id]"))) {
+        const id = el.dataset.fitId!;
+        const twin = backById.get(id);
+        if (twin) twin.style.display = el.style.display;
+        if (!all.has(id)) continue;
+        const box = el.getBoundingClientRect();
+        if (box.left < pageEdge - TOL) p1.add(id);
+        else { p2.add(id); right = Math.max(right, box.right); if (!firstBack) firstBack = el; }
+      }
+      for (const gr of Array.from(back.querySelectorAll<HTMLElement>(".topic-group"))) {
+        gr.style.display = Array.from(gr.querySelectorAll<HTMLElement>("[data-fit-id]")).some((el) => el.style.display !== "none") ? "" : "none";
+      }
+      // The topic whose lines run over the fold: named at the top of the back page.
+      const group = (firstBack as HTMLElement | null)?.closest<HTMLElement>(".topic-group");
+      const banner = group?.querySelector<HTMLElement>(".topic-banner");
+      const bannerOnFront = banner ? banner.getBoundingClientRect().left < pageEdge - TOL : false;
+      setContTopic(bannerOnFront ? (group?.dataset.topic ?? null) : null);
+
+      setPage1Ids(all);
+      setPage2Ids(all);
+      setFitInfo({ p1: p1.size, p2: p2.size, dropped: allIds.size - all.size });
+      const backWidth = flowBox.right - pageEdge;
+      onFitRef.current?.({ front: p1.size, back: p2.size, backFill: backWidth > 0 ? Math.min(1, (right - pageEdge) / backWidth) : 0 });
+      root.setAttribute("data-fit-done", "1");
+    };
+
     const run = () => {
+      if (continuous) return runContinuous();
       // Page 1 fills from the WHOLE pool…
       const p1 = fitPage(sheets[0], allIds);
       // …page 2 fills from exactly what page 1 couldn't take.
@@ -276,7 +325,7 @@ export function TwoPageSheet({
       window.removeEventListener("resize", onResize);
     };
     // view.sources / view.tags change line heights through CSS: re-measure.
-  }, [allIds, topicGroups, view.sources, view.tags, view.answers, groupOrder, ctx.order, figures]);
+  }, [allIds, topicGroups, view.sources, view.tags, view.answers, groupOrder, ctx.order, figures, continuous]);
 
   const counts = {
     formulas: content.formulas.length,
@@ -303,6 +352,8 @@ export function TwoPageSheet({
         keyLine={keyLine}
         figures={figures}
         visible={page1Ids}
+        continuous={continuous}
+        contTopic={null}
         topicAssign={topicAssign}
         totalRanked={totalRanked}
         verified={counts.verified}
@@ -320,6 +371,8 @@ export function TwoPageSheet({
         keyLine={keyLine}
         figures={figures}
           visible={page2Ids}
+          continuous={continuous}
+          contTopic={contTopic}
           topicAssign={topicAssign}
           totalRanked={totalRanked}
           verified={counts.verified}
@@ -380,6 +433,8 @@ function SheetPage({
   totalRanked,
   verified,
   cols5,
+  continuous,
+  contTopic,
 }: {
   pageNo: 1 | 2;
   title: string;
@@ -399,6 +454,10 @@ function SheetPage({
   totalRanked: number;
   verified: number;
   cols5: boolean;
+  /** Both pages render the SAME flow; the back shows it shifted one page to the left. */
+  continuous: boolean;
+  /** Topic whose lines continue from the front (back page only). */
+  contTopic: string | null;
 }) {
   const hide = (id: string) => !visible.has(id);
   const groupVisible = (g: Record<Section, Scored[]>) =>
@@ -412,6 +471,7 @@ function SheetPage({
           <h1>{title}</h1>
           <div className="sheet-meta">
             {totalRanked} items ranked · {verified} verified · MAX
+            {contTopic && <span className="cont-topic"> · continues: {contTopic}</span>}
           </div>
         </div>
         <div className="sheet-legend">
@@ -436,9 +496,9 @@ function SheetPage({
         </div>
       </header>
 
-      <div className={colsClass}>
-        {pageNo === 1 && <ExamFormatStrip format={content.examFormat} />}
-        {pageNo === 1 && <VerifiedPatternsBlock patterns={content.verifiedPatterns} />}
+      <ColsShell continuous={continuous} className={colsClass}>
+        {(continuous || pageNo === 1) && <ExamFormatStrip format={content.examFormat} />}
+        {(continuous || pageNo === 1) && <VerifiedPatternsBlock patterns={content.verifiedPatterns} />}
 
         {order.map((ti) => {
           const g = groups[ti];
@@ -457,6 +517,7 @@ function SheetPage({
             <section
               key={ti}
               className={`topic-group ${tk}`}
+              data-topic={topicName}
               style={shown ? undefined : { display: "none" }}
             >
               {topicName && (
@@ -492,7 +553,7 @@ function SheetPage({
             </section>
           );
         })}
-      </div>
+      </ColsShell>
 
       <footer className="sheet-foot">
         {content.formulas.length} formulas · {content.concepts.length} concepts ·{" "}
@@ -500,6 +561,16 @@ function SheetPage({
         {verified} verified · MAX · {pageNo === 1 ? "FRONT" : "BACK"}
         {keyLine && <div className="src-key">{keyLine}</div>}
       </footer>
+    </div>
+  );
+}
+
+/** The columns. Continuous: a page-sized window onto a flow two pages wide. */
+function ColsShell({ continuous, className, children }: { continuous: boolean; className: string; children: React.ReactNode }) {
+  if (!continuous) return <div className={className}>{children}</div>;
+  return (
+    <div className="cols-window">
+      <div className={className}>{children}</div>
     </div>
   );
 }

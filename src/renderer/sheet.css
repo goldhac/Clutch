@@ -290,3 +290,26 @@
   margin-right: 1pt;
   vertical-align: 0.5pt;
 }
+
+
+/* ── Continuous flow across both sides ────────────────────────────────
+ * Each page holds the SAME 14-column flow, two pages wide, inside a page-sized window. The
+ * front shows columns 1–7; the back shifts the flow one page (plus one gap) to the left and
+ * shows 8–14. Identical content in identical boxes lays out identically, so a topic appears
+ * once and its lines simply carry on overleaf. A column keeps the width it has on a 7-column
+ * page: (2W + g − 13g)/14 = (W − 6g)/7. */
+.sheet > .cols-window {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+.sheet.density-max > .cols-window > .cols {
+  height: 100%;
+  width: calc(200% + 3pt);
+  column-count: 14;
+  column-gap: 3pt;
+}
+.sheet.density-max[data-page="2"] > .cols-window > .cols {
+  margin-left: calc(-100% - 3pt);
+}
+.sheet .sheet-meta .cont-topic { font-style: italic; }

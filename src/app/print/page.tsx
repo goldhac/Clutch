@@ -96,7 +96,7 @@ export default async function PrintPage({
     // (decided by /api/pdf from the signed-in profile, never by the client).
     return (
       <div className={first(sp.only) === "front" ? "sheet-page front-only" : "sheet-page"}>
-        <TwoPageSheet content={stored.content} ctx={stored.ctx} cols5={false} />
+        <TwoPageSheet content={stored.content} ctx={stored.ctx} cols5={false} continuous={first(sp.only) !== "front"} />
       </div>
     );
   }
