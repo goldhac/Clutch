@@ -43,10 +43,11 @@ type FillSection = (typeof FILL_SECTIONS)[number];
  * deck cannot fill them without repeating itself or writing from the model's own knowledge
  * (seen in testing: "Master Theorem Case 1–3" cited to a homework that never says "master").
  * So the target is capped at a multiple of the pack's own length. 1.6, not 1: a sheet line
- * carries its answer and its reason, and first drafts already run ~1.5× a thin deck. At 1.6 a
- * lecture-sized pack (~20k chars) fills both sides; a single short deck (~8k) stops at one page.
+ * carries its answer and its reason, and first drafts already run ~1.5× a thin deck. At 2 a
+ * lecture-sized pack (~17k chars) fills both sides; a single short deck (~8k) stops at one page.
+ * What keeps 2× honest is below: the grounding check and the paraphrase check.
  */
-const SOURCE_RATIO = 1.6;
+const SOURCE_RATIO = 2;
 const STOP = new Set(
   "which following about their there these those would could should where when what that this with from have been being into than then also only most more such each other some many does were will because while between under over after before true false".split(" "),
 );
@@ -81,6 +82,21 @@ function groundingProblem(section: string, item: unknown, pack: Set<string>): st
     if (share < 0.55) return `only ${Math.round(share * 100)}% of its words are in your files`;
   }
   return null;
+}
+
+/** The words a line is ABOUT: its question or headline, not its answer. */
+const aboutOf = (section: string, item: unknown): Set<string> => new Set(stems(labelOfFull(section, item)));
+const labelOfFull = (section: string, item: unknown): string => {
+  const it = (item ?? {}) as Record<string, unknown>;
+  return String(it.q ?? it.term ?? it.name ?? it.title ?? it.text ?? "");
+};
+/** Same subject said another way: most of the smaller line's words are in the other one. */
+const PARAPHRASE = 0.75;
+function paraphrases(a: Set<string>, b: Set<string>): boolean {
+  if (a.size < 3 || b.size < 3) return false;
+  let shared = 0;
+  for (const w of a) if (b.has(w)) shared++;
+  return shared / Math.min(a.size, b.size) >= PARAPHRASE;
 }
 
 export const visibleLines = (c: SheetContent): number =>
@@ -166,6 +182,9 @@ async function deepenOnce(
   // What survives beyond the gap is kept as surplus for the fitter, up to KEEP_OVER.
   const perTopic = Math.min(MAX_PER_TOPIC, Math.ceil((deficit * 1.6) / content.topics.length));
   const seen = new Set<string>();
+  // Per section: a question may ask about a term the sheet defines; two questions may not ask the same thing.
+  const about: Record<string, Set<string>[]> = {};
+  for (const sec of FILL_SECTIONS) about[sec] = ((content[sec] ?? []) as unknown[]).map((it) => aboutOf(sec, it));
   for (const s of [...FILL_SECTIONS, "traps"] as const) for (const it of (content[s] ?? []) as unknown[]) seen.add(keyOf(s, it));
 
   // Two calls per topic, in parallel: the wait is bound by how long one call writes, and a call
@@ -230,6 +249,9 @@ async function deepenOnce(
       if (ungrounded) { dropped.push(`${section}: ${ungrounded} — "${labelOf(section, item)}"`); continue; }
       const key = keyOf(section, item);
       if (seen.has(key)) { dropped.push(`${section}: repeats "${labelOf(section, item)}"`); continue; }
+      const mine = aboutOf(section, item);
+      if (about[section].some((other) => paraphrases(mine, other))) { dropped.push(`${section}: says again "${labelOf(section, item)}"`); continue; }
+      about[section].push(mine);
       seen.add(key);
       const list = byTopic.get(r.value.topic) ?? [];
       list.push({ op: "add", section, item, after: labelOf(section, item) });

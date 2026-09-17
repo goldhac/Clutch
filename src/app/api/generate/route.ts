@@ -187,9 +187,11 @@ export async function POST(req: NextRequest) {
         );
       }
       if (deep.cappedBySource && deep.after < FILL_TARGET * 0.8) {
+        // ~72 lines fill a page. Say what the student will actually see.
+        const howFull = deep.after < 90 ? "about one page" : "the front and part of the back";
         fillWarnings.push(
-          "These files are short, so the sheet fills about one page. We only print what your files say. " +
-            "Add more material (slides, notes, a past exam) to fill the back.",
+          `These files are short, so the sheet fills ${howFull}. We only print what your files say, and never the same thing twice. ` +
+            "Add more material (slides, notes, a past exam) to fill the rest.",
         );
       }
     } catch (e) {
