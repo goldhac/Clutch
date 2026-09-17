@@ -7,6 +7,7 @@
  */
 import type { SheetContent, SheetFigure } from "@/contract/sheet-content";
 import type { CroppedFigure } from "@/parse/figures";
+import { augmentTopicSources } from "@/components/sheet/course-order";
 
 /** Keep the sheet small enough for sessionStorage, the saved row and the PDF POST. */
 const MAX_FIGURES = 8;
@@ -39,7 +40,12 @@ const words = (t: string) =>
  *   - words shared between the figure's caption and the topic's NAME (strongest)
  *   - the figure's page falling in, or near, a range the topic cites
  */
-function topicFor(filename: string, fig: { page: number; caption: string; what: string }, topics: SheetContent["topics"]): string | undefined {
+function topicFor(
+  filename: string,
+  fig: { page: number; caption: string; what: string },
+  topics: SheetContent["topics"],
+  itemWords: Map<string, Set<string>> = new Map(),
+): string | undefined {
   const stem = stemOf(filename);
   // The caption NAMES the figure; the description lists its parts (a Transformer diagram's
   // description mentions multi-head attention), so it counts for much less.
@@ -57,6 +63,11 @@ function topicFor(filename: string, fig: { page: number; caption: string; what: 
       else if (figWords.has(w)) score += 0.4 * rarity(w, nameWords);
     }
     for (const w of whyWords[i]) if (figWords.has(w) && !nameWords[i].has(w)) score += 0.5 * rarity(w, whyWords);
+    // The topic's own lines talk about the thing in the picture ("dartboard", "octagon") even when
+    // neither the topic's name nor its citations do. A weak signal, capped, so it only breaks ties
+    // and rescues figures that would otherwise have no home.
+    const mine = itemWords.get(t.name);
+    if (mine) score += Math.min(1.2, [...captionWords].filter((w) => mine.has(w)).length * 0.4);
     let distance = Infinity;
     for (const part of t.src.toLowerCase().split(";")) {
       if (!part.includes(stem)) continue;
@@ -75,6 +86,18 @@ export function attachFigures(
   perFile: { filename: string; figures: CroppedFigure[] }[],
 ): SheetContent {
   const all: SheetFigure[] = [];
+  // Topics may cite only a review sheet; their lines say which deck and slides they came from.
+  const located = augmentTopicSources(content);
+  const itemWords = new Map<string, Set<string>>();
+  for (const items of [content.formulas, content.concepts, content.questions] as { topic?: string }[][]) {
+    for (const it of items) {
+      if (!it.topic) continue;
+      const rec = it as Record<string, unknown>;
+      const bag = itemWords.get(it.topic) ?? new Set<string>();
+      for (const w of words(`${rec.name ?? ""} ${rec.term ?? ""} ${rec.q ?? ""} ${rec.ex ?? ""}`)) bag.add(w);
+      itemWords.set(it.topic, bag);
+    }
+  }
   perFile.forEach((file, fi) => {
     file.figures.forEach((f, i) => {
       if (f.importance < MIN_IMPORTANCE || f.image.length > MAX_IMAGE_CHARS) return;
@@ -88,13 +111,31 @@ export function attachFigures(
         image: f.image,
         w: f.w,
         h: f.h,
-        topic: topicFor(file.filename, f, content.topics),
+        topic: topicFor(file.filename, f, located, itemWords),
       });
     });
   });
   if (all.length === 0) return content;
+  // Lecture slides and the notes made from them carry the same picture ("Dartboard with regions"
+  // came back from both files on a real pack). Mostly the same caption words = the same figure;
+  // after the sort below, the one kept is the more important.
   // Most important first; document order breaks ties so the tray reads like the course.
   const order = new Map(all.map((f, i) => [f.id, i]));
   all.sort((a, b) => b.importance - a.importance || order.get(a.id)! - order.get(b.id)!);
-  return { ...content, figures: all.slice(0, MAX_FIGURES) };
+  const seen: { words: Set<string>; page: number; file: string }[] = [];
+  const unique = all.filter((f) => {
+    const mine = words(f.caption);
+    const page = Number(/(\d+)$/.exec(f.src)?.[1] ?? -1);
+    const file = f.src.replace(/\s+(?:p|Slide )\d+$/, "");
+    const dup = mine.size > 0 && seen.some((other) => {
+      const shared = [...mine].filter((w) => other.words.has(w)).length / Math.min(mine.size, other.words.size);
+      // Notes made from slides keep the slide's page: same page in ANOTHER file, half the words is
+      // enough. (Within one file, two figures on a page are two figures: a homework page showed
+      // two different pseudocode listings.)
+      return shared >= 0.75 || (other.page === page && other.file !== file && shared >= 0.5);
+    });
+    if (!dup) seen.push({ words: mine, page, file });
+    return !dup;
+  });
+  return { ...content, figures: unique.slice(0, MAX_FIGURES) };
 }

@@ -13,7 +13,7 @@
  * citation that points at course material — not at the past exam or review
  * sheet, which the engine lists first because they carry the most authority.
  */
-import type { Topic } from "@/contract/sheet-content";
+import type { SheetContent, Topic } from "@/contract/sheet-content";
 
 /** Tags that are the course itself, in teaching order. Everything else is about the exam. */
 const COURSE_TAGS = new Set(["slides", "notes", "textbook", "lecture", "transcript"]);
@@ -138,5 +138,46 @@ export function topicSpans(topics: Topic[], files: { name: string; tag: string }
     const first = hits[0], last = hits[hits.length - 1];
     if (first.seq !== last.seq) return `${first.word}${first.seq}–${last.seq}`;
     return first.page ? `${first.word}${first.seq} · ${first.unit}${first.page}` : `${first.word}${first.seq}`;
+  });
+}
+
+/**
+ * Where a topic lives in the course, read from its ITEMS when the topic itself doesn't say.
+ *
+ * With a review sheet or past exam in the pack, the engine cites that (higher-authority) file on
+ * every topic — on a real six-deck pack all six topics cited only "Screenshot….pdf p1", so there
+ * was no chapter to read: no labels, no course order, and diagrams could not find a home. The
+ * individual lines do cite the decks ("Chapter 03_final.pptx, Slide 15"), one chapter per topic,
+ * so each topic's citation is extended with the files most of its lines come from and the
+ * slide/page range they span. Nothing is sent to a model; the original citation is kept.
+ */
+export function augmentTopicSources(content: SheetContent): Topic[] {
+  const sections = [content.formulas, content.concepts, content.questions, content.traps, content.tables ?? []] as { topic?: string; src: string }[][];
+  return content.topics.map((topic) => {
+    const byFile = new Map<string, { n: number; min: number; max: number; unit: string }>();
+    let total = 0;
+    for (const items of sections) {
+      for (const it of items) {
+        if (it.topic !== topic.name) continue;
+        for (const part of it.src.split(";")) {
+          const p = part.trim();
+          const name = /^(.*?\.(?:pdf|pptx?|docx?|md|txt))\b/i.exec(p)?.[1];
+          if (!name) continue;
+          total++;
+          const rest = p.slice(name.length);
+          const nums = [...rest.matchAll(/(?:\bpp?\.?|\bpages?|\bslides?|\bsl\.?|\bs)\s*(\d{1,4})(?:\s*[-–]\s*(\d{1,4}))?/gi)]
+            .flatMap((m) => [Number(m[1]), m[2] ? Number(m[2]) : Number(m[1])]);
+          const entry = byFile.get(name) ?? { n: 0, min: Infinity, max: 0, unit: /slide|\bsl\b/i.test(rest) ? "Slide " : "p" };
+          entry.n++;
+          if (nums.length) { entry.min = Math.min(entry.min, ...nums); entry.max = Math.max(entry.max, ...nums); }
+          byFile.set(name, entry);
+        }
+      }
+    }
+    // Files that carry a real share of the topic's lines, not a stray cross-reference.
+    const extra = [...byFile.entries()]
+      .filter(([name, e]) => e.n / Math.max(1, total) >= 0.25 && !topic.src.toLowerCase().includes(name.toLowerCase()))
+      .map(([name, e]) => (e.max ? `${name} ${e.unit}${e.min}${e.max > e.min ? `-${e.max}` : ""}` : name));
+    return extra.length ? { ...topic, src: `${topic.src}; ${extra.join("; ")}` } : topic;
   });
 }

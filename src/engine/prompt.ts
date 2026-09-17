@@ -333,8 +333,22 @@ export function buildUserPrompt(input: EnginePromptInput): string {
 "verified": true — only set it when an item is unambiguously confirmed
 in the highest-weight source.`;
 
+  // The format rules live in the system prompt, but on real packs the model followed the
+  // multiple-choice answer shape 0 times in 20 (2026-09-17) and needed a 40 s repair pass. A
+  // concrete example next to the task is what it actually copies.
+  const formatNote =
+    input.examFormat === "multiple-choice"
+      ? `\n\nFORMAT CHECK — multiple-choice: EVERY MCQ answer has two halves:
+  "<correct answer> — not <the most tempting wrong option>: <why that option is wrong>"
+  e.g. "Secondary care — not Primary care: primary care is the first point of contact; a specialist referral is secondary."
+An MCQ answer without the "— not …:" half is incomplete. Check each one before you emit.`
+      : input.examFormat === "true-false"
+        ? `\n\nFORMAT CHECK — true/false: count your T/F statements before you emit. Between 40% and 60% of
+them must be FALSE. If you have too many of one kind, restate some as the other (same fact, same citation).`
+        : "";
+
   return `
-${courseLine ? courseLine + "\n" : ""}${controlsLine}${refactorNote}
+${courseLine ? courseLine + "\n" : ""}${controlsLine}${refactorNote}${formatNote}
 
 Below are the source files. Tags drive ranking weight (highest →
 lowest): past_exam > review > homework > slides > notes > formula_sheet.

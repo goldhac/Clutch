@@ -5,7 +5,7 @@ import type { SheetContent } from "@/contract/sheet-content";
 import type { Concept, Formula, Question, SheetTable, Trap } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
-import { courseOrder, topicSpans } from "./course-order";
+import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
@@ -74,7 +74,9 @@ export function FittedSheet({
     () => (view.sources === "compact" ? sourceKeyLine(sourceKey, content) : ""),
     [view.sources, sourceKey, content],
   );
-  const spans = useMemo(() => topicSpans(base.topics, ctx.files), [base.topics, ctx.files]);
+  // Topics often cite only the review sheet; their lines cite the decks. Read the course from both.
+  const located = useMemo(() => augmentTopicSources(base), [base]);
+  const spans = useMemo(() => topicSpans(located, ctx.files), [located, ctx.files]);
   // Course order reads like the course: definitions first, then the formulas built on them.
   const sectionFlow: ("formulas" | "tables" | "concepts")[] =
     ctx.order === "priority" ? ["formulas", "tables", "concepts"] : ["concepts", "formulas", "tables"];
@@ -84,8 +86,8 @@ export function FittedSheet({
   const topicAssign = useMemo(() => assignTopics(content), [content]);
   // Placement only: the fitter picks what fits by score, whatever order groups render in.
   const groupOrder = useMemo(
-    () => (ctx.order === "priority" ? base.topics.map((_, i) => i) : courseOrder(base.topics, ctx.files)),
-    [base.topics, ctx.order, ctx.files],
+    () => (ctx.order === "priority" ? base.topics.map((_, i) => i) : courseOrder(located, ctx.files)),
+    [base.topics, located, ctx.order, ctx.files],
   );
 
   // Compose once (pure/deterministic). The estimated budget just needs to

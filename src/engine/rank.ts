@@ -113,6 +113,8 @@ export async function generateSheet(
 
   // Validation failed — retry ONCE with the error appended so the model
   // can self-correct (typically a trust-rule violation or schema slip).
+  // Logged, because a retry costs the student ~90 s and the reason is how we stop it next time.
+  console.warn(`[engine] first draft failed validation, retrying: ${firstParse.error.replace(/\s*\n\s*/g, " | ").slice(0, 600)}`);
   const retryUser = `${user}
 
 ──────

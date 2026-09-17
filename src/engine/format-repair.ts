@@ -38,7 +38,7 @@ export async function repairForFormat(
     instruction =
       "Edit every MCQ question whose answer lacks it: keep the correct answer, then append " +
       "' — not <the most tempting wrong option>: <why it is wrong>', grounded in the pack. Change nothing else.";
-  } else if (format === "true-false" && shape.tf >= 8 && (shape.falseShare > 0.65 || shape.falseShare < 0.35)) {
+  } else if (format === "true-false" && shape.tf >= 8 && (shape.falseShare > 0.6 || shape.falseShare < 0.4)) {
     const many = shape.falseShare > 0.65 ? "FALSE" : "TRUE", few = many === "FALSE" ? "TRUE" : "FALSE";
     const n = Math.round(Math.abs(shape.falseShare - 0.5) * shape.tf);
     instruction =
