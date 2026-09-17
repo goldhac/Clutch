@@ -18,7 +18,7 @@ import { extractText } from "./text";
 import { extractPptx, imageHeavySlides, type PptxDoc } from "./pptx";
 import { rasterizePdf, rasterizerAvailable } from "./rasterize";
 import { markVisionText, transcribeImages, type VisionImage } from "./vision";
-import { cropFigures, detectFigures, type CroppedFigure } from "./figures";
+import { cropFigures, detectFigures, figuresFromSlides, type CroppedFigure } from "./figures";
 
 export interface IngestResult {
   text: string;
@@ -59,7 +59,7 @@ export interface IngestOptions {
   visionMode?: "sparse" | "figures";
   /**
    * Also locate and crop the document's diagrams so the student can place them on the
-   * sheet. PDF only for now. Runs alongside the figures vision pass on the same rendered
+   * sheet. PDFs are cropped from the rendered page; PPTX uses the deck's embedded images. Runs alongside the figures vision pass on the same rendered
    * pages, so it adds cost (~$0.005 a lecture) but no waiting.
    */
   figures?: boolean;
@@ -97,6 +97,10 @@ export async function ingestDocument(
     let text = doc.text;
     let visionChars = 0;
     let visionImages = 0;
+    // Diagram hunting runs beside the reading pass; it never blocks or fails the ingest.
+    const slideFigures = useVision && opts.figures
+      ? figuresFromSlides(doc.slides, { documentName: filename }).catch(() => [] as CroppedFigure[])
+      : Promise.resolve([] as CroppedFigure[]);
 
     if (useVision) {
       const figures = opts.visionMode === "figures";
@@ -147,6 +151,7 @@ export async function ingestDocument(
       units: doc.slideCount,
       visionChars,
       visionImages,
+      figures: await slideFigures.then((f) => (f.length ? f : undefined)),
       warnings,
     };
   }

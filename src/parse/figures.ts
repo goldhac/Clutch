@@ -20,7 +20,6 @@ import { promisify } from "node:util";
 import { z } from "zod";
 import { defaultGeminiClient } from "@/engine/gemini-client";
 import type { LLMClient } from "@/engine/llm-client";
-import type { RasterPage } from "./rasterize";
 
 const run = promisify(execFile);
 
@@ -68,7 +67,10 @@ const DetectSchema = z.object({
 });
 
 export interface DetectedFigure {
+  /** PDF page or PPTX slide number. */
   page: number;
+  /** Index into the images that were sent — a slide can carry several pictures. */
+  index: number;
   /** [ymin, xmin, ymax, xmax], 0–1000. */
   box: [number, number, number, number];
   caption: string;
@@ -83,13 +85,16 @@ export interface CroppedFigure extends DetectedFigure {
   h: number;
 }
 
+/** An image to search for figures: a rendered PDF page or a deck's embedded picture. */
+export interface FigureInput { page: number; base64: string; mimeType: string }
+
 export async function detectFigures(
-  pages: RasterPage[],
+  pages: FigureInput[],
   opts: { client?: LLMClient; documentName?: string } = {},
 ): Promise<{ figures: DetectedFigure[]; inputTokens: number; outputTokens: number }> {
   if (pages.length === 0) return { figures: [], inputTokens: 0, outputTokens: 0 };
   const client = opts.client ?? defaultGeminiClient();
-  const chunks: RasterPage[][] = [];
+  const chunks: FigureInput[][] = [];
   for (let i = 0; i < pages.length; i += PAGES_PER_CALL) chunks.push(pages.slice(i, i + PAGES_PER_CALL));
 
   const out: DetectedFigure[] = [];
@@ -114,10 +119,11 @@ export async function detectFigures(
         for (const f of parsed.data.figures) {
           const page = chunk[f.image - 1]?.page;
           if (!page) continue;
+          const index = pages.indexOf(chunk[f.image - 1]);
           const [ymin, xmin, ymax, xmax] = f.box_2d.map((n) => Math.max(0, Math.min(1000, n)));
           if (ymax <= ymin || xmax <= xmin) continue;
           if (((ymax - ymin) * (xmax - xmin)) / 1e6 < MIN_BOX_SHARE) continue;
-          out.push({ page, box: [ymin, xmin, ymax, xmax], caption: f.caption.trim(), what: f.what.trim(), importance: Math.round(f.importance) });
+          out.push({ page, index, box: [ymin, xmin, ymax, xmax], caption: f.caption.trim(), what: f.what.trim(), importance: Math.round(f.importance) });
         }
       } catch {
         // One failed batch loses only its own pages' figures.
@@ -176,4 +182,77 @@ export async function cropFigures(buf: Buffer | Uint8Array, figures: DetectedFig
   } finally {
     await rm(dir, { recursive: true, force: true });
   }
+}
+
+/* ── PPTX ────────────────────────────────────────────────────────────────────────────
+ * A deck's pictures are embedded files, so there is no page to crop from: the image IS
+ * the figure. What needs filtering is everything that is not one — the logo repeated on
+ * every slide, icons, photos — and what needs doing is downscaling (a deck can embed a
+ * 4000 px screenshot). Detection reuses the same Gemini pass for caption + importance,
+ * while its box is ignored — the whole embedded picture is the figure.
+ */
+
+/** The same picture on this many slides is template art, not content. */
+const TEMPLATE_REPEATS = 3;
+const MIN_SIDE_PX = 160;
+const MAX_SLIDE_IMAGES = 40;
+
+export async function figuresFromSlides(
+  slides: { index: number; images: { base64: string; mimeType: string; bytes: number }[] }[],
+  opts: { client?: LLMClient; documentName?: string } = {},
+): Promise<CroppedFigure[]> {
+  let sharp: typeof import("sharp");
+  try {
+    sharp = (await import("sharp")).default;
+  } catch {
+    return []; // no image library in this environment: a sheet without diagrams, not a failure
+  }
+
+  // Count repeats by content so a logo on every slide is dropped everywhere.
+  const seen = new Map<string, number>();
+  const keyOf = (img: { base64: string; bytes: number }) => `${img.bytes}:${img.base64.slice(0, 64)}:${img.base64.slice(-32)}`;
+  for (const sl of slides) for (const img of sl.images) seen.set(keyOf(img), (seen.get(keyOf(img)) ?? 0) + 1);
+
+  const candidates: { slide: number; buf: Buffer; page: FigureInput }[] = [];
+  const taken = new Set<string>();
+  for (const sl of slides) {
+    for (const img of [...sl.images].sort((a, b) => b.bytes - a.bytes)) {
+      const key = keyOf(img);
+      if ((seen.get(key) ?? 0) >= TEMPLATE_REPEATS || taken.has(key)) continue;
+      if (candidates.length >= MAX_SLIDE_IMAGES) break;
+      try {
+        const buf = Buffer.from(img.base64, "base64");
+        const meta = await sharp(buf).metadata();
+        if (!meta.width || !meta.height || Math.min(meta.width, meta.height) < MIN_SIDE_PX) continue;
+        // A model-sized copy for detection; the original is kept for the final cut.
+        const preview = await sharp(buf).resize({ width: 1000, height: 1000, fit: "inside", withoutEnlargement: true }).flatten({ background: "#fff" }).jpeg({ quality: 80 }).toBuffer();
+        taken.add(key);
+        candidates.push({ slide: sl.index, buf, page: { page: sl.index, base64: preview.toString("base64"), mimeType: "image/jpeg" } });
+      } catch {
+        // unreadable image (corrupt, exotic format): skip it
+      }
+    }
+  }
+  if (candidates.length === 0) return [];
+
+  const detected = await detectFigures(candidates.map((c) => c.page), opts);
+  const out: CroppedFigure[] = [];
+  for (const f of detected.figures) {
+    const c = candidates[f.index];
+    if (!c) continue;
+    try {
+      // The embedded picture IS the figure, so it is used whole. Trusting the model's box here
+      // cut the Maia architecture diagram in half (2026-09-17); a box only helps when the page
+      // around the figure is not part of it, which is the PDF case.
+      const { data, info } = await sharp(c.buf)
+        .resize({ width: MAX_CROP_PX, withoutEnlargement: true })
+        .flatten({ background: "#fff" })
+        .jpeg({ quality: 78 })
+        .toBuffer({ resolveWithObject: true });
+      out.push({ ...f, page: c.slide, image: `data:image/jpeg;base64,${data.toString("base64")}`, w: info.width, h: info.height });
+    } catch {
+      // one bad image never costs the others
+    }
+  }
+  return out;
 }

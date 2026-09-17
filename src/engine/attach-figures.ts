@@ -82,7 +82,8 @@ export function attachFigures(
         id: `fig-${fi}-${f.page}-${i}`,
         caption: f.caption || `Figure, p${f.page}`,
         what: f.what,
-        src: `${file.filename} p${f.page}`,
+        // Same citation style the engine uses: pages for documents, slides for decks.
+        src: `${file.filename} ${/\.pptx?$/i.test(file.filename) ? "Slide " : "p"}${f.page}`,
         importance: f.importance,
         image: f.image,
         w: f.w,
