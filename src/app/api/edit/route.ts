@@ -10,6 +10,7 @@ import { type NextRequest } from "next/server";
 import { safeParseSheetContent } from "@/contract/sheet-content";
 import { proposeEdit } from "@/engine/edit";
 import { judgeEditLimit, judgeInMemory, type LimitVerdict } from "@/lib/edit-limit";
+import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
 import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
@@ -97,6 +98,7 @@ export async function POST(req: NextRequest) {
     await record("proposed", p.ops.length);
     return Response.json({ reply: p.reply, ops: p.ops, dropped: p.dropped, proposed: p.proposed });
   } catch (err) {
+    if (isProviderCapacityError(err)) return capacityResponse("/api/edit", err); // not the student's failure: not counted
     await record("failed", 0); // a failed proposal still cost a model call
     console.error(`[/api/edit] 422 after ${((Date.now() - started) / 1000).toFixed(0)}s · "${instruction.slice(0, 80)}"`, err);
     return new Response(

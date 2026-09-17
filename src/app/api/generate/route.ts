@@ -23,6 +23,7 @@ import { ingestDocument } from "@/parse/ingest";
 import type { CroppedFigure } from "@/parse/figures";
 import { attachFigures } from "@/engine/attach-figures";
 import { detectExamFormat } from "@/engine/detect-format";
+import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
 import { repairForFormat } from "@/engine/format-repair";
 import {
   EXAM_FORMATS,
@@ -199,6 +200,7 @@ export async function POST(req: NextRequest) {
         { status: 422, headers: { "Content-Type": "text/plain; charset=utf-8" } },
       );
     }
+    if (isProviderCapacityError(e)) return capacityResponse("/api/generate", e);
     console.error(`[/api/generate] 500 after ${secs}s · ${packSummary}`, e);
     return new Response(
       "Something went wrong on our side while building your sheet. Your files are still here, so please try again.",
