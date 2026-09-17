@@ -74,6 +74,25 @@ export default function ResultsPage() {
   // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
   const [dockOpen, setDockOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
+  const [profileTier, setProfileTier] = useState<"free" | "pro">("free");
+
+  useEffect(() => {
+    let cancelled = false;
+    const supabase = supabaseBrowser();
+    supabase.auth
+      .getUser()
+      .then(async ({ data }) => {
+        if (!data.user) return;
+        const { data: profile } = await supabase.from("profiles").select("tier").eq("id", data.user.id).single();
+        if (!cancelled && profile?.tier === "pro") setProfileTier("pro");
+      })
+      .catch(() => {
+        /* signed out or offline: stays free */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   // Every accepted chat edit can be taken back (this visit).
   const [undoStack, setUndoStack] = useState<unknown[]>([]);
   const [upsellOpen, setUpsellOpen] = useState(false);
@@ -159,7 +178,11 @@ export default function ResultsPage() {
     );
   }
 
-  const tier = stash.tier ?? "free";
+  // Entitlement comes from the signed-in user's profile. The ?tier=pro preview switch is a
+  // development aid only: before 2026-09-17 it was the ONLY source, so a real Pro account was
+  // treated as free here (caught running the live flow), and anyone could add it to the URL.
+  const previewTier = process.env.NODE_ENV !== "production" ? stash.tier : undefined;
+  const tier = profileTier === "pro" || previewTier === "pro" ? "pro" : "free";
   const pro = tier === "pro";
   const effectiveCtx: ScoreCtx = { ...(stash.ctx ?? EMPTY_CTX), ...ctxPatch };
   const warnings = stash.warnings ?? [];
