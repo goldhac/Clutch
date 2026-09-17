@@ -47,13 +47,18 @@ export type PriorityMode = "formulas" | "concepts" | "balanced";
 export interface ViewOptions {
   /** Trap callouts and the ⚠ trap row inside formulas. */
   traps: boolean;
-  /** The citation on each line ("Slide 14"). */
-  sources: boolean;
+  /**
+   * The citation on each line. "compact" swaps each filename for a circled number
+   * keyed in the footer and keeps the page ("①p18-28") — proof at a fraction of the width.
+   */
+  sources: "off" | "compact" | "full";
   /** The MCQ / short / problem / T/F tag before each question. */
   tags: boolean;
+  /** Answers to the likely questions. Off = self-test mode. */
+  answers: boolean;
 }
 
-export const DEFAULT_VIEW: ViewOptions = { traps: false, sources: false, tags: false };
+export const DEFAULT_VIEW: ViewOptions = { traps: false, sources: "off", tags: false, answers: true };
 
 export interface ScoreCtx {
   /** Uploaded files with their tags — drives source-authority scoring. */
@@ -65,7 +70,7 @@ export interface ScoreCtx {
    * renders a sheet — Results, the saved row, /api/pdf → /print — already
    * carries ctx, so what the student sees is what they export.
    */
-  view?: Partial<ViewOptions>;
+  view?: Partial<Omit<ViewOptions, "sources">> & { sources?: ViewOptions["sources"] | boolean };
   /** Where topics sit (issue #12): in the order the course taught them (default), or by exam priority. */
   order?: "course" | "priority";
 }
@@ -73,12 +78,15 @@ export interface ScoreCtx {
 export const EMPTY_CTX: ScoreCtx = { files: [], examType: "mixed", priority: "balanced" };
 
 export function viewOf(ctx?: ScoreCtx): ViewOptions {
-  return { ...DEFAULT_VIEW, ...(ctx?.view ?? {}) };
+  const v = ctx?.view ?? {};
+  // Sheets saved on 2026-09-17 stored sources as a boolean.
+  const sources = v.sources === true ? "full" : v.sources === false || v.sources === undefined ? DEFAULT_VIEW.sources : v.sources;
+  return { ...DEFAULT_VIEW, ...v, sources };
 }
 
-/** Root class names that switch citations and question tags off in CSS. */
+/** Root class names that switch citations, question tags and answers off in CSS. */
 export function viewClass(view: ViewOptions): string {
-  return `${view.sources ? "" : " view-no-src"}${view.tags ? "" : " view-no-tags"}`;
+  return `${view.sources === "off" ? " view-no-src" : ""}${view.tags ? "" : " view-no-tags"}${view.answers ? "" : " view-no-ans"}`;
 }
 
 /** A ranked item paired with its section + derived score + estimated height. */

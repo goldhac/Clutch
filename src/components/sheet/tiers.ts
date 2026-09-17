@@ -55,13 +55,25 @@ function byRank<T extends Ranked>(items: T[]): T[] {
  * Traps are removed from the DATA (not hidden in CSS) so the composer and the
  * fitter never reserve room for them. Sources and tags are CSS-only.
  */
-export function applyView(content: SheetContent, view: { traps: boolean }): SheetContent {
-  if (view.traps) return content;
-  return {
-    ...content,
-    traps: [],
-    formulas: content.formulas.map((f) => (f.trap ? { ...f, trap: undefined } : f)),
-  };
+export function applyView(
+  content: SheetContent,
+  view: { traps: boolean; sources: "off" | "compact" | "full" },
+  compactSrc?: (src: string) => string,
+): SheetContent {
+  let out = content;
+  if (!view.traps) {
+    out = { ...out, traps: [], formulas: out.formulas.map((f) => (f.trap ? { ...f, trap: undefined } : f)) };
+  }
+  if (view.sources === "compact" && compactSrc) {
+    const c = <T extends { src: string }>(x: T): T => ({ ...x, src: compactSrc(x.src) });
+    out = {
+      ...out,
+      topics: out.topics.map(c), formulas: out.formulas.map(c), concepts: out.concepts.map(c),
+      questions: out.questions.map(c), traps: out.traps.map(c),
+      tables: out.tables?.map(c), verifiedPatterns: out.verifiedPatterns?.map(c),
+    };
+  }
+  return out;
 }
 
 export function filterForDensity(content: SheetContent, density: Density): SheetContent {

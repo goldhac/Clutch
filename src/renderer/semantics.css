@@ -122,6 +122,30 @@
 .view-no-src .sheet .src-line,
 .sheet.view-no-src .src,
 .sheet.view-no-src .src-line { display: none; }
+/* Self-test mode: the questions stay, the answers go. */
+.view-no-ans .sheet .qq .ans,
+.sheet.view-no-ans .qq .ans { display: none; }
+/* Compact sources: the footer key that explains the circled file markers. Two lines at most:
+   the footer sits outside the measured columns, which shrink to make room and are re-fitted. */
+.sheet .sheet-foot .src-key {
+  margin-top: 0.8pt;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  color: var(--ink-500);
+}
+/* Course locator on a topic banner ("Ch 3 · p9"). */
+.sheet .topic-group > h2.topic-banner .topic-span {
+  float: right;
+  margin-left: 4pt;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 0.82em;
+  letter-spacing: 0;
+  text-transform: none;
+  opacity: 0.85;
+}
 /* One class more specific than `.sheet .qq .kind` in sheet.css, which sets display. */
 .view-no-tags .sheet .qq .kind,
 .sheet.view-no-tags .qq .kind { display: none; }

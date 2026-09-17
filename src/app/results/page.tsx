@@ -32,10 +32,15 @@ interface Stash {
   savedAt?: string;
 }
 
-const VIEW_TOGGLES: { key: keyof ViewOptions; label: string }[] = [
+const VIEW_TOGGLES: { key: "traps" | "tags" | "answers"; label: string }[] = [
   { key: "traps", label: "Traps" },
-  { key: "sources", label: "Sources" },
   { key: "tags", label: "Question tags" },
+  { key: "answers", label: "Answers" },
+];
+const SOURCE_STYLES: { value: ViewOptions["sources"]; label: string }[] = [
+  { value: "off", label: "Off" },
+  { value: "compact", label: "Compact" },
+  { value: "full", label: "Full" },
 ];
 
 const FREE_PRESETS: { label: string; patch: Partial<ScoreCtx> }[] = [
@@ -193,11 +198,14 @@ export default function ResultsPage() {
   }
 
   /** Display options are free and instant; saved with the sheet so a reload and the PDF match. */
-  function toggleView(key: keyof ViewOptions) {
+  function toggleView(key: "traps" | "tags" | "answers") {
+    setView((current) => ({ ...current, [key]: !current[key] }));
+  }
+
+  function setView(update: (current: ViewOptions) => ViewOptions) {
     setStash((prev) => {
       if (!prev) return prev;
-      const current = viewOf(prev.ctx ?? EMPTY_CTX);
-      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), view: { ...current, [key]: !current[key] } } };
+      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), view: update(viewOf(prev.ctx ?? EMPTY_CTX)) } };
       try {
         sessionStorage.setItem("clutch:last", JSON.stringify(next));
       } catch {
@@ -547,6 +555,26 @@ export default function ResultsPage() {
                 </button>
               );
             })}
+            <span className="ml-1 font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Sources</span>
+            <span className="flex items-center rounded-[9px] bg-white/[0.08] p-[3px]" role="group" aria-label="Source style">
+              {SOURCE_STYLES.map((o) => {
+                const on = viewOf(effectiveCtx).sources === o.value;
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    aria-pressed={on}
+                    onClick={() => setView((current) => ({ ...current, sources: o.value }))}
+                    className={
+                      "tap rounded-[6px] px-2.5 py-[4px] text-[12px] font-semibold transition-[background-color,color] duration-[160ms] " +
+                      (on ? "bg-white text-[var(--band)]" : "text-[var(--on-band-muted)] hover:text-[var(--on-band)]")
+                    }
+                  >
+                    {o.label}
+                  </button>
+                );
+              })}
+            </span>
           </span>
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
           <button

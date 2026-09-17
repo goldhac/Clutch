@@ -5,7 +5,8 @@ import type { SheetContent } from "@/contract/sheet-content";
 import type { Concept, Formula, Question, SheetTable, Trap } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
-import { courseOrder } from "./course-order";
+import { courseOrder, topicSpans } from "./course-order";
+import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 import { FormulaBlock } from "./FormulaBlock";
@@ -64,15 +65,26 @@ export function FittedSheet({
   debug = false,
 }: FittedSheetProps) {
   const view = useMemo(() => viewOf(ctx), [ctx]);
-  const content = useMemo(() => applyView(filterForDensity(raw, density), view), [raw, density, view]);
+  // `base` keeps the original citations: course order and the chapter labels read them.
+  const base = useMemo(() => filterForDensity(raw, density), [raw, density]);
+  const sourceKey = useMemo(() => buildSourceKey(base, ctx.files), [base, ctx.files]);
+  const content = useMemo(() => applyView(base, view, sourceKey.compact), [base, view, sourceKey]);
+  const keyLine = useMemo(
+    () => (view.sources === "compact" ? sourceKeyLine(sourceKey, content) : ""),
+    [view.sources, sourceKey, content],
+  );
+  const spans = useMemo(() => topicSpans(base.topics, ctx.files), [base.topics, ctx.files]);
+  // Course order reads like the course: definitions first, then the formulas built on them.
+  const sectionFlow: ("formulas" | "tables" | "concepts")[] =
+    ctx.order === "priority" ? ["formulas", "tables", "concepts"] : ["concepts", "formulas", "tables"];
 
   // Topic color assignment — the KEY the reader scans. Each block is tinted
   // by its topic; the legend maps color → topic name.
   const topicAssign = useMemo(() => assignTopics(content), [content]);
   // Placement only: the fitter picks what fits by score, whatever order groups render in.
   const groupOrder = useMemo(
-    () => (ctx.order === "priority" ? content.topics.map((_, i) => i) : courseOrder(content.topics, ctx.files)),
-    [content.topics, ctx.order, ctx.files],
+    () => (ctx.order === "priority" ? base.topics.map((_, i) => i) : courseOrder(base.topics, ctx.files)),
+    [base.topics, ctx.order, ctx.files],
   );
 
   // Compose once (pure/deterministic). The estimated budget just needs to
@@ -227,7 +239,7 @@ export function FittedSheet({
       window.removeEventListener("resize", onResize);
     };
     // view.sources / view.tags change line heights through CSS: re-measure.
-  }, [topicGroups, benchIds, density, cols5, view.sources, view.tags, groupOrder]);
+  }, [topicGroups, benchIds, density, cols5, view.sources, view.tags, view.answers, groupOrder, ctx.order]);
 
   const hide = (id: string) => hiddenIds.has(id);
   const groupVisible = (g: Record<Section, Scored[]>) =>
@@ -297,8 +309,13 @@ export function FittedSheet({
           const topicName = content.topics[ti]?.name;
           return (
             <section key={ti} className={`topic-group ${tk}`}>
-              {topicName && <h2 className="topic-banner">{topicName}</h2>}
-              {(["formulas", "tables", "concepts"] as const).map((section) =>
+              {topicName && (
+                <h2 className="topic-banner">
+                  {topicName}
+                  {spans[ti] && <span className="topic-span">{spans[ti]}</span>}
+                </h2>
+              )}
+              {sectionFlow.map((section) =>
                 g[section].map((it) => (
                   <FitLeaf key={it.id} it={it} hidden={hide(it.id)} className={tk}>
                     {renderItem(section, it)}
@@ -329,6 +346,7 @@ export function FittedSheet({
       <footer className="sheet-foot">
         {counts.formulas} formulas · {counts.concepts} concepts · {counts.traps} traps ·{" "}
         {counts.questions} questions · {counts.verified} verified · {density.toUpperCase()}
+        {keyLine && <div className="src-key">{keyLine}</div>}
       </footer>
 
       {debug && fitInfo && (

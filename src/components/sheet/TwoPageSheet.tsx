@@ -11,7 +11,8 @@ import type {
 } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
-import { courseOrder } from "./course-order";
+import { courseOrder, topicSpans } from "./course-order";
+import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 import { FormulaBlock } from "./FormulaBlock";
@@ -73,7 +74,18 @@ export function TwoPageSheet({
   lockBack = false,
 }: TwoPageSheetProps) {
   const view = useMemo(() => viewOf(ctx), [ctx]);
-  const content = useMemo(() => applyView(filterForDensity(raw, "max"), view), [raw, view]);
+  // `base` keeps the original citations: course order and the chapter labels read them.
+  const base = useMemo(() => filterForDensity(raw, "max"), [raw]);
+  const sourceKey = useMemo(() => buildSourceKey(base, ctx.files), [base, ctx.files]);
+  const content = useMemo(() => applyView(base, view, sourceKey.compact), [base, view, sourceKey]);
+  const keyLine = useMemo(
+    () => (view.sources === "compact" ? sourceKeyLine(sourceKey, content) : ""),
+    [view.sources, sourceKey, content],
+  );
+  const spans = useMemo(() => topicSpans(base.topics, ctx.files), [base.topics, ctx.files]);
+  // Course order reads like the course: definitions first, then the formulas built on them.
+  const sectionFlow: ("formulas" | "tables" | "concepts")[] =
+    ctx.order === "priority" ? ["formulas", "tables", "concepts"] : ["concepts", "formulas", "tables"];
   const topicAssign = useMemo(() => assignTopics(content), [content]);
 
   // Compose with an effectively infinite budget: we want the mix-aware
@@ -102,8 +114,8 @@ export function TwoPageSheet({
 
   // Placement only: the fitter below picks what fits by score, whatever order groups render in.
   const groupOrder = useMemo(
-    () => (ctx.order === "priority" ? content.topics.map((_, i) => i) : courseOrder(content.topics, ctx.files)),
-    [content.topics, ctx.order, ctx.files],
+    () => (ctx.order === "priority" ? base.topics.map((_, i) => i) : courseOrder(base.topics, ctx.files)),
+    [base.topics, ctx.order, ctx.files],
   );
 
   const allIds = useMemo(() => new Set(allItems.map((i) => i.id)), [allItems]);
@@ -240,7 +252,7 @@ export function TwoPageSheet({
       window.removeEventListener("resize", onResize);
     };
     // view.sources / view.tags change line heights through CSS: re-measure.
-  }, [allIds, topicGroups, view.sources, view.tags, groupOrder]);
+  }, [allIds, topicGroups, view.sources, view.tags, view.answers, groupOrder, ctx.order]);
 
   const counts = {
     formulas: content.formulas.length,
@@ -262,6 +274,9 @@ export function TwoPageSheet({
         content={content}
         groups={topicGroups}
         order={groupOrder}
+        spans={spans}
+        sectionFlow={sectionFlow}
+        keyLine={keyLine}
         visible={page1Ids}
         topicAssign={topicAssign}
         totalRanked={totalRanked}
@@ -275,6 +290,9 @@ export function TwoPageSheet({
           content={content}
           groups={topicGroups}
         order={groupOrder}
+        spans={spans}
+        sectionFlow={sectionFlow}
+        keyLine={keyLine}
           visible={page2Ids}
           topicAssign={topicAssign}
           totalRanked={totalRanked}
@@ -327,6 +345,9 @@ function SheetPage({
   content,
   groups,
   order,
+  spans,
+  sectionFlow,
+  keyLine,
   visible,
   topicAssign,
   totalRanked,
@@ -339,6 +360,11 @@ function SheetPage({
   groups: Groups;
   /** Topic indices in display order. */
   order: number[];
+  /** Course locator per topic ("22 · p18"), or null. */
+  spans: (string | null)[];
+  sectionFlow: ("formulas" | "tables" | "concepts")[];
+  /** "① file · ② file" when sources are compact, else "". */
+  keyLine: string;
   visible: Set<string>;
   topicAssign: ReturnType<typeof assignTopics>;
   totalRanked: number;
@@ -403,8 +429,13 @@ function SheetPage({
               className={`topic-group ${tk}`}
               style={shown ? undefined : { display: "none" }}
             >
-              {topicName && <h2 className="topic-banner">{topicName}</h2>}
-              {(["formulas", "tables", "concepts"] as const).map((section) =>
+              {topicName && (
+                <h2 className="topic-banner">
+                  {topicName}
+                  {spans[ti] && <span className="topic-span">{spans[ti]}</span>}
+                </h2>
+              )}
+              {sectionFlow.map((section) =>
                 g[section].map((it) => (
                   <FitLeaf key={it.id} it={it} hidden={hide(it.id)} className={tk}>
                     {renderItem(section, it)}
@@ -434,6 +465,7 @@ function SheetPage({
         {content.formulas.length} formulas · {content.concepts.length} concepts ·{" "}
         {content.traps.length > 0 && <>{content.traps.length} traps · </>}{content.questions.length} questions ·{" "}
         {verified} verified · MAX · {pageNo === 1 ? "FRONT" : "BACK"}
+        {keyLine && <div className="src-key">{keyLine}</div>}
       </footer>
     </div>
   );

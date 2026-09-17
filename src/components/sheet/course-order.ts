@@ -36,6 +36,14 @@ function pageNumber(part: string): number {
   return m ? Number(m[1]) : 0;
 }
 
+/** The filename a citation part starts with — names may contain spaces ("Chapter 03_final.pptx"). */
+function citedName(part: string): string {
+  return /^(.*?\.(?:pdf|pptx?|docx?|md|txt))\b/i.exec(part)?.[1] ?? part.split(/[\s,]/)[0];
+}
+
+/** Is this file about the EXAM rather than the course? "_final" in "Chapter 03_final" is not. */
+const EXAMISH = /(^|[^a-z])(exam|review|quiz|midterm|homework|hw\d*)([^a-z]|$)|final[\s_-]*exam/;
+
 interface Position { course: 0 | 1; file: number; page: number }
 
 export function courseOrder(topics: Topic[], files: { name: string; tag: string }[] = []): number[] {
@@ -70,8 +78,8 @@ export function courseOrder(topics: Topic[], files: { name: string; tag: string 
         pos = { course: COURSE_TAGS.has(file.tag) ? 0 : 1, file: fileIndex.get(file.stem)!, page: pageNumber(p.replace(file.stem, "")) };
       } else {
         // No pack metadata (saved or sample sheets): read the sequence straight from the citation.
-        const seq = sequenceNumber(p.split(/[\s,]/)[0]);
-        if (seq !== null) pos = { course: /exam|review|quiz|midterm|final|homework|hw/.test(p) ? 1 : 0, file: seq, page: pageNumber(p) };
+        const seq = sequenceNumber(citedName(p));
+        if (seq !== null) pos = { course: EXAMISH.test(citedName(p)) ? 1 : 0, file: seq, page: pageNumber(p) };
       }
       if (!pos) continue;
       if (!best || pos.course < best.course || (pos.course === best.course && (pos.file < best.file || (pos.file === best.file && pos.page < best.page)))) {
@@ -89,5 +97,46 @@ export function courseOrder(topics: Topic[], files: { name: string; tag: string 
     const pa = positions[a], pb = positions[b];
     if (!pa || !pb) return pa ? -1 : pb ? 1 : a - b; // unplaced topics keep their rank, after the placed ones
     return pa.course - pb.course || pa.file - pb.file || pa.page - pb.page || a - b;
+  });
+}
+
+/** "Chapter 03_final" → "Ch" · "lecture-06" → "Lec" · "8-parsing" → "" (a bare number says enough). */
+function sequenceWord(name: string): string {
+  const s = stemOf(name);
+  if (/chapter|chap|\bch[\s._-]*\d/.test(s)) return "Ch ";
+  if (/lecture|\blec[\s._-]*\d|\bl[\s._-]*\d/.test(s)) return "Lec ";
+  if (/week|\bwk[\s._-]*\d/.test(s)) return "Wk ";
+  if (/unit/.test(s)) return "Unit ";
+  if (/module|\bmod[\s._-]*\d/.test(s)) return "Mod ";
+  if (/session|class/.test(s)) return "Class ";
+  return "";
+}
+
+/**
+ * The small locator on each topic banner: where in the course this topic lives.
+ *   "22 · p18"   one file, first page        "Ch 3–5"   several chapters
+ * Read from the topic's course citations only (never the exam/review ones); null when the
+ * citations carry no sequence — a wrong chapter label is worse than none.
+ */
+export function topicSpans(topics: Topic[], files: { name: string; tag: string }[] = []): (string | null)[] {
+  const known = files.map((f) => ({ ...f, stem: stemOf(f.name) }));
+  return topics.map((topic) => {
+    const hits: { seq: number; word: string; page: number; unit: string }[] = [];
+    for (const part of topic.src.split(";")) {
+      const p = part.trim().toLowerCase();
+      if (!p || EXAMISH.test(citedName(p))) continue;
+      const file = known.find((f) => p.includes(f.stem));
+      if (file && !COURSE_TAGS.has(file.tag)) continue;
+      const name = file ? file.name : citedName(p);
+      const seq = sequenceNumber(name);
+      if (seq === null) continue;
+      const rest = p.replace(stemOf(name), "");
+      hits.push({ seq, word: sequenceWord(name), page: pageNumber(rest), unit: /\bslides?\b|\bsl\b/.test(rest) ? "s" : "p" });
+    }
+    if (!hits.length) return null;
+    hits.sort((a, b) => a.seq - b.seq || a.page - b.page);
+    const first = hits[0], last = hits[hits.length - 1];
+    if (first.seq !== last.seq) return `${first.word}${first.seq}–${last.seq}`;
+    return first.page ? `${first.word}${first.seq} · ${first.unit}${first.page}` : `${first.word}${first.seq}`;
   });
 }
