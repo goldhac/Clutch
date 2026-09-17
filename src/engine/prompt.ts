@@ -15,6 +15,20 @@
 import type { Density } from "@/components/sheet";
 
 export type ExamType = "conceptual" | "problem-solving" | "mixed";
+
+/**
+ * How the exam ASKS (issue #11) — the one choice the student makes. It shapes what the
+ * engine writes (see EXAM FORMAT in the system prompt) and how the page is weighted.
+ * `ExamType` stays as the coarse scoring axis underneath and is derived from it.
+ */
+export type ExamFormat = "mixed" | "multiple-choice" | "true-false" | "short-answer" | "problems";
+export const EXAM_FORMATS: ExamFormat[] = ["mixed", "multiple-choice", "true-false", "short-answer", "problems"];
+
+export function examTypeFor(format: ExamFormat): ExamType {
+  if (format === "problems") return "problem-solving";
+  if (format === "mixed") return "mixed";
+  return "conceptual";
+}
 export type PriorityMode = "formulas" | "concepts" | "balanced";
 export type FileTag =
   | "slides"
@@ -34,6 +48,8 @@ export interface PackFile {
 export interface EnginePromptInput {
   pack: PackFile[];
   examType: ExamType;
+  /** Optional for back-compat; "mixed" when absent. */
+  examFormat?: ExamFormat;
   density: Density;
   priority: PriorityMode;
   /** Optional per-course context (course code, professor name) if user supplied them. */
@@ -196,6 +212,32 @@ EXAM TYPE WEIGHTING:
 - "problem-solving" — bias toward formulas + worked examples
 - "mixed"           — balanced
 
+EXAM FORMAT — how the exam asks. Shape the pool for it (the contract is unchanged):
+- "true-false" — the exam is statements to judge.
+    * At least 60% of questions have kind "T/F". Write "q" as the STATEMENT itself, worded
+      the way an examiner would (no "True or false:" prefix). Write "a" starting with
+      "TRUE —" or "FALSE —", then the reason; for FALSE, give the corrected statement.
+    * Make roughly half the statements FALSE, built the way examiners build them: an absolute
+      qualifier swapped in (always / never / all / only / none), two easily-confused terms
+      swapped, a direction, sign or order flipped, or a true cause attached to the wrong
+      effect. The source must directly refute every FALSE statement — never invent facts.
+    * traps: emit the HIGH end of the range — here they are the main course. Each names the
+      tempting claim and why it is false.
+    * concepts: state the boundary — when it holds AND when it stops holding (exceptions,
+      preconditions). One exception is what turns an "always" statement false.
+- "multiple-choice" — the exam is stems with distractors.
+    * At least 60% of questions have kind "MCQ". "q" is the STEM only — no option list; this
+      is a reference sheet, not a quiz. "a" gives the correct answer, then
+      "— not <the most tempting wrong option>: <why it is wrong>".
+    * tables: emit the HIGH end of the range — a compare/contrast table for every pair or
+      family of easily-confused concepts ("both do A; only X does B").
+    * concepts: lead each definition with the ONE feature that distinguishes it.
+- "short-answer" — questions have kind "short"; "a" lists the 2–3 points a grader looks for,
+    separated by ";".
+- "problems" — formulas with when-to-use rules and worked skeletons; questions have kind
+    "problem". (Same lean as exam type "problem-solving".)
+- "mixed" — mirror the past exam's mix when one is in the pack; otherwise balanced.
+
 PRIORITY MODE:
 - "formulas"  — formulas section gets first crack at the column budget
 - "concepts"  — concepts section gets first crack
@@ -263,6 +305,7 @@ export function buildUserPrompt(input: EnginePromptInput): string {
 
   const controlsLine = [
     `Exam type: ${input.examType}`,
+    `Exam format: ${input.examFormat ?? "mixed"}`,
     // density is a LAYOUT control resolved by the composer, not a
     // supply control — the POOL TARGET is the same at every density.
     `Priority:  ${input.priority}`,

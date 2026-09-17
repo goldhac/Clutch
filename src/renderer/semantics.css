@@ -122,6 +122,12 @@
 .view-no-src .sheet .src-line,
 .sheet.view-no-src .src,
 .sheet.view-no-src .src-line { display: none; }
+/* True/False verdict marker: read before the statement, gone in self-test mode. */
+.sheet .qq .verdict { font-weight: 700; margin-right: 1.5pt; }
+.sheet .qq .verdict.v-false { color: var(--conf-low); }
+.sheet .qq .verdict.v-true { color: var(--conf-high); }
+.view-no-ans .sheet .qq .verdict,
+.sheet.view-no-ans .qq .verdict { display: none; }
 /* Self-test mode: the questions stay, the answers go. */
 .view-no-ans .sheet .qq .ans,
 .sheet.view-no-ans .qq .ans { display: none; }

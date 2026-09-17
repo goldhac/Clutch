@@ -7,6 +7,22 @@ import { AppChrome } from "@/components/ui";
 import type { Density } from "@/components/sheet";
 import { GeneratingOverlay } from "./GeneratingOverlay";
 
+type ExamFormat = "mixed" | "multiple-choice" | "true-false" | "short-answer" | "problems";
+const EXAM_FORMAT_OPTIONS: [string, ExamFormat][] = [
+  ["Mixed", "mixed"],
+  ["Multiple choice", "multiple-choice"],
+  ["True / False", "true-false"],
+  ["Short answer", "short-answer"],
+  ["Problems", "problems"],
+];
+const EXAM_FORMAT_NOTES: Record<ExamFormat, string> = {
+  mixed: "A balanced sheet. If a past exam is in the pack, we follow its mix.",
+  "multiple-choice": "Built around easily-confused pairs and why the tempting option is wrong.",
+  "true-false": "Built around where each claim stops being true: always, never, only. Traps start on.",
+  "short-answer": "Definitions plus the two or three points a grader looks for.",
+  problems: "Formulas, when to use them, and worked skeletons.",
+};
+
 /**
  * /generate — v2 handoff: build the pack, tag each file, see how strong
  * the pack is, spend one credit. File LEDGER (hairline table), stacked
@@ -63,7 +79,9 @@ function fmtSize(bytes: number): string {
 export default function GeneratePage() {
   const router = useRouter();
   const [files, setFiles] = useState<PendingFile[]>([]);
-  const [examType, setExamType] = useState<"conceptual" | "problem-solving" | "mixed">("mixed");
+  const [examFormat, setExamFormat] = useState<ExamFormat>("mixed");
+  // The coarse scoring axis underneath; the student only chooses the format.
+  const examType = examFormat === "problems" ? "problem-solving" : examFormat === "mixed" ? "mixed" : "conceptual";
   const [density, setDensity] = useState<Density>("max");
   const [priority, setPriority] = useState<"formulas" | "concepts" | "balanced">("balanced");
   const [courseCode, setCourseCode] = useState("");
@@ -125,6 +143,7 @@ export default function GeneratePage() {
         fd.append(`tag_${ix}`, f.tag);
       });
       fd.append("examType", examType);
+      fd.append("examFormat", examFormat);
       fd.append("density", density);
       fd.append("priority", priority);
       if (courseCode) fd.append("courseCode", courseCode);
@@ -145,6 +164,7 @@ export default function GeneratePage() {
           ctx: {
             files: files.map((f) => ({ name: f.file.name, tag: f.tag })),
             examType,
+            examFormat,
             priority,
           },
           savedAt: new Date().toISOString(),
@@ -429,23 +449,16 @@ export default function GeneratePage() {
               </div>
 
               <div className="mt-3.5">
-                <div className="text-[12.5px] font-semibold text-[var(--ink-600)]">Exam type</div>
-                <div className="mt-[7px] flex gap-1 rounded-[9px] bg-[var(--field)] p-[3px]">
-                  {(
-                    [
-                      ["Conceptual", "conceptual"],
-                      ["Problem-solving", "problem-solving"],
-                      ["Mixed", "mixed"],
-                    ] as const
-                  ).map(([label, value]) => (
-                    <SegPill
-                      key={value}
-                      label={label}
-                      active={examType === value}
-                      onClick={() => setExamType(value)}
-                    />
+                <div className="text-[12.5px] font-semibold text-[var(--ink-600)]">Exam format</div>
+                <div className="mt-[7px] grid grid-cols-2 gap-1 rounded-[9px] bg-[var(--field)] p-[3px]">
+                  {EXAM_FORMAT_OPTIONS.map(([label, value]) => (
+                    // Five options in two columns: "Mixed" spans the top row so none sits alone.
+                    <div key={value} className={"flex" + (value === "mixed" ? " col-span-2" : "")}>
+                      <SegPill label={label} active={examFormat === value} onClick={() => setExamFormat(value)} />
+                    </div>
                   ))}
                 </div>
+                <p className="mt-2 text-[12px] leading-[1.5] text-[var(--ink-500)]">{EXAM_FORMAT_NOTES[examFormat]}</p>
               </div>
 
               <div className="mt-[18px]">

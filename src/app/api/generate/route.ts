@@ -21,6 +21,9 @@ import { type NextRequest } from "next/server";
 import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
 import {
+  EXAM_FORMATS,
+  examTypeFor,
+  type ExamFormat,
   type ExamType,
   type FileTag,
   type PackFile,
@@ -65,7 +68,13 @@ export async function POST(req: NextRequest) {
   const density = (form.get("density") ?? "max").toString() as Density;
   if (!VALID_DENSITIES.has(density)) return badRequest(`bad density: ${density}`);
 
-  const examType = (form.get("examType") ?? "mixed").toString() as ExamType;
+  // examFormat is what the form sends since 2026-09-17; examType is derived from it. Older
+  // clients that send only examType still work.
+  const examFormat = (form.get("examFormat") ?? "mixed").toString() as ExamFormat;
+  if (!EXAM_FORMATS.includes(examFormat)) return badRequest(`bad examFormat: ${examFormat}`);
+  const examType = form.has("examFormat")
+    ? examTypeFor(examFormat)
+    : ((form.get("examType") ?? "mixed").toString() as ExamType);
   if (!VALID_EXAM_TYPES.has(examType)) return badRequest(`bad examType: ${examType}`);
 
   const priority = (form.get("priority") ?? "balanced").toString() as PriorityMode;
@@ -124,12 +133,13 @@ export async function POST(req: NextRequest) {
   }
 
   const started = Date.now();
-  const packSummary = pack.map((f) => `${f.tag}:${f.filename}(${f.text.length}c)`).join(", ");
+  const packSummary = `format=${examFormat} · ` + pack.map((f) => `${f.tag}:${f.filename}(${f.text.length}c)`).join(", ");
   try {
     const result = await generateSheet({
       pack,
       density,
       examType,
+      examFormat,
       priority,
       courseContext: { code: courseCode, professor },
     });

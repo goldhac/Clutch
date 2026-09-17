@@ -13,9 +13,17 @@ export interface QuestionBoxProps {
 }
 
 export function QuestionBox({ question: q, bare = false }: QuestionBoxProps) {
+  // A True/False sheet prints FALSE statements on purpose. Mark the verdict BEFORE the statement
+  // so a skimming eye never takes a false claim for a fact. Hidden with the answers (self-test).
+  const verdict = q.kind === "T/F" ? /^\s*(true|false)\b/i.exec(q.a)?.[1].toLowerCase() : undefined;
   const inner = (
     <>
       <VerifiedStar verified={q.verified} />
+      {verdict && (
+        <span className={`verdict v-${verdict}`} aria-label={verdict === "false" ? "False statement" : "True statement"}>
+          {verdict === "false" ? "✗" : "✓"}
+        </span>
+      )}
       <span className="kind">{q.kind}</span> <InlineText text={q.q} />{" "}
       <span className="ans">
         <span className="ans-arrow">→</span> <InlineText text={q.a} />

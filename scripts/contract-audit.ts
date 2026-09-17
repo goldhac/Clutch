@@ -23,7 +23,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { safeParseSheetContent } from "@/contract/sheet-content";
 import { defaultGeminiClient } from "@/engine/gemini-client";
-import { buildSystemPrompt, buildUserPrompt, type FileTag, type PackFile } from "@/engine/prompt";
+import { buildSystemPrompt, buildUserPrompt, examTypeFor, type ExamFormat, type FileTag, type PackFile } from "@/engine/prompt";
 import { tryParseJsonAndValidate } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
 
@@ -32,7 +32,9 @@ const REVALIDATE = argv.includes("--revalidate");
 /** Judge drafts the way production does on attempt 1: normalize, drop unknown keys, salvage ≤ 3 items. */
 const PRODUCTION = argv.includes("--production");
 const ONLY = argv.includes("--only") ? (argv[argv.indexOf("--only") + 1] ?? "").split(",").filter(Boolean) : [];
-const LABEL = argv.includes("--label") ? argv[argv.indexOf("--label") + 1] : "baseline";
+/** --format true-false|multiple-choice|… audits a format mode (issue #11); label defaults to it. */
+const FORMAT = (argv.includes("--format") ? argv[argv.indexOf("--format") + 1] : "mixed") as ExamFormat;
+const LABEL = argv.includes("--label") ? argv[argv.indexOf("--label") + 1] : FORMAT === "mixed" ? "baseline" : FORMAT;
 const OUT = join("scripts/.audit", LABEL);
 
 const P = "reference/exam-prep";
@@ -105,13 +107,22 @@ async function main() {
           const r = await ingestDocument(basename(path), readFileSync(path), { vision: true, visionMode: "figures" });
           pack.push({ tag, filename: basename(path), text: r.text });
         }
-        const user = buildUserPrompt({ pack, examType: "mixed", density: "max", priority: "balanced" });
+        const user = buildUserPrompt({ pack, examType: examTypeFor(FORMAT), examFormat: FORMAT, density: "max", priority: "balanced" });
         const res = await client!.generate({ system, user, temperature: 0.3 });
         raw = res.text;
         writeFileSync(file, JSON.stringify({ raw, usage: res.usage }, null, 2));
       }
       if (PRODUCTION) {
         const r = tryParseJsonAndValidate(raw, 3);
+        if (r.ok) {
+          // What the format actually changed: question kinds, FALSE share, traps, tables.
+          const qs = r.value.questions;
+          const kinds: Record<string, number> = {};
+          for (const q of qs) kinds[q.kind] = (kinds[q.kind] ?? 0) + 1;
+          const falseN = qs.filter((q) => /^\s*false\b/i.test(q.a)).length, trueN = qs.filter((q) => /^\s*true\b/i.test(q.a)).length;
+          const notX = qs.filter((q) => /—\s*not\b|\bnot\s+[^:]{2,60}:/i.test(q.a)).length;
+          console.log(`  ${name.padEnd(11)} shape: kinds ${JSON.stringify(kinds)} · TRUE ${trueN} / FALSE ${falseN} · "not X:" answers ${notX} · traps ${r.value.traps.length} · tables ${(r.value.tables ?? []).length} · concepts ${r.value.concepts.length} · formulas ${r.value.formulas.length}`);
+        }
         console.log(`  ${name.padEnd(11)} ${r.ok ? `PASSES on the first attempt · ${r.dropped.length} item(s) dropped${r.dropped.length ? ": " + r.dropped.join(" | ").slice(0, 200) : ""}` : "NEEDS A RETRY · " + r.error.split("\n").length + " issue(s): " + r.error.split("\n").slice(0, 3).join(" ").slice(0, 300)}`);
         continue;
       }

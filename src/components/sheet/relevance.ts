@@ -33,6 +33,8 @@ import type { Density } from "./Sheet";
 export type Section = "formulas" | "concepts" | "traps" | "questions" | "topics" | "tables";
 
 export type ExamType = "conceptual" | "problem-solving" | "mixed";
+/** Mirrors engine/prompt.ts › ExamFormat (kept local so the sheet never imports the engine). */
+export type ExamFormat = "mixed" | "multiple-choice" | "true-false" | "short-answer" | "problems";
 export type PriorityMode = "formulas" | "concepts" | "balanced";
 
 /**
@@ -64,6 +66,8 @@ export interface ScoreCtx {
   /** Uploaded files with their tags — drives source-authority scoring. */
   files: { name: string; tag: string }[];
   examType: ExamType;
+  /** How the exam asks (issue #11). Absent on sheets made before 2026-09-17 → "mixed". */
+  examFormat?: ExamFormat;
   priority: PriorityMode;
   /**
    * Display options travel with the compose context because everything that
@@ -78,7 +82,8 @@ export interface ScoreCtx {
 export const EMPTY_CTX: ScoreCtx = { files: [], examType: "mixed", priority: "balanced" };
 
 export function viewOf(ctx?: ScoreCtx): ViewOptions {
-  const v = ctx?.view ?? {};
+  // In a True/False exam the traps ARE the content, so they start on there.
+  const v = { ...(ctx?.examFormat === "true-false" ? { traps: true } : {}), ...(ctx?.view ?? {}) };
   // Sheets saved on 2026-09-17 stored sources as a boolean.
   const sources = v.sources === true ? "full" : v.sources === false || v.sources === undefined ? DEFAULT_VIEW.sources : v.sources;
   return { ...DEFAULT_VIEW, ...v, sources };
@@ -229,6 +234,10 @@ function corroboration(src: string): number {
 function itemMultiplier(section: Section, item: unknown, ctx: ScoreCtx): number {
   if (section !== "questions") return 1;
   const kind = (item as Question).kind;
+  // The exam's own format outranks the coarse type: surface the questions shaped like the exam.
+  const FORMAT_KIND = { "true-false": "T/F", "multiple-choice": "MCQ", "short-answer": "short", problems: "problem" } as const;
+  const wanted = ctx.examFormat && ctx.examFormat !== "mixed" ? FORMAT_KIND[ctx.examFormat] : null;
+  if (wanted) return kind === wanted ? 1.25 : 0.9;
   if (ctx.examType === "problem-solving") return kind === "problem" ? 1.15 : 0.95;
   if (ctx.examType === "conceptual") return kind === "MCQ" || kind === "T/F" ? 1.1 : 0.95;
   return 1;
@@ -377,6 +386,10 @@ function shareDeltas(ctx: ScoreCtx): Record<Section, number> {
   const d: Record<Section, number> = { formulas: 0, concepts: 0, traps: 0, questions: 0, topics: 0, tables: 0 };
   if (ctx.examType === "problem-solving") { d.formulas += 8; d.concepts -= 6; d.questions += 3; d.tables -= 2; }
   if (ctx.examType === "conceptual") { d.formulas -= 8; d.concepts += 8; d.traps += 3; }
+  // Format leans, on top of the type it implies ("conceptual" for the first three).
+  if (ctx.examFormat === "true-false") { d.traps += 6; d.questions += 5; d.concepts -= 5; d.formulas -= 4; }
+  if (ctx.examFormat === "multiple-choice") { d.tables += 6; d.questions += 4; d.concepts -= 4; d.formulas -= 4; }
+  if (ctx.examFormat === "short-answer") { d.concepts += 3; d.questions += 4; d.formulas -= 5; }
   if (ctx.priority === "formulas") { d.formulas += 5; d.concepts -= 5; }
   if (ctx.priority === "concepts") { d.formulas -= 5; d.concepts += 5; }
   return d;
