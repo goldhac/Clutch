@@ -22,6 +22,7 @@ import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
 import type { CroppedFigure } from "@/parse/figures";
 import { attachFigures } from "@/engine/attach-figures";
+import { deepenPool, FILL_TARGET } from "@/engine/deepen";
 import { detectExamFormat } from "@/engine/detect-format";
 import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
 import { repairForFormat } from "@/engine/format-repair";
@@ -172,14 +173,36 @@ export async function POST(req: NextRequest) {
     );
     // Diagrams ride along with the sheet; the student chooses which to place (issue #15).
     const packText = pack.map((f) => `===== ${f.filename} [${f.tag}] =====\n${f.text}`).join("\n\n").slice(0, 400_000);
+    const fileNames = pack.map((f) => f.filename);
+    // Both sides of the sheet get filled: when the pool is short, mine the pack deeper per topic.
+    const fillWarnings: string[] = [];
+    let pool = result.content;
+    try {
+      const deep = await deepenPool(pool, { packText, files: fileNames, examFormat: format });
+      pool = deep.proposed;
+      if (deep.asked || deep.cappedBySource) {
+        console.warn(
+          `[/api/generate] deepen · ${deep.before}→${deep.after} lines · asked ${deep.asked} · dropped ${deep.dropped.length} · ` +
+            `${deep.seconds.toFixed(0)}s${deep.cappedBySource ? ` · capped by source at ${deep.sourceCap}` : ""}`,
+        );
+      }
+      if (deep.cappedBySource && deep.after < FILL_TARGET * 0.8) {
+        fillWarnings.push(
+          "These files are short, so the sheet fills about one page. We only print what your files say. " +
+            "Add more material (slides, notes, a past exam) to fill the back.",
+        );
+      }
+    } catch (e) {
+      console.error(`[/api/generate] deepen failed; shipping the first draft`, e);
+    }
     // A format sheet must have the format's shape; patch it in a few seconds when it doesn't.
-    const shaped = await repairForFormat(result.content, format, { packText, files: pack.map((f) => f.filename) });
+    const shaped = await repairForFormat(pool, format, { packText, files: fileNames });
     if (shaped.repaired) console.warn(`[/api/generate] format repair · ${shaped.repaired}`);
     const content = attachFigures(shaped.content, packFigures);
     return Response.json({
       content,
       meta: result.meta,
-      warnings: [...ingestWarnings, ...result.warnings],
+      warnings: [...ingestWarnings, ...result.warnings, ...fillWarnings],
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),
       // The student's own text, so "Edit with Clutch" can ADD grounded lines later (issue #14).
       // Kept client-side for the session; capped to stay inside sessionStorage.

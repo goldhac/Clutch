@@ -28,7 +28,7 @@ import { normalizeDraft } from "./normalize";
 export const EDIT_SECTIONS = ["topics", "formulas", "concepts", "tables", "traps", "questions"] as const;
 export type EditSection = (typeof EDIT_SECTIONS)[number];
 
-const ITEM_SCHEMA = {
+export const ITEM_SCHEMA = {
   topics: TopicSchema,
   formulas: FormulaSchema,
   concepts: ConceptSchema,
@@ -67,7 +67,7 @@ export interface EditProposal {
   meta: { model: string; inputTokens?: number; outputTokens?: number; seconds: number };
 }
 
-const labelOf = (section: EditSection, item: unknown): string => {
+export const labelOf = (section: EditSection, item: unknown): string => {
   const it = (item ?? {}) as Record<string, unknown>;
   const text = String(it.name ?? it.term ?? it.title ?? it.q ?? it.text ?? "");
   return `${text.slice(0, 90)}${text.length > 90 ? "…" : ""}`;

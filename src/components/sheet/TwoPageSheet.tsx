@@ -64,6 +64,8 @@ export interface TwoPageSheetProps {
   /** Free-tier preview: the BACK page renders (real content, real fit)
    * but blurred behind an unlock card — the conversion surface. */
   lockBack?: boolean;
+  /** Called after every fit with how much of the back page's width its columns actually use (0–1). */
+  onFit?: (info: { front: number; back: number; backFill: number }) => void;
 }
 
 type Groups = Record<Section, Scored[]>[];
@@ -74,6 +76,7 @@ export function TwoPageSheet({
   cols5 = false,
   debug = false,
   lockBack = false,
+  onFit,
 }: TwoPageSheetProps) {
   const view = useMemo(() => viewOf(ctx), [ctx]);
   // `base` keeps the original citations: course order and the chapter labels read them.
@@ -129,6 +132,9 @@ export function TwoPageSheet({
   );
 
   const rootRef = useRef<HTMLDivElement>(null);
+  // A ref, so a new callback identity from the parent never re-runs the measuring effect.
+  const onFitRef = useRef(onFit);
+  onFitRef.current = onFit;
   // page1Ids = visible on page 1; page2Ids = visible on page 2.
   // Initial state: everything on page 1, page 2 empty — the effect
   // measures and rebalances.
@@ -243,6 +249,16 @@ export function TwoPageSheet({
       setPage1Ids(p1);
       setPage2Ids(p2);
       setFitInfo({ p1: p1.size, p2: p2.size, dropped: allIds.size - p1.size - p2.size });
+      // How far across the back page the last visible line reaches: columns fill left to right.
+      const backCols = sheets[1].querySelector<HTMLElement>(".cols");
+      if (backCols && onFitRef.current) {
+        const box = backCols.getBoundingClientRect();
+        let right = box.left;
+        for (const el of Array.from(backCols.querySelectorAll<HTMLElement>("[data-fit-id]"))) {
+          if (p2.has(el.dataset.fitId!)) right = Math.max(right, el.getBoundingClientRect().right);
+        }
+        onFitRef.current({ front: p1.size, back: p2.size, backFill: box.width ? Math.min(1, (right - box.left) / box.width) : 0 });
+      }
       root.setAttribute("data-fit-done", "1");
     };
 

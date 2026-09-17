@@ -34,7 +34,11 @@ interface Message {
   tone?: "error" | "upsell";
 }
 
+/** "fill the back", "fill both pages", "add more content" → top the pool up from the pack. */
+const FILL_INTENT = /\bfill\b[^.]*\b(back|page|pages|sheet|sides?|both)\b|\b(add|need|want)\s+more\s+(content|lines|material)\b|\bmore\s+content\b/i;
+
 const CHIPS: { label: string; text: string; send: boolean }[] = [
+  { label: "Fill the back page", text: "fill the back page", send: true },
   { label: "Hide traps", text: "hide the traps", send: true },
   { label: "Compact sources", text: "compact sources", send: true },
   { label: "Chapter order", text: "put it in chapter order", send: true },
@@ -53,15 +57,19 @@ export interface EditChatProps {
   /** Filenames of the student's pack — new lines must cite one of them. */
   files: string[];
   pro: boolean;
+  /** The exam format the sheet was built for; new lines follow it. */
+  examFormat?: string;
   canUndo: boolean;
   onFree: (actions: FreeAction[]) => void;
   onAccept: (next: SheetContent) => void;
   onUndo: () => void;
   onUpsell: () => void;
   onClose: () => void;
+  /** Sent once when the chat opens (the "fill the back page" nudge). */
+  autoSend?: string;
 }
 
-export function EditChat({ content, files, pro, canUndo, onFree, onAccept, onUndo, onUpsell, onClose }: EditChatProps) {
+export function EditChat({ content, files, pro, examFormat, canUndo, onFree, onAccept, onUndo, onUpsell, onClose, autoSend }: EditChatProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: "clutch",
@@ -108,7 +116,10 @@ export function EditChat({ content, files, pro, canUndo, onFree, onAccept, onUnd
         method: "POST",
         headers: { "Content-Type": "application/json" },
         // Diagrams are images the engine never sees.
-        body: JSON.stringify({ content: { ...content, figures: undefined }, instruction, packText, files }),
+        body: JSON.stringify({
+          content: { ...content, figures: undefined }, instruction, packText, files,
+          ...(FILL_INTENT.test(instruction) ? { mode: "fill", examFormat } : {}),
+        }),
       });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
       const p = (await res.json()) as { reply: string; ops: ProposalOp[]; dropped: string[]; proposed: SheetContent };
@@ -126,6 +137,16 @@ export function EditChat({ content, files, pro, canUndo, onFree, onAccept, onUnd
       inputRef.current?.focus();
     }
   }
+
+  // The nudge on Results opens the chat with the request already made.
+  const autoSent = useRef(false);
+  useEffect(() => {
+    if (autoSend && !autoSent.current) {
+      autoSent.current = true;
+      void send(autoSend);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSend]);
 
   function decide(index: number, accept: boolean) {
     const proposal = messages[index]?.proposal;

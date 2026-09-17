@@ -71,6 +71,10 @@ export default function ResultsPage() {
   const [ctxPatch, setCtxPatch] = useState<Partial<ScoreCtx>>({});
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  // Measured by the sheet itself: how much of the back page is used (null until the first fit).
+  const [backFill, setBackFill] = useState<number | null>(null);
+  const [chatAutoSend, setChatAutoSend] = useState<string | undefined>(undefined);
+  const [fillDismissed, setFillDismissed] = useState(false);
   // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
   const [dockOpen, setDockOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
@@ -359,7 +363,8 @@ export default function ResultsPage() {
           title: content.title,
           content: content as unknown as Record<string, unknown>,
           ctx: effectiveCtx as unknown as Record<string, unknown>,
-          pack_text: packText ? packText.slice(0, 400_000) : null,
+          // Postgres refuses NUL in text; sessions opened before the ingest fix may still carry one.
+          pack_text: packText ? packText.replace(/\u0000/g, "").slice(0, 400_000) : null,
         })
         .select("id")
         .single();
@@ -438,6 +443,29 @@ export default function ResultsPage() {
             </div>
           </div>
         )}
+        {density === "max" && pro && !editorOpen && !fillDismissed && backFill !== null && backFill < 0.8 && (
+          <div className="mx-auto max-w-[1320px] px-4 pb-3 sm:px-7">
+            <div className="flex flex-wrap items-center gap-[11px] rounded-[9px] border border-[var(--ink-150)] bg-[var(--paper)] px-3.5 py-3">
+              <div className="flex-1 text-[13px] leading-[1.55] text-[var(--ink-800)]">
+                The back page is {Math.round(backFill * 100)}% full. Clutch can pull more lines from your files to fill it. Nothing already on the sheet is repeated, and you approve the new lines first.
+              </div>
+              <button
+                type="button"
+                onClick={() => { setChatAutoSend("fill the back page"); setEditorOpen(true); }}
+                className="shrink-0 rounded-[7px] bg-[var(--ink-900)] px-3 py-1.5 text-[12.5px] font-medium text-[var(--paper)]"
+              >
+                Fill the back page
+              </button>
+              <button
+                type="button"
+                onClick={() => setFillDismissed(true)}
+                className="shrink-0 border-b border-[var(--ink-300)] font-mono text-[11px] text-[var(--ink-600)]"
+              >
+                dismiss
+              </button>
+            </div>
+          </div>
+        )}
         {(exportError || saveError) && (
           <div className="mx-auto max-w-[1320px] px-4 pb-3 sm:px-7">
             <div role="alert" className="rounded-[9px] border border-[var(--conf-low)]/25 bg-[var(--conf-low-bg)] px-3.5 py-3 text-[13px] leading-[1.55] text-[var(--conf-low-deep)]">
@@ -460,7 +488,7 @@ export default function ResultsPage() {
             <div className="flex min-w-max justify-center">
               <div className="animate-[cl-rise_400ms_var(--ease-pop)]">
                 {density === "max" ? (
-                  <TwoPageSheet content={content} ctx={effectiveCtx} lockBack={!pro} />
+                  <TwoPageSheet content={content} ctx={effectiveCtx} lockBack={!pro} onFit={(f) => setBackFill(f.backFill)} />
                 ) : (
                   <div className="shadow-[0_30px_60px_rgba(17,17,20,.18),0_4px_10px_rgba(17,17,20,.08)]">
                     <FittedSheet content={content} density={density} ctx={effectiveCtx} />
@@ -529,6 +557,7 @@ export default function ResultsPage() {
             content={content}
             files={(effectiveCtx.files ?? []).map((f) => f.name)}
             pro={pro}
+            examFormat={effectiveCtx.examFormat}
             canUndo={undoStack.length > 0}
             onFree={handleFree}
             onAccept={acceptEdit}
@@ -537,7 +566,8 @@ export default function ResultsPage() {
               setUpsellOpen(true);
               setEditorOpen(false);
             }}
-            onClose={() => setEditorOpen(false)}
+            onClose={() => { setEditorOpen(false); setChatAutoSend(undefined); }}
+            autoSend={chatAutoSend}
           />
         )}
 

@@ -65,6 +65,13 @@ export interface IngestOptions {
   figures?: boolean;
 }
 
+/**
+ * LaTeX PDFs map some math-font glyphs to C0 control characters (NUL, SOH and friends). They mean
+ * nothing to the model, and Postgres refuses NUL in text: a student's Save failed on it
+ * (2026-09-17). Everything below space goes, except newline, tab and form feed (the page break).
+ */
+const stripControl = (t: string): string => t.replace(/[\u0000-\u0008\u000B\u000E-\u001F\u007F]/g, "");
+
 /** A PDF page with far less text than its neighbours is a picture page. */
 function sparsePdfPages(text: string, pageCount: number): number[] {
   if (pageCount <= 1) return [];
@@ -94,7 +101,7 @@ export async function ingestDocument(
   // ── PPTX ────────────────────────────────────────────────────────────
   if (lower.endsWith(".pptx")) {
     const doc: PptxDoc = extractPptx(buf);
-    let text = doc.text;
+    let text = stripControl(doc.text);
     let visionChars = 0;
     let visionImages = 0;
     // Diagram hunting runs beside the reading pass; it never blocks or fails the ingest.
@@ -158,7 +165,8 @@ export async function ingestDocument(
 
   // ── PDF ─────────────────────────────────────────────────────────────
   if (lower.endsWith(".pdf")) {
-    const { text: baseText, pageCount, charCount } = await extractPdfText(buf);
+    const { text: rawText, pageCount, charCount } = await extractPdfText(buf);
+    const baseText = stripControl(rawText);
     let text = baseText;
     let visionChars = 0;
     let visionImages = 0;
@@ -249,6 +257,6 @@ export async function ingestDocument(
   }
 
   // ── Plain text / markdown ───────────────────────────────────────────
-  const { text } = extractText(buf.toString("utf-8"));
+  const text = stripControl(extractText(buf.toString("utf-8")).text);
   return { text, charCount: text.length, units: 0, visionChars: 0, visionImages: 0, warnings };
 }

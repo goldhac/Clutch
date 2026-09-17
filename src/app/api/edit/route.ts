@@ -8,6 +8,7 @@
  */
 import { type NextRequest } from "next/server";
 import { safeParseSheetContent } from "@/contract/sheet-content";
+import { deepenPool } from "@/engine/deepen";
 import { proposeEdit } from "@/engine/edit";
 import { judgeEditLimit, judgeInMemory, type LimitVerdict } from "@/lib/edit-limit";
 import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
@@ -28,9 +29,11 @@ export async function POST(req: NextRequest) {
   } catch {
     return new Response("body must be JSON", { status: 400 });
   }
-  const b = body as { content?: unknown; instruction?: unknown; packText?: unknown; files?: unknown };
+  const b = body as { content?: unknown; instruction?: unknown; packText?: unknown; files?: unknown; mode?: unknown; examFormat?: unknown };
 
-  const instruction = typeof b.instruction === "string" ? b.instruction.trim() : "";
+  // mode "fill": top the pool up from the pack so both pages fill (same gate, same limit, same preview).
+  const fill = b.mode === "fill";
+  const instruction = fill ? "fill the back page" : typeof b.instruction === "string" ? b.instruction.trim() : "";
   if (!instruction) return new Response("instruction required", { status: 400 });
   if (instruction.length > MAX_INSTRUCTION) {
     return new Response(`instruction too long (max ${MAX_INSTRUCTION} chars)`, { status: 400 });
@@ -90,6 +93,19 @@ export async function POST(req: NextRequest) {
 
   const started = Date.now();
   try {
+    if (fill) {
+      const deep = await deepenPool(parsed.data, { packText, files, examFormat: typeof b.examFormat === "string" ? (b.examFormat as never) : undefined });
+      console.warn(`[/api/edit] fill · ${deep.before}→${deep.after} lines · dropped ${deep.dropped.length} · ${deep.seconds.toFixed(0)}s${deep.cappedBySource ? ` · capped at ${deep.sourceCap}` : ""}`);
+      await record("proposed", deep.ops.length);
+      const reply = !packText
+        ? "This sheet was saved before Clutch kept your files' text, so I have nothing to draw new lines from. Generate it again to fill the back."
+        : deep.ops.length
+          ? `I found ${deep.ops.length} more lines in your files. Every one cites where it came from.`
+          : deep.cappedBySource
+            ? "Your files are short, and the sheet already says about as much as they do. Add more material to fill the back."
+            : "The sheet is already full.";
+      return Response.json({ reply, ops: deep.ops, dropped: [], proposed: deep.proposed });
+    }
     const p = await proposeEdit(parsed.data, instruction, { packText, files });
     console.warn(
       `[/api/edit] 200 in ${((Date.now() - started) / 1000).toFixed(0)}s · ops=${p.ops.length} dropped=${p.dropped.length} · ` +
