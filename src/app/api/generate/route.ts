@@ -158,6 +158,9 @@ export async function POST(req: NextRequest) {
       meta: result.meta,
       warnings: [...ingestWarnings, ...result.warnings],
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),
+      // The student's own text, so "Edit with Clutch" can ADD grounded lines later (issue #14).
+      // Kept client-side for the session; capped to stay inside sessionStorage.
+      packText: pack.map((f) => `===== ${f.filename} [${f.tag}] =====\n${f.text}`).join("\n\n").slice(0, 400_000),
     });
   } catch (e) {
     const secs = ((Date.now() - started) / 1000).toFixed(0);

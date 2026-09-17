@@ -9,6 +9,8 @@ import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-conte
 import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
 import { defaultFigureIds } from "@/components/sheet/Figures";
+import type { FreeAction } from "@/lib/edit-router";
+import { EditChat } from "./EditChat";
 import { LinkButton, Wordmark, Toaster, toast, Modal, ModalOptions, OptionTile } from "@/components/ui";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
@@ -68,14 +70,13 @@ export default function ResultsPage() {
   const [exportModal, setExportModal] = useState(false);
   const [ctxPatch, setCtxPatch] = useState<Partial<ScoreCtx>>({});
   const [activePreset, setActivePreset] = useState<string | null>(null);
-  const [instruction, setInstruction] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
   // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
   const [dockOpen, setDockOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
+  // Every accepted chat edit can be taken back (this visit).
+  const [undoStack, setUndoStack] = useState<unknown[]>([]);
   const [upsellOpen, setUpsellOpen] = useState(false);
-  const [tweaking, setTweaking] = useState(false);
-  const [tweakError, setTweakError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
@@ -230,6 +231,48 @@ export default function ResultsPage() {
     });
   }
 
+  /** Display changes the chat routed locally: free, instant, no model call. */
+  function handleFree(actions: FreeAction[]) {
+    for (const a of actions) {
+      if (a.type === "view") setView((v) => ({ ...v, [a.key]: a.on }));
+      else if (a.type === "sources") setView((v) => ({ ...v, sources: a.value }));
+      else if (a.type === "order") setOrder(a.value);
+      else if (a.type === "density") setDensity(a.value);
+      else if (a.type === "preset") applyPreset(a.label, a.patch);
+      else if (a.type === "figure") setView((v) => ({ ...v, figures: [...new Set([...(v.figures ?? (content ? defaultFigureIds(content) : [])), a.id])] }));
+      else if (a.type === "figures-off") setView((v) => ({ ...v, figures: [] }));
+      else if (a.type === "open-diagrams") setTrayOpen(true);
+    }
+  }
+
+  function replaceContent(nextContent: unknown) {
+    setStash((prev) => {
+      if (!prev) return prev;
+      const next: Stash = { ...prev, content: nextContent };
+      try {
+        sessionStorage.setItem("clutch:last", JSON.stringify(next));
+      } catch {
+        /* quota: the edit still applies for this visit */
+      }
+      return next;
+    });
+  }
+
+  function acceptEdit(nextContent: SheetContent) {
+    if (!stash) return;
+    setUndoStack((u) => [...u.slice(-9), stash.content]);
+    replaceContent(nextContent);
+    toast("Edit applied");
+  }
+
+  function undoEdit() {
+    const last = undoStack[undoStack.length - 1];
+    if (last === undefined) return;
+    setUndoStack((u) => u.slice(0, -1));
+    replaceContent(last);
+    toast("Edit undone");
+  }
+
   function toggleFigure(id: string) {
     if (!content) return;
     setView((current) => {
@@ -245,31 +288,6 @@ export default function ResultsPage() {
     setActivePreset(label);
   }
 
-  async function applyTweak() {
-    if (!instruction.trim() || !stash || !content) return;
-    setTweaking(true);
-    setTweakError(null);
-    try {
-      const res = await fetch("/api/tweak", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Diagrams are images the engine never sees: keep them out of the prompt, put them back after.
-        body: JSON.stringify({ content: { ...content, figures: undefined }, instruction: instruction.trim() }),
-      });
-      if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
-      const payload = (await res.json()) as { content: Record<string, unknown> };
-      const next = { ...stash, content: { ...payload.content, figures: content.figures } };
-      setStash(next);
-      sessionStorage.setItem("clutch:last", JSON.stringify(next));
-      setInstruction("");
-      setEditorOpen(false);
-      toast("Sheet rewritten to your instruction");
-    } catch (e) {
-      setTweakError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setTweaking(false);
-    }
-  }
 
   async function saveToLibrary() {
     if (!content) return;
@@ -367,10 +385,10 @@ export default function ResultsPage() {
             </div>
           </div>
         )}
-        {(exportError || saveError || tweakError) && (
+        {(exportError || saveError) && (
           <div className="mx-auto max-w-[1320px] px-4 pb-3 sm:px-7">
             <div role="alert" className="rounded-[9px] border border-[var(--conf-low)]/25 bg-[var(--conf-low-bg)] px-3.5 py-3 text-[13px] leading-[1.55] text-[var(--conf-low-deep)]">
-              {exportError ? `Export failed: ${exportError}` : saveError ? `Save failed: ${saveError}` : `Edit failed: ${tweakError}`}
+              {exportError ? `Export failed: ${exportError}` : `Save failed: ${saveError}`}
             </div>
           </div>
         )}
@@ -453,44 +471,21 @@ export default function ResultsPage() {
             </div>
           </div>
         )}
-        {editorOpen && pro && (
-          <div className="pointer-events-auto w-full max-w-[640px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
-            <div className="flex items-center justify-between">
-              <span className="text-[13px] font-semibold text-white">Edit in your own words</span>
-              <button
-                type="button"
-                onClick={() => setEditorOpen(false)}
-                className="font-mono text-[11px] text-[var(--on-band-muted)] hover:text-[var(--on-band)]"
-              >
-                close
-              </button>
-            </div>
-            <textarea
-              value={instruction}
-              onChange={(e) => setInstruction(e.target.value)}
-              rows={2}
-              maxLength={500}
-              disabled={tweaking}
-              placeholder="shorter questions · more SQL formulas · drop the Tableau section · add a worked example to every trap"
-              className="mt-2.5 w-full resize-none rounded-[9px] border border-[var(--band-line)] bg-[var(--band)] px-3 py-[11px] text-[13px] leading-[1.5] text-white outline-none placeholder:text-[var(--ink-500)] focus:border-[var(--signal-500)]"
-            />
-            <div className="mt-2.5 flex items-center justify-between gap-4">
-              <span className="font-mono text-[11px] text-[var(--ink-500)]">
-                re-runs the engine on your pool · usually 2–3 minutes
-              </span>
-              <button
-                type="button"
-                onClick={() => void applyTweak()}
-                disabled={!instruction.trim() || tweaking}
-                className="inline-flex h-9 items-center gap-2 rounded-[9px] bg-white px-4 text-[13px] font-semibold text-[var(--ink-900)] transition-[opacity,transform] duration-[160ms] active:scale-[0.98] disabled:opacity-40"
-              >
-                {tweaking && (
-                  <span aria-hidden className="h-3.5 w-3.5 animate-[cl-spin_800ms_linear_infinite] rounded-full border-2 border-[var(--ink-400)] border-t-transparent" />
-                )}
-                {tweaking ? "Rewriting…" : "Apply edit"}
-              </button>
-            </div>
-          </div>
+        {editorOpen && content && (
+          <EditChat
+            content={content}
+            files={(effectiveCtx.files ?? []).map((f) => f.name)}
+            pro={pro}
+            canUndo={undoStack.length > 0}
+            onFree={handleFree}
+            onAccept={acceptEdit}
+            onUndo={undoEdit}
+            onUpsell={() => {
+              setUpsellOpen(true);
+              setEditorOpen(false);
+            }}
+            onClose={() => setEditorOpen(false)}
+          />
         )}
 
         {upsellOpen && !pro && (
@@ -652,25 +647,21 @@ export default function ResultsPage() {
           <button
             type="button"
             onClick={() => {
-              if (pro) {
-                setEditorOpen((v) => !v);
-                setUpsellOpen(false);
-              } else {
-                setUpsellOpen((v) => !v);
-                setEditorOpen(false);
-              }
+              // Everyone gets the chat: show/hide/reorder are free. Pro gates content edits inside it.
+              setEditorOpen((v) => !v);
+              setUpsellOpen(false);
+              setTrayOpen(false);
             }}
             className="tap inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
               <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
             </svg>
-            Edit in your own words
-            {!pro && <span aria-hidden className="text-[var(--verified)]">✦</span>}
+            Edit with Clutch
           </button>
         </div>
         <div className="pointer-events-none font-mono text-[11px] text-[var(--ink-500)]">
-          order, show and presets are free &amp; instant · custom edits re-run the engine on your pool
+          order, show and presets are free &amp; instant · content edits come as a preview you accept or reject
         </div>
       </div>
 

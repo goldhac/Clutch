@@ -151,7 +151,14 @@ export default function GeneratePage() {
 
       const res = await fetch("/api/generate", { method: "POST", body: fd, signal: ctrl.signal });
       if (!res.ok) throw new Error((await res.text()) || `HTTP ${res.status}`);
-      const payload = (await res.json()) as { content: unknown; meta: unknown; warnings?: string[] };
+      const payload = (await res.json()) as { content: unknown; meta: unknown; warnings?: string[]; packText?: string };
+      try {
+        // Separate key: losing this (quota) only disables grounded "add" edits, never the sheet.
+        if (payload.packText) sessionStorage.setItem("clutch:pack", payload.packText);
+        else sessionStorage.removeItem("clutch:pack");
+      } catch {
+        sessionStorage.removeItem("clutch:pack");
+      }
       sessionStorage.setItem(
         "clutch:last",
         JSON.stringify({
