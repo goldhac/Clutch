@@ -59,6 +59,12 @@ export interface GenerateResult {
   warnings: string[];
 }
 
+function droppedWarning(dropped: string[]): string[] {
+  return dropped.length
+    ? [`${dropped.length} line${dropped.length === 1 ? "" : "s"} didn't meet our citation and accuracy rules and ${dropped.length === 1 ? "was" : "were"} left off the sheet.`]
+    : [];
+}
+
 export interface GenerateOptions {
   /** Override the default LLMClient (e.g. for tests or model swaps). */
   client?: LLMClient;
@@ -86,12 +92,13 @@ export async function generateSheet(
 
   const first = await client.generate({ system, user, temperature: 0.3 });
 
-  const firstParse = tryParseJsonAndValidate(first.text);
+  // Up to 3 bad items: drop them now rather than spend ~90 s re-rolling the whole sheet.
+  const firstParse = tryParseJsonAndValidate(first.text, 3);
   if (firstParse.ok) {
     const sanitized = sanitizeForTrust(firstParse.value, packMeta);
     return {
       content: sanitized.content,
-      warnings: sanitized.warnings,
+      warnings: [...sanitized.warnings, ...droppedWarning(firstParse.dropped)],
       meta: {
         model: first.model,
         inputTokens: first.usage.inputTokens,
@@ -121,7 +128,12 @@ explain or apologize — just emit the corrected JSON.`;
     temperature: 0.2,
   });
 
-  const secondParse = tryParseJsonAndValidate(second.text);
+  // After the retry, save the sheet if at all possible — then fall back to the first draft.
+  let secondParse = tryParseJsonAndValidate(second.text, 40);
+  if (!secondParse.ok) {
+    const fallback = tryParseJsonAndValidate(first.text, 40);
+    if (fallback.ok) secondParse = fallback;
+  }
   if (!secondParse.ok) {
     throw new EngineError(
       `Engine output failed validation after retry: ${secondParse.error}`,
@@ -132,7 +144,7 @@ explain or apologize — just emit the corrected JSON.`;
   const sanitized = sanitizeForTrust(secondParse.value, packMeta);
   return {
     content: sanitized.content,
-    warnings: sanitized.warnings,
+    warnings: [...sanitized.warnings, ...droppedWarning(secondParse.dropped)],
     meta: {
       model: second.model,
       inputTokens: (first.usage.inputTokens ?? 0) + (second.usage.inputTokens ?? 0),
@@ -275,10 +287,20 @@ the schema's fields — no extra keys. Do not explain or apologize.`,
 }
 
 type ParseResult =
-  | { ok: true; value: SheetContent }
+  | { ok: true; value: SheetContent; dropped: string[] }
   | { ok: false; error: string };
 
-function tryParseJsonAndValidate(raw: string): ParseResult {
+/** A salvaged sheet must keep at least this share of the items the model wrote. */
+const SALVAGE_MIN_KEPT = 0.6;
+
+/**
+ * @param maxDrop  How many individually-invalid items may be dropped to save the
+ *   sheet (0 = strict). One bad trap or question used to throw away the whole
+ *   sheet after two ~90 s model calls — a user waited 204 s for a 422 on
+ *   2026-09-17. An item that fails a rule is removed, never loosened: the sheet
+ *   that ships still passes every rule.
+ */
+function tryParseJsonAndValidate(raw: string, maxDrop = 0): ParseResult {
   // Strip code fences if the model added them despite being told not to.
   const cleaned = raw
     .trim()
@@ -321,6 +343,38 @@ function tryParseJsonAndValidate(raw: string): ParseResult {
       result = safeParseSheetContent(parsed);
     }
   }
+  const droppedItems: string[] = [];
+  if (!result.success && maxDrop > 0 && parsed && typeof parsed === "object") {
+    const root = parsed as Record<string, unknown>;
+    const countItems = () =>
+      Object.values(root).reduce<number>((n, v) => n + (Array.isArray(v) ? v.length : 0), 0);
+    const before = countItems();
+    // Issues at <array>.<index>.… are item-level; anything else is structural and not salvageable.
+    const bad = new Map<string, Set<number>>();
+    let structural = false;
+    for (const issue of result.error.issues) {
+      const [key, index] = issue.path;
+      if (typeof key === "string" && typeof index === "number" && Array.isArray(root[key])) {
+        if (!bad.has(key)) bad.set(key, new Set());
+        bad.get(key)!.add(index);
+      } else structural = true;
+    }
+    const badCount = [...bad.values()].reduce((n, set) => n + set.size, 0);
+    if (!structural && badCount > 0 && badCount <= maxDrop) {
+      for (const [key, indexes] of bad) {
+        const arr = root[key] as unknown[];
+        for (const i of [...indexes].sort((a, b) => b - a)) {
+          droppedItems.push(`${key}[${i}]: ${result.error.issues.find((x) => x.path[0] === key && x.path[1] === i)?.message ?? "invalid"}`);
+          arr.splice(i, 1);
+        }
+      }
+      const retry = safeParseSheetContent(parsed);
+      if (retry.success && countItems() >= before * SALVAGE_MIN_KEPT) {
+        console.warn(`[engine] salvaged sheet by dropping ${droppedItems.length} item(s): ${droppedItems.join(" | ").slice(0, 600)}`);
+        result = retry;
+      }
+    }
+  }
   if (!result.success) {
     // Include the OFFENDING VALUE, not just the path. "traps.5.text is
     // bad" gives the model nothing to work with on retry; quoting the
@@ -344,7 +398,7 @@ function tryParseJsonAndValidate(raw: string): ParseResult {
       .join("\n");
     return { ok: false, error: lines };
   }
-  return { ok: true, value: result.data };
+  return { ok: true, value: result.data, dropped: droppedItems };
 }
 
 /**

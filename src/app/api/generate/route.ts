@@ -123,6 +123,8 @@ export async function POST(req: NextRequest) {
     return badRequest("upload at least one file");
   }
 
+  const started = Date.now();
+  const packSummary = pack.map((f) => `${f.tag}:${f.filename}(${f.text.length}c)`).join(", ");
   try {
     const result = await generateSheet({
       pack,
@@ -131,6 +133,10 @@ export async function POST(req: NextRequest) {
       priority,
       courseContext: { code: courseCode, professor },
     });
+    console.log(
+      `[/api/generate] 200 in ${((Date.now() - started) / 1000).toFixed(0)}s · retried=${result.meta.retried} · ` +
+        `warnings=${result.warnings.length} · ${packSummary}`,
+    );
     return Response.json({
       content: result.content,
       meta: result.meta,
@@ -138,21 +144,27 @@ export async function POST(req: NextRequest) {
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),
     });
   } catch (e) {
+    const secs = ((Date.now() - started) / 1000).toFixed(0);
     if (e instanceof EngineError) {
-      return new Response(e.message, {
-        status: 422,
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      });
+      // The technical reason goes to the log; the student gets words they can act on.
+      console.error(`[/api/generate] 422 after ${secs}s · ${packSummary}\n${e.message.slice(0, 2000)}`);
+      return new Response(
+        "We couldn't build a sheet from these files this time. Nothing was saved and no credit was used. " +
+          "Your files are still here, so please try again. If it happens twice, try removing the largest file.",
+        { status: 422, headers: { "Content-Type": "text/plain; charset=utf-8" } },
+      );
     }
-    console.error("[/api/generate] error:", e);
+    console.error(`[/api/generate] 500 after ${secs}s · ${packSummary}`, e);
     return new Response(
-      e instanceof Error ? e.message : String(e),
+      "Something went wrong on our side while building your sheet. Your files are still here, so please try again.",
       { status: 500, headers: { "Content-Type": "text/plain; charset=utf-8" } },
     );
   }
 }
 
 function badRequest(msg: string) {
+  // Every failure is logged: a 422 on 2026-09-17 left no trace of which rule failed.
+  console.warn(`[/api/generate] 400 ${msg}`);
   return new Response(msg, {
     status: 400,
     headers: { "Content-Type": "text/plain; charset=utf-8" },

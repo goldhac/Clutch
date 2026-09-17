@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AppChrome } from "@/components/ui";
 import type { Density } from "@/components/sheet";
 import { GeneratingOverlay } from "./GeneratingOverlay";
@@ -73,6 +73,15 @@ export default function GeneratePage() {
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const alertRef = useRef<HTMLDivElement>(null);
+
+  // A failed generation drops the student back on this form. The message used to sit only
+  // beside the Generate button, below the fold on a phone: she saw "nothing" (2026-09-17).
+  useEffect(() => {
+    if (!error) return;
+    alertRef.current?.scrollIntoView({ block: "center", behavior: "smooth" });
+    alertRef.current?.focus({ preventScroll: true });
+  }, [error]);
 
   const n = files.length;
   const hasFiles = n > 0;
@@ -144,7 +153,13 @@ export default function GeneratePage() {
       router.push("/results");
     } catch (e) {
       if ((e as Error).name === "AbortError") return; // user cancelled — form state intact
-      setError(e instanceof Error ? e.message : String(e));
+      const msg = e instanceof Error ? e.message : String(e);
+      // fetch() rejects with a TypeError when the connection drops (browser-specific wording).
+      setError(
+        e instanceof TypeError || /failed to fetch|load failed|networkerror/i.test(msg)
+          ? "The connection dropped while we were building your sheet. Your files are still here, so please try again."
+          : msg.length > 400 ? "We couldn't build a sheet from these files this time. Your files are still here, so please try again." : msg,
+      );
       setSubmitting(false);
     }
   }
@@ -178,6 +193,21 @@ export default function GeneratePage() {
               : "One printable page, ranked by what is most likely to be tested. Drop the pack and we will read all of it."}
           </p>
         </header>
+
+        {error && (
+          <div
+            ref={alertRef}
+            role="alert"
+            tabIndex={-1}
+            className="mt-6 flex items-start gap-3 rounded-[12px] border border-[var(--conf-low)]/30 bg-[var(--conf-low-bg)] px-5 py-4 text-[14px] leading-[1.55] text-[var(--conf-low-deep)] outline-none"
+          >
+            <span aria-hidden className="mt-[3px] inline-block h-2 w-2 shrink-0 rounded-full bg-[var(--conf-low)]" />
+            <div>
+              <div className="font-semibold">Your sheet wasn&rsquo;t made</div>
+              <div className="mt-0.5">{error}</div>
+            </div>
+          </div>
+        )}
 
         <div className="mt-9 grid items-start gap-11 lg:grid-cols-[minmax(0,1fr)_340px]">
           {/* ── left: the pack ──────────────────────────────────────── */}
@@ -542,7 +572,7 @@ export default function GeneratePage() {
             {/* CTA */}
             <div>
               {error && (
-                <div role="alert" className="mb-3 rounded-[10px] border border-[var(--conf-low)]/25 bg-[var(--conf-low-bg)] px-4 py-3 text-[13px] leading-[1.55] text-[var(--conf-low-deep)]">
+                <div className="mb-3 rounded-[10px] border border-[var(--conf-low)]/25 bg-[var(--conf-low-bg)] px-4 py-3 text-[13px] leading-[1.55] text-[var(--conf-low-deep)]">
                   {error}
                 </div>
               )}
