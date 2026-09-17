@@ -7,7 +7,7 @@ import "@/renderer/sheet.css";
 import { useEffect, useMemo, useState } from "react";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
-import { EMPTY_CTX, type ScoreCtx } from "@/components/sheet/relevance";
+import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
 import { LinkButton, Wordmark, Toaster, toast, Modal, ModalOptions, OptionTile } from "@/components/ui";
 import { supabaseBrowser } from "@/lib/supabase/client";
 
@@ -31,6 +31,12 @@ interface Stash {
   tier?: "free" | "pro";
   savedAt?: string;
 }
+
+const VIEW_TOGGLES: { key: keyof ViewOptions; label: string }[] = [
+  { key: "traps", label: "Traps" },
+  { key: "sources", label: "Sources" },
+  { key: "tags", label: "Question tags" },
+];
 
 const FREE_PRESETS: { label: string; patch: Partial<ScoreCtx> }[] = [
   { label: "More formulas", patch: { priority: "formulas" } },
@@ -58,6 +64,8 @@ export default function ResultsPage() {
   const [activePreset, setActivePreset] = useState<string | null>(null);
   const [instruction, setInstruction] = useState("");
   const [editorOpen, setEditorOpen] = useState(false);
+  // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
+  const [dockOpen, setDockOpen] = useState(false);
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [tweaking, setTweaking] = useState(false);
   const [tweakError, setTweakError] = useState<string | null>(null);
@@ -182,6 +190,34 @@ export default function ResultsPage() {
     // pages needs the unlock). Everything else exports directly.
     if (maxLocked) setExportModal(true);
     else void runExport();
+  }
+
+  /** Display options are free and instant; saved with the sheet so a reload and the PDF match. */
+  function toggleView(key: keyof ViewOptions) {
+    setStash((prev) => {
+      if (!prev) return prev;
+      const current = viewOf(prev.ctx ?? EMPTY_CTX);
+      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), view: { ...current, [key]: !current[key] } } };
+      try {
+        sessionStorage.setItem("clutch:last", JSON.stringify(next));
+      } catch {
+        /* private mode / quota: the toggle still applies for this visit */
+      }
+      return next;
+    });
+  }
+
+  function setOrder(order: "course" | "priority") {
+    setStash((prev) => {
+      if (!prev) return prev;
+      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), order } };
+      try {
+        sessionStorage.setItem("clutch:last", JSON.stringify(next));
+      } catch {
+        /* private mode / quota: still applies for this visit */
+      }
+      return next;
+    });
   }
 
   function applyPreset(label: string, patch: Partial<ScoreCtx>) {
@@ -442,7 +478,15 @@ export default function ResultsPage() {
             ))}
           </span>
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
-          <span className="flex flex-wrap items-center justify-center gap-1.5">
+          <button
+            type="button"
+            aria-expanded={dockOpen}
+            onClick={() => setDockOpen((v) => !v)}
+            className="tap inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:hidden"
+          >
+            {dockOpen ? "Hide options" : "Options"}
+          </button>
+          <span className={(dockOpen ? "flex" : "hidden") + " flex-wrap items-center justify-center gap-1.5 sm:flex"}>
             {FREE_PRESETS.map((p) => (
               <button
                 key={p.label}
@@ -458,6 +502,51 @@ export default function ResultsPage() {
                 {p.label}
               </button>
             ))}
+          </span>
+          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
+          <span className={(dockOpen ? "flex" : "hidden") + " shrink-0 items-center gap-1.5 sm:flex"} role="group" aria-label="Topic order">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Order</span>
+            <span className="flex items-center rounded-[9px] bg-white/[0.08] p-[3px]">
+              {(["course", "priority"] as const).map((o) => (
+                <button
+                  key={o}
+                  type="button"
+                  aria-pressed={(effectiveCtx.order ?? "course") === o}
+                  onClick={() => setOrder(o)}
+                  className={
+                    "tap rounded-[6px] px-2.5 py-[4px] text-[12px] font-semibold transition-[background-color,color] duration-[160ms] " +
+                    ((effectiveCtx.order ?? "course") === o
+                      ? "bg-white text-[var(--band)]"
+                      : "text-[var(--on-band-muted)] hover:text-[var(--on-band)]")
+                  }
+                >
+                  {o === "course" ? "Course" : "Priority"}
+                </button>
+              ))}
+            </span>
+          </span>
+          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
+          <span className={(dockOpen ? "flex" : "hidden") + " flex-wrap items-center justify-center gap-1.5 sm:flex"} role="group" aria-label="Show on the sheet">
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Show</span>
+            {VIEW_TOGGLES.map((t) => {
+              const on = viewOf(effectiveCtx)[t.key];
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  aria-pressed={on}
+                  onClick={() => toggleView(t.key)}
+                  className={
+                    "tap rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-[160ms] " +
+                    (on
+                      ? "border-white bg-white text-[var(--band)]"
+                      : "border-[var(--band-line)] text-[var(--on-band-muted)] hover:border-[var(--ink-500)] hover:text-[var(--on-band)]")
+                  }
+                >
+                  {t.label}
+                </button>
+              );
+            })}
           </span>
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
           <button
@@ -481,7 +570,7 @@ export default function ResultsPage() {
           </button>
         </div>
         <div className="pointer-events-none font-mono text-[11px] text-[var(--ink-500)]">
-          presets are free &amp; instant · custom edits re-run the engine on your pool
+          order, show and presets are free &amp; instant · custom edits re-run the engine on your pool
         </div>
       </div>
 

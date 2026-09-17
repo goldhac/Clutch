@@ -10,7 +10,8 @@ import type {
   Trap,
 } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
-import { filterForDensity } from "./tiers";
+import { applyView, filterForDensity } from "./tiers";
+import { courseOrder } from "./course-order";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 import { FormulaBlock } from "./FormulaBlock";
@@ -22,6 +23,8 @@ import {
   type ScoreCtx,
   type Scored,
   type Section,
+  viewClass,
+  viewOf,
 } from "./relevance";
 import { assignTopics } from "./topics-color";
 
@@ -69,7 +72,8 @@ export function TwoPageSheet({
   debug = false,
   lockBack = false,
 }: TwoPageSheetProps) {
-  const content = useMemo(() => filterForDensity(raw, "max"), [raw]);
+  const view = useMemo(() => viewOf(ctx), [ctx]);
+  const content = useMemo(() => applyView(filterForDensity(raw, "max"), view), [raw, view]);
   const topicAssign = useMemo(() => assignTopics(content), [content]);
 
   // Compose with an effectively infinite budget: we want the mix-aware
@@ -95,6 +99,12 @@ export function TwoPageSheet({
       for (const s of DISPLAY_ORDER) g[s].sort((a, b) => b.score - a.score);
     return groups;
   }, [allItems, content.topics.length, topicAssign]);
+
+  // Placement only: the fitter below picks what fits by score, whatever order groups render in.
+  const groupOrder = useMemo(
+    () => (ctx.order === "priority" ? content.topics.map((_, i) => i) : courseOrder(content.topics, ctx.files)),
+    [content.topics, ctx.order, ctx.files],
+  );
 
   const allIds = useMemo(() => new Set(allItems.map((i) => i.id)), [allItems]);
 
@@ -229,7 +239,8 @@ export function TwoPageSheet({
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };
-  }, [allIds, topicGroups]);
+    // view.sources / view.tags change line heights through CSS: re-measure.
+  }, [allIds, topicGroups, view.sources, view.tags, groupOrder]);
 
   const counts = {
     formulas: content.formulas.length,
@@ -244,12 +255,13 @@ export function TwoPageSheet({
     content.topics.length + counts.formulas + counts.concepts + counts.questions;
 
   return (
-    <div ref={rootRef} className="two-page">
+    <div ref={rootRef} className={`two-page${viewClass(view)}`}>
       <SheetPage
         pageNo={1}
         title={content.title}
         content={content}
         groups={topicGroups}
+        order={groupOrder}
         visible={page1Ids}
         topicAssign={topicAssign}
         totalRanked={totalRanked}
@@ -262,6 +274,7 @@ export function TwoPageSheet({
           title={`${content.title} — BACK`}
           content={content}
           groups={topicGroups}
+        order={groupOrder}
           visible={page2Ids}
           topicAssign={topicAssign}
           totalRanked={totalRanked}
@@ -313,6 +326,7 @@ function SheetPage({
   title,
   content,
   groups,
+  order,
   visible,
   topicAssign,
   totalRanked,
@@ -323,6 +337,8 @@ function SheetPage({
   title: string;
   content: SheetContent;
   groups: Groups;
+  /** Topic indices in display order. */
+  order: number[];
   visible: Set<string>;
   topicAssign: ReturnType<typeof assignTopics>;
   totalRanked: number;
@@ -369,7 +385,9 @@ function SheetPage({
         {pageNo === 1 && <ExamFormatStrip format={content.examFormat} />}
         {pageNo === 1 && <VerifiedPatternsBlock patterns={content.verifiedPatterns} />}
 
-        {groups.map((g, ti) => {
+        {order.map((ti) => {
+          const g = groups[ti];
+          if (!g) return null;
           const hasAny = DISPLAY_ORDER.some((s) => g[s].length > 0);
           if (!hasAny) return null;
           // The section (and its leaves) is ALWAYS in the DOM — the fit
@@ -414,7 +432,7 @@ function SheetPage({
 
       <footer className="sheet-foot">
         {content.formulas.length} formulas · {content.concepts.length} concepts ·{" "}
-        {content.traps.length} traps · {content.questions.length} questions ·{" "}
+        {content.traps.length > 0 && <>{content.traps.length} traps · </>}{content.questions.length} questions ·{" "}
         {verified} verified · MAX · {pageNo === 1 ? "FRONT" : "BACK"}
       </footer>
     </div>

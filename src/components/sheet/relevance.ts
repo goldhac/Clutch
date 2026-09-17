@@ -35,14 +35,51 @@ export type Section = "formulas" | "concepts" | "traps" | "questions" | "topics"
 export type ExamType = "conceptual" | "problem-solving" | "mixed";
 export type PriorityMode = "formulas" | "concepts" | "balanced";
 
+/**
+ * What the student chooses to SEE (issue #13). Free and instant: nothing here
+ * calls the engine. Hiding things frees room and the fitter, which measures the
+ * real page, refills it with the next-best items.
+ *
+ * Defaults are Gold's call (2026-09-17): traps, sources and question tags are
+ * all OFF until the student turns them on. The verified ★ and the confidence
+ * dot stay — they are the trust signals that cost no space.
+ */
+export interface ViewOptions {
+  /** Trap callouts and the ⚠ trap row inside formulas. */
+  traps: boolean;
+  /** The citation on each line ("Slide 14"). */
+  sources: boolean;
+  /** The MCQ / short / problem / T/F tag before each question. */
+  tags: boolean;
+}
+
+export const DEFAULT_VIEW: ViewOptions = { traps: false, sources: false, tags: false };
+
 export interface ScoreCtx {
   /** Uploaded files with their tags — drives source-authority scoring. */
   files: { name: string; tag: string }[];
   examType: ExamType;
   priority: PriorityMode;
+  /**
+   * Display options travel with the compose context because everything that
+   * renders a sheet — Results, the saved row, /api/pdf → /print — already
+   * carries ctx, so what the student sees is what they export.
+   */
+  view?: Partial<ViewOptions>;
+  /** Where topics sit (issue #12): in the order the course taught them (default), or by exam priority. */
+  order?: "course" | "priority";
 }
 
 export const EMPTY_CTX: ScoreCtx = { files: [], examType: "mixed", priority: "balanced" };
+
+export function viewOf(ctx?: ScoreCtx): ViewOptions {
+  return { ...DEFAULT_VIEW, ...(ctx?.view ?? {}) };
+}
+
+/** Root class names that switch citations and question tags off in CSS. */
+export function viewClass(view: ViewOptions): string {
+  return `${view.sources ? "" : " view-no-src"}${view.tags ? "" : " view-no-tags"}`;
+}
 
 /** A ranked item paired with its section + derived score + estimated height. */
 export interface Scored<T = unknown> {

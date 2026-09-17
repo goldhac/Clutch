@@ -4,7 +4,8 @@ import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { SheetContent } from "@/contract/sheet-content";
 import type { Concept, Formula, Question, SheetTable, Trap } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
-import { filterForDensity } from "./tiers";
+import { applyView, filterForDensity } from "./tiers";
+import { courseOrder } from "./course-order";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 import { FormulaBlock } from "./FormulaBlock";
@@ -18,6 +19,8 @@ import {
   type ScoreCtx,
   type Scored,
   type Section,
+  viewClass,
+  viewOf,
 } from "./relevance";
 import { assignTopics } from "./topics-color";
 
@@ -60,11 +63,17 @@ export function FittedSheet({
   ctx = EMPTY_CTX,
   debug = false,
 }: FittedSheetProps) {
-  const content = useMemo(() => filterForDensity(raw, density), [raw, density]);
+  const view = useMemo(() => viewOf(ctx), [ctx]);
+  const content = useMemo(() => applyView(filterForDensity(raw, density), view), [raw, density, view]);
 
   // Topic color assignment — the KEY the reader scans. Each block is tinted
   // by its topic; the legend maps color → topic name.
   const topicAssign = useMemo(() => assignTopics(content), [content]);
+  // Placement only: the fitter picks what fits by score, whatever order groups render in.
+  const groupOrder = useMemo(
+    () => (ctx.order === "priority" ? content.topics.map((_, i) => i) : courseOrder(content.topics, ctx.files)),
+    [content.topics, ctx.order, ctx.files],
+  );
 
   // Compose once (pure/deterministic). The estimated budget just needs to
   // land near the page — the measure pass corrects the rest.
@@ -217,7 +226,8 @@ export function FittedSheet({
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", onResize);
     };
-  }, [topicGroups, benchIds, density, cols5]);
+    // view.sources / view.tags change line heights through CSS: re-measure.
+  }, [topicGroups, benchIds, density, cols5, view.sources, view.tags, groupOrder]);
 
   const hide = (id: string) => hiddenIds.has(id);
   const groupVisible = (g: Record<Section, Scored[]>) =>
@@ -238,7 +248,7 @@ export function FittedSheet({
   const colsClass = `cols${density === "max" && cols5 ? " cols-5" : ""}`;
 
   return (
-    <div ref={rootRef} className={`sheet density-${density}`}>
+    <div ref={rootRef} className={`sheet density-${density}${viewClass(view)}`}>
       <header className="sheet-head">
         <div className="sheet-head-main">
           <h1>{content.title}</h1>
@@ -280,8 +290,9 @@ export function FittedSheet({
          * consumed a column for content the reader already has. */}
 
 
-        {topicGroups.map((g, ti) => {
-          if (!groupVisible(g)) return null;
+        {groupOrder.map((ti) => {
+          const g = topicGroups[ti];
+          if (!g || !groupVisible(g)) return null;
           const tk = topicAssign.topicColor(ti);
           const topicName = content.topics[ti]?.name;
           return (

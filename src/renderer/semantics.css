@@ -116,6 +116,16 @@
   font-size: 0.88em;
 }
 
+/* ── View options (issue #13): the student may switch these off. The class sits on
+      .sheet itself (single page) or on the .two-page wrapper around both sheets. ── */
+.view-no-src .sheet .src,
+.view-no-src .sheet .src-line,
+.sheet.view-no-src .src,
+.sheet.view-no-src .src-line { display: none; }
+/* One class more specific than `.sheet .qq .kind` in sheet.css, which sets display. */
+.view-no-tags .sheet .qq .kind,
+.sheet.view-no-tags .qq .kind { display: none; }
+
 /* ── Code + monospace ────────────────────────────────────────────────── */
 .sheet code,
 .sheet pre {

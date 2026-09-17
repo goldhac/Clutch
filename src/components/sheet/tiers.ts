@@ -51,6 +51,19 @@ function byRank<T extends Ranked>(items: T[]): T[] {
  * wide 2-col layout has no room for — the ranked formulas/concepts/
  * traps/questions still overfill and clip.
  */
+/**
+ * Traps are removed from the DATA (not hidden in CSS) so the composer and the
+ * fitter never reserve room for them. Sources and tags are CSS-only.
+ */
+export function applyView(content: SheetContent, view: { traps: boolean }): SheetContent {
+  if (view.traps) return content;
+  return {
+    ...content,
+    traps: [],
+    formulas: content.formulas.map((f) => (f.trap ? { ...f, trap: undefined } : f)),
+  };
+}
+
 export function filterForDensity(content: SheetContent, density: Density): SheetContent {
   const essentials = density === "essentials";
   return {
