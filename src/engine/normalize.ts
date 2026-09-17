@@ -48,13 +48,25 @@ export interface NormalizeReport {
   confDowngraded: number;
   kindsFilled: number;
   trapKeysRemoved: number;
+  /** Sections the model left out because the course has none (e.g. no formulas in a healthcare course). */
+  sectionsFilled: number;
 }
 
 /** Mutates `draft` in place. Safe on anything: non-objects and odd shapes are left alone. */
 export function normalizeDraft(draft: unknown): NormalizeReport {
-  const report: NormalizeReport = { confRespelled: 0, confDowngraded: 0, kindsFilled: 0, trapKeysRemoved: 0 };
+  const report: NormalizeReport = { confRespelled: 0, confDowngraded: 0, kindsFilled: 0, trapKeysRemoved: 0, sectionsFilled: 0 };
   if (!draft || typeof draft !== "object") return report;
   const root = draft as Record<string, unknown>;
+
+  // "This course has no formulas" arrives as a missing (or null) key, and the contract wants a
+  // list. Seen on production 2026-09-17: a healthcare pack paid a whole 80 s retry for it.
+  // Only on a whole sheet (it has topics) — never topics or questions, whose absence means a
+  // truncated draft, which should still fail.
+  if (Array.isArray(root.topics)) {
+    for (const key of ["formulas", "concepts", "traps"]) {
+      if (root[key] === undefined || root[key] === null) { root[key] = []; report.sectionsFilled++; }
+    }
+  }
 
   for (const key of RANKED) {
     const arr = root[key];
