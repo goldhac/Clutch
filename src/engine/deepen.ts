@@ -14,6 +14,7 @@
  * The type size and the 7 columns are the product; they never change to fill space.
  */
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
+import { checkClaims } from "./claims-check";
 import { applyOps, ITEM_SCHEMA, labelOf, type EditOp, type EditSection } from "./edit";
 import { defaultGeminiClient, GEMINI_FLASH } from "./gemini-client";
 import type { LLMClient } from "./llm-client";
@@ -192,6 +193,8 @@ export interface DeepenResult {
   practice?: number;
   /** Still short of the target after everything honest was tried. */
   short?: boolean;
+  /** Lines the claims check refused (issue #17). */
+  unverified?: number;
 }
 
 /** How many lines of THIS sheet's size the pack can honestly support. */
@@ -324,6 +327,8 @@ type DeepenOpts = {
   packText?: string; files?: string[]; examFormat?: ExamFormat; target?: number; client?: LLMClient;
   /** Traps are showing, so they take space too. */
   countTraps?: boolean;
+  /** Skip the claims check (evals, offline tests). Never in production. */
+  verify?: false;
 };
 
 /**
@@ -498,6 +503,62 @@ export async function deepenPool(content: SheetContent, opts: DeepenOpts = {}): 
   const gap = wanted - count(total.proposed);
   if (!early && gap >= MIN_DEFICIT && practiceRoom(total.proposed) >= 4) {
     addPractice(await practiceRound(total.proposed, opts, Math.min(gap, practiceRoom(total.proposed))).catch(() => null));
+  }
+
+  // ── The claims check: nothing goes on the sheet that the source does not say (issue #17) ──
+  // Measured on scripts/evals/claims: 100% recall on 28 planted wrong lines, ~9% false alarms.
+  // A dropped true line costs a little space; a confident wrong one costs the student marks.
+  if (opts.verify !== false && total.ops.length && opts.packText) {
+    // What is actually being ASSERTED. A question asserts nothing; its ANSWER does, and the
+    // question is context for it. A trap asserts its correction. Checking the whole item as one
+    // string made the checker refuse 99 of 112 good lines: it was reading interrogatives as claims.
+    const claimText = (o: EditOp): string => {
+      const it = (o.item ?? {}) as Record<string, string | undefined>;
+      const clean = (t: string) => t.replace(/\s+/g, " ").trim();
+      if (o.section === "questions") return clean(`${it.a ?? ""}${it.q ? ` (in answer to: ${it.q})` : ""}`);
+      if (o.section === "traps") return clean(it.text ?? "");
+      if (o.section === "concepts") return clean(`${it.term ?? ""}: ${it.def ?? ""}`);
+      if (o.section === "formulas") return clean(`${it.name ?? ""}: ${it.formula ?? ""}. ${it.when ?? ""}`);
+      return clean(textOf(o.item));
+    };
+    // Index every op, so the verdicts map back to exactly the ops that were checked.
+    const checked = total.ops.map((op, index) => ({ op, index })).filter(({ op }) => op.op === "add" && claimText(op).length > 30);
+    if (checked.length) {
+      try {
+        // Practice lines were built on the sheet's own lines: those count as source here.
+        const sheetLines = [...content.concepts, ...content.formulas, ...content.questions, ...(content.tables ?? [])]
+          .map((it) => textOf(it)).join("\n");
+        const verdicts = await checkClaims(
+          checked.map(({ index }, i) => ({ id: String(i), text: claimText(total.ops[index]) })),
+          `${opts.packText}\n\n===== ALREADY ON THE SHEET =====\n${sheetLines}`,
+          { client: opts.client },
+        );
+        const refusedIndexes = new Set(
+          verdicts.filter((v) => !v.supported).map((v) => checked[Number(v.id)]?.index).filter((i): i is number => i !== undefined),
+        );
+        if (refusedIndexes.size) {
+          const practiceFrom = total.ops.length - (total.practice ?? 0); // practice ops were appended last
+          const survivors = total.ops.filter((_, i) => !refusedIndexes.has(i));
+          const whole = safeParseSheetContent(applyOps({ ...content, figures: undefined }, survivors));
+          if (whole.success) {
+            total = {
+              ...total,
+              ops: survivors,
+              proposed: { ...whole.data, figures: content.figures },
+              practice: (total.practice ?? 0) - [...refusedIndexes].filter((i) => i >= practiceFrom).length,
+              unverified: refusedIndexes.size,
+              dropped: [
+                ...total.dropped,
+                ...verdicts.filter((v) => !v.supported).map((v) =>
+                  `claims check: ${v.note.slice(0, 90)} — "${claimText(total.ops[checked[Number(v.id)].index]).slice(0, 70)}"`),
+              ],
+            };
+          }
+        }
+      } catch {
+        /* the checker itself failed: the per-line guards still stand */
+      }
+    }
   }
 
   total.before = count(content);

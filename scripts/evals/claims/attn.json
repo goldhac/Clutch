@@ -1,0 +1,474 @@
+{
+ "source": "attn.source.txt",
+ "note": "Labelled by hand against the source text on 2026-09-18. Seeded with the misses recorded in scripts/phase0/FINDINGS.md. ADD every new miss found in production here. Includes the shapes the fill actually produces: answers (claim = the answer, question as context), traps, concept definitions.",
+ "lines": [
+  {
+   "id": "s01",
+   "label": "supported",
+   "kind": "fact",
+   "text": "Rare and unknown words are the main source of difficulty for neural machine translation."
+  },
+  {
+   "id": "s02",
+   "label": "supported",
+   "kind": "fact",
+   "text": "An unknown word has no embedding, so the decoder cannot generate it."
+  },
+  {
+   "id": "s03",
+   "label": "supported",
+   "kind": "fact",
+   "text": "A single-layer encoder-decoder with attention performs roughly on par with phrase-based MT."
+  },
+  {
+   "id": "s04",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The <unk> token is part of the vocabulary, so the decoder can predict a probability for it."
+  },
+  {
+   "id": "s05",
+   "label": "supported",
+   "kind": "cause",
+   "text": "A decoder can only generate words from a fixed vocabulary because it outputs a fixed-size probability distribution."
+  },
+  {
+   "id": "s06",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The most commonly used version of the copy network is called the pointer generator."
+  },
+  {
+   "id": "s07",
+   "label": "supported",
+   "kind": "fact",
+   "text": "p_gen is a learned probability that controls how much the generate and copy modes contribute to the current decision."
+  },
+  {
+   "id": "s08",
+   "label": "supported",
+   "kind": "fact",
+   "text": "If a word is unknown, its generation probability in the fixed vocabulary is 0."
+  },
+  {
+   "id": "s09",
+   "label": "supported",
+   "kind": "fact",
+   "text": "If the word is not in the input, its copy probability from the pointer network is 0."
+  },
+  {
+   "id": "s10",
+   "label": "supported",
+   "kind": "fact",
+   "text": "Encoder-decoder models often have problems with repetition and deletion."
+  },
+  {
+   "id": "s11",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The coverage vector at the current decoder step is the sum of the attention weight vectors from all previous steps."
+  },
+  {
+   "id": "s12",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The coverage vector idea comes from phrase-based MT, where it is obvious which words have been translated."
+  },
+  {
+   "id": "s13",
+   "label": "supported",
+   "kind": "fact",
+   "text": "A term is added to the loss function that penalizes the network for attending to the same position multiple times."
+  },
+  {
+   "id": "s14",
+   "label": "supported",
+   "kind": "fact",
+   "text": "For attention in an encoder-decoder, the query is the decoder hidden state, and the keys and values are the encoder hidden states."
+  },
+  {
+   "id": "s15",
+   "label": "supported",
+   "kind": "fact",
+   "text": "Self attention is also called intra-attention."
+  },
+  {
+   "id": "s16",
+   "label": "supported",
+   "kind": "cause",
+   "text": "In 'The happy cat purrs', 'cat' is relevant to the query 'purrs' because cats purr, and also because it is singular like 'purrs'."
+  },
+  {
+   "id": "s17",
+   "label": "supported",
+   "kind": "fact",
+   "text": "Each attention head can learn to focus on a different type of relevance."
+  },
+  {
+   "id": "s18",
+   "label": "supported",
+   "kind": "cause",
+   "text": "Reducing the number of dimensions in the query, key and value makes the network smaller and less expensive."
+  },
+  {
+   "id": "s19",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The Transformer is a sequence-to-sequence model that uses only attention and feed-forward layers."
+  },
+  {
+   "id": "s20",
+   "label": "supported",
+   "kind": "number",
+   "text": "The Transformer encoder repeats its attention block for a total of 6 runs."
+  },
+  {
+   "id": "s21",
+   "label": "supported",
+   "kind": "cause",
+   "text": "Because there is no recurrence in the Transformer, word order information is lost and has to be added back with position embeddings."
+  },
+  {
+   "id": "s22",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The Transformer's autoregressive decoding is slower than RNN decoding and can't be parallelized."
+  },
+  {
+   "id": "s23",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The Transformer beats both phrase-based and RNN machine translation."
+  },
+  {
+   "id": "s24",
+   "label": "supported",
+   "kind": "number",
+   "text": "The Transformer was introduced by Vaswani et al. in 2017."
+  },
+  {
+   "id": "s25",
+   "label": "supported",
+   "kind": "fact",
+   "text": "True or False: in self attention the query, key and value all come from the same source. TRUE."
+  },
+  {
+   "id": "s26",
+   "label": "supported",
+   "kind": "cause",
+   "text": "In a transformer none of the q, k and v depend on each other, so the attention calculations can be done in parallel."
+  },
+  {
+   "id": "s27",
+   "label": "supported",
+   "kind": "fact",
+   "text": "Deletion means skipping some part of the input and not generating anything for it."
+  },
+  {
+   "id": "s28",
+   "label": "supported",
+   "kind": "fact",
+   "text": "The transformer uses dot product scoring, normalized by the key embedding size."
+  },
+  {
+   "id": "u01",
+   "label": "unsupported",
+   "kind": "cause",
+   "text": "Copying words from the input is what created the repetition problem.",
+   "why": "REAL MISS r2-r4: the lecture says encoder-decoders in general repeat"
+  },
+  {
+   "id": "u02",
+   "label": "unsupported",
+   "kind": "cause",
+   "text": "The copy network solved unknown words, but it introduced a new problem: the decoder starts repeating itself.",
+   "why": "REAL MISS: topic order is not causation"
+  },
+  {
+   "id": "u03",
+   "label": "unsupported",
+   "kind": "cause",
+   "text": "Because the pointer network keeps pointing at the same input word, the model repeats phrases.",
+   "why": "invented cause"
+  },
+  {
+   "id": "u04",
+   "label": "unsupported",
+   "kind": "cause",
+   "text": "Adding the copy mechanism leads to deletion, where parts of the input are skipped.",
+   "why": "invented cause"
+  },
+  {
+   "id": "u05",
+   "label": "unsupported",
+   "kind": "number",
+   "text": "A typical decoder vocabulary has 50,000 words.",
+   "why": "REAL MISS (NotebookLM): number nowhere in the lecture"
+  },
+  {
+   "id": "u06",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "When the decoder meets a word it has never seen, p_gen acts like a dial that turns to copy mode.",
+   "why": "REAL MISS (NotebookLM): p_gen is a learned probability; the lecture never says it responds to unseen words"
+  },
+  {
+   "id": "u07",
+   "label": "unsupported",
+   "kind": "number",
+   "text": "The model is 98% confident when it copies a name.",
+   "why": "REAL MISS: invented number"
+  },
+  {
+   "id": "u08",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "p_gen is a fixed hyperparameter chosen before training.",
+   "why": "contradiction: learned"
+  },
+  {
+   "id": "u09",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "If a word is unknown, its copy probability from the pointer network is 0.",
+   "why": "swapped: unknown -> GENERATION probability is 0"
+  },
+  {
+   "id": "u10",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "The coverage vector is the sum of the decoder hidden states from all previous steps.",
+   "why": "swapped entity: attention weight vectors"
+  },
+  {
+   "id": "u11",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "The coverage loss rewards the network for attending to the same position multiple times.",
+   "why": "reversed: penalizes"
+  },
+  {
+   "id": "u12",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "The coverage vector idea comes from information retrieval.",
+   "why": "swapped: coverage is from phrase-based MT; IR is queries/keys/values"
+  },
+  {
+   "id": "u13",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "For attention in an encoder-decoder, the query is the encoder hidden state and the keys are the decoder states.",
+   "why": "reversed"
+  },
+  {
+   "id": "u14",
+   "label": "unsupported",
+   "kind": "number",
+   "text": "The Transformer encoder repeats its attention block for a total of 12 runs.",
+   "why": "wrong number: 6"
+  },
+  {
+   "id": "u15",
+   "label": "unsupported",
+   "kind": "cause",
+   "text": "The Transformer's decoding is faster than RNN decoding because it runs in parallel.",
+   "why": "reversed: decoding is slower and cannot be parallelized"
+  },
+  {
+   "id": "u16",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "The Transformer is less sensitive to hyperparameter tuning than RNNs.",
+   "why": "reversed: more sensitive"
+  },
+  {
+   "id": "u17",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "The Transformer uses recurrence to keep track of word order.",
+   "why": "contradiction: no recurrence; position embeddings"
+  },
+  {
+   "id": "u18",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "In multi-head attention the feed forward layers increase the number of dimensions in the query, key and value.",
+   "why": "reversed: reduce"
+  },
+  {
+   "id": "u19",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "BERT is built from the Transformer encoder.",
+   "why": "true in the world, not in this lecture (BERT is only the next lecture's heading)"
+  },
+  {
+   "id": "u20",
+   "label": "unsupported",
+   "kind": "number",
+   "text": "Attention was first proposed by Bahdanau et al. in 2014.",
+   "why": "outside knowledge"
+  },
+  {
+   "id": "u21",
+   "label": "unsupported",
+   "kind": "number",
+   "text": "The Transformer uses 8 attention heads.",
+   "why": "outside knowledge: not in the lecture"
+  },
+  {
+   "id": "u22",
+   "label": "unsupported",
+   "kind": "cause",
+   "text": "In 'The happy cat purrs', 'the' is relevant to 'purrs' because it marks a singular noun.",
+   "why": "contradiction: 'The' is not relevant"
+  },
+  {
+   "id": "u23",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "The <unk> approach works well: 'My dog UNK is named after UNK UNK' is an acceptable output.",
+   "why": "contradiction: 'kind of lame'"
+  },
+  {
+   "id": "u24",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "Humans need to know the meaning of an out-of-vocabulary word in order to use it.",
+   "why": "reversed"
+  },
+  {
+   "id": "u25",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "Transformers perform worse than state-of-the-art RNN constituency parsers.",
+   "why": "contradiction: comparably"
+  },
+  {
+   "id": "u26",
+   "label": "unsupported",
+   "kind": "fact",
+   "text": "Deletion means generating the same word or phrase more than once.",
+   "why": "swapped definitions: that is repetition"
+  },
+  {
+   "id": "u27",
+   "label": "unsupported",
+   "kind": "cause",
+   "text": "Layer normalization is used in the Transformer because gradients vanish in deep networks.",
+   "why": "invented cause: the lecture says normalize, never why"
+  },
+  {
+   "id": "u28",
+   "label": "unsupported",
+   "kind": "number",
+   "text": "The pointer generator was introduced by See et al. in 2017.",
+   "why": "outside knowledge"
+  },
+  {
+   "id": "s29",
+   "label": "supported",
+   "kind": "answer",
+   "text": "The attention weights. (in answer to: When a decoder generates a word, how can we tell which input word it corresponds to?)"
+  },
+  {
+   "id": "s30",
+   "label": "supported",
+   "kind": "answer",
+   "text": "It is the sum of the attention weight vectors from all previous decoder steps. (in answer to: What is the coverage vector at the current decoder step?)"
+  },
+  {
+   "id": "s31",
+   "label": "supported",
+   "kind": "answer",
+   "text": "FALSE \u2014 the keys and values are the encoder hidden states, and the query is the decoder hidden state. (in answer to: True or False: in encoder-decoder attention the query is the encoder hidden state.)"
+  },
+  {
+   "id": "s32",
+   "label": "supported",
+   "kind": "answer",
+   "text": "Because it outputs a fixed-size probability distribution. (in answer to: Why can a decoder only generate words from a fixed vocabulary?)"
+  },
+  {
+   "id": "s33",
+   "label": "supported",
+   "kind": "answer",
+   "text": "6 runs. (in answer to: How many times is the attention block repeated in the Transformer?)"
+  },
+  {
+   "id": "s34",
+   "label": "supported",
+   "kind": "trap",
+   "text": "Thinking the Transformer's decoding is fast because the model is parallel is a mistake: its autoregressive decoding is slower than RNN decoding and can't be parallelized."
+  },
+  {
+   "id": "s35",
+   "label": "supported",
+   "kind": "trap",
+   "text": "Saying the <unk> approach handles unknown words well is wrong \u2014 the lecture calls it 'kind of lame'."
+  },
+  {
+   "id": "s36",
+   "label": "supported",
+   "kind": "concept",
+   "text": "Pointer network: the way of using attention where a_j, a probability distribution over the input words, is used to sample a word from the input."
+  },
+  {
+   "id": "u29",
+   "label": "unsupported",
+   "kind": "answer",
+   "text": "Because copying introduced repetition into the output. (in answer to: Why was the coverage vector needed?)",
+   "why": "invented cause \u2014 the lecture says encoder-decoders in general repeat"
+  },
+  {
+   "id": "u30",
+   "label": "unsupported",
+   "kind": "answer",
+   "text": "12 runs. (in answer to: How many times is the attention block repeated in the Transformer?)",
+   "why": "wrong number: 6"
+  },
+  {
+   "id": "u31",
+   "label": "unsupported",
+   "kind": "answer",
+   "text": "It is the sum of the decoder hidden states from all previous steps. (in answer to: What is the coverage vector?)",
+   "why": "swapped entity"
+  },
+  {
+   "id": "u32",
+   "label": "unsupported",
+   "kind": "answer",
+   "text": "Around 50,000 words. (in answer to: How large is the decoder's fixed vocabulary?)",
+   "why": "number not in the lecture"
+  },
+  {
+   "id": "u33",
+   "label": "unsupported",
+   "kind": "trap",
+   "text": "Students think the coverage loss penalizes attending to the same position twice \u2014 in fact it rewards it.",
+   "why": "reversed/contradicted"
+  },
+  {
+   "id": "u34",
+   "label": "unsupported",
+   "kind": "trap",
+   "text": "It is a myth that the Transformer needs position embeddings: its recurrence already encodes word order.",
+   "why": "reversed/contradicted"
+  },
+  {
+   "id": "u35",
+   "label": "unsupported",
+   "kind": "concept",
+   "text": "Layer normalization: applied after each sub-layer to stop gradients from vanishing in the 6-layer stack.",
+   "why": "invented reason"
+  },
+  {
+   "id": "u36",
+   "label": "unsupported",
+   "kind": "concept",
+   "text": "Scaled dot-product attention: the dot product is divided by the square root of 512, the model dimension in Vaswani et al.",
+   "why": "number not in the lecture"
+  }
+ ]
+}
