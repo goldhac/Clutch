@@ -60,6 +60,9 @@ const DENSITY_OPTS = [
   { value: "essentials" as const, label: "Essentials" },
 ];
 
+/** Last known account tier on this device, so the first paint is already the right layout. */
+const TIER_CACHE = "clutch:tier";
+
 export default function ResultsPage() {
   const [stash, setStash] = useState<Stash | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -78,23 +81,53 @@ export default function ResultsPage() {
   // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
   const [dockOpen, setDockOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
-  const [profileTier, setProfileTier] = useState<"free" | "pro">("free");
+  // null = not known yet. The sheet is NOT drawn until it is: free and Pro lay the pages out
+  // differently (Pro = one continuous flow), so drawing first as free made every Pro account
+  // watch the sheet re-lay itself out a few seconds in.
+  const [profileTier, setProfileTier] = useState<"free" | "pro" | null>(null);
 
   useEffect(() => {
     let cancelled = false;
+    const settle = (t: "free" | "pro") => {
+      if (cancelled) return;
+      setProfileTier(t);
+      try {
+        localStorage.setItem(TIER_CACHE, t);
+      } catch {
+        /* private mode: no cache, the wait below still applies */
+      }
+    };
+    // Last known tier on this device paints at once; the real one replaces it when it lands.
+    // Cosmetic only: /api/pdf and /api/edit decide entitlement on the server.
+    // Only while a sign-in cookie exists: signed out is free, with nothing to wait for.
+    const signedIn = document.cookie.split(";").some((c) => /^\s*sb-.*-auth-token/.test(c));
+    if (!signedIn) {
+      settle("free");
+      return;
+    }
+    try {
+      const cached = localStorage.getItem(TIER_CACHE);
+      if (cached === "pro" || cached === "free") setProfileTier(cached);
+    } catch {
+      /* ignore */
+    }
     const supabase = supabaseBrowser();
+    // getSession reads the cookie (no round trip); getUser would add a network call before the
+    // profile query even starts.
     supabase.auth
-      .getUser()
+      .getSession()
       .then(async ({ data }) => {
-        if (!data.user) return;
-        const { data: profile } = await supabase.from("profiles").select("tier").eq("id", data.user.id).single();
-        if (!cancelled && profile?.tier === "pro") setProfileTier("pro");
+        const uid = data.session?.user.id;
+        if (!uid) return settle("free");
+        const { data: profile } = await supabase.from("profiles").select("tier").eq("id", uid).single();
+        settle(profile?.tier === "pro" ? "pro" : "free");
       })
-      .catch(() => {
-        /* signed out or offline: stays free */
-      });
+      .catch(() => settle("free")); // signed out or offline
+    // Never hold the sheet hostage to a slow network.
+    const giveUp = setTimeout(() => setProfileTier((t) => t ?? "free"), 2500);
     return () => {
       cancelled = true;
+      clearTimeout(giveUp);
     };
   }, []);
   // Every accepted chat edit can be taken back (this visit).
@@ -171,7 +204,8 @@ export default function ResultsPage() {
     );
   }
 
-  if (!stash || !content) {
+  const tierPending = profileTier === null && !(process.env.NODE_ENV !== "production" && stash?.tier === "pro");
+  if (!stash || !content || tierPending) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[var(--paper)]">
         <div className="flex items-center gap-3 font-mono text-[12px] text-[var(--ink-500)]">

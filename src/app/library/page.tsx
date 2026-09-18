@@ -180,6 +180,11 @@ export default function LibraryPage() {
 
   async function signOut() {
     await supabaseBrowser().auth.signOut();
+    try {
+      localStorage.removeItem("clutch:tier"); // Results' cached layout tier belongs to the account
+    } catch {
+      /* ignore */
+    }
     window.location.reload();
   }
 
