@@ -16,7 +16,8 @@ import { supabaseServer } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-export const maxDuration = 120;
+// A fill is several model calls plus the claims check: measured at 60–90 s on a two-lecture pack.
+export const maxDuration = 240;
 
 const MAX_INSTRUCTION = 500;
 const AUTO_FILL = "auto fill";

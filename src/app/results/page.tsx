@@ -589,7 +589,7 @@ export default function ResultsPage() {
           <div className="mx-auto max-w-[1320px] px-4 pb-3 sm:px-7">
             <div role="status" className="flex items-center gap-[11px] rounded-[9px] border border-[var(--ink-150)] bg-[var(--paper)] px-3.5 py-3 text-[13px] leading-[1.55] text-[var(--ink-800)]">
               <span aria-hidden className="h-3.5 w-3.5 shrink-0 animate-[cl-spin_800ms_linear_infinite] rounded-full border-2 border-[var(--ink-300)] border-t-transparent" />
-              Filling the back page. Nothing already on the sheet is repeated. About 30 seconds.
+              Filling the back page. Every new line is checked against your files first, and nothing already on the sheet is repeated. About a minute.
             </div>
           </div>
         )}

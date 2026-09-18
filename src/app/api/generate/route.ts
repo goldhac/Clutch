@@ -22,7 +22,6 @@ import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
 import type { CroppedFigure } from "@/parse/figures";
 import { attachFigures } from "@/engine/attach-figures";
-import { deepenPool } from "@/engine/deepen";
 import { detectExamFormat } from "@/engine/detect-format";
 import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
 import { repairForFormat } from "@/engine/format-repair";
@@ -174,38 +173,18 @@ export async function POST(req: NextRequest) {
     // Diagrams ride along with the sheet; the student chooses which to place (issue #15).
     const packText = pack.map((f) => `===== ${f.filename} [${f.tag}] =====\n${f.text}`).join("\n\n").slice(0, 400_000);
     const fileNames = pack.map((f) => f.filename);
-    // Both sides of the sheet get filled: when the pool is short, mine the pack deeper per topic.
-    const fillWarnings: string[] = [];
-    let pool = result.content;
-    try {
-      // Traps are on by default only for True/False, where they take space like any other line.
-      const deep = await deepenPool(pool, { packText, files: fileNames, examFormat: format, countTraps: format === "true-false" });
-      pool = deep.proposed;
-      if (deep.ops.length || deep.short) {
-        console.warn(
-          `[/api/generate] deepen · ${deep.before}→${deep.after} lines · facts ${deep.ops.length - (deep.practice ?? 0)} · practice ${deep.practice ?? 0} · ` +
-            `dropped ${deep.dropped.length} · ${deep.seconds.toFixed(0)}s${deep.cappedBySource ? ` · source cap ${deep.sourceCap}` : ""}${deep.short ? " · STILL SHORT" : ""}`,
-        );
-      }
-      if (deep.short) {
-        // ~72 lines fill a page. Say what the student will actually see.
-        const howFull = deep.after < 90 ? "about one page" : "the front and part of the back";
-        fillWarnings.push(
-          `These files are short, so the sheet fills ${howFull}. We print what your files say, practice built on it, and never the same thing twice. ` +
-            "Add more material (slides, notes, a past exam) to fill the rest.",
-        );
-      }
-    } catch (e) {
-      console.error(`[/api/generate] deepen failed; shipping the first draft`, e);
-    }
-    // A format sheet must have the format's shape; patch it in a few seconds when it doesn't.
-    const shaped = await repairForFormat(pool, format, { packText, files: fileNames });
+    // The pool is NOT deepened here. It was, and generation + fill + claims check ran 241 s —
+    // past the 300 s gateway timeout, so a student got a 502 after five minutes (2026-09-18).
+    // The sheet comes back fast and fills ITSELF on the Results page (/api/edit mode "fill"),
+    // which is also what the student sees: the sheet appears, then both pages fill and keep
+    // filling as they edit.
+    const shaped = await repairForFormat(result.content, format, { packText, files: fileNames });
     if (shaped.repaired) console.warn(`[/api/generate] format repair · ${shaped.repaired}`);
     const content = attachFigures(shaped.content, packFigures);
     return Response.json({
       content,
       meta: result.meta,
-      warnings: [...ingestWarnings, ...result.warnings, ...fillWarnings],
+      warnings: [...ingestWarnings, ...result.warnings],
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),
       // The student's own text, so "Edit with Clutch" can ADD grounded lines later (issue #14).
       // Kept client-side for the session; capped to stay inside sessionStorage.
