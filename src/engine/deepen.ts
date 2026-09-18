@@ -52,7 +52,7 @@ const STOP = new Set(
   "which following about their there these those would could should where when what that this with from have been being into than then also only most more such each other some many does were will because while between under over after before true false".split(" "),
 );
 /** Hyphens split ("self-attention" and "self attention" must match); 6-letter stems fold plurals. */
-const stems = (t: string): string[] =>
+export const stems = (t: string): string[] =>
   (t.toLowerCase().match(/[a-z]{4,}/g) ?? []).filter((w) => !STOP.has(w)).map((w) => w.slice(0, 6));
 const TEXT_KEYS = ["term", "def", "q", "a", "name", "formula", "vars", "when", "ex", "title"] as const;
 const textOf = (item: unknown): string => {
@@ -67,7 +67,7 @@ const textOf = (item: unknown): string => {
  * Crude on purpose — it cannot prove a line true, but it reliably catches a line about
  * something the student's files never mention.
  */
-function groundingProblem(section: string, item: unknown, pack: Set<string>): string | null {
+export function groundingProblem(section: string, item: unknown, pack: Set<string>): string | null {
   const it = (item ?? {}) as Record<string, unknown>;
   const head = section === "concepts" ? it.term : section === "formulas" ? it.name : null;
   if (typeof head === "string") {
@@ -84,6 +84,39 @@ function groundingProblem(section: string, item: unknown, pack: Set<string>): st
   return null;
 }
 
+/**
+ * A wrong figure is the worst thing an exam sheet can carry, and word overlap cannot see it
+ * ("60% of adults" and "16% of adults" share every word). Every number in a NEW line that is
+ * specific enough to be wrong — two or more digits, a decimal, a percentage — must occur in the
+ * text the line was built from. Formulas are exempt: their digits are exponents and indices.
+ */
+const UNITS = ["zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+/** Slides write "Sixty percent"; a line that says "60%" is quoting them. Digits for every number word. */
+function spelledNumbers(text: string): string {
+  const out: string[] = [];
+  const re = new RegExp(`\\b(${TENS.filter(Boolean).join("|")})(?:[- ](${UNITS.slice(1, 10).join("|")}))?\\b|\\b(${UNITS.slice(10).join("|")})\\b`, "gi");
+  for (const m of text.matchAll(re)) {
+    if (m[1]) out.push(String(TENS.indexOf(m[1].toLowerCase()) * 10 + (m[2] ? UNITS.indexOf(m[2].toLowerCase()) : 0)));
+    else if (m[3]) out.push(String(UNITS.indexOf(m[3].toLowerCase())));
+  }
+  return out.join(" ");
+}
+
+export function numberProblem(section: string, item: unknown, sourceText: string): string | null {
+  if (section === "formulas") return null;
+  const source = `${sourceText.replace(/(\d),(?=\d{3})/g, "$1")} ${spelledNumbers(sourceText)}`;
+  const nums = textOf(item).replace(/(\d),(?=\d{3})/g, "$1").match(/\d+(?:\.\d+)?%?/g) ?? [];
+  for (const n of nums) {
+    const core = n.replace(/%$/, "");
+    const specific = core.replace(".", "").length >= 2 || n.endsWith("%") || core.includes(".");
+    if (!specific) continue;
+    // Whole-number match: "16" must not be satisfied by "2016" or "160".
+    if (!new RegExp(`(?<![\\d.])${core.replace(".", "\\.")}(?![\\d])`).test(source)) return `the number ${n} is not in your files`;
+  }
+  return null;
+}
+
 /** The words a line is ABOUT: its question or headline, not its answer. */
 const aboutOf = (section: string, item: unknown): Set<string> => new Set(stems(labelOfFull(section, item)));
 const labelOfFull = (section: string, item: unknown): string => {
@@ -92,7 +125,7 @@ const labelOfFull = (section: string, item: unknown): string => {
 };
 /** Same subject said another way: most of the smaller line's words are in the other one. */
 const PARAPHRASE = 0.75;
-function paraphrases(a: Set<string>, b: Set<string>): boolean {
+export function paraphrases(a: Set<string>, b: Set<string>): boolean {
   if (a.size < 3 || b.size < 3) return false;
   let shared = 0;
   for (const w of a) if (b.has(w)) shared++;
@@ -155,6 +188,17 @@ export interface DeepenResult {
   /** The pack is too short to fill two pages honestly; `sourceCap` is the line count it supports. */
   cappedBySource: boolean;
   sourceCap: number;
+  /** Lines added by the practice layer (derived from lines already on the sheet). */
+  practice?: number;
+  /** Still short of the target after everything honest was tried. */
+  short?: boolean;
+}
+
+/** How many lines of THIS sheet's size the pack can honestly support. */
+function sourceCapOf(content: SheetContent, packText: string): number {
+  const lines = [...content.formulas, ...content.concepts, ...content.questions, ...(content.tables ?? [])];
+  const avgChars = lines.length ? Math.max(60, lines.reduce((n, it) => n + textOf(it).length, 0) / lines.length) : 150;
+  return Math.floor((packText.length * SOURCE_RATIO) / avgChars);
 }
 
 async function deepenOnce(
@@ -166,9 +210,7 @@ async function deepenOnce(
   const none = (): DeepenResult => ({ ops: [], dropped: [], proposed: content, before, after: before, asked: 0, seconds: 0, cappedBySource: false, sourceCap: 0 });
   if (!opts.packText || content.topics.length === 0) return none();
   // How many lines of THIS sheet's size the pack can honestly support.
-  const lines = [...content.formulas, ...content.concepts, ...content.questions, ...(content.tables ?? [])];
-  const avgChars = lines.length ? Math.max(60, lines.reduce((n, it) => n + textOf(it).length, 0) / lines.length) : 150;
-  const sourceCap = Math.floor((opts.packText.length * SOURCE_RATIO) / avgChars);
+  const sourceCap = sourceCapOf(content, opts.packText);
   const wanted = opts.target ?? FILL_TARGET;
   const target = Math.min(wanted, sourceCap);
   const cappedBySource = sourceCap < wanted;
@@ -245,7 +287,7 @@ async function deepenOnce(
         dropped.push(`${section}: cites "${item.src.slice(0, 50)}", not one of the files — "${labelOf(section, item)}"`);
         continue;
       }
-      const ungrounded = groundingProblem(section, item, packStems);
+      const ungrounded = groundingProblem(section, item, packStems) ?? numberProblem(section, item, opts.packText!);
       if (ungrounded) { dropped.push(`${section}: ${ungrounded} — "${labelOf(section, item)}"`); continue; }
       const key = keyOf(section, item);
       if (seen.has(key)) { dropped.push(`${section}: repeats "${labelOf(section, item)}"`); continue; }
@@ -278,16 +320,142 @@ async function deepenOnce(
   return { ops, dropped, proposed: next, before, after: visibleLines(next), cappedBySource, sourceCap, asked: perTopic * content.topics.length, seconds: (Date.now() - t0) / 1000 };
 }
 
-type DeepenOpts = { packText?: string; files?: string[]; examFormat?: ExamFormat; target?: number; client?: LLMClient };
+type DeepenOpts = {
+  packText?: string; files?: string[]; examFormat?: ExamFormat; target?: number; client?: LLMClient;
+  /** Traps are showing, so they take space too. */
+  countTraps?: boolean;
+};
 
 /**
- * Up to MAX_ROUNDS passes. The second runs only when the first still left a real gap, and sees
- * the first round's lines as "already there", so nothing is said twice.
+ * PRACTICE LAYER — for when the files have no more facts to give (a thin pack).
+ * Practice questions and traps need no new source: each one TESTS a line the sheet already has.
+ * So they are held to a stricter rule than new facts — the line must carry the exact citation of
+ * the line it tests, and its words and numbers must come from that topic's lines or the pack.
+ * Capped at PRACTICE_RATIO questions per fact line: past that it is a quiz, not a reference sheet.
+ */
+const PRACTICE_RATIO = 2;
+const PRACTICE_SYSTEM = `
+You write PRACTICE for one topic of a student's exam reference sheet. You are given the topic's
+LINES (the facts already on the sheet, each with its citation) and how many items to write.
+
+Write questions an examiner could ask about THESE LINES, and a few traps (a tempting wrong belief
+about one of these lines, and why it is wrong). Use ONLY facts stated in the lines: the answer to
+every question must be readable off one of them. Never bring in outside knowledge, never invent a
+number. Do not repeat a question or trap the topic already has; come at the fact from a new angle
+(apply it, compare two lines, reverse it, give the consequence).
+
+ITEM SHAPES (no extra keys):
+- questions: {"topic","q","a","kind":"MCQ|short|problem|T/F","conf":"med"}   "a" is required
+- traps:     {"topic","text"}   text names the falsity: "X is FALSE because Y"
+"topic" is exactly the topic name given. Do NOT write a citation: give "line", the number of the
+LINE the item tests, and the sheet attaches that line's citation itself.
+
+Return JSON exactly: {"items":[{"section":"questions","line":3,"item":{…}}]}
+`.trim();
+
+async function practiceRound(
+  content: SheetContent,
+  opts: DeepenOpts,
+  want: number,
+): Promise<{ ops: EditOp[]; dropped: string[] }> {
+  const client = opts.client ?? defaultGeminiClient();
+  const dropped: string[] = [];
+  const byTopic = new Map<string, EditOp[]>();
+  const about: Record<"questions" | "traps", Set<string>[]> = {
+    questions: content.questions.map((q) => aboutOf("questions", q)),
+    traps: content.traps.map((t) => aboutOf("traps", t)),
+  };
+  const topics = content.topics
+    .map((topic) => {
+      const facts = [...content.concepts, ...content.formulas, ...(content.tables ?? [])].filter((it) => it.topic === topic.name);
+      return { topic, facts };
+    })
+    .filter((t) => t.facts.length > 0);
+  if (!topics.length) return { ops: [], dropped };
+  const perTopic = Math.min(24, Math.ceil((want * 1.5) / topics.length));
+
+  const settled = await Promise.allSettled(topics.map(async ({ topic, facts }) => {
+    const lines = facts.map((f, i) => `[${i + 1}] ${textOf(f).replace(/\s+/g, " ").trim()}`).join("\n");
+    const has = content.questions.filter((q) => q.topic === topic.name).map((q) => `- ${q.q}`).join("\n");
+    const user = [
+      `TOPIC: "${topic.name}"`,
+      `${formatRule(opts.examFormat)} About one item in five should be a trap.`,
+      `WRITE ${perTopic} ITEMS.`,
+      `LINES (the only facts you may use):\n${lines}`,
+      `QUESTIONS THE TOPIC ALREADY HAS (do not repeat):\n${has || "(none)"}`,
+    ].join("\n\n──────\n\n");
+    const res = await Promise.race([
+      client.generate({ system: PRACTICE_SYSTEM, user, model: GEMINI_FLASH, temperature: 0.4, maxOutputTokens: 8192 }),
+      new Promise<never>((_, reject) => setTimeout(() => reject(new Error("practice timed out")), 45_000)),
+    ]);
+    const cleaned = res.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
+    const parsed = JSON.parse(cleaned) as { items?: { section?: string; line?: number; item?: unknown }[] };
+    return { topic: topic.name, facts, items: Array.isArray(parsed.items) ? parsed.items : [] };
+  }));
+
+  for (const r of settled) {
+    if (r.status === "rejected") { dropped.push("a topic got no practice (call failed)"); continue; }
+    const factsText = r.value.facts.map((f) => textOf(f)).join(" ");
+    const allowed = new Set(stems(`${factsText} ${opts.packText ?? ""}`));
+    for (const raw of r.value.items) {
+      const section = raw.section as "questions" | "traps";
+      if (section !== "questions" && section !== "traps") { dropped.push(`practice: unknown section "${String(raw.section)}"`); continue; }
+      // The citation is not the model's to write: it is the citation of the line being tested.
+      const tested = typeof raw.line === "number" ? r.value.facts[raw.line - 1] : undefined;
+      if (!tested || !raw.item || typeof raw.item !== "object") { dropped.push(`practice ${section}: does not say which line it tests`); continue; }
+      const holder = { [section]: [{ ...(raw.item as Record<string, unknown>), src: tested.src, topic: r.value.topic }] } as Record<string, unknown[]>;
+      normalizeDraft(holder);
+      const first = holder[section][0];
+      if (first && typeof first === "object") delete (first as Record<string, unknown>).options;
+      const ok = ITEM_SCHEMA[section].safeParse(first);
+      if (!ok.success) { dropped.push(`practice ${section}: ${ok.error.issues[0]?.message ?? "invalid"}`); continue; }
+      const item = ok.data as { topic?: string; src: string };
+      const words = stems(textOf(item) + " " + String((item as { text?: string }).text ?? ""));
+      if (words.length >= 5 && words.filter((w) => allowed.has(w)).length / words.length < 0.6) { dropped.push(`practice ${section}: goes beyond the sheet's lines — "${labelOf(section, item)}"`); continue; }
+      const num = numberProblem(section, { ...item, a: `${(item as { a?: string }).a ?? ""} ${(item as { text?: string }).text ?? ""}` }, `${factsText} ${opts.packText ?? ""}`);
+      if (num) { dropped.push(`practice ${section}: ${num} — "${labelOf(section, item)}"`); continue; }
+      const mine = aboutOf(section, item);
+      if (about[section].some((o) => paraphrases(mine, o))) { dropped.push(`practice ${section}: says again "${labelOf(section, item)}"`); continue; }
+      about[section].push(mine);
+      const list = byTopic.get(r.value.topic) ?? [];
+      list.push({ op: "add", section, item, after: labelOf(section, item) });
+      byTopic.set(r.value.topic, list);
+    }
+  }
+  const ops: EditOp[] = [];
+  const keep = Math.ceil(want * KEEP_OVER);
+  for (let round = 0; ops.length < keep; round++) {
+    let took = false;
+    for (const list of byTopic.values()) if (round < list.length && ops.length < keep) { ops.push(list[round]); took = true; }
+    if (!took) break;
+  }
+  return { ops, dropped };
+}
+
+/**
+ * The ladder, cheapest and most certain first: new FACTS from the pack (up to MAX_ROUNDS, capped
+ * by the source), then PRACTICE derived from the sheet's own lines. Each step runs only if the
+ * one before left a real gap.
  */
 export async function deepenPool(content: SheetContent, opts: DeepenOpts = {}): Promise<DeepenResult> {
+  const t0 = Date.now();
+  const count = (c: SheetContent) => visibleLines(c) + (opts.countTraps ? c.traps.length : 0);
+  const wanted = opts.target ?? FILL_TARGET;
+  const practiceRoom = (c: SheetContent) =>
+    (c.concepts.length + c.formulas.length + (c.tables ?? []).length) * PRACTICE_RATIO - c.questions.length;
+
+  // The pack's length is known before any call: when it cannot carry the sheet to the target,
+  // practice (which needs only the lines already here) starts NOW, beside the facts round,
+  // instead of a minute later. Measured: 62 s in sequence.
+  const cap = opts.packText ? sourceCapOf(content, opts.packText) : 0;
+  const foreseen = wanted - Math.max(count(content), Math.min(wanted, cap));
+  const early = foreseen >= MIN_DEFICIT && practiceRoom(content) >= 4
+    ? practiceRound(content, opts, Math.min(foreseen, practiceRoom(content))).catch(() => null)
+    : null;
+
   let total = await deepenOnce(content, opts);
   for (let round = 1; round < MAX_ROUNDS; round++) {
-    const target = Math.min(opts.target ?? FILL_TARGET, total.sourceCap || Infinity);
+    const target = Math.min(wanted, total.sourceCap || Infinity);
     if (!total.ops.length || target - total.after < MIN_DEFICIT) break;
     const next = await deepenOnce(total.proposed, opts);
     if (!next.ops.length) break;
@@ -297,8 +465,44 @@ export async function deepenPool(content: SheetContent, opts: DeepenOpts = {}): 
       dropped: [...total.dropped, ...next.dropped],
       before: total.before,
       asked: total.asked + next.asked,
-      seconds: total.seconds + next.seconds,
     };
   }
+
+  const addPractice = (p: { ops: EditOp[]; dropped: string[] } | null) => {
+    if (!p?.ops.length) return;
+    // Practice written beside the facts round has not seen its questions: check again here.
+    const seen = total.proposed.questions.map((q) => aboutOf("questions", q));
+    const fresh = p.ops.filter((o) => {
+      if (o.section !== "questions") return true;
+      const mine = aboutOf("questions", o.item);
+      if (seen.some((other) => paraphrases(mine, other))) return false;
+      seen.push(mine);
+      return true;
+    });
+    const room = Math.max(0, Math.ceil((wanted - count(total.proposed)) * KEEP_OVER));
+    const kept = fresh.slice(0, room);
+    if (!kept.length) return;
+    const whole = safeParseSheetContent(applyOps({ ...total.proposed, figures: undefined }, kept));
+    if (!whole.success) return;
+    total = {
+      ...total,
+      ops: [...total.ops, ...kept],
+      dropped: [...total.dropped, ...p.dropped],
+      proposed: { ...whole.data, figures: content.figures },
+      practice: (total.practice ?? 0) + kept.length,
+    };
+  };
+  addPractice(early ? await early : null);
+
+  // Not foreseen (the facts round simply came back short): practice now.
+  const gap = wanted - count(total.proposed);
+  if (!early && gap >= MIN_DEFICIT && practiceRoom(total.proposed) >= 4) {
+    addPractice(await practiceRound(total.proposed, opts, Math.min(gap, practiceRoom(total.proposed))).catch(() => null));
+  }
+
+  total.before = count(content);
+  total.after = count(total.proposed);
+  total.short = wanted - total.after >= MIN_DEFICIT;
+  total.seconds = (Date.now() - t0) / 1000;
   return total;
 }

@@ -8,7 +8,7 @@
  */
 import { type NextRequest } from "next/server";
 import { safeParseSheetContent } from "@/contract/sheet-content";
-import { deepenPool } from "@/engine/deepen";
+import { deepenPool, FILL_TARGET } from "@/engine/deepen";
 import { proposeEdit } from "@/engine/edit";
 import { judgeEditLimit, judgeInMemory, type LimitVerdict } from "@/lib/edit-limit";
 import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
@@ -19,6 +19,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 120;
 
 const MAX_INSTRUCTION = 500;
+const AUTO_FILL = "auto fill";
+/** Automatic top-ups per user per day (each is ~$0.03 of Flash). */
+const AUTO_FILL_PER_DAY = 15;
 /** ~100k tokens of the student's own text is plenty to ground an edit. */
 const MAX_PACK_CHARS = 400_000;
 
@@ -29,11 +32,13 @@ export async function POST(req: NextRequest) {
   } catch {
     return new Response("body must be JSON", { status: 400 });
   }
-  const b = body as { content?: unknown; instruction?: unknown; packText?: unknown; files?: unknown; mode?: unknown; examFormat?: unknown };
+  const b = body as { content?: unknown; instruction?: unknown; packText?: unknown; files?: unknown; mode?: unknown; examFormat?: unknown; target?: unknown; auto?: unknown; countTraps?: unknown };
 
   // mode "fill": top the pool up from the pack so both pages fill (same gate, same limit, same preview).
   const fill = b.mode === "fill";
-  const instruction = fill ? "fill the back page" : typeof b.instruction === "string" ? b.instruction.trim() : "";
+  // The sheet topping itself up is not the student spending an edit: it has its own daily allowance.
+  const auto = fill && b.auto === true;
+  const instruction = auto ? AUTO_FILL : fill ? "fill the back page" : typeof b.instruction === "string" ? b.instruction.trim() : "";
   if (!instruction) return new Response("instruction required", { status: 400 });
   if (instruction.length > MAX_INSTRUCTION) {
     return new Response(`instruction too long (max ${MAX_INSTRUCTION} chars)`, { status: 400 });
@@ -59,7 +64,7 @@ export async function POST(req: NextRequest) {
     const dayAgo = new Date(Date.now() - 86_400_000).toISOString();
     const { data: recent, error: countErr } = await supabase
       .from("edit_events")
-      .select("created_at")
+      .select("created_at, instruction")
       .eq("user_id", uid)
       .neq("outcome", "limited")
       .gte("created_at", dayAgo)
@@ -70,8 +75,14 @@ export async function POST(req: NextRequest) {
       console.error(`[/api/edit] rate-limit read failed: ${countErr.message}`);
       return new Response("Edits are briefly unavailable. Nothing on your sheet changed. Please try again in a minute.", { status: 503 });
     }
-    const times = (recent ?? []).map((r) => new Date(r.created_at as string).getTime());
-    verdict = judgeEditLimit(times.filter((t) => Date.now() - t < 3_600_000), times.length);
+    const rows = (recent ?? []) as { created_at: string; instruction?: string }[];
+    const autoToday = rows.filter((r) => r.instruction === AUTO_FILL).length;
+    const times = rows.filter((r) => r.instruction !== AUTO_FILL).map((r) => new Date(r.created_at).getTime());
+    verdict = auto
+      ? autoToday >= AUTO_FILL_PER_DAY
+        ? { ok: false, message: "Automatic fills are done for today.", retryAfterS: 3600 }
+        : { ok: true }
+      : judgeEditLimit(times.filter((t) => Date.now() - t < 3_600_000), times.length);
   } else {
     verdict = judgeInMemory(req.headers.get("x-forwarded-for") ?? "local");
   }
@@ -94,17 +105,18 @@ export async function POST(req: NextRequest) {
   const started = Date.now();
   try {
     if (fill) {
-      const deep = await deepenPool(parsed.data, { packText, files, examFormat: typeof b.examFormat === "string" ? (b.examFormat as never) : undefined });
-      console.warn(`[/api/edit] fill · ${deep.before}→${deep.after} lines · dropped ${deep.dropped.length} · ${deep.seconds.toFixed(0)}s${deep.cappedBySource ? ` · capped at ${deep.sourceCap}` : ""}`);
+      // The client measures how many lines two pages hold in the current view; never below the default, never absurd.
+      const target = typeof b.target === "number" && Number.isFinite(b.target) ? Math.min(320, Math.max(FILL_TARGET, Math.round(b.target))) : undefined;
+      const deep = await deepenPool(parsed.data, { packText, files, target, countTraps: b.countTraps === true, examFormat: typeof b.examFormat === "string" ? (b.examFormat as never) : undefined });
+      console.warn(`[/api/edit] ${auto ? "auto-fill" : "fill"} · ${deep.before}→${deep.after} lines · facts ${deep.ops.length - (deep.practice ?? 0)} · practice ${deep.practice ?? 0} · dropped ${deep.dropped.length} · ${deep.seconds.toFixed(0)}s${deep.short ? " · still short" : ""}`);
       await record("proposed", deep.ops.length);
-      const reply = !packText
-        ? "This sheet was saved before Clutch kept your files' text, so I have nothing to draw new lines from. Generate it again to fill the back."
-        : deep.ops.length
-          ? `I found ${deep.ops.length} more lines in your files. Every one cites where it came from.`
-          : deep.cappedBySource
-            ? "Your files are short, and the sheet already says about as much as they do. Add more material to fill the back."
-            : "The sheet is already full.";
-      return Response.json({ reply, ops: deep.ops, dropped: [], proposed: deep.proposed });
+      const reply = deep.ops.length
+        ? `I added ${deep.ops.length} lines${deep.practice ? ` (${deep.practice} of them practice built on lines already here)` : ""}. Every one cites where it came from.`
+        : deep.short
+          ? "Your files are short, and the sheet already says what they say. Add more material to fill the rest."
+          : "The sheet is already full.";
+      // `exhausted`: the files have nothing more to give (or too little came back to be worth asking again).
+      return Response.json({ reply, ops: deep.ops, dropped: [], proposed: deep.proposed, exhausted: !!deep.short || deep.ops.length < 8 });
     }
     const p = await proposeEdit(parsed.data, instruction, { packText, files });
     console.warn(

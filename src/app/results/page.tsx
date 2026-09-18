@@ -4,7 +4,7 @@ import "@/renderer/density.css";
 import "@/renderer/semantics.css";
 import "@/renderer/sheet.css";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useRef } from "react";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
@@ -33,6 +33,8 @@ interface Stash {
   ctx?: ScoreCtx;
   tier?: "free" | "pro";
   savedAt?: string;
+  /** Set when the sheet was opened from My Sheets: the row this session edits. */
+  sheetId?: string;
 }
 
 const VIEW_TOGGLES: { key: "traps" | "tags" | "answers"; label: string }[] = [
@@ -62,6 +64,9 @@ const DENSITY_OPTS = [
 
 /** Last known account tier on this device, so the first paint is already the right layout. */
 const TIER_CACHE = "clutch:tier";
+/** Back page used less than this (0–1) → restock from the pack. */
+const AUTO_FILL_BELOW = 0.85;
+const AUTO_FILL_MAX = 3;
 
 export default function ResultsPage() {
   const [stash, setStash] = useState<Stash | null>(null);
@@ -77,7 +82,6 @@ export default function ResultsPage() {
   // Measured by the sheet itself: how much of the back page is used (null until the first fit).
   const [backFill, setBackFill] = useState<number | null>(null);
   const [chatAutoSend, setChatAutoSend] = useState<string | undefined>(undefined);
-  const [fillDismissed, setFillDismissed] = useState(false);
   // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
   const [dockOpen, setDockOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
@@ -135,6 +139,8 @@ export default function ResultsPage() {
   const [upsellOpen, setUpsellOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
+  // Content changed since the last save (edits, fills): Save becomes "Save changes" and updates the row.
+  const [dirty, setDirty] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -170,6 +176,7 @@ export default function ResultsPage() {
       }
       const parsed = JSON.parse(raw) as Stash;
       setStash(parsed);
+      if (parsed.sheetId) setSavedId(parsed.sheetId);
       if (parsed.density) setDensity(parsed.density);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -188,6 +195,94 @@ export default function ResultsPage() {
     }
     return result.data;
   }, [stash]);
+
+  // ── Auto-fill: the sheet keeps both sides full on its own ─────────────────────────────────
+  // The fitter reshapes instantly from the ranked bench on every toggle and edit. When the bench
+  // runs dry (an older sheet, a removed topic, quiz mode), this restocks it from the student's own
+  // files: no banner, no approval step — a note while it works, then "Added N lines · Undo".
+  // Bounded: it waits for the layout to settle, never runs while the chat is open (a pending
+  // proposal was computed against the current lines), stops when the files have nothing more to
+  // give or the student undoes it, and runs at most AUTO_FILL_MAX times a visit.
+  const [autoFill, setAutoFill] = useState<"idle" | "filling" | "off">("idle");
+  const autoFillRuns = useRef(0);
+  // Lines the fitter is showing right now; with backFill it says how many lines two pages hold in THIS view.
+  const fitLinesRef = useRef(0);
+  const stashRef = useRef(stash);
+  stashRef.current = stash;
+  const savedIdRef = useRef(savedId);
+  savedIdRef.current = savedId;
+  const canAutoFill =
+    density === "max" && !editorOpen && !!stash &&
+    (profileTier === "pro" || (process.env.NODE_ENV !== "production" && stash?.tier === "pro"));
+  useEffect(() => {
+    if (!canAutoFill || autoFill !== "idle" || backFill === null || backFill >= AUTO_FILL_BELOW) return;
+    if (autoFillRuns.current >= AUTO_FILL_MAX) return;
+    let pack: string | null = null;
+    try {
+      pack = sessionStorage.getItem("clutch:pack");
+    } catch {
+      pack = null; // without the files' text the fill can still build practice on the sheet's own lines
+    }
+    const timer = setTimeout(async () => {
+      const cur = stashRef.current;
+      const parsed = cur ? safeParseSheetContent(cur.content) : null;
+      if (!cur || !parsed?.success) return;
+      // Free and instant first: every sheet already carries ranked, cited traps, hidden by default
+      // only to save space. With space to spare they go on — unless the student chose otherwise.
+      if (cur.ctx?.view?.traps === undefined && cur.ctx?.examFormat !== "true-false" && parsed.data.traps.length > 0) {
+        setView((v) => ({ ...v, traps: true }));
+        return; // the refit reports the new fill; this effect runs again if room remains
+      }
+      autoFillRuns.current++;
+      setAutoFill("filling");
+      try {
+        const res = await fetch("/api/edit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mode: "fill",
+            auto: true,
+            countTraps: viewOf(cur.ctx ?? undefined).traps,
+            // Measured, not assumed: N lines cover (1 + backFill) / 2 of the two pages, so two full pages
+            // in this view (quiz mode, sources on…) hold N / that. Plus surplus for the fitter to choose from.
+            target: fitLinesRef.current > 0 ? Math.ceil((fitLinesRef.current / ((1 + (backFill ?? 0)) / 2)) * 1.12) : undefined,
+            content: { ...parsed.data, figures: undefined },
+            packText: pack ?? undefined,
+            files: (cur.ctx?.files ?? []).map((f: { name: string }) => f.name),
+            examFormat: cur.ctx?.examFormat,
+          }),
+        });
+        if (!res.ok) return setAutoFill("off"); // limit reached, provider busy: leave the sheet as it is
+        const p = (await res.json()) as { ops: unknown[]; proposed: SheetContent; exhausted?: boolean };
+        if (!p.ops?.length) return setAutoFill("off");
+        const before = cur.content;
+        const next = { ...p.proposed, figures: parsed.data.figures };
+        const persist = (c: unknown) => {
+          const id = savedIdRef.current;
+          if (!id) return;
+          // A sheet from My Sheets stays filled: the row is updated, never copied.
+          void supabaseBrowser().from("sheets").update({ content: c as Record<string, unknown> }).eq("id", id)
+            .then(({ error: e }) => { if (!e) setDirty(false); });
+        };
+        setUndoStack((u) => [...u.slice(-9), before]);
+        replaceContent(next);
+        persist(next);
+        toast(`Filled the back page · ${p.ops.length} lines added`, "check", {
+          label: "Undo",
+          onAction: () => {
+            setAutoFill("off"); // the student said no: do not fill again this visit
+            setUndoStack((u) => u.slice(0, -1));
+            replaceContent(before);
+            persist(before);
+          },
+        });
+        setAutoFill(p.exhausted ? "off" : "idle");
+      } catch {
+        setAutoFill("off");
+      }
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [canAutoFill, autoFill, backFill]);
 
   if (error) {
     return (
@@ -331,6 +426,7 @@ export default function ResultsPage() {
     setStash((prev) => {
       if (!prev) return prev;
       const next: Stash = { ...prev, content: nextContent };
+      setDirty(true);
       try {
         sessionStorage.setItem("clutch:last", JSON.stringify(next));
       } catch {
@@ -352,6 +448,7 @@ export default function ResultsPage() {
     if (last === undefined) return;
     setUndoStack((u) => u.slice(0, -1));
     replaceContent(last);
+    setAutoFill("off"); // never fight an undo by filling again
     toast("Edit undone");
   }
 
@@ -390,6 +487,16 @@ export default function ResultsPage() {
       } catch {
         packText = null;
       }
+      if (savedId) {
+        const { error: updErr } = await supabase
+          .from("sheets")
+          .update({ title: content.title, content: content as unknown as Record<string, unknown>, ctx: effectiveCtx as unknown as Record<string, unknown> })
+          .eq("id", savedId);
+        if (updErr) throw updErr;
+        setDirty(false);
+        toast("Changes saved");
+        return;
+      }
       const { data, error: insErr } = await supabase
         .from("sheets")
         .insert({
@@ -404,6 +511,7 @@ export default function ResultsPage() {
         .single();
       if (insErr) throw insErr;
       setSavedId(data.id);
+      setDirty(false);
       toast("Saved to My Sheets");
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
@@ -438,10 +546,10 @@ export default function ResultsPage() {
             <button
               type="button"
               onClick={() => void saveToLibrary()}
-              disabled={saving || !!savedId}
+              disabled={saving || (!!savedId && !dirty)}
               className="tap hidden h-[34px] items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-3.5 text-[13px] font-semibold text-[var(--ink-900)] transition-[background-color] duration-[160ms] hover:bg-[var(--ink-50)] disabled:opacity-60 sm:inline-flex"
             >
-              {savedId ? "Saved ✓" : saving ? "Saving…" : "Save"}
+              {saving ? "Saving…" : savedId ? (dirty ? "Save changes" : "Saved ✓") : "Save"}
             </button>
             <LinkButton href="/generate" variant="secondary" size="sm" className="tap hidden !h-[34px] sm:inline-flex">
               Make another
@@ -477,26 +585,11 @@ export default function ResultsPage() {
             </div>
           </div>
         )}
-        {density === "max" && pro && !editorOpen && !fillDismissed && backFill !== null && backFill < 0.8 && (
+        {autoFill === "filling" && (
           <div className="mx-auto max-w-[1320px] px-4 pb-3 sm:px-7">
-            <div className="flex flex-wrap items-center gap-[11px] rounded-[9px] border border-[var(--ink-150)] bg-[var(--paper)] px-3.5 py-3">
-              <div className="flex-1 text-[13px] leading-[1.55] text-[var(--ink-800)]">
-                The back page is {Math.round(backFill * 100)}% full. Clutch can pull more lines from your files to fill it. Nothing already on the sheet is repeated, and you approve the new lines first.
-              </div>
-              <button
-                type="button"
-                onClick={() => { setChatAutoSend("fill the back page"); setEditorOpen(true); }}
-                className="shrink-0 rounded-[7px] bg-[var(--ink-900)] px-3 py-1.5 text-[12.5px] font-medium text-[var(--paper)]"
-              >
-                Fill the back page
-              </button>
-              <button
-                type="button"
-                onClick={() => setFillDismissed(true)}
-                className="shrink-0 border-b border-[var(--ink-300)] font-mono text-[11px] text-[var(--ink-600)]"
-              >
-                dismiss
-              </button>
+            <div role="status" className="flex items-center gap-[11px] rounded-[9px] border border-[var(--ink-150)] bg-[var(--paper)] px-3.5 py-3 text-[13px] leading-[1.55] text-[var(--ink-800)]">
+              <span aria-hidden className="h-3.5 w-3.5 shrink-0 animate-[cl-spin_800ms_linear_infinite] rounded-full border-2 border-[var(--ink-300)] border-t-transparent" />
+              Filling the back page. Nothing already on the sheet is repeated. About 30 seconds.
             </div>
           </div>
         )}
@@ -522,7 +615,7 @@ export default function ResultsPage() {
             <div className="flex min-w-max justify-center">
               <div className="animate-[cl-rise_400ms_var(--ease-pop)]">
                 {density === "max" ? (
-                  <TwoPageSheet content={content} ctx={effectiveCtx} lockBack={!pro} onFit={(f) => setBackFill(f.backFill)} />
+                  <TwoPageSheet content={content} ctx={effectiveCtx} lockBack={!pro} onFit={(f) => { setBackFill(f.backFill); fitLinesRef.current = f.front + f.back; }} />
                 ) : (
                   <div className="shadow-[0_30px_60px_rgba(17,17,20,.18),0_4px_10px_rgba(17,17,20,.08)]">
                     <FittedSheet content={content} density={density} ctx={effectiveCtx} />

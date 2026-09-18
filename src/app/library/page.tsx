@@ -134,6 +134,8 @@ export default function LibraryPage() {
         warnings: [],
         density: "max",
         savedAt: row.created_at,
+        // Results updates THIS row (auto-fill, Save) instead of inserting a copy.
+        sheetId: row.id,
       }),
     );
     window.location.href = "/results";

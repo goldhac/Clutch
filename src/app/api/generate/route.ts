@@ -22,7 +22,7 @@ import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
 import type { CroppedFigure } from "@/parse/figures";
 import { attachFigures } from "@/engine/attach-figures";
-import { deepenPool, FILL_TARGET } from "@/engine/deepen";
+import { deepenPool } from "@/engine/deepen";
 import { detectExamFormat } from "@/engine/detect-format";
 import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
 import { repairForFormat } from "@/engine/format-repair";
@@ -178,19 +178,20 @@ export async function POST(req: NextRequest) {
     const fillWarnings: string[] = [];
     let pool = result.content;
     try {
-      const deep = await deepenPool(pool, { packText, files: fileNames, examFormat: format });
+      // Traps are on by default only for True/False, where they take space like any other line.
+      const deep = await deepenPool(pool, { packText, files: fileNames, examFormat: format, countTraps: format === "true-false" });
       pool = deep.proposed;
-      if (deep.asked || deep.cappedBySource) {
+      if (deep.ops.length || deep.short) {
         console.warn(
-          `[/api/generate] deepen · ${deep.before}→${deep.after} lines · asked ${deep.asked} · dropped ${deep.dropped.length} · ` +
-            `${deep.seconds.toFixed(0)}s${deep.cappedBySource ? ` · capped by source at ${deep.sourceCap}` : ""}`,
+          `[/api/generate] deepen · ${deep.before}→${deep.after} lines · facts ${deep.ops.length - (deep.practice ?? 0)} · practice ${deep.practice ?? 0} · ` +
+            `dropped ${deep.dropped.length} · ${deep.seconds.toFixed(0)}s${deep.cappedBySource ? ` · source cap ${deep.sourceCap}` : ""}${deep.short ? " · STILL SHORT" : ""}`,
         );
       }
-      if (deep.cappedBySource && deep.after < FILL_TARGET * 0.8) {
+      if (deep.short) {
         // ~72 lines fill a page. Say what the student will actually see.
         const howFull = deep.after < 90 ? "about one page" : "the front and part of the back";
         fillWarnings.push(
-          `These files are short, so the sheet fills ${howFull}. We only print what your files say, and never the same thing twice. ` +
+          `These files are short, so the sheet fills ${howFull}. We print what your files say, practice built on it, and never the same thing twice. ` +
             "Add more material (slides, notes, a past exam) to fill the rest.",
         );
       }
