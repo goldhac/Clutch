@@ -10,7 +10,7 @@ difference you hear is the voice and nothing else. File 3 is the bar we set out 
 | 2 | `2-fish-s2.1-pro.mp3` | Our script · **Fish Audio S2.1 Pro** | 20:54 |
 | 3 | `3-notebooklm-benchmark.m4a` | **NotebookLM**, same PDF, its own script | 24:00 |
 | 4 | `4-fish-with-cues.mp3` | **Fish again — now with delivery direction** (see below) | 21:08 |
-| 5 | `5-gemini-2.5-half-price.mp3` | **Gemini 2.5 Flash TTS** — same voices, a third of the price | 19:57 |
+| 5 | `5-gemini-2.5-half-price.mp3` | **Gemini 2.5 Flash TTS — CHOSEN** · same voices, a third of the price | 19:57 |
 
 Transcripts of what is actually *heard* (machine-transcribed from the audio, not the script) are
 beside each file, with timestamps — handy for jumping to a spot.
@@ -42,7 +42,9 @@ NotebookLM's 179 and quicker than the 3.1 take. On the page that is a saving; in
 feel rushed for a student meeting this material two days before an exam. It also says the
 lecturer's name differently ("Oyang" rather than "Ouyang").
 
-**Listen to 1 and 5, first 90 seconds.** The question is only: is 5 too fast? If it is fine, take
+**Chosen 2026-09-19 — Gold listened and picked 5.** It is now the default in `episode.ts`.
+
+The question had been: is 5 too fast? If it is fine, take
 it — it is a two-thirds cut of the single biggest cost in the feature, and fewer re-takes on top.
 If it is too fast, we can slow it in the script (shorter turns, more pauses) before paying 3× for
 the slower model.

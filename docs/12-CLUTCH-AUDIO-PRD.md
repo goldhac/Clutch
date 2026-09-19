@@ -269,17 +269,27 @@ chapters; contrast passing in both themes with `--on-band-*` on the dark player.
 | Speaking pace | **140 words / minute**, pauses included | measured, run 1 |
 | Script tokens, one episode | ~10.2k in / ~4.6k out | measured, run 2 (outline + script) |
 
-**Per episode** (TTS rate measured on 3.1; 2.5 assumed same token rate — unverified)
-| Configuration | 10 min | ~23 min |
-|---|---|---|
-| 3.1 Flash TTS + 2.5 Pro script *(what Phase 0 used)* | **$0.44** | $0.94 |
-| 3.1 Flash TTS + 2.5 Flash script | $0.40 | $0.90 |
-| 2.5 Flash TTS + 2.5 Flash script | **$0.21** | $0.46 |
+**Per episode — now measured on both TTS models, same script, same voices (2026-09-19).**
+The earlier table assumed 2.5 billed at the same token rate as 3.1. It does not: 24.74 tokens per
+second of speech against 31.72, so it lands cheaper than half.
 
-A 13-episode series at 10 min: **$2.70–$5.70**. That is **2–4× the old estimate**, and D5
-(10 vs 23 min) doubles it again. **Credit pricing must clear ~$0.25–$0.45 per episode**, not
-the $0.15 previously written here — settle in the Stripe session, and decide the TTS model on
-whether 3.1's quality is worth 2× (Phase 0 can A/B it by re-voicing the same script).
+| Configuration | measured, ~20 min | ~10 min (TTS scales with duration) |
+|---|---|---|
+| **2.5 Flash TTS + 2.5 Pro script** *(CHOSEN)* | **$0.59** ($0.296 TTS + $0.293 script) | ~$0.44 |
+| 3.1 Flash TTS + 2.5 Pro script *(Phase 0's default until now)* | $1.15 ($0.858 + $0.293) | ~$0.72 |
+
+**Decision (D-TTS): `gemini-2.5-flash-preview-tts`.** Gold compared the two takes by ear and chose
+2.5. It is 65% cheaper on the dominant line item, needed 4 block re-takes against 10, and says the
+same words. Its pace is quicker (205 wpm against 179) — if that ever reads as rushed, slow it in
+the script with shorter turns and more pauses rather than paying 3× for the slower model.
+
+**One caveat on every figure above: re-takes are not in them.** `ttsCostUSD` is computed from the
+final audio's billed tokens, so discarded takes never appear. Round 4 rendered 33 blocks to keep
+23. Real spend runs above the table by roughly the re-take rate — another reason 2.5's steadiness
+is worth more than the sticker difference.
+
+A 13-episode series at 10 min: **~$5.70**. **Credit pricing must clear ~$0.25–$0.45 per episode**,
+not the $0.15 previously written here — settle it in the Stripe session.
 
 **Deferred to v2 of the feature:**
 1. **Audio from a saved sheet.** Needs the §3 source-text decision; only matters once people

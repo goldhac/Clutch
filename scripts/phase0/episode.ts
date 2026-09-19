@@ -39,7 +39,7 @@
  *   npx tsx scripts/phase0/episode.ts --reuse scripts/phase0/out/<run> --revoice 7,18   (splice blocks)
  *   npx tsx scripts/phase0/episode.ts --reuse scripts/phase0/out/<run> --intro-only
  *
- * Flags: --pdf  --minutes (default 24)  --tts (default gemini-3.1-flash-tts-preview)  --fish-cues
+ * Flags: --pdf  --minutes (default 24)  --tts (default gemini-2.5-flash-preview-tts)  --fish-cues
  *        --reuse <run dir>  --vision sparse|figures|off (default figures)  --intro-only
  */
 import { config as loadDotenv } from "dotenv";
@@ -64,7 +64,12 @@ const flag = (name: string) => {
 const PDF = flag("pdf");
 const REUSE = flag("reuse");
 const MINUTES = Number(flag("minutes") ?? 24);
-const TTS_MODEL = flag("tts") ?? "gemini-3.1-flash-tts-preview";
+/**
+ * 2.5, not 3.1: same script, same voices, measured 2026-09-19 — $0.296 against $0.858 (it bills
+ * fewer tokens per second of speech as well as costing less per token), 4 block re-takes against
+ * 10, and Gold picked it by ear against the 3.1 take. Override with --tts.
+ */
+const TTS_MODEL = flag("tts") ?? "gemini-2.5-flash-preview-tts";
 /** "fish:<model>" routes voicing to Fish Audio's dialogue endpoint (A/B against Gemini, 2026-09-17). */
 const FISH = TTS_MODEL.startsWith("fish:");
 const FISH_MODEL = FISH ? TTS_MODEL.slice(5) : "";
