@@ -239,10 +239,15 @@ function itemMultiplier(section: Section, item: unknown, ctx: ScoreCtx): number 
   // The exam's own format outranks the coarse type: surface the questions shaped like the exam.
   const FORMAT_KIND = { "true-false": "T/F", "multiple-choice": "MCQ", "short-answer": "short", problems: "problem" } as const;
   const wanted = ctx.examFormat && ctx.examFormat !== "mixed" ? FORMAT_KIND[ctx.examFormat] : null;
-  if (wanted) return kind === wanted ? 1.25 : 0.9;
-  if (ctx.examType === "problem-solving") return kind === "problem" ? 1.15 : 0.95;
-  if (ctx.examType === "conceptual") return kind === "MCQ" || kind === "T/F" ? 1.1 : 0.95;
-  return 1;
+  // The two COMBINE. They used to be exclusive — a format returned early — so on any sheet built
+  // for a named format the "Problem-heavy" and "Concept-heavy" buttons lit up and moved nothing.
+  // The format is still the stronger lever (1.25 / 0.9 against 1.15 / 0.95); the student's choice
+  // now nudges on top of it instead of being discarded.
+  let m = 1;
+  if (wanted) m *= kind === wanted ? 1.25 : 0.9;
+  if (ctx.examType === "problem-solving") m *= kind === "problem" ? 1.15 : 0.95;
+  else if (ctx.examType === "conceptual") m *= kind === "MCQ" || kind === "T/F" ? 1.1 : 0.95;
+  return m;
 }
 
 /**
