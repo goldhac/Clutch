@@ -39,7 +39,7 @@
  *   npx tsx scripts/phase0/episode.ts --reuse scripts/phase0/out/<run> --revoice 7,18   (splice blocks)
  *   npx tsx scripts/phase0/episode.ts --reuse scripts/phase0/out/<run> --intro-only
  *
- * Flags: --pdf  --minutes (default 24)  --tts (default gemini-3.1-flash-tts-preview)
+ * Flags: --pdf  --minutes (default 24)  --tts (default gemini-3.1-flash-tts-preview)  --fish-cues
  *        --reuse <run dir>  --vision sparse|figures|off (default figures)  --intro-only
  */
 import { config as loadDotenv } from "dotenv";
@@ -74,6 +74,8 @@ const VISION = (flag("vision") ?? "figures") as "sparse" | "figures" | "off";
 const INTRO_ONLY = argv.includes("--intro-only");
 /** Voice one tiny block and run the voice check — proves the TTS path before a $1 run. */
 const SMOKE = argv.includes("--smoke");
+/** Fish only: per-line [delivery] tags, so it gets the same direction Gemini always had. */
+const FISH_CUES = argv.includes("--fish-cues");
 /** With --reuse: re-voice only these 1-based blocks (more takes) and splice them into the existing WAV. */
 const REVOICE = (flag("revoice") ?? "").split(",").map(Number).filter((n) => n > 0);
 const API_KEY = process.env.GEMINI_API_KEY;
@@ -728,8 +730,40 @@ async function ttsBlock(lines: Line[], instructions: string) {
  * instructions field — expression is per-line bracket cues, left out here so the A/B compares the
  * raw voices. outTokens carries the billed unit for this provider: UTF-8 bytes of text.
  */
+/**
+ * Fish S2 takes free-form natural-language delivery tags in [square brackets], anywhere in the
+ * text (docs.fish.audio → Emotion Control). Gemini gets a whole acting direction with every block
+ * (DELIVERY); Fish was sent bare text, which is why the first A/B sounded flatter — that was our
+ * doing, not the provider's. The script already knows what each line IS, so the direction comes
+ * from the line's own kind and the host's role: A explains with quiet confidence, B is curious
+ * and reacts fast.
+ */
+function fishCue(l: Line): string {
+  const A = l.speaker === "A";
+  switch (l.kind) {
+    case "open": return A ? "[warm, glad you're here]" : "[bright, eager]";
+    case "motivation": return A ? "[setting up the problem]" : "[curious]";
+    case "mechanism": return A ? "[explaining clearly, unhurried]" : "[following closely]";
+    case "example": return A ? "[warm, walking through it]" : "[interested]";
+    case "analogy": return A ? "[playful]" : "[amused, getting it]";
+    case "confusion": return A ? "[patient]" : "[puzzled, thinking out loud]";
+    case "relevance": return "[this is the bit that matters]";
+    case "midpoint-recap":
+    case "recap": return "[calm, gathering the thread]";
+    case "retrieval-question": return "[inviting, a little challenge]";
+    case "retrieval-pickup": return "[game for it]";
+    case "retrieval-attempt": return "[tentative, working it out]";
+    case "retrieval-answer": return "[reassuring, confirming]";
+    case "homework": return "[encouraging]";
+    case "outro": return "[warm, signing off]";
+    default: return A ? "[warm]" : "[curious]";
+  }
+}
+
 async function fishBlock(lines: Line[]) {
-  const text = lines.map((l) => `<|speaker:${l.speaker === "A" ? 0 : 1}|>${l.text}`).join("\n");
+  const text = lines
+    .map((l) => `<|speaker:${l.speaker === "A" ? 0 : 1}|>${FISH_CUES ? `${fishCue(l)} ` : ""}${l.text}`)
+    .join("\n");
   const res = await fetch("https://api.fish.audio/v1/tts", {
     method: "POST",
     headers: { Authorization: `Bearer ${FISH_API_KEY}`, "Content-Type": "application/json", model: FISH_MODEL },
