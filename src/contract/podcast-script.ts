@@ -65,6 +65,15 @@ export const PodcastLineSchema = z
 
 export type PodcastLine = z.infer<typeof PodcastLineSchema>;
 
+/**
+ * What a DRAFT must be: well-formed lines, nothing more. The structural rules below apply to a
+ * finished episode, and a draft is allowed to be on its way there — it is the patch loop's job to
+ * get it the rest of the way. Parsing a draft with the full script schema would reject work that
+ * is one edit from correct.
+ */
+export const PodcastDraftSchema = z.object({ lines: z.array(PodcastLineSchema).min(1) }).strict();
+export type PodcastDraft = z.infer<typeof PodcastDraftSchema>;
+
 const isWrapper = (k: LineKind) => (WRAPPER_KINDS as readonly string[]).includes(k);
 
 export const PodcastScriptSchema = z
@@ -184,6 +193,26 @@ export const PodcastScriptSchema = z
   });
 
 export type PodcastScript = z.infer<typeof PodcastScriptSchema>;
+
+/**
+ * The structural rules as REPAIRABLE issues, not a verdict.
+ *
+ * Learned the hard way on the first real run: the patch step replaces one line with up to three,
+ * and those replacements can break a hard rule — two turns by the same host, or a line that says
+ * "Okay, B". The revision loop only saw the soft checks, so nothing noticed until the final parse,
+ * where a whole good episode failed with no way back. A hard rule still has to be a hard rule at
+ * the end; it just needs to be visible to the loop on the way there.
+ *
+ * The messages are the schema's own, which are already written as instructions.
+ */
+export function structuralIssues(lines: PodcastLine[]): string[] {
+  const probe = PodcastScriptSchema.safeParse({ title: "probe", summary: "probe", lines });
+  if (probe.success) return [];
+  return probe.error.issues
+    // Per-line shape problems are already impossible here: `lines` is typed.
+    .filter((i) => i.code === "custom")
+    .map((i) => `STRUCTURE: ${i.message}`);
+}
 
 export function safeParsePodcastScript(value: unknown) {
   return PodcastScriptSchema.safeParse(value);

@@ -6,7 +6,7 @@
  */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { safeParsePodcastScript, type PodcastLine } from "@/contract/podcast-script";
+import { safeParsePodcastScript, structuralIssues, type PodcastLine } from "@/contract/podcast-script";
 
 let n = 0;
 const ok = (name: string, fn: () => void) => { fn(); n++; console.log(`  ok  ${name}`); };
@@ -135,6 +135,20 @@ ok("the round-4 episode Gold approved passes", () => {
   const script = { title: "NLP — Attention Networks", summary: "Copying, coverage and the transformer.", lines: raw.lines };
   const r = parse(script);
   assert.equal(r.success, true, r.success ? "" : "REAL SCRIPT REJECTED: " + r.error.issues.map((i) => i.message).join(" | "));
+});
+
+ok("structuralIssues reports the same rules as repairable text", () => {
+  const s = valid();
+  s.lines[3] = L("A", "confusion", "And another thing entirely.");
+  s.lines[5] = L("A", "analogy", "Okay, B, what do you reckon?");
+  const issues = structuralIssues(s.lines);
+  assert.ok(issues.length >= 2, `expected two structural issues, got ${issues.length}`);
+  assert.ok(issues.every((i) => i.startsWith("STRUCTURE: ")), "each must be tagged for the patch loop");
+  assert.match(issues.join(" "), /alternate/);
+  assert.match(issues.join(" "), /labels in this file|address a host/);
+});
+ok("structuralIssues is silent on a good script", () => {
+  assert.deepEqual(structuralIssues(valid().lines), []);
 });
 
 console.log(`\n${n} checks passed`);
