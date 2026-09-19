@@ -43,7 +43,12 @@ WORKDIR /app
 # poppler-utils provides pdftoppm — the vision-ingest pass rasterizes
 # image-only PDF pages with it (src/parse/rasterize.ts). Without it the
 # pipeline degrades to text-only with a user-facing warning.
-RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils \
+#
+# ffmpeg encodes Clutch Audio episodes (src/engine/tts.ts). Issue #4 expected
+# this NOT to be needed, on the assumption the provider could return MP3
+# directly; Gemini's TTS returns raw PCM, so an encoder is required — and it
+# also applies the fade-out. Without it, audio generation fails outright.
+RUN apt-get update && apt-get install -y --no-install-recommends poppler-utils ffmpeg \
   && rm -rf /var/lib/apt/lists/*
 
 ENV NODE_ENV=production
