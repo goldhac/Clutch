@@ -128,12 +128,15 @@ export async function proposeEdit(
   const t0 = Date.now();
   // Images never go to the model.
   const pool: SheetContent = { ...existing, figures: undefined };
+  // Most stable first, most volatile last: the pack never changes in a session, the pool changes
+  // with each accepted edit, the instruction every time. That ordering is what lets the provider
+  // reuse the long prefix between calls rather than re-reading the whole pack for every edit.
   const user = [
-    `INSTRUCTION FROM THE STUDENT:\n"${instruction.replace(/"/g, "'").slice(0, 500)}"`,
-    `CURRENT POOL:\n${numberedPool(pool)}`,
     opts.packText
       ? `PACK TEXT (the student's own files — the only source for new facts):\n${opts.packText}`
       : `PACK TEXT: not available. Do not add new facts; you may only remove, reword or restructure what the pool already says.`,
+    `CURRENT POOL:\n${numberedPool(pool)}`,
+    `INSTRUCTION FROM THE STUDENT:\n"${instruction.replace(/"/g, "'").slice(0, 500)}"`,
   ].join("\n\n──────\n\n");
 
   // Flash, not Pro: measured on the BERT sheet (4 instructions), both produced the same valid,

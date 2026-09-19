@@ -20,6 +20,8 @@
 import { type NextRequest } from "next/server";
 import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
+import { cacheKey, readCache, writeCache } from "@/parse/ingest-cache";
+import { supabaseServer } from "@/lib/supabase/server";
 import type { CroppedFigure } from "@/parse/figures";
 import { attachFigures } from "@/engine/attach-figures";
 import { detectExamFormat } from "@/engine/detect-format";
@@ -113,10 +115,22 @@ export async function POST(req: NextRequest) {
   // the lines a text layer drops (Phase 0: scaled dot-product attention was
   // missing from the attention lecture's text). Files run in parallel so the
   // vision cost is ~one lecture's latency, not one per file.
+  // Extraction is deterministic, so the same bytes are read once per student and reused after a
+  // retry, a regenerate, or the same deck in a second sheet — the vision pass is the expensive half.
+  const INGEST_OPTS = { vision: true, visionMode: "figures", figures: true } as const;
+  const supabaseForCache = await supabaseServer().catch(() => null);
+  const cacheUser = supabaseForCache ? (await supabaseForCache.auth.getUser()).data.user?.id ?? null : null;
+  let cacheHits = 0;
   const ingested = await Promise.allSettled(
     uploads.map(async ({ file, tag }) => {
       const buf = Buffer.from(await file.arrayBuffer());
-      const r = await ingestDocument(file.name, buf, { vision: true, visionMode: "figures", figures: true });
+      const key = cacheKey(buf, INGEST_OPTS);
+      let r = supabaseForCache && cacheUser ? await readCache(supabaseForCache, cacheUser, key) : null;
+      if (r) cacheHits++;
+      else {
+        r = await ingestDocument(file.name, buf, INGEST_OPTS);
+        if (supabaseForCache && cacheUser) void writeCache(supabaseForCache, cacheUser, key, file.name, r);
+      }
       return { tag, filename: file.name, text: r.text, warnings: r.warnings, figures: r.figures ?? [] };
     }),
   );
@@ -168,7 +182,7 @@ export async function POST(req: NextRequest) {
     });
     console.log(
       `[/api/generate] 200 in ${((Date.now() - started) / 1000).toFixed(0)}s · retried=${result.meta.retried} · ` +
-        `warnings=${result.warnings.length} · figures=${packFigures.reduce((n, f) => n + f.figures.length, 0)} · ${packSummary}`,
+        `warnings=${result.warnings.length} · figures=${packFigures.reduce((n, f) => n + f.figures.length, 0)} · cached-reads=${cacheHits}/${uploads.length} · ${packSummary}`,
     );
     // Diagrams ride along with the sheet; the student chooses which to place (issue #15).
     const packText = pack.map((f) => `===== ${f.filename} [${f.tag}] =====\n${f.text}`).join("\n\n").slice(0, 400_000);

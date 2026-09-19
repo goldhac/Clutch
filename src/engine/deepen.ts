@@ -247,12 +247,15 @@ async function deepenOnce(
     for (const s of FILL_SECTIONS) {
       for (const it of (content[s] ?? []) as { topic?: string }[]) if (it.topic === topic.name) has.push(`- [${s}] ${labelOf(s, it)}`);
     }
+    // The pack goes FIRST and is byte-identical in every call of this fill, so all of them share
+    // one prefix and the provider can serve it from its cache instead of re-reading it. It used to
+    // be last, which made ~24 calls per fill carry the same text with nothing in common to cache.
     const user = [
+      `PACK TEXT (the student's own files):\n${opts.packText!.slice(0, 300_000)}`,
       `TOPIC: "${topic.name}" — ${topic.why}`,
       half.rule,
       `WRITE ${half.n} NEW LINES for this topic.`,
       `THE TOPIC ALREADY HAS (do not repeat or rephrase these):\n${has.join("\n") || "(nothing yet)"}`,
-      `PACK TEXT:\n${opts.packText!.slice(0, 300_000)}`,
     ].join("\n\n──────\n\n");
     const res = await Promise.race([
       client.generate({ system: SYSTEM, user, model: GEMINI_FLASH, temperature: 0.3, maxOutputTokens: 8192 }),
