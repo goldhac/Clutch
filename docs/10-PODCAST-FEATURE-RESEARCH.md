@@ -92,7 +92,7 @@ Gemini TTS is purpose-built for exact-text recitation with fine-grained style co
 
 | Model tier | Input (text) | Output (audio) | ≈ cost per audio-minute |
 |---|---|---|---|
-| Gemini **3.5 Flash TTS** (newest) | — | **$6 / 1M tokens** | ~$0.009 (10-min narration ≈ $0.09) |
+| Gemini **3.1 Flash TTS Preview** (used in Phase 0) | $1 / 1M text | **$20 / 1M audio** (verified 2026-09-18) | measured: 22.5-min episode = 42,880 tok = **$0.86** |
 | Gemini **3.1 Flash TTS** | $1 / 1M | **$20 / 1M tokens** | ~$0.03 (60-sec clip ≈ $0.03) |
 | Legacy Flash TTS (2.5 gen) | $0.50 / 1M | $10 / 1M | ~$0.015 |
 | Pro TTS | $1 / 1M | $20 / 1M | ~$0.03 |
@@ -129,7 +129,7 @@ resp = client.models.generate_content(
 
 ### Caveats flagged during research
 
-1. 3.5 Flash TTS at $6/M came from **one** pricing tracker (Rogue Marketing, June 2026). Another July 2026 source lists Flash TTS $10/M, Pro $20/M; two sources agree 3.1 Flash TTS = $1/$20. **Confirm on ai.google.dev's live pricing page before unit economics go anywhere customer-facing.**
+1. ~~3.5 Flash TTS at $6/M came from **one** pricing tracker~~ — **VERIFIED 2026-09-18 on ai.google.dev/gemini-api/docs/pricing. The $6/M figure is wrong and is retired.** Live prices, per 1M tokens: **Gemini 3.1 Flash TTS Preview $1 text in / $20 audio out** (the model Phase 0 actually used) · Gemini 2.5 Flash Preview TTS $0.50 / $10 · Gemini 2.5 Pro Preview TTS $1 / $20. `episode.ts` was already billing at $20/M, so the measured Phase 0 costs stand; only doc 10's table was stale.
 2. These are preview-tier models — IDs, quotas, availability churn. Re-verify model strings at build time.
 
 ---
@@ -180,7 +180,7 @@ Anthropic: Batch API = −50% on everything; cache hits ≈ 10% of input price. 
 | Self-host | Haiku (~$0.05) | VibeVoice-1.5B on serverless L4 (~$0.06–0.12) | **~$0.12–0.17** |
 | Premium | Sonnet | ElevenLabs ($0.68–1.35) | **~$0.85–1.50** |
 
-TTS sub-math: 22,500 tok at $6/M = $0.135 · at $10/M = $0.225 · at $20/M = $0.45.
+TTS sub-math (superseded — see the verified price above): at $20/M a REAL 22.5-minute episode measured 42,880 tokens = **$0.86**, not the 22,500 tokens assumed here.
 
 ### Self-host GPU rates (RunPod, verified Jul 2026 pages)
 
