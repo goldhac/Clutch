@@ -66,7 +66,7 @@ async function main() {
 
   const claims: ClaimLine[] = all.map((c, i) => ({ id: String(i), text: c.text }));
   const t0 = Date.now();
-  const verdicts = await checkClaims(claims, source);
+  const verdicts = await checkClaims(claims, source, { prose: true });
   const bad = verdicts.filter((v) => !v.supported);
   console.log(`checked in ${((Date.now() - t0) / 1000).toFixed(0)}s · ${bad.length} unsupported\n`);
 

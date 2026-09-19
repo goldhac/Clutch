@@ -98,6 +98,23 @@ Otherwise say "different". A careful paraphrase of the evidence is "same". When 
 
 Return JSON exactly: {"claims":[{"id":"","verdict":"same|different","why":""}]}`;
 
+/**
+ * Spoken dialogue wraps its fact in conversation. "They introduced the Transformer, a
+ * sequence-to-sequence model that uses only attention and feed-forward layers" is verbatim from
+ * the lecture apart from "They introduced" — and the whole-line rule above threw it out. For prose
+ * the unit to check is the FACTUAL CORE, not the wrapper.
+ */
+const PROSE_RULE = `
+THESE LINES ARE SPOKEN DIALOGUE from a study podcast. Check the FACTUAL CORE of each line and
+ignore the conversational wrapper: who introduced it, "the famous paper", "so", "right", "let's
+say", second-person address, reactions, and analogies that are plainly analogies ("like a dial",
+"it's like hearing a name at a party"). If the core fact is in the SOURCE, quote the core and treat
+the line as supported, even though the wrapper is not in the SOURCE.
+What is NOT wrapper, and must still be in the SOURCE: every number, every named person or paper,
+and every CAUSAL link. "X solved A, but that created B" is a claim about causation, not framing —
+it needs a passage saying X causes B, or it is unsupported.
+`.trim();
+
 const QuoteSchema = z.object({
   lines: z.array(z.object({ id: z.string(), quotes: z.array(z.string()).optional(), quote: z.string().optional() })),
 });
@@ -108,6 +125,8 @@ const parse = <T>(text: string, schema: z.ZodType<T>): T =>
 
 export interface ClaimsOptions {
   client?: LLMClient; model?: string; batch?: number; timeoutMs?: number;
+  /** The lines are spoken dialogue: check the factual core, not the conversational wrapper. */
+  prose?: boolean;
   /**
    * Also run stage 2 (does the quote state the SAME relation?). OFF by default on the evidence:
    * on scripts/evals/claims it caught nothing stage 1 had not already stopped, while doubling the
@@ -139,7 +158,7 @@ export async function checkClaims(lines: ClaimLine[], source: string, opts: Clai
   const verdicts = new Map<string, ClaimVerdict>();
   const quoted: { line: ClaimLine; quote: string; context: string }[] = [];
   await Promise.all(chunks.map(async (chunk) => {
-    const user = `SOURCE:\n${source.slice(0, 300_000)}\n\n──────\n\nLINES:\n${chunk.map((l) => `[${l.id}] ${l.text}`).join("\n")}`;
+    const user = `SOURCE:\n${source.slice(0, 300_000)}\n\n──────\n\n${opts.prose ? PROSE_RULE + "\n\n──────\n\n" : ""}LINES:\n${chunk.map((l) => `[${l.id}] ${l.text}`).join("\n")}`;
     let got: { id: string; quotes?: string[]; quote?: string }[] = [];
     for (let attempt = 0; attempt < 2 && got.length < chunk.length; attempt++) {
       try {
