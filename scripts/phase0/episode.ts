@@ -49,6 +49,8 @@ import { execFileSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
 import { z } from "zod";
+import { checkClaims } from "@/engine/claims-check";
+import { selectClaimLines } from "./check-claims";
 import { GeminiClient, GEMINI_PRO } from "../../src/engine/gemini-client";
 import { ingestDocument } from "../../src/parse/ingest";
 
@@ -329,20 +331,6 @@ ${INTRO_RULES}
 
 Return JSON exactly: {"lines":[{"speaker":"A","beat":0,"kind":"open","text":""}]}`;
 
-const CLAIMS_SYSTEM = `You are a fact-checker for a study podcast. You get the LECTURE SOURCE and the SCRIPT.
-Find every line in the script that makes one of these:
-  (a) a specific number, date, size, count or named person/paper;
-  (b) a causal claim: X caused / led to / created the need for Y; "because of X, Y";
-  (c) a claim about what the lecture, notes or slides say or show.
-For each, decide whether the SOURCE supports it. A paraphrase counts as supported. "Supported" is
-false when the number appears nowhere in the source, the source states a different cause, or the
-source never says it. The ORDER in which a lecture presents ideas is not evidence that one idea
-caused the next problem: "copying solved unknown words, but that created repetition" is unsupported
-unless the source says copying causes repetition (round 4 shipped four such lines past this check).
-Treat "X creates/introduces/leads to/caused problem Y" as a causal claim to verify. Ignore analogies,
-opinions and general framing.
-Return JSON exactly: {"claims":[{"line":0,"quote":"","kind":"number|cause|source","supported":true,"note":""}]}
-where "line" is the 0-based index of the script line. Include every checked claim, supported or not.`;
 
 const PATCH_SYSTEM = (words: number) => `You are editing an existing Clutch Audio script with SURGICAL patches. You get the full numbered
 script and a list of failed checks. Return only the edits needed to fix them; every other line stays
@@ -375,9 +363,6 @@ const PatchSchema = z.object({
 /** Checks whose fix needs a whole-script rewrite rather than line patches. */
 const GLOBAL_ISSUE = /^(LENGTH|INTRO|SPINE|AIRTIME|WRAPPER|BALANCE)\b/;
 
-const ClaimsSchema = z.object({
-  claims: z.array(z.object({ line: z.number().int(), quote: z.string(), kind: z.string(), supported: z.boolean(), note: z.string() })),
-});
 
 /** Speaker labels are fixed for the whole episode, so the instructions can name them safely. */
 const DELIVERY = `Two friends studying together. Warm, quick and genuinely curious, at a brisk conversational
@@ -975,25 +960,36 @@ async function polishScript(runDir: string, outline: Outline, source: string, ll
     for (const i of issues) log(`      ${i.replace(/\n/g, " | ").slice(0, 600)}`);
   }
 
-  /* 8. claims check — numbers, causes, "the lecture says" — traced to the source */
-  const claimsUser = (ls: Line[]) => `LECTURE SOURCE:\n${source}\n\nSCRIPT:\n${ls.map((l, i) => `${i}\t${l.speaker}: ${l.text}`).join("\n")}`;
+  /* 8. claims check — the quote-anchored engine (issue #17), not the old "is this supported?" ask.
+   * The model must produce the passage of the lecture that says the line, and CODE then looks for
+   * that passage in the source. The old one-shot checker read 54 claims, passed all 54, and four
+   * of them had cause and effect backwards. Measured on this very episode with those misses
+   * planted back: 6/6 caught, 1 false flag in 9 checked lines. */
   const claimRounds: { checked: number; unsupported: string[] }[] = [];
   for (let round = 0; round < 2; round++) {
     log(`claims check ${round + 1}…`);
-    const claims = await withRetry("claims", async () => {
-      const c = await llm.generate({ system: CLAIMS_SYSTEM, user: claimsUser(lines), model: GEMINI_PRO, temperature: 0.1, maxOutputTokens: 32768 });
-      addCost(c.usage);
-      // The checker sometimes returns the bare array; accept both shapes.
-      const cleaned = c.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/i, "");
-      const raw = JSON.parse(cleaned) as unknown;
-      return parseJson(JSON.stringify(Array.isArray(raw) ? { claims: raw } : raw), ClaimsSchema, "claims").claims;
+    // Only lines that can be wrong in a way that costs a student marks: a number, a causal link,
+    // or a claim about what the lecture says. Selected by regex — no model, no cost.
+    const selected = selectClaimLines(lines);
+    if (!selected.length) { log(`  no checkable claims`); break; }
+    const verdicts = await checkClaims(
+      selected.map((c, i) => ({ id: String(i), text: c.text })),
+      source,
+      { client: llm, prose: true, onUsage: (u) => addCost({ inputTokens: u.inputTokens, outputTokens: u.outputTokens }) },
+    );
+    const bad = verdicts
+      .filter((v) => !v.supported)
+      .map((v) => ({ ...v, line: selected[Number(v.id)].index, kind: selected[Number(v.id)].kind, text: selected[Number(v.id)].text }))
+      .filter((v) => v.line >= 0 && v.line < lines.length);
+    claimRounds.push({
+      checked: selected.length,
+      unsupported: bad.map((v) => `[${v.kind}] line ${v.line}: "${v.text.slice(0, 90)}" — ${v.stage}: ${v.note.slice(0, 90)}`),
     });
-    const bad = claims.filter((k) => !k.supported && k.line >= 0 && k.line < lines.length);
-    claimRounds.push({ checked: claims.length, unsupported: bad.map((k) => `[${k.kind}] line ${k.line}: "${k.quote}" — ${k.note}`) });
-    log(`  ${claims.length} claims checked · ${bad.length} unsupported`);
+    log(`  ${selected.length} of ${lines.length} lines carry a claim · ${bad.length} unsupported`);
+    for (const v of bad) log(`    line ${v.line} [${v.kind}] ${v.stage}: "${v.text.slice(0, 80)}"`);
     if (!bad.length) break;
-    const why = `CLAIMS: these lines say things the source does not support. Fix each (drop the number, state it the way the source does, or remove the causal link) without changing anything else:\n` +
-      bad.map((k) => `  - line ${k.line} (${k.kind}): "${k.quote}" — ${k.note}`).join("\n");
+    const why = `CLAIMS: these lines say things the lecture does not support. Fix each — drop the number, state it the way the source states it, or remove the causal link — without changing anything else:\n` +
+      bad.map((v) => `  - line ${v.line} (${v.kind}): "${v.text.slice(0, 120)}" — ${v.note.slice(0, 120)}`).join("\n");
     const n = await patch(why + (issues.length ? `\n\nALSO STILL FAILING:\n${issues.join("\n\n")}` : ""));
     log(`  patched ${n} line(s)`);
     issues = scriptIssues(lines, words, outline);

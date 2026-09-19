@@ -127,6 +127,8 @@ export interface ClaimsOptions {
   client?: LLMClient; model?: string; batch?: number; timeoutMs?: number;
   /** The lines are spoken dialogue: check the factual core, not the conversational wrapper. */
   prose?: boolean;
+  /** Called after every model call, so a caller that reports cost can keep counting. */
+  onUsage?: (u: { inputTokens?: number; outputTokens?: number }) => void;
   /**
    * Also run stage 2 (does the quote state the SAME relation?). OFF by default on the evidence:
    * on scripts/evals/claims it caught nothing stage 1 had not already stopped, while doubling the
@@ -163,6 +165,7 @@ export async function checkClaims(lines: ClaimLine[], source: string, opts: Clai
     for (let attempt = 0; attempt < 2 && got.length < chunk.length; attempt++) {
       try {
         const res = await withTimeout(client.generate({ system: QUOTE_SYSTEM, user, model, temperature: 0, maxOutputTokens: 24576 }));
+        opts.onUsage?.(res.usage);
         got = parse(res.text, QuoteSchema).lines;
       } catch {
         /* truncated or malformed: try once more, then the lines fall through as unchecked */
@@ -207,6 +210,7 @@ export async function checkClaims(lines: ClaimLine[], source: string, opts: Clai
     for (let attempt = 0; attempt < 2 && byId.size < chunk.length; attempt++) {
       try {
         const res = await withTimeout(client.generate({ system: RELATION_SYSTEM, user, model, temperature: 0, maxOutputTokens: 16384 }));
+        opts.onUsage?.(res.usage);
         const got = parse(res.text, RelationSchema).claims;
         byId = new Map(got.map((g) => [g.id.replace(/[[\]]/g, ""), g]));
       } catch {
