@@ -10,6 +10,7 @@ difference you hear is the voice and nothing else. File 3 is the bar we set out 
 | 2 | `2-fish-s2.1-pro.mp3` | Our script · **Fish Audio S2.1 Pro** | 20:54 |
 | 3 | `3-notebooklm-benchmark.m4a` | **NotebookLM**, same PDF, its own script | 24:00 |
 | 4 | `4-fish-with-cues.mp3` | **Fish again — now with delivery direction** (see below) | 21:08 |
+| 5 | `5-gemini-2.5-half-price.mp3` | **Gemini 2.5 Flash TTS** — same voices, a third of the price | 19:57 |
 
 Transcripts of what is actually *heard* (machine-transcribed from the audio, not the script) are
 beside each file, with timestamps — handy for jumping to a spot.
@@ -17,6 +18,34 @@ beside each file, with timestamps — handy for jumping to a spot.
 **Suggested listen: the first 90 seconds of each, back to back.** That is where the difference in
 naturalness shows fastest. Then 2 minutes from the middle of one (try `08:30`, the multi-head
 attention stretch) to hear how each handles a long explanation.
+
+---
+
+## File 5: the same episode for a third of the price
+
+Provider decided (Gemini). The remaining question was whether we are on the right *model*.
+`gemini-2.5-flash-preview-tts` is half the list price of `gemini-3.1-flash-tts-preview`, and it
+turns out to be cheaper still in practice because it bills fewer tokens per second of speech.
+Same script, same two voices (Kore + Puck), one flag changed.
+
+| | 3.1 Flash TTS (file 1) | 2.5 Flash TTS (file 5) |
+|---|---|---|
+| **Cost, this episode** | \$0.858 | **\$0.296 — 65% less** |
+| Length | 22:49 | 19:57 |
+| Pace | 179 wpm | **205 wpm** |
+| Blocks needing a re-take | 10 | **4** |
+| Wrong-voice lines after the pass | 3 | **1** |
+| Words heard | 4,089 | 4,084 |
+
+Cheaper, steadier, and it says the same words. **The catch is the pace**: 205 wpm is quicker than
+NotebookLM's 179 and quicker than the 3.1 take. On the page that is a saving; in the ear it may
+feel rushed for a student meeting this material two days before an exam. It also says the
+lecturer's name differently ("Oyang" rather than "Ouyang").
+
+**Listen to 1 and 5, first 90 seconds.** The question is only: is 5 too fast? If it is fine, take
+it — it is a two-thirds cut of the single biggest cost in the feature, and fewer re-takes on top.
+If it is too fast, we can slow it in the script (shorter turns, more pauses) before paying 3× for
+the slower model.
 
 ---
 
