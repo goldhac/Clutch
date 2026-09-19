@@ -109,8 +109,10 @@ export async function POST(req: NextRequest) {
       // The client measures how many lines two pages hold in the current view; never below the default, never absurd.
       const target = typeof b.target === "number" && Number.isFinite(b.target) ? Math.min(320, Math.max(FILL_TARGET, Math.round(b.target))) : undefined;
       const deep = await deepenPool(parsed.data, { packText, files, target, countTraps: b.countTraps === true, examFormat: typeof b.examFormat === "string" ? (b.examFormat as never) : undefined });
-      console.warn(`[/api/edit] ${auto ? "auto-fill" : "fill"} · ${deep.before}→${deep.after} lines · facts ${deep.ops.length - (deep.practice ?? 0)} · practice ${deep.practice ?? 0} · dropped ${deep.dropped.length} · ${deep.seconds.toFixed(0)}s${deep.short ? " · still short" : ""}`);
+      console.warn(`[/api/edit] ${auto ? "auto-fill" : "fill"} · ${deep.before}→${deep.after} lines · facts ${deep.ops.length - (deep.practice ?? 0)} · practice ${deep.practice ?? 0} · dropped ${deep.dropped.length} · ${deep.seconds.toFixed(0)}s${deep.short ? " · still short" : ""}${deep.ops.length === 0 && deep.dropped.length ? ` · why: ${deep.dropped.slice(0, 2).join(" | ").slice(0, 200)}` : ""}`);
       await record("proposed", deep.ops.length);
+      // The provider refusing us is not "your files have nothing more": say so, and don't count it.
+      if (!deep.ops.length && deep.providerBusy) return capacityResponse("/api/edit fill", new Error("spending cap / quota"));
       const reply = deep.ops.length
         ? `I added ${deep.ops.length} lines${deep.practice ? ` (${deep.practice} of them practice built on lines already here)` : ""}. Every one cites where it came from.`
         : deep.short

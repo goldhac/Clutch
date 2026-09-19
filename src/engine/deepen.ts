@@ -15,6 +15,7 @@
  */
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 import { checkClaims } from "./claims-check";
+import { isProviderCapacityError } from "@/lib/provider-outage";
 import { applyOps, ITEM_SCHEMA, labelOf, type EditOp, type EditSection } from "./edit";
 import { defaultGeminiClient, GEMINI_FLASH } from "./gemini-client";
 import type { LLMClient } from "./llm-client";
@@ -195,6 +196,8 @@ export interface DeepenResult {
   short?: boolean;
   /** Lines the claims check refused (issue #17). */
   unverified?: number;
+  /** Every call failed because the provider refused us (spend cap, quota). NOT 'the pack is empty'. */
+  providerBusy?: boolean;
 }
 
 /** How many lines of THIS sheet's size the pack can honestly support. */
@@ -264,8 +267,10 @@ async function deepenOnce(
   const ops: EditOp[] = [];
   const byTopic = new Map<string, EditOp[]>();
   const dropped: string[] = [];
+  let capacityFailures = 0;
   for (const r of settled) {
     if (r.status === "rejected") {
+      if (isProviderCapacityError(r.reason)) capacityFailures++;
       dropped.push(`a topic could not be deepened (${r.reason instanceof Error ? r.reason.message.slice(0, 60) : "error"})`);
       continue;
     }
@@ -313,7 +318,7 @@ async function deepenOnce(
     }
     if (!took) break;
   }
-  if (!ops.length) return { ...none(), dropped, cappedBySource, sourceCap, asked: perTopic * content.topics.length, seconds: (Date.now() - t0) / 1000 };
+  if (!ops.length) return { ...none(), dropped, cappedBySource, sourceCap, providerBusy: capacityFailures > 0, asked: perTopic * content.topics.length, seconds: (Date.now() - t0) / 1000 };
 
   // New lines go after the generated ones: the first draft's ranking stays on top.
   const proposed = applyOps({ ...content, figures: undefined }, ops);

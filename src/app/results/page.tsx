@@ -67,6 +67,8 @@ const TIER_CACHE = "clutch:tier";
 /** Back page used less than this (0–1) → restock from the pack. */
 const AUTO_FILL_BELOW = 0.85;
 const AUTO_FILL_MAX = 3;
+/** How long the layout must hold still before a fill is worth paying for. */
+const SETTLE_MS = 1500;
 
 export default function ResultsPage() {
   const [stash, setStash] = useState<Stash | null>(null);
@@ -211,30 +213,48 @@ export default function ResultsPage() {
   stashRef.current = stash;
   const savedIdRef = useRef(savedId);
   savedIdRef.current = savedId;
+  // The decision is made from LIVE values on a one-second watchdog, not from a React dependency
+  // firing at the right moment. A sheet opened from My Sheets once sat at 0% for a minute because
+  // the measurement that should have started the fill landed while another condition was still
+  // settling, and nothing changed afterwards to run the check again. A watchdog cannot miss that.
+  const autoFillRef = useRef<"idle" | "filling" | "off">("idle");
+  /** Ref first, then state: the watchdog reads the ref a second later, before React has re-rendered. */
+  const setFillState = (v: "idle" | "filling" | "off") => {
+    autoFillRef.current = v;
+    setAutoFill(v);
+  };
+  const backFillRef = useRef<number | null>(backFill);
+  const settledAt = useRef(0);
+  if (backFillRef.current !== backFill) {
+    backFillRef.current = backFill;
+    settledAt.current = Date.now(); // the layout just changed; let it settle before spending a call
+  }
   const canAutoFill =
     density === "max" && !editorOpen && !!stash &&
     (profileTier === "pro" || (process.env.NODE_ENV !== "production" && stash?.tier === "pro"));
   useEffect(() => {
-    if (!canAutoFill || autoFill !== "idle" || backFill === null || backFill >= AUTO_FILL_BELOW) return;
-    if (autoFillRuns.current >= AUTO_FILL_MAX) return;
+    if (!canAutoFill) return;
     let pack: string | null = null;
     try {
       pack = sessionStorage.getItem("clutch:pack");
     } catch {
       pack = null; // without the files' text the fill can still build practice on the sheet's own lines
     }
-    const timer = setTimeout(async () => {
+    let stopped = false;
+    const fill = async () => {
       const cur = stashRef.current;
       const parsed = cur ? safeParseSheetContent(cur.content) : null;
-      if (!cur || !parsed?.success) return;
+      if (!cur || !parsed?.success) return setFillState("idle");
       // Free and instant first: every sheet already carries ranked, cited traps, hidden by default
       // only to save space. With space to spare they go on — unless the student chose otherwise.
       if (cur.ctx?.view?.traps === undefined && cur.ctx?.examFormat !== "true-false" && parsed.data.traps.length > 0) {
         setView((v) => ({ ...v, traps: true }));
-        return; // the refit reports the new fill; this effect runs again if room remains
+        // Free and instant: not a fill. Hand the claim back — the watchdog looks again once the
+        // refit reports how much room the traps left.
+        return setFillState("idle");
       }
       autoFillRuns.current++;
-      setAutoFill("filling");
+      setFillState("filling");
       try {
         const res = await fetch("/api/edit", {
           method: "POST",
@@ -245,16 +265,21 @@ export default function ResultsPage() {
             countTraps: viewOf(cur.ctx ?? undefined).traps,
             // Measured, not assumed: N lines cover (1 + backFill) / 2 of the two pages, so two full pages
             // in this view (quiz mode, sources on…) hold N / that. Plus surplus for the fitter to choose from.
-            target: fitLinesRef.current > 0 ? Math.ceil((fitLinesRef.current / ((1 + (backFill ?? 0)) / 2)) * 1.12) : undefined,
+            target: fitLinesRef.current > 0 ? Math.ceil((fitLinesRef.current / ((1 + (backFillRef.current ?? 0)) / 2)) * 1.12) : undefined,
             content: { ...parsed.data, figures: undefined },
             packText: pack ?? undefined,
             files: (cur.ctx?.files ?? []).map((f: { name: string }) => f.name),
             examFormat: cur.ctx?.examFormat,
           }),
         });
-        if (!res.ok) return setAutoFill("off"); // limit reached, provider busy: leave the sheet as it is
+        if (!res.ok) {
+          // Quiet is right for "you've had your fills today"; a provider outage the student can
+          // retry deserves a word, since they are looking at a half-empty page wondering.
+          if (res.status === 503) toast("Couldn't fill the back page just now — nothing changed. Try again in a bit.", "star");
+          return setFillState("off");
+        }
         const p = (await res.json()) as { ops: unknown[]; proposed: SheetContent; exhausted?: boolean };
-        if (!p.ops?.length) return setAutoFill("off");
+        if (!p.ops?.length) return setFillState("off");
         const before = cur.content;
         const next = { ...p.proposed, figures: parsed.data.figures };
         const persist = (c: unknown) => {
@@ -270,19 +295,30 @@ export default function ResultsPage() {
         toast(`Filled the back page · ${p.ops.length} lines added`, "check", {
           label: "Undo",
           onAction: () => {
-            setAutoFill("off"); // the student said no: do not fill again this visit
+            setFillState("off"); // the student said no: do not fill again this visit
             setUndoStack((u) => u.slice(0, -1));
             replaceContent(before);
             persist(before);
           },
         });
-        setAutoFill(p.exhausted ? "off" : "idle");
+        setFillState(p.exhausted ? "off" : "idle");
       } catch {
-        setAutoFill("off");
+        setFillState("off");
       }
-    }, 1500);
-    return () => clearTimeout(timer);
-  }, [canAutoFill, autoFill, backFill]);
+    };
+    const watchdog = setInterval(() => {
+      if (stopped || autoFillRef.current !== "idle" || autoFillRuns.current >= AUTO_FILL_MAX) return;
+      const room = backFillRef.current;
+      if (room === null || room >= AUTO_FILL_BELOW) return;
+      if (Date.now() - settledAt.current < SETTLE_MS) return;
+      autoFillRef.current = "filling"; // claim it now: the next tick must not start a second fill
+      void fill();
+    }, 1000);
+    return () => {
+      stopped = true;
+      clearInterval(watchdog);
+    };
+  }, [canAutoFill]);
 
   if (error) {
     return (
@@ -448,7 +484,7 @@ export default function ResultsPage() {
     if (last === undefined) return;
     setUndoStack((u) => u.slice(0, -1));
     replaceContent(last);
-    setAutoFill("off"); // never fight an undo by filling again
+    setFillState("off"); // never fight an undo by filling again
     toast("Edit undone");
   }
 
@@ -521,7 +557,11 @@ export default function ResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--paper-2)]">
+    <div
+      className="min-h-screen bg-[var(--paper-2)]"
+      // Why the sheet is (or is not) topping itself up — readable in any browser, no build needed.
+      data-autofill={`${canAutoFill ? "on" : "off"}:${autoFill}:${backFill === null ? "unmeasured" : Math.round(backFill * 100) + "%"}:${autoFillRuns.current}`}
+    >
       <Toaster />
 
       {/* ── toolbar ─────────────────────────────────────────────────── */}
