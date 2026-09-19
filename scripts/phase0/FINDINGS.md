@@ -290,3 +290,33 @@ total ≈ **$6.6**. A clean run of this pipeline is ≈ $1.6 (LLM ≈ $0.6, TTS 
 ~$0.28 (round 1) + ~$0.40 (round 2) + $1.10 (round 3) + ~$0.02 (vision tests) + $0.16 (two intro
 previews) + ~$0.45 (sheet A/B, three engine runs) + ~$0.03 (ingest timing) + $0.07 (intro v3) + $0.16 (three transcriptions) ≈ **$2.70** through §8; round 4 (§9) adds ≈ $3.9 → ≈ **$6.6**; the Fish A/B (§10) adds ≈ $0.35 of Gemini-side checks and transcriptions (Fish itself: $0) → ≈ **$7.0**. NotebookLM generation
 draws on Gold's Pro plan allowance, not API spend.
+
+## 11. Provider decision, and where the money actually goes (2026-09-19)
+
+**Decided: Gemini 3.1 Flash TTS.** Gold listened to all three — bare Fish, directed Fish, Gemini —
+and the directed round changed almost nothing to his ear ("not much has changed"). Fish's
+advantages were real but none of them was naturalness, and naturalness is the one that matters for
+a thing a student listens to for 20 minutes. Gemini also keeps one vendor, one bill, and licensed
+voices — Fish's library is mostly clones of named people, which would have been real work to clear.
+
+**What an episode actually costs** (round 3, the only full end-to-end run with both halves
+measured):
+
+| | USD |
+|---|---|
+| Script + outline + vision (Pro) | 0.293 |
+| TTS | 0.811 |
+| **Total** | **1.104** |
+
+So **TTS is ~73% of an episode**, not the script. Two things follow.
+
+1. **`gemini-2.5-flash-preview-tts` is half the price** ($10/M against $20/M) and one flag away.
+   Untested for quality. It is the single biggest cost lever we have and it costs $0.43 and six
+   minutes to find out.
+2. **Re-takes are not in that number.** `ttsCostUSD` is computed from the *final* audio's billed
+   tokens, so the 10 block re-takes round 4 needed — 33 renders for 23 blocks — were never
+   counted. Real Gemini spend is nearer **$1.2 an episode**, and roughly 40% of the TTS bill is
+   audio we threw away. Cutting re-takes is worth about as much as halving the model price.
+
+Not worth optimising yet: at Phase 0, with no users, this is noise. It becomes the whole
+conversation at volume, and Phase 2's topic split (shorter episodes) cuts it on its own.
