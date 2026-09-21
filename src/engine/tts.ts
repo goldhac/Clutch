@@ -81,6 +81,25 @@ export function writeWav(pcm: Uint8Array, sampleRate: number, channels = 1, bits
   return new Uint8Array(buf);
 }
 
+/**
+ * Retry what is worth retrying. Phase 0 wrapped every TTS and voice-check call in this; the port
+ * dropped it, and the first full episode died at block 14 of 24 on a single empty response —
+ * throwing away thirteen good blocks and the money they cost. A provider hiccup on one block must
+ * never lose an episode.
+ */
+async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 4): Promise<T> {
+  for (let i = 1; ; i++) {
+    try {
+      return await fn();
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      const retryable = /no audio|429|rate|quota|503|500|UNAVAILABLE|overloaded|timeout|fetch failed|ECONNRESET|socket/i.test(msg);
+      if (!retryable || i >= tries) throw new Error(`${label}: ${msg}`);
+      await new Promise((r) => setTimeout(r, 4000 * i));
+    }
+  }
+}
+
 /** Silence of a given length, in the same format as the speech around it. */
 const silence = (ms: number, sampleRate: number) => new Uint8Array(Math.round((sampleRate * ms) / 1000) * 2);
 
@@ -329,8 +348,9 @@ export async function speak(
     let best: (BlockAudio & { wrong: string[]; matched: number }) | null = null;
 
     for (let attempt = 0; attempt <= maxRevoice; attempt++) {
-      const take = await ttsBlock(block.lines, instructions, apiKey, model);
-      const check = await voiceCheck(block.lines, take.pcm, take.sampleRate, apiKey);
+      const label = `block ${i + 1}/${blocks.length}`;
+      const take = await withRetry(`${label} tts`, () => ttsBlock(block.lines, instructions, apiKey, model));
+      const check = await withRetry(`${label} voice check`, () => voiceCheck(block.lines, take.pcm, take.sampleRate, apiKey));
       opts.onCheckUsage?.({ inputTokens: check.inputTokens, outputTokens: check.outputTokens });
       const cand = { ...take, wrong: check.wrong, matched: check.matched };
       const better =
