@@ -9,13 +9,15 @@ loadDotenv({ path: ".env.local", quiet: true });
  *   npx tsx scripts/gen-podcast.ts --pdf reference/exam-prep/21-attn.pdf
  *   npx tsx scripts/gen-podcast.ts --source <dir>/source.txt --minutes 10
  *   npx tsx scripts/gen-podcast.ts --source <dir>/source.txt --outline <dir>/outline.json
+ *   npx tsx scripts/gen-podcast.ts --source … --outline … --script <dir>/script.json --voice
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { basename, join } from "node:path";
-import { safeParsePodcastOutline } from "@/contract/podcast-outline";
-import { countWords } from "@/contract/podcast-script";
+import { safeParsePodcastOutline, type PodcastOutline } from "@/contract/podcast-outline";
+import { countWords, type PodcastLine } from "@/contract/podcast-script";
 import { GEMINI_FLASH, GEMINI_PRO } from "@/engine/gemini-client";
 import { outlineEpisode, writeScript, WORDS_PER_MINUTE, type Usage } from "@/engine/podcast";
+import { speak, TTS_MODEL } from "@/engine/tts";
 import { ingestDocument } from "@/parse/ingest";
 
 const argv = process.argv.slice(2);
@@ -26,6 +28,10 @@ const flag = (name: string) => {
 const PDF = flag("pdf");
 const SOURCE = flag("source");
 const OUTLINE_PATH = flag("outline");
+/** Reuse a script that already passed, to voice it without paying to write it again. */
+const SCRIPT_PATH = flag("script");
+/** Record it: the #5 acceptance is a playable chaptered MP3 from a real pack. */
+const VOICE = argv.includes("--voice");
 const MINUTES = Number(flag("minutes") ?? 24);
 if (!PDF && !SOURCE) throw new Error("pass --pdf <lecture.pdf> or --source <source.txt>");
 
@@ -43,6 +49,29 @@ function bill(stage: string, model: string, u: Usage) {
   const p = PRICE[model] ?? PRICE[GEMINI_FLASH];
   const usd = ((u.inputTokens ?? 0) * p.in + (u.outputTokens ?? 0) * p.out) / 1e6;
   spend[stage] = { usd: (spend[stage]?.usd ?? 0) + usd, calls: (spend[stage]?.calls ?? 0) + 1 };
+}
+
+/** Voice a finished script and write the MP3, its preview and the chapters. */
+async function record(script: { title: string; lines: PodcastLine[] }, outline: PodcastOutline, outDir: string) {
+  log(`voicing with ${TTS_MODEL}…`);
+  const t = Date.now();
+  let audioTokens = 0, discardedTokens = 0, checkIn = 0, checkOut = 0;
+  const ep = await speak(script.lines, (l) => outline.beats[l.beat]?.section ?? "", {
+    onProgress: (done, total, note) => log(`  block ${done}/${total} · ${note}`),
+    onAudioUsage: (u) => { audioTokens += u.audioTokens; if (u.discarded) discardedTokens += u.audioTokens; },
+    onCheckUsage: (u) => { checkIn += u.inputTokens; checkOut += u.outputTokens; },
+  });
+  writeFileSync(join(outDir, "episode.mp3"), ep.mp3);
+  writeFileSync(join(outDir, "episode-preview.mp3"), ep.previewMp3);
+  writeFileSync(join(outDir, "chapters.json"), JSON.stringify(ep.chapters, null, 2));
+  const ttsUsd = (audioTokens / 1e6) * 10;
+  const checkUsd = (checkIn * 0.3 + checkOut * 2.5) / 1e6;
+  spend.voicing = { usd: ttsUsd + checkUsd, calls: ep.blocks };
+  const mins = Math.floor(ep.durationSeconds / 60);
+  log(`voiced · ${mins}:${String(ep.durationSeconds % 60).padStart(2, "0")} · ${ep.blocks} blocks · ${ep.retakes} re-take(s) · ${ep.wrongVoiceLines.length} wrong-voice line(s)`);
+  log(`  chapters: ${ep.chapters.map((c) => `${c.section} @${c.startS}s`).join(" · ")}`);
+  log(`  discarded audio tokens: ${discardedTokens} (paid for, thrown away)`);
+  log(`  voicing $${(ttsUsd + checkUsd).toFixed(4)} · ${((Date.now() - t) / 1000).toFixed(0)}s`);
 }
 
 (async () => {
@@ -82,6 +111,12 @@ function bill(stage: string, model: string, u: Usage) {
   writeFileSync(join(outDir, "outline.json"), JSON.stringify(outline, null, 2));
 
   // 3. Script
+  if (SCRIPT_PATH) {
+    const saved = JSON.parse(readFileSync(SCRIPT_PATH, "utf8"));
+    log(`script: reused from ${SCRIPT_PATH} (${saved.lines.length} lines)`);
+    await record(saved, outline, outDir);
+    return;
+  }
   const result = await writeScript(outline, source, {
     minutes: MINUTES,
     onUsage: (stage, u) => bill(stage, stage === "claims" ? GEMINI_FLASH : GEMINI_PRO, u),
@@ -110,6 +145,7 @@ function bill(stage: string, model: string, u: Usage) {
   writeFileSync(join(outDir, "report.json"), JSON.stringify(report, null, 2));
 
   log(`\ndone · ${report.words} words in ${report.lines} lines · ${result.remaining.length ? `STILL FAILING: ${result.remaining.map((i) => i.split(":")[0]).join(", ")}` : "all checks pass"}`);
+  if (VOICE) await record(result.script, outline, outDir);
   for (const [stage, s] of Object.entries(spend)) log(`  ${stage.padEnd(8)} $${s.usd.toFixed(4)} · ${s.calls} call(s)`);
   log(`  TOTAL    $${total.toFixed(4)} · ${report.seconds}s`);
   log(`→ ${outDir}`);
