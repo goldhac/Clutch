@@ -45,6 +45,14 @@ const BLOCK_GAP_MS = 250;
 /** Shorter than round 3's 2,200: fewer chances for the voice to drift inside one block. */
 const MAX_BLOCK_CHARS = 1500;
 const MAX_REVOICE = 2;
+/**
+ * A request that hangs is worse than one that fails: it holds a worker slot while the heartbeat
+ * keeps beating, so nothing recovers it. The first full episode took 2.6 HOURS because one block
+ * hung for 45 minutes across its retries. A block is ~90 seconds of speech; anything past this is
+ * not coming back.
+ */
+const TTS_TIMEOUT_MS = 180_000;
+const CHECK_TIMEOUT_MS = 120_000;
 /** The preview a free listener gets (FR-18). */
 export const PREVIEW_SECONDS = 90;
 
@@ -93,7 +101,7 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 4): Pro
       return await fn();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      const retryable = /no audio|429|rate|quota|503|500|UNAVAILABLE|overloaded|timeout|fetch failed|ECONNRESET|socket/i.test(msg);
+      const retryable = /no audio|429|rate|quota|503|500|UNAVAILABLE|overloaded|timeout|timed out|aborted|AbortError|fetch failed|ECONNRESET|socket/i.test(msg);
       if (!retryable || i >= tries) throw new Error(`${label}: ${msg}`);
       await new Promise((r) => setTimeout(r, 4000 * i));
     }
@@ -160,6 +168,7 @@ async function ttsBlock(lines: PodcastLine[], instructions: string, apiKey: stri
   const transcript = lines.map((l) => `${l.speaker === "A" ? "Speaker1" : "Speaker2"}: ${l.text}`).join("\n");
   const res = await fetch(`${BASE}/models/${model}:generateContent?key=${apiKey}`, {
     method: "POST",
+    signal: AbortSignal.timeout(TTS_TIMEOUT_MS),
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [{ parts: [{ text: `Delivery instructions:\n${instructions}\n\nTranscript:\n${transcript}` }] }],
@@ -219,6 +228,7 @@ export async function voiceCheck(
   const wav = writeWav(pcm, sampleRate);
   const res = await fetch(`${BASE}/models/${CHECK_MODEL}:generateContent?key=${apiKey}`, {
     method: "POST",
+    signal: AbortSignal.timeout(CHECK_TIMEOUT_MS),
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       contents: [
