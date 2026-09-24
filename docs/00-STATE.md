@@ -119,9 +119,40 @@ npm run lint
 npm run check:contract   # Zod contract gate (7/7)
 npm run check:relevance  # relevance core gate (22/22)
 npm run gen:cli reference/exam-prep/Big_Data_Exam/... -- --density=max --out=/tmp/x.json   # engine on a real pack (needs GEMINI_API_KEY)
-git push && railway up --detach --service cramsheet   # deploy (Railway builds the image)
+git push && railway up --detach --service cramsheet   # deploy the site
+git push && railway up --detach --service worker     # deploy the episode worker
 ```
-Key screens: `/` (marketing), `/generate`, `/results`, `/library`, `/sheet?density=max|balanced|essentials`, `/debug/tokens`, `/debug/primitives`.
+Key screens: `/` (marketing), `/generate`, `/audio`, `/results`, `/library`, `/sheet?density=max|balanced|essentials`, `/debug/tokens`, `/debug/primitives`.
+
+### The episode worker (Clutch Audio, #5)
+
+Two Railway services in the project `cramsheet`, built from the SAME image. `railway.json` is shared,
+so `scripts/railway-start.mjs` reads `CLUTCH_ROLE` and starts the right process:
+
+| service     | `CLUTCH_ROLE` | runs                        |
+|-------------|---------------|-----------------------------|
+| `cramsheet` | unset (`web`) | `next start`                |
+| `worker`    | `worker`      | `tsx scripts/worker.ts`     |
+
+```bash
+railway logs --service worker
+railway ssh --service worker "wget -qO- http://127.0.0.1:8080/healthz"   # what it has actually done
+railway service restart --service worker --yes                           # kills an in-flight episode
+```
+
+`/healthz` answers the question `railway logs` cannot: `polls` only increases when a claim came back
+FROM Supabase, so a worker with a bad key shows `polls: 0` and `lastError` set while looking perfectly
+alive. A worker that has not reached the database in five minutes reports itself unhealthy and Railway
+restarts it. Recording counts as working, so a long episode is not mistaken for a dead worker.
+
+**`SUPABASE_SERVICE_ROLE_KEY` is set on `worker` only** — the site never needed it. When it is rotated
+(#19), it must be updated in BOTH `.env.local` and the Railway `worker` service, or episodes stop
+being claimed silently: the site stays up, the queue just never drains.
+
+**Paid end-to-end test:** `npx tsx scripts/test-episode-live.ts --spend` makes one real episode from
+`samples/audio-test/lecture.md` — plain text (no vision pass to pay for), 6,334 chars, just over the
+`MIN_SOURCE_CHARS` floor, so it is the shortest episode the product will make. Reports what was
+actually billed from `podcast_costs`. `--clean` removes what it left.
 
 ---
 
