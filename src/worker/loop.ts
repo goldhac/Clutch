@@ -77,11 +77,12 @@ export async function runWorkerLoop(): Promise<void> {
     const userId = claimed.userId;
 
     const engine: Pick<JobDeps, "outline" | "script" | "speak"> = {
-      outline: async (source, onStage) => {
+      outline: async (source, minutes, onStage) => {
         onStage("outline" as Stage);
         const t = Date.now();
         let inTok = 0, outTok = 0;
         const result = await outlineEpisode(source, {
+          minutes,
           onUsage: (_s, u) => { inTok += u.inputTokens ?? 0; outTok += u.outputTokens ?? 0; },
         });
         await bill(userId, {
@@ -91,11 +92,12 @@ export async function runWorkerLoop(): Promise<void> {
         });
         return result;
       },
-      script: async (outline, source, onStage) => {
+      script: async (outline, source, minutes, onStage) => {
         onStage("script" as Stage);
         const t = Date.now();
         const tally: Record<string, { in: number; out: number }> = {};
         const result = await writeScript(outline as PodcastOutline, source, {
+          minutes,
           onUsage: (stage, u) => {
             const k = stage === "claims" ? GEMINI_FLASH : GEMINI_PRO;
             tally[k] = { in: (tally[k]?.in ?? 0) + (u.inputTokens ?? 0), out: (tally[k]?.out ?? 0) + (u.outputTokens ?? 0) };

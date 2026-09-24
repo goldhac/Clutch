@@ -170,6 +170,19 @@ function fakeDeps(over: Partial<JobDeps> = {}, creditsSpent = 1) {
     assert.ok(c2.some((x) => x.startsWith("fail:")));
   });
 
+  await ok("the episode is written to ITS topic's length, not a default 24 minutes", async () => {
+    // The bug this covers: both engine calls default to 24 minutes, and nothing passed the
+    // topic's own length, so a 6-minute topic was written — and billed — as a 24-minute one.
+    const asked: number[] = [];
+    const { deps } = fakeDeps({
+      loadJob: async () => ({ userId: "u1", topic: "Short", source: REAL_SOURCE, minutes: 6, creditsSpent: 1 }),
+      outline: async (_s, minutes) => { asked.push(minutes); return OUTLINE; },
+      script: async (_o, _s, minutes) => { asked.push(minutes); return SCRIPT; },
+    });
+    assert.equal((await runEpisodeJob("p1", deps)).status, "done");
+    assert.deepEqual(asked, [6, 6], "the engine was not told how long the episode should be");
+  });
+
   await ok("just over the floor is allowed through", async () => {
     let paid = 0;
     const { deps } = fakeDeps({

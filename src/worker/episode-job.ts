@@ -55,8 +55,15 @@ export interface JobDeps {
   } | null>;
   setStage(podcastId: string, stage: Stage): Promise<void>;
   heartbeat(podcastId: string): Promise<void>;
-  outline(source: string, onStage: (s: Stage) => void): Promise<PodcastOutline>;
-  script(outline: PodcastOutline, source: string, onStage: (s: Stage) => void): Promise<PodcastScript>;
+  /**
+   * `minutes` is the length THIS topic's material supports, from the split the student approved.
+   * It is a required parameter rather than an option because leaving it out is exactly the bug it
+   * was added for: both engine calls default to 24 minutes, and for months every episode was
+   * written to that length regardless of its topic — a six-minute topic padded to twenty-four,
+   * which is the failure MIN_TOPIC_MINUTES exists to prevent, and paid for at four times the price.
+   */
+  outline(source: string, minutes: number, onStage: (s: Stage) => void): Promise<PodcastOutline>;
+  script(outline: PodcastOutline, source: string, minutes: number, onStage: (s: Stage) => void): Promise<PodcastScript>;
   speak(script: PodcastScript, outline: PodcastOutline, onStage: (s: Stage) => void): Promise<SpokenAudio>;
   /** Returns the storage paths it wrote. */
   store(userId: string, podcastId: string, audio: SpokenAudio): Promise<{ audioPath: string; previewPath: string }>;
@@ -136,9 +143,9 @@ export async function runEpisodeJob(podcastId: string, deps: JobDeps, opts: RunO
     if (tooThinToTeach(chars)) throw new ThinSourceError(job.topic, chars);
 
     await at("outline");
-    const outline = await deps.outline(job.source, (s) => void at(s));
+    const outline = await deps.outline(job.source, job.minutes, (s) => void at(s));
     await at("script");
-    const script = await deps.script(outline, job.source, (s) => void at(s));
+    const script = await deps.script(outline, job.source, job.minutes, (s) => void at(s));
     await at("voicing");
     const audio = await deps.speak(script, outline, (s) => void at(s));
     await at("assembling");
