@@ -19,11 +19,11 @@ web.on("exit", (code) => {
   process.exit(code ?? 1);
 });
 
-const ready = process.env.SUPABASE_SERVICE_ROLE_KEY && process.env.DATABASE_URL;
+const ready = Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY);
 if (!ready) {
   console.warn(
-    "[start] the episode worker is NOT running: SUPABASE_SERVICE_ROLE_KEY and DATABASE_URL are " +
-      "required. The site is up and sheets work; audio jobs will queue until they are set.",
+    "[start] the episode worker is NOT running: SUPABASE_SERVICE_ROLE_KEY is required. The site " +
+      "is up and sheets work; audio jobs will sit queued until it is set.",
   );
 } else {
   let restarts = 0;

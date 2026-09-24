@@ -10,7 +10,7 @@ loadDotenv({ path: ".env.local", quiet: true });
  * being true, this file moves to its own service and nothing else changes.
  *
  * It does three things on a loop:
- *   1. takes episode jobs off the queue and runs them;
+ *   1. claims episodes from the `podcasts` table and records them;
  *   2. recovers episodes abandoned by a worker that died mid-job;
  *   3. writes what every stage cost, including the takes that were thrown away.
  */
@@ -21,8 +21,8 @@ import { outlineEpisode, writeScript } from "@/engine/podcast";
 import { speak, TTS_MODEL } from "@/engine/tts";
 import { serviceClient } from "@/lib/supabase/service";
 import { runEpisodeJob, type CostRow, type JobDeps, type Stage } from "@/worker/episode-job";
-import { STALE_AFTER_MS, storeDeps, recordCost } from "@/worker/episode-store";
-import { getBoss, QUEUE, stopBoss, type EpisodeJob } from "@/worker/queue";
+import { storeDeps, recordCost } from "@/worker/episode-store";
+import { claimNextEpisode, POLL_MS, recoverStaleEpisodes } from "@/worker/queue";
 
 /** Gemini list prices, ai.google.dev, checked 2026-09-19. */
 const PRICE: Record<string, { in: number; out: number }> = {
@@ -36,18 +36,15 @@ const log = (m: string) => console.log(`[worker] ${new Date().toISOString().slic
 
 async function main() {
   const db = serviceClient();
-  const boss = await getBoss();
-  log(`listening on "${QUEUE}"`);
+  log("polling for episodes");
+  let stopping = false;
 
-  await boss.work<EpisodeJob>(QUEUE, { batchSize: 1 }, async ([job]) => {
-    const { podcastId } = job.data;
+  const runOne = async (claimed: { podcastId: string; userId: string }) => {
+    const { podcastId } = claimed;
     const started = Date.now();
     log(`${podcastId}: starting`);
-
-    // Costs are collected per stage and written as they land, so a job that dies halfway still
-    // leaves behind what it already spent.
     const bill = async (userId: string, row: CostRow) => recordCost(db, podcastId, userId, row);
-    let userId = "";
+    const userId = claimed.userId;
 
     const engine: Pick<JobDeps, "outline" | "script" | "speak"> = {
       outline: async (source, onStage) => {
@@ -107,41 +104,45 @@ async function main() {
       },
     };
 
-    const deps = storeDeps(db, engine);
-    const loaded = await deps.loadJob(podcastId);
-    userId = loaded?.userId ?? "";
-    const result = await runEpisodeJob(podcastId, deps);
+    const result = await runEpisodeJob(podcastId, storeDeps(db, engine));
     log(`${podcastId}: ${result.status}${result.refunded ? " · credit returned" : ""} · ${((Date.now() - started) / 1000).toFixed(0)}s`);
-  });
+  };
 
-  // Recovery: a row still `running` with a cold heartbeat belongs to a worker that died.
-  const sweep = setInterval(() => {
-    void (async () => {
-      const cutoff = new Date(Date.now() - STALE_AFTER_MS).toISOString();
-      const { data } = await db
-        .from("podcasts")
-        .select("id, user_id")
-        .eq("status", "running")
-        .or(`heartbeat_at.is.null,heartbeat_at.lt.${cutoff}`)
-        .limit(5);
-      for (const row of data ?? []) {
-        log(`recovering abandoned episode ${row.id}`);
-        // Back to queued, then re-enqueued: the partial unique index still guards against doubles.
-        await db.from("podcasts").update({ status: "queued", stage: null, heartbeat_at: null }).eq("id", row.id);
-        await boss.send(QUEUE, { podcastId: row.id as string, userId: row.user_id as string }, { singletonKey: row.id as string, retryLimit: 0 });
-      }
-    })().catch((e) => console.error("[worker] sweep failed", e));
-  }, 60_000);
-
-  const shutdown = async () => {
+  // Registered BEFORE the loop: the loop never returns, so anything after it never runs.
+  const shutdown = () => {
     log("shutting down");
-    clearInterval(sweep);
-    // Graceful: in-flight jobs finish, and anything killed mid-job is recovered by its heartbeat.
-    await stopBoss();
+    // The in-flight episode keeps its row `running`; its heartbeat goes cold and the sweep
+    // recovers it. Nothing is lost, nothing is stuck.
+    stopping = true;
     process.exit(0);
   };
-  process.on("SIGTERM", () => void shutdown());
-  process.on("SIGINT", () => void shutdown());
+  process.on("SIGTERM", shutdown);
+  process.on("SIGINT", shutdown);
+
+  // One episode at a time per worker: recording is long, and two at once in one process would
+  // just contend. More throughput means more workers, which the SKIP LOCKED claim already allows.
+  let sinceSweep = 0;
+  while (!stopping) {
+    try {
+      // Every minute, put back anything a dead worker left behind.
+      if (Date.now() - sinceSweep > 60_000) {
+        sinceSweep = Date.now();
+        const recovered = await recoverStaleEpisodes(db);
+        if (recovered) log(`recovered ${recovered} abandoned episode(s)`);
+      }
+      const claimed = await claimNextEpisode(db);
+      if (!claimed) {
+        await new Promise((r) => setTimeout(r, POLL_MS));
+        continue;
+      }
+      await runOne(claimed);
+    } catch (e) {
+      // A bad poll must not kill the worker; back off and keep going.
+      console.error("[worker]", e instanceof Error ? e.message : e);
+      await new Promise((r) => setTimeout(r, POLL_MS));
+    }
+  }
+
 }
 
 main().catch((e) => {
