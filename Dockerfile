@@ -71,4 +71,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/ || exit 1
 
+# NOTE: railway.json sets `deploy.startCommand`, which OVERRIDES this CMD. Both are kept in step
+# on purpose — this one is what `docker run` locally does, that one is what production does.
+# Changing the start path means changing both, or the deploy silently keeps the old one (2026-09-24).
 CMD ["npm", "run", "start:all"]
