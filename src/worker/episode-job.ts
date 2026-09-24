@@ -88,8 +88,11 @@ export function friendlyFailure(err: unknown): string {
   // Already the right words, and more specific than anything below could be.
   if (err instanceof ThinSourceError) return err.message;
   const msg = err instanceof Error ? err.message : String(err);
-  if (/spending cap|quota|RESOURCE_EXHAUSTED|\b429\b|Too Many Requests|billing/i.test(msg)) {
-    return "We couldn't reach the voice service just now. Your credit has been returned — please try again shortly.";
+  if (/spending cap|quota|RESOURCE_EXHAUSTED|\b429\b|\b402\b|Too Many Requests|prepayment credits|credits are depleted|billing/i.test(msg)) {
+    // Deliberately does NOT say "try again shortly": when the provider is out of credit, retrying
+    // is the one thing that cannot help, and telling a student to retry the night before an exam
+    // sends them into a loop against a wall.
+    return "Clutch can't record episodes right now — the problem is on our side, not with your files. Your credit has been returned, and we're on it.";
   }
   if (/GEMINI_API_KEY|api key|unauthor|forbidden|\b401\b|\b403\b/i.test(msg)) {
     return "Audio is temporarily unavailable. Your credit has been returned and nothing was charged.";
@@ -159,6 +162,12 @@ export async function runEpisodeJob(podcastId: string, deps: JobDeps, opts: RunO
     });
     return { status: "done" };
   } catch (err) {
+    // The friendly message goes on the student's screen; the real one has to go SOMEWHERE, and
+    // until now it went nowhere. A live episode failed on a 402 and the only trace was
+    // "couldn't reach the voice service", which cost an hour of looking in the wrong place.
+    console.error(
+      `[episode ${podcastId}] ${err instanceof Error ? (err.stack ?? err.message) : String(err)}`,
+    );
     const message = friendlyFailure(err);
     // Order matters: refund first, then mark failed. If the process dies between them the row is
     // still `running` with a cold heartbeat — recoverable — rather than `failed` with the credit

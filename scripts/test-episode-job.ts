@@ -183,6 +183,14 @@ function fakeDeps(over: Partial<JobDeps> = {}, creditsSpent = 1) {
     assert.deepEqual(asked, [6, 6], "the engine was not told how long the episode should be");
   });
 
+  await ok("a depleted provider is not described as something to retry", async () => {
+    // A 402 is a wall, not weather. Telling a student to try again shortly sends them into a loop.
+    const msg = friendlyFailure(new Error('tts 402: {"error":{"code":402,"message":"Your prepayment credits are depleted."}}'));
+    assert.ok(!/try again/i.test(msg), "it tells them to retry against a wall");
+    assert.ok(/credit has been returned/i.test(msg), "the credit is not accounted for");
+    assert.ok(/on our side/i.test(msg), "it reads as the student's fault");
+  });
+
   await ok("just over the floor is allowed through", async () => {
     let paid = 0;
     const { deps } = fakeDeps({

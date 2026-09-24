@@ -7,7 +7,13 @@
  * failure gets its own status (503), its own words, and an [ALERT] line that is easy to find
  * (and to wire to a pager later).
  */
-const CAPACITY = /spending cap|exceeded its monthly|quota|RESOURCE_EXHAUSTED|\b429\b|Too Many Requests|billing/i;
+/**
+ * `402` and "prepayment credits are depleted" were added on 2026-09-24: a live episode died at the
+ * voicing stage and the logs said only "couldn't reach the voice service", which reads as a
+ * transient outage. It was not transient — the prepaid balance was empty, and nothing would have
+ * worked until someone topped it up. A wall we cannot retry past must not be described as weather.
+ */
+const CAPACITY = /spending cap|exceeded its monthly|quota|RESOURCE_EXHAUSTED|\b429\b|\b402\b|Too Many Requests|prepayment credits|credits are depleted|billing/i;
 
 export function isProviderCapacityError(err: unknown): boolean {
   const text = err instanceof Error ? `${err.message} ${String((err as { cause?: unknown }).cause ?? "")}` : String(err);

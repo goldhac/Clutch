@@ -111,7 +111,10 @@ async function run() {
         const { data: file } = await db.storage.from("podcasts").download(row.audio_path);
         if (file) {
           mkdirSync("listen", { recursive: true });
-          const out = `listen/live-test-${new Date().toISOString().slice(0, 10)}.mp3`;
+          // Length and date in the name: two runs on the same day are usually a before and an
+          // after, and one silently overwriting the other loses the comparison that was the point.
+          const mins = row.duration_s ? `${Math.round(row.duration_s / 60)}min` : "unknown";
+          const out = `listen/live-test-${new Date().toISOString().slice(0, 10)}-${mins}.mp3`;
           writeFileSync(out, Buffer.from(await file.arrayBuffer()));
           console.log(`\nsaved ${out}`);
         }
