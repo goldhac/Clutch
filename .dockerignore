@@ -25,9 +25,10 @@ _private/
 .idea
 Thumbs.db
 
-# Build-time-only excludes — samples/ is imported by /sheet so it MUST
-# ship. scripts/ + tests/ + docs/ are not imported at runtime.
-scripts/
+# Build-time-only excludes — samples/ is imported by /sheet so it MUST ship.
+# scripts/ WAS excluded here, which is why two deploys failed with a Dockerfile
+# that copied it: the directory never existed in the build stage to copy FROM.
+# It ships now so the episode worker can be run inside the container.
 tests/
 docs/
 
