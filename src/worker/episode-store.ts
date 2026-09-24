@@ -8,6 +8,15 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { PodcastScript } from "@/contract/podcast-script";
 import type { CostRow, JobDeps, SpokenAudio, Stage } from "./episode-job";
+import { packTextFor } from "@/engine/pack-slice";
+import { MAX_EPISODE_MINUTES } from "@/engine/topic-split";
+
+/** The shape `podcast_series.topics` stores — the part of a Topic an episode needs. */
+interface SeriesTopic {
+  index: number;
+  files?: string[];
+  episodeMinutes?: number;
+}
 
 export const BUCKET = "podcasts";
 /** A row still marked `running` with a heartbeat older than this was abandoned by a dead worker. */
@@ -139,19 +148,59 @@ export function storeDeps(
   engine: Pick<JobDeps, "outline" | "script" | "speak">,
 ): JobDeps {
   return {
+    /**
+     * An episode gets ITS topic's material and ITS own length — not the whole course at a fixed
+     * 24 minutes, which is what this did before #6 and which made the topic split decide nothing.
+     *
+     * The series stores the split it was generated from, so the topic at this row's `topic_index`
+     * names the files to slice out of `pack_text` and the minutes to aim for. If the split is
+     * missing or its filenames no longer match the pack, the slice falls back to the whole pack
+     * and says so in the log — a wrong-but-working episode beats a silent empty one, and the line
+     * in the log is how we find out it happened.
+     */
     async loadJob(podcastId) {
       const { data, error } = await db
         .from("podcasts")
-        .select("user_id, topic, credits_spent, series_id, podcast_series(pack_text)")
+        .select("user_id, topic, topic_index, credits_spent, series_id, podcast_series(pack_text, topics)")
         .eq("id", podcastId)
         .single();
       if (error || !data) return null;
-      const series = data.podcast_series as unknown as { pack_text: string | null } | null;
+      const series = data.podcast_series as unknown as
+        | { pack_text: string | null; topics: unknown }
+        | null;
+      const packText = series?.pack_text ?? "";
+      const topicIndex = (data.topic_index as number) ?? 0;
+      const topics = Array.isArray(series?.topics) ? (series.topics as SeriesTopic[]) : [];
+      const topic = topics.find((t) => t?.index === topicIndex);
+
+      let source = packText;
+      let minutes = MAX_EPISODE_MINUTES;
+      if (topic) {
+        minutes = topic.episodeMinutes ?? MAX_EPISODE_MINUTES;
+        const slice = packTextFor(packText, topic.files ?? []);
+        source = slice.text;
+        if (slice.fellBack) {
+          console.warn(
+            `[episode ${podcastId}] topic "${data.topic}" claims ${(topic.files ?? []).join(", ") || "no files"}, ` +
+              `none of which are in the pack — speaking from the whole pack instead.`,
+          );
+        } else if (slice.missing.length) {
+          console.warn(
+            `[episode ${podcastId}] topic "${data.topic}" is missing ${slice.missing.join(", ")} from the pack.`,
+          );
+        }
+      } else if (topics.length) {
+        console.warn(
+          `[episode ${podcastId}] no topic at index ${topicIndex} in the series split — ` +
+            `speaking from the whole pack.`,
+        );
+      }
+
       return {
         userId: data.user_id as string,
         topic: data.topic as string,
-        source: series?.pack_text ?? "",
-        minutes: 24,
+        source,
+        minutes,
         creditsSpent: (data.credits_spent as number) ?? 0,
       };
     },
