@@ -6,7 +6,7 @@
  * spoken from and how long it speaks. A UI bug or a hand-written request must not be able to ask
  * for a 200-minute episode, an episode about no files, or two topics claiming one index.
  */
-import { MAX_EPISODE_MINUTES, MIN_TOPIC_MINUTES, type Topic } from "@/engine/topic-split";
+import { MAX_EPISODE_MINUTES, MIN_TOPIC_MINUTES, tooThinToTeach, type Topic } from "@/engine/topic-split";
 
 const PRIORITIES = new Set(["T1", "T2", "T3"]);
 const MAX_TOPIC_TITLE = 300;
@@ -48,4 +48,27 @@ export function sanitizeTopics(raw: unknown): Topic[] | null {
     });
   }
   return out;
+}
+
+/**
+ * Which topics are worth offering, and what to say about the ones that are not (#21).
+ *
+ * The worker refuses a thin topic before it spends (episode-job.ts) — that is the gate that
+ * protects the credit. This is the earlier, kinder half: a student should be told on the page that
+ * a chapter is unreadable, not after they have ticked it and waited for a queued job to fail.
+ *
+ * `usable` is empty with `topics` non-empty only when the whole pack is unreadable, which is a
+ * refusal rather than a filter — almost always a scan with no text layer.
+ */
+export function offerableTopics(topics: Topic[]): { usable: Topic[]; note: string | null } {
+  const usable = topics.filter((t) => !tooThinToTeach(t.chars));
+  const thin = topics.filter((t) => tooThinToTeach(t.chars));
+  if (!thin.length) return { usable, note: null };
+  const named = thin.map((t) => `"${t.title}"`).join(", ");
+  return {
+    usable,
+    note:
+      `${named} ${thin.length === 1 ? "has" : "have"} too little readable text to make an episode ` +
+      `from, so ${thin.length === 1 ? "it is" : "they are"} not offered.`,
+  };
 }

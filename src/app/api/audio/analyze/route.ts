@@ -18,7 +18,8 @@ import { ingestDocument } from "@/parse/ingest";
 import { cacheKey, readCache, writeCache } from "@/parse/ingest-cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
-import { creditsFor, splitTopics, tooThinToTeach, type SourceFile } from "@/engine/topic-split";
+import { creditsFor, splitTopics, type SourceFile } from "@/engine/topic-split";
+import { offerableTopics } from "@/lib/audio-selection";
 import type { FileTag } from "@/engine/prompt";
 
 export const runtime = "nodejs";
@@ -129,7 +130,7 @@ export async function POST(req: NextRequest) {
    * actually protects the credit — but catching it here means the student is told on the page,
    * before they tick anything, instead of after a queued job.
    */
-  const usable = topics.filter((t) => !tooThinToTeach(t.chars));
+  const { usable, note: thinNote } = offerableTopics(topics);
   if (topics.length && !usable.length) {
     return bad(
       "We couldn't find enough readable text in these files to teach from. That usually means " +
@@ -137,13 +138,7 @@ export async function POST(req: NextRequest) {
       422,
     );
   }
-  if (usable.length < topics.length) {
-    const thin = topics.filter((t) => tooThinToTeach(t.chars));
-    notes.push(
-      `${thin.map((t) => `"${t.title}"`).join(", ")} ${thin.length === 1 ? "has" : "have"} too ` +
-        `little readable text to make an episode from, so ${thin.length === 1 ? "it is" : "they are"} not offered.`,
-    );
-  }
+  if (thinNote) notes.push(thinNote);
   if (!topics.length) {
     return bad(
       "None of these files look like lecture material. Add slides or notes — a review sheet on " +

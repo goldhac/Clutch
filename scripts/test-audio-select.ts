@@ -12,11 +12,11 @@ config({ path: ".env.local", quiet: true });
  * Everything it creates, it deletes.
  */
 import assert from "node:assert/strict";
-import { sanitizeTopics } from "@/lib/audio-selection";
+import { offerableTopics, sanitizeTopics } from "@/lib/audio-selection";
 import { enqueueEpisode } from "@/worker/queue";
 import { serviceClient } from "@/lib/supabase/service";
 import { storeDeps } from "@/worker/episode-store";
-import { MAX_EPISODE_MINUTES, MIN_TOPIC_MINUTES } from "@/engine/topic-split";
+import { MAX_EPISODE_MINUTES, MIN_SOURCE_CHARS, MIN_TOPIC_MINUTES, type Topic } from "@/engine/topic-split";
 
 let n = 0;
 const ok = (name: string, fn: () => void) => { fn(); n++; console.log(`  ok  ${name}`); };
@@ -82,6 +82,44 @@ ok("a made-up merge reason is dropped, a real one is kept", () => {
 
 ok("a fractional length is rounded, not rejected", () => {
   assert.equal(sanitizeTopics([topic({ episodeMinutes: 12.4 })])?.[0].episodeMinutes, 12);
+});
+
+// ── what is worth offering at all (#21) ─────────────────────────────────────────────────────
+const t = (title: string, chars: number): Topic => ({
+  index: 0, title, files: ["f.pdf"], chars, materialMinutes: 10, episodeMinutes: 10,
+  priority: "T2", examMentions: 0,
+});
+
+ok("a readable pack is offered whole, with nothing to explain", () => {
+  const r = offerableTopics([t("Ch1", 20000), t("Ch2", MIN_SOURCE_CHARS)]);
+  assert.equal(r.usable.length, 2);
+  assert.equal(r.note, null);
+});
+
+ok("a chapter with no text layer is dropped and named", () => {
+  const r = offerableTopics([t("Ch1", 20000), t("Ch2 scan", 40)]);
+  assert.deepEqual(r.usable.map((x) => x.title), ["Ch1"]);
+  assert.ok(r.note?.includes('"Ch2 scan"'), "the student is not told which chapter");
+  assert.ok(/ has /.test(r.note ?? ""), "singular reads wrongly");
+});
+
+ok("several dropped chapters read as a list, in the plural", () => {
+  const r = offerableTopics([t("Ch1", 20000), t("Ch2", 10), t("Ch3", 10)]);
+  assert.equal(r.usable.length, 1);
+  assert.ok(r.note?.includes('"Ch2", "Ch3"'));
+  assert.ok(/ have /.test(r.note ?? ""), "plural reads wrongly");
+});
+
+ok("a wholly unreadable pack leaves nothing to offer — the caller must refuse, not filter", () => {
+  const r = offerableTopics([t("Ch1", 10), t("Ch2", 10)]);
+  assert.equal(r.usable.length, 0);
+  assert.ok(r.note);
+});
+
+ok("the floor is the same one the worker enforces", () => {
+  // If these ever drift, a topic is offered on the page and then refused after it is queued.
+  assert.equal(offerableTopics([t("exact", MIN_SOURCE_CHARS)]).usable.length, 1);
+  assert.equal(offerableTopics([t("one short", MIN_SOURCE_CHARS - 1)]).usable.length, 0);
 });
 
 // ── against the real database ────────────────────────────────────────────────────────────────
