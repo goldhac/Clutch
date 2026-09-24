@@ -75,13 +75,19 @@ const stripControl = (t: string): string => t.replace(/[\u0000-\u0008\u000B\u000
 /**
  * The one image on a slide worth showing the vision model — and showing it small.
  *
- * Measured on a real 9-deck pack (2026-09-24): we were sending 29.7 MB of slide images, and
- * picking the LARGEST BY BYTES. That is the wrong picture. Two of the first five were 200×200
- * icons weighing 900 KB and 629 KB, beating a 1000×831 diagram that weighed 110 KB — so vision
- * was reading a logo and never saw the diagram beside it.
+ * Measured across a real 9-deck pack, 83 image-bearing slides (2026-09-24). We were sending
+ * 29.7 MB of slide images at full size, choosing the largest BY BYTES. Downscaling to 1024px
+ * JPEG q80 makes the same pack 5.6 MB — 81% less — and 1024 is where Gemini tiles anyway, so
+ * the pixels above it were paid for and thrown away.
  *
- * So: choose by PIXEL AREA, skip anything too small to be a diagram, and downscale before
- * sending. The same pack becomes 5.6 MB, 81% less, while showing the model better pictures.
+ * Choosing by PIXEL AREA instead of bytes is the smaller half of this: it changes the picture on
+ * only 2 of the 83 slides (1000×667 → 1000×804; 653×404 → 842×546). Both rules were already
+ * finding a real diagram. It is kept because area is what the model sees and bytes is an artifact
+ * of how someone saved the file, but do not expect it to rescue much.
+ *
+ * The 300px floor earns its place differently: it drops 5 slides whose only image is a badly
+ * saved 200×200 photo weighing 400 KB–1 MB. Those slides carry 800–1300 characters of text of
+ * their own, so nothing readable is lost — we just stop spending a vision call on a headshot.
  */
 const MIN_VISION_SIDE_PX = 300;
 const MAX_VISION_SIDE_PX = 1024;
