@@ -20,6 +20,7 @@
 import { type NextRequest } from "next/server";
 import { generateSheet, EngineError } from "@/engine/rank";
 import { ingestDocument } from "@/parse/ingest";
+import { deepenPool } from "@/engine/deepen";
 import { cacheKey, readCache, writeCache } from "@/parse/ingest-cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { CroppedFigure } from "@/parse/figures";
@@ -187,18 +188,53 @@ export async function POST(req: NextRequest) {
     // Diagrams ride along with the sheet; the student chooses which to place (issue #15).
     const packText = pack.map((f) => `===== ${f.filename} [${f.tag}] =====\n${f.text}`).join("\n\n").slice(0, 400_000);
     const fileNames = pack.map((f) => f.filename);
-    // The pool is NOT deepened here. It was, and generation + fill + claims check ran 241 s —
-    // past the 300 s gateway timeout, so a student got a 502 after five minutes (2026-09-18).
-    // The sheet comes back fast and fills ITSELF on the Results page (/api/edit mode "fill"),
-    // which is also what the student sees: the sheet appears, then both pages fill and keep
-    // filling as they edit.
-    const shaped = await repairForFormat(result.content, format, { packText, files: fileNames });
+    /**
+     * The sheet should ARRIVE with both sides full — not appear half empty and fill itself while
+     * the student watches. A first draft does not manage that on its own: the prompt asks for
+     * ~140 lines and the model returns 60–100, and nine decks came back at 77.
+     *
+     * The reason this was once removed is still true: generation plus an unbounded fill ran 241 s
+     * against a 300 s gateway, and a student waited five minutes for a 502. So the fill now takes
+     * the time that is LEFT and stops. On a fast pack it finishes and the sheet is full; on a slow
+     * one it does what it can and the page tops up the rest. Either way nobody gets a 502.
+     */
+    const BUDGET_MS = 250_000;
+    const remaining = BUDGET_MS - (Date.now() - started);
+    const fillWarnings: string[] = [];
+    let pool = result.content;
+    if (remaining > 45_000) {
+      try {
+        const deep = await deepenPool(pool, {
+          packText, files: fileNames, examFormat: format,
+          countTraps: format === "true-false",
+          deadlineMs: remaining,
+        });
+        pool = deep.proposed;
+        console.warn(
+          `[/api/generate] fill · ${deep.before}→${deep.after} lines · +${deep.ops.length} ` +
+            `(${deep.practice ?? 0} practice) · ${deep.unverified ?? 0} refused by the claims check · ` +
+            `${deep.seconds.toFixed(0)}s of ${(remaining / 1000).toFixed(0)}s${deep.short ? " · still short" : ""}`,
+        );
+        if (deep.short) {
+          const howFull = deep.after < 90 ? "about one page" : "the front and part of the back";
+          fillWarnings.push(
+            `These files are short, so the sheet fills ${howFull}. We print what your files say, ` +
+              `practice built on it, and never the same thing twice. Add more material to fill the rest.`,
+          );
+        }
+      } catch (e) {
+        console.error(`[/api/generate] fill failed; shipping the first draft`, e);
+      }
+    } else {
+      console.warn(`[/api/generate] fill skipped · only ${(remaining / 1000).toFixed(0)}s left of the budget`);
+    }
+    const shaped = await repairForFormat(pool, format, { packText, files: fileNames });
     if (shaped.repaired) console.warn(`[/api/generate] format repair · ${shaped.repaired}`);
     const content = attachFigures(shaped.content, packFigures);
     return Response.json({
       content,
       meta: result.meta,
-      warnings: [...ingestWarnings, ...result.warnings],
+      warnings: [...ingestWarnings, ...result.warnings, ...fillWarnings],
       pack: pack.map((f) => ({ filename: f.filename, tag: f.tag, chars: f.text.length })),
       // The student's own text, so "Edit with Clutch" can ADD grounded lines later (issue #14).
       // Kept client-side for the session; capped to stay inside sessionStorage.

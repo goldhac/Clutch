@@ -337,6 +337,13 @@ type DeepenOpts = {
   countTraps?: boolean;
   /** Skip the claims check (evals, offline tests). Never in production. */
   verify?: false;
+  /**
+   * Wall-clock budget. A sheet should ARRIVE full, not fill itself while the student watches —
+   * but generation sits behind a 300 s gateway, and a fill that overruns it turns a finished
+   * sheet into a 502. So the fill takes what time is left and stops: a round that cannot start
+   * inside the budget is not started, and what has landed so far ships.
+   */
+  deadlineMs?: number;
 };
 
 /**
@@ -452,6 +459,9 @@ async function practiceRound(
  */
 export async function deepenPool(content: SheetContent, opts: DeepenOpts = {}): Promise<DeepenResult> {
   const t0 = Date.now();
+  const deadline = opts.deadlineMs ? t0 + opts.deadlineMs : Infinity;
+  /** A round takes 25-40 s; starting one with less than that left only risks the whole response. */
+  const timeFor = (ms: number) => Date.now() + ms <= deadline;
   const count = (c: SheetContent) => visibleLines(c) + (opts.countTraps ? c.traps.length : 0);
   const wanted = opts.target ?? FILL_TARGET;
   const practiceRoom = (c: SheetContent) =>
@@ -468,6 +478,7 @@ export async function deepenPool(content: SheetContent, opts: DeepenOpts = {}): 
 
   let total = await deepenOnce(content, opts);
   for (let round = 1; round < MAX_ROUNDS; round++) {
+    if (!timeFor(40_000)) break;
     const target = Math.min(wanted, total.sourceCap || Infinity);
     if (!total.ops.length || target - total.after < MIN_DEFICIT) break;
     const next = await deepenOnce(total.proposed, opts);
@@ -509,13 +520,15 @@ export async function deepenPool(content: SheetContent, opts: DeepenOpts = {}): 
 
   // Not foreseen (the facts round simply came back short): practice now.
   const gap = wanted - count(total.proposed);
-  if (!early && gap >= MIN_DEFICIT && practiceRoom(total.proposed) >= 4) {
+  if (!early && gap >= MIN_DEFICIT && practiceRoom(total.proposed) >= 4 && timeFor(45_000)) {
     addPractice(await practiceRound(total.proposed, opts, Math.min(gap, practiceRoom(total.proposed))).catch(() => null));
   }
 
   // ── The claims check: nothing goes on the sheet that the source does not say (issue #17) ──
   // Measured on scripts/evals/claims: 100% recall on 28 planted wrong lines, ~9% false alarms.
   // A dropped true line costs a little space; a confident wrong one costs the student marks.
+  // The claims check is the one step never skipped for time: an unchecked line is worse than a
+  // short sheet. It is also the cheapest — one Flash call per 16 lines.
   if (opts.verify !== false && total.ops.length && opts.packText) {
     // What is actually being ASSERTED. A question asserts nothing; its ANSWER does, and the
     // question is context for it. A trap asserts its correction. Checking the whole item as one
