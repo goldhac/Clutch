@@ -10,7 +10,7 @@ import { Toaster } from "./Toast";
  * Content max-width 1180px at 32px padding. Mounts the Toaster.
  */
 export interface AppChromeProps {
-  active?: "generate" | "library";
+  active?: "generate" | "audio" | "library";
   credits?: number;
   planLabel?: string;
   /** initials for the avatar, e.g. "AD" */
@@ -18,8 +18,9 @@ export interface AppChromeProps {
   children: ReactNode;
 }
 
-const TABS: { key: "generate" | "library"; label: string; href: string }[] = [
+const TABS: { key: NonNullable<AppChromeProps["active"]>; label: string; href: string }[] = [
   { key: "generate", label: "Generate", href: "/generate" },
+  { key: "audio", label: "Listen", href: "/audio" },
   { key: "library", label: "My Sheets", href: "/library" },
 ];
 

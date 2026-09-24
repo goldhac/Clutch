@@ -31,7 +31,13 @@ export interface SourceFile {
   text: string;
 }
 
-export type MergeReason = "same subject" | "too thin";
+/**
+ * Why a topic covers more than one file. `splitTopics` only ever produces the first two — it is
+ * describing its own reasoning. "joined by hand" comes from the student on /audio, and exists
+ * because borrowing "too thin" for their merge put a false sentence on the screen: two 24-minute
+ * chapters they joined themselves were explained as neither having five minutes of material.
+ */
+export type MergeReason = "same subject" | "too thin" | "joined by hand";
 
 export interface Topic {
   /** Position in the course, from the order the files were given. */

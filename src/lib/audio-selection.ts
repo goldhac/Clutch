@@ -10,6 +10,7 @@ import { MAX_EPISODE_MINUTES, MIN_TOPIC_MINUTES, type Topic } from "@/engine/top
 
 const PRIORITIES = new Set(["T1", "T2", "T3"]);
 const MAX_TOPIC_TITLE = 300;
+const MERGE_REASONS = new Set(["same subject", "too thin", "joined by hand"]);
 
 /**
  * Accept an edited split only if every topic is still a usable instruction to the worker: a real
@@ -43,7 +44,7 @@ export function sanitizeTopics(raw: unknown): Topic[] | null {
       episodeMinutes: Math.round(minutes),
       priority: priority as Topic["priority"],
       examMentions: Number.isFinite(Number(t.examMentions)) ? Number(t.examMentions) : 0,
-      merged: t.merged === "same subject" || t.merged === "too thin" ? t.merged : undefined,
+      merged: MERGE_REASONS.has(t.merged as string) ? (t.merged as Topic["merged"]) : undefined,
     });
   }
   return out;

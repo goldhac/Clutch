@@ -36,5 +36,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/library/:path*", "/results/:path*", "/auth/:path*", "/api/tweak", "/api/sheets/:path*"],
+  // /audio and its routes read auth on every request — a series belongs to a student and is
+  // billed to them — so they need the session refreshed here like the rest. Left out at first,
+  // which would have signed a student out mid-upload the moment their access token aged out.
+  matcher: [
+    "/library/:path*", "/results/:path*", "/auth/:path*", "/api/tweak", "/api/sheets/:path*",
+    "/audio/:path*", "/api/audio/:path*",
+  ],
 };
