@@ -14,11 +14,11 @@ export function isProviderCapacityError(err: unknown): boolean {
   return CAPACITY.test(text);
 }
 
-export function capacityResponse(route: string, err: unknown): Response {
+export function capacityResponse(route: string, err: unknown, what = "sheets"): Response {
   const detail = err instanceof Error ? err.message : String(err);
   console.error(`[ALERT] ${route}: AI provider is refusing requests (spend cap / quota). Every generation is failing. ${detail.slice(0, 300)}`);
   return new Response(
-    "Clutch can't build sheets right now. The problem is on our side, not with your files, and trying again won't help yet. " +
+    `Clutch can't build ${what} right now. The problem is on our side, not with your files, and trying again won't help yet. ` +
       "Nothing was saved and no credit was used. Please come back in a little while.",
     { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": "1800" } },
   );
