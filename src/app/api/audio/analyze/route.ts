@@ -18,7 +18,7 @@ import { ingestDocument } from "@/parse/ingest";
 import { cacheKey, readCache, writeCache } from "@/parse/ingest-cache";
 import { supabaseServer } from "@/lib/supabase/server";
 import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
-import { creditsFor, splitTopics, type SourceFile } from "@/engine/topic-split";
+import { creditsFor, splitTopics, tooThinToTeach, type SourceFile } from "@/engine/topic-split";
 import type { FileTag } from "@/engine/prompt";
 
 export const runtime = "nodejs";
@@ -124,6 +124,26 @@ export async function POST(req: NextRequest) {
   }
 
   const { topics, notes } = splitTopics(files);
+  /**
+   * Nothing worth teaching from. The worker refuses a thin topic too (#21) — that is the gate that
+   * actually protects the credit — but catching it here means the student is told on the page,
+   * before they tick anything, instead of after a queued job.
+   */
+  const usable = topics.filter((t) => !tooThinToTeach(t.chars));
+  if (topics.length && !usable.length) {
+    return bad(
+      "We couldn't find enough readable text in these files to teach from. That usually means " +
+        "they're scans without a text layer. Try the original slides or a PDF you can select text in.",
+      422,
+    );
+  }
+  if (usable.length < topics.length) {
+    const thin = topics.filter((t) => tooThinToTeach(t.chars));
+    notes.push(
+      `${thin.map((t) => `"${t.title}"`).join(", ")} ${thin.length === 1 ? "has" : "have"} too ` +
+        `little readable text to make an episode from, so ${thin.length === 1 ? "it is" : "they are"} not offered.`,
+    );
+  }
   if (!topics.length) {
     return bad(
       "None of these files look like lecture material. Add slides or notes — a review sheet on " +
@@ -145,7 +165,8 @@ export async function POST(req: NextRequest) {
       title,
       course_code: courseCode ?? null,
       ctx: { files: files.map((f) => ({ filename: f.filename, tag: f.tag })), courseCode },
-      topics,
+      // Store what was OFFERED, so the split the worker reads is the split the student saw.
+      topics: usable,
       pack_text: packText,
     })
     .select("id")
@@ -164,10 +185,10 @@ export async function POST(req: NextRequest) {
   return Response.json({
     seriesId: series.id as string,
     title,
-    topics,
+    topics: usable,
     notes,
     // What the whole series would cost if they made every episode. They will choose a subset.
-    credits: creditsFor(topics),
+    credits: creditsFor(usable),
     warnings,
   });
 }

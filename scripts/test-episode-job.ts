@@ -10,6 +10,7 @@ import type { PodcastOutline } from "@/contract/podcast-outline";
 import type { PodcastScript } from "@/contract/podcast-script";
 import { friendlyFailure, runEpisodeJob, type JobDeps } from "@/worker/episode-job";
 import { atUserLimit, PER_USER_RUNNING } from "@/worker/queue";
+import { MIN_SOURCE_CHARS } from "@/engine/topic-split";
 import { STALE_AFTER_MS } from "@/worker/episode-store";
 
 let n = 0;
@@ -21,12 +22,19 @@ const OUTLINE = { title: "T" } as unknown as PodcastOutline;
 const SCRIPT = { title: "T", summary: "S", lines: [] } as unknown as PodcastScript;
 const AUDIO = { mp3: new Uint8Array(3), previewMp3: new Uint8Array(2), durationSeconds: 60, chapters: [] };
 
+/**
+ * A source with enough in it to be worth an episode. Was "lecture text" — twelve characters — which
+ * every test happily recorded, and which the real pipeline would now refuse before spending (#21).
+ * A fixture that cannot happen in production tests nothing about production.
+ */
+const REAL_SOURCE = "Scaled dot-product attention weights values by query-key similarity. ".repeat(100);
+
 /** A fake worker environment that records everything it was asked to do. */
 function fakeDeps(over: Partial<JobDeps> = {}, creditsSpent = 1) {
   const calls: string[] = [];
   let refundedOnce = false;
   const deps: JobDeps = {
-    loadJob: async () => ({ userId: "u1", topic: "Attention", source: "lecture text", minutes: 24, creditsSpent }),
+    loadJob: async () => ({ userId: "u1", topic: "Attention", source: REAL_SOURCE, minutes: 24, creditsSpent }),
     setStage: async (_id, stage) => { calls.push(`stage:${stage}`); },
     heartbeat: async () => { calls.push("beat"); },
     outline: async () => OUTLINE,
@@ -129,6 +137,55 @@ function fakeDeps(over: Partial<JobDeps> = {}, creditsSpent = 1) {
     const fresh = { heartbeat_at: new Date().toISOString() };
     assert.equal(atUserLimit([cold, cold], STALE_AFTER_MS), false, "two dead jobs must not block a student for ever");
     assert.equal(atUserLimit([cold, fresh], STALE_AFTER_MS), false);
+  });
+
+  // ── #21: nothing is paid for until we know there is something to teach ──────────────────────
+  await ok("an empty pack is refused BEFORE the first paid call, and the credit comes back", async () => {
+    let paid = 0;
+    const { deps, calls } = fakeDeps({
+      loadJob: async () => ({ userId: "u1", topic: "Smoke", source: "", minutes: 5, creditsSpent: 1 }),
+      outline: async () => { paid++; return OUTLINE; },
+      script: async () => { paid++; return SCRIPT; },
+      speak: async () => { paid++; return AUDIO; },
+    });
+    const r = await runEpisodeJob("p1", deps);
+    assert.equal(r.status, "failed");
+    assert.equal(paid, 0, "a paid call was made against an empty pack");
+    assert.equal(r.refunded, true);
+    assert.ok(calls.includes("refund:done"));
+    // It must not even claim to have started: the row never reaches the outline stage.
+    assert.ok(!calls.includes("stage:outline"), "the row was marked as outlining without outlining");
+  });
+
+  await ok("the refusal says what is wrong with the file, not 'something went wrong'", async () => {
+    const { calls } = fakeDeps();
+    void calls;
+    const { deps, calls: c2 } = fakeDeps({
+      loadJob: async () => ({ userId: "u1", topic: "Chapter 3", source: "a scan", minutes: 5, creditsSpent: 1 }),
+    });
+    const r = await runEpisodeJob("p1", deps);
+    assert.ok(r.message?.includes("Chapter 3"), "the student is not told which file");
+    assert.ok(/text layer|scan/i.test(r.message ?? ""), "the likely cause is not named");
+    assert.ok(/nothing was charged/i.test(r.message ?? ""), "the credit is not accounted for");
+    assert.ok(c2.some((x) => x.startsWith("fail:")));
+  });
+
+  await ok("just over the floor is allowed through", async () => {
+    let paid = 0;
+    const { deps } = fakeDeps({
+      loadJob: async () => ({ userId: "u1", topic: "Thin but real", source: "x".repeat(MIN_SOURCE_CHARS), minutes: 5, creditsSpent: 1 }),
+      outline: async () => { paid++; return OUTLINE; },
+    });
+    const r = await runEpisodeJob("p1", deps);
+    assert.equal(r.status, "done");
+    assert.equal(paid, 1);
+  });
+
+  await ok("whitespace is not material", async () => {
+    const { deps } = fakeDeps({
+      loadJob: async () => ({ userId: "u1", topic: "Blank", source: " \n\t".repeat(9999), minutes: 5, creditsSpent: 1 }),
+    });
+    assert.equal((await runEpisodeJob("p1", deps)).status, "failed");
   });
 
   console.log(`\n${n} checks passed`);

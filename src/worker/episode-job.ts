@@ -17,6 +17,7 @@
  *   **A killed worker leaves a recoverable row, not a stuck one.** `running` alone is not a
  *   claim — `heartbeat_at` is. A row whose heartbeat has gone cold is free to be retried.
  */
+import { MIN_SOURCE_CHARS, tooThinToTeach } from "@/engine/topic-split";
 import type { PodcastOutline } from "@/contract/podcast-outline";
 import type { PodcastScript } from "@/contract/podcast-script";
 
@@ -77,6 +78,8 @@ export interface JobResult {
  * their screen, so it says what happened to their credit and what to do — never a stack trace.
  */
 export function friendlyFailure(err: unknown): string {
+  // Already the right words, and more specific than anything below could be.
+  if (err instanceof ThinSourceError) return err.message;
   const msg = err instanceof Error ? err.message : String(err);
   if (/spending cap|quota|RESOURCE_EXHAUSTED|\b429\b|Too Many Requests|billing/i.test(msg)) {
     return "We couldn't reach the voice service just now. Your credit has been returned — please try again shortly.";
@@ -91,6 +94,23 @@ export function friendlyFailure(err: unknown): string {
     return "We couldn't build an episode from this material this time. Your credit has been returned — try again, or pick a narrower topic.";
   }
   return "Something went wrong making this episode. Your credit has been returned — please try again.";
+}
+
+/**
+ * Thrown before the first paid call when a topic has nothing in it to teach.
+ *
+ * A distinct type because the message is not a guess at what went wrong — it is the exact reason,
+ * and `friendlyFailure` should pass it through rather than fall back to "something went wrong".
+ */
+export class ThinSourceError extends Error {
+  constructor(readonly topic: string, readonly chars: number) {
+    super(
+      `"${topic}" has only ${chars} characters of readable text — under the ${MIN_SOURCE_CHARS} ` +
+        `an episode needs. Nothing was charged. This usually means the file is a scan with no text ` +
+        `layer, or the wrong file. Try the original slides or notes.`,
+    );
+    this.name = "ThinSourceError";
+  }
 }
 
 export interface RunOptions {
@@ -109,6 +129,12 @@ export async function runEpisodeJob(podcastId: string, deps: JobDeps, opts: RunO
   };
 
   try {
+    // Before anything is paid for: is there something here to teach? The outline model will
+    // happily invent an episode from an empty string and bill for it (#21), so this has to be
+    // asked by us, and asked first. The failure path below refunds and marks the row.
+    const chars = job.source.trim().length;
+    if (tooThinToTeach(chars)) throw new ThinSourceError(job.topic, chars);
+
     await at("outline");
     const outline = await deps.outline(job.source, (s) => void at(s));
     await at("script");

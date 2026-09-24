@@ -65,6 +65,20 @@ export const CHARS_PER_AUDIO_MINUTE = 1_100;
 /** Below this, an episode is padding held together by two voices. Merge instead. */
 export const MIN_TOPIC_MINUTES = 5;
 /**
+ * The least material an episode may be made from — the shortest episode we are willing to make,
+ * priced in source characters.
+ *
+ * This is a spending gate, not a quality preference. On 2026-09-24 an episode was queued against an
+ * empty pack to see it fail fast; instead the outline stage invented a confident episode out of
+ * nothing, billed $0.06, and moved on to scripting (#21). Nothing in the pipeline had asked whether
+ * there was anything to teach. A student who uploads a scanned PDF with no text layer would have
+ * paid a credit to hear two hosts discuss material that was never in their course.
+ */
+export const MIN_SOURCE_CHARS = MIN_TOPIC_MINUTES * CHARS_PER_AUDIO_MINUTE;
+
+/** Is there enough here to teach from at all? Used before any paid call, and on /audio. */
+export const tooThinToTeach = (chars: number): boolean => chars < MIN_SOURCE_CHARS;
+/**
  * A long topic does not make a longer episode; it makes a fuller one. Measured on the real pack:
  * a lecture runs 6.7k–17.5k characters, so a single one supports roughly 6–16 minutes and a
  * two-part lecture about twenty. Past that the episode selects rather than sprawls.
