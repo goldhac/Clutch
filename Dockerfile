@@ -64,6 +64,11 @@ COPY --from=build /app/package.json ./package.json
 # Generated demo pools — /api/dev-pool + /sheet?g= read these at runtime
 # (owner demos / QA). Small JSON; PDFs excluded via .dockerignore.
 COPY --from=build /app/samples ./samples
+# The worker and the process that starts it. The runtime image copied only .next, public and
+# node_modules, so the first deploy of start:all failed outright: the script was not in the image.
+COPY --from=build /app/scripts ./scripts
+COPY --from=build /app/src ./src
+COPY --from=build /app/tsconfig.json ./tsconfig.json
 
 EXPOSE 3000
 
