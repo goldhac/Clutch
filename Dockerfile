@@ -76,4 +76,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s \
   CMD wget --quiet --tries=1 --spider http://127.0.0.1:3000/ || exit 1
 
-CMD ["npm", "run", "start"]
+# One image, two jobs: CLUTCH_ROLE picks the web server or the episode worker. railway.json's
+# startCommand overrides this CMD in production — keep the two the same so running the image
+# directly does what Railway does.
+CMD ["node", "scripts/railway-start.mjs"]

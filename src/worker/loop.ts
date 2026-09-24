@@ -29,6 +29,41 @@ const TTS_PER_M = 10;
 
 const log = (m: string) => console.log(`[worker] ${new Date().toISOString().slice(11, 19)} ${m}`);
 
+/**
+ * What the loop has actually done, for /healthz to report.
+ *
+ * A worker that is "up" is not the same as a worker that is working: the process can be alive
+ * while every poll fails on a bad key or an unreachable database, and nothing on the outside would
+ * look different. So the numbers here are the ones that distinguish those two — when it last
+ * managed a poll, and what the last error was.
+ */
+export interface WorkerStats {
+  startedAt: string;
+  polls: number;
+  lastPollAt: string | null;
+  claimed: number;
+  done: number;
+  failed: number;
+  recovered: number;
+  /** The episode being recorded right now, if any. */
+  current: string | null;
+  lastError: string | null;
+  stopping: boolean;
+}
+
+export const workerStats: WorkerStats = {
+  startedAt: new Date().toISOString(),
+  polls: 0,
+  lastPollAt: null,
+  claimed: 0,
+  done: 0,
+  failed: 0,
+  recovered: 0,
+  current: null,
+  lastError: null,
+  stopping: false,
+};
+
 export async function runWorkerLoop(): Promise<void> {
   const db = serviceClient();
   log("polling for episodes");
@@ -99,8 +134,15 @@ export async function runWorkerLoop(): Promise<void> {
       },
     };
 
-    const result = await runEpisodeJob(podcastId, storeDeps(db, engine));
-    log(`${podcastId}: ${result.status}${result.refunded ? " · credit returned" : ""} · ${((Date.now() - started) / 1000).toFixed(0)}s`);
+    workerStats.current = podcastId;
+    try {
+      const result = await runEpisodeJob(podcastId, storeDeps(db, engine));
+      if (result.status === "done") workerStats.done++;
+      else workerStats.failed++;
+      log(`${podcastId}: ${result.status}${result.refunded ? " · credit returned" : ""} · ${((Date.now() - started) / 1000).toFixed(0)}s`);
+    } finally {
+      workerStats.current = null;
+    }
   };
 
   // Sharing the web server's process now, so this asks the loop to stop and NEVER calls
@@ -109,6 +151,7 @@ export async function runWorkerLoop(): Promise<void> {
   const shutdown = () => {
     log("stopping");
     stopping = true;
+    workerStats.stopping = true;
   };
   process.once("SIGTERM", shutdown);
   process.once("SIGINT", shutdown);
@@ -122,16 +165,26 @@ export async function runWorkerLoop(): Promise<void> {
       if (Date.now() - sinceSweep > 60_000) {
         sinceSweep = Date.now();
         const recovered = await recoverStaleEpisodes(db);
-        if (recovered) log(`recovered ${recovered} abandoned episode(s)`);
+        if (recovered) {
+          workerStats.recovered += recovered;
+          log(`recovered ${recovered} abandoned episode(s)`);
+        }
       }
       const claimed = await claimNextEpisode(db);
+      // A poll only counts once it came back from the database. That is the whole point of the
+      // number: it separates "the process is alive" from "the process can reach Supabase".
+      workerStats.polls++;
+      workerStats.lastPollAt = new Date().toISOString();
+      workerStats.lastError = null;
       if (!claimed) {
         await new Promise((r) => setTimeout(r, POLL_MS));
         continue;
       }
+      workerStats.claimed++;
       await runOne(claimed);
     } catch (e) {
       // A bad poll must not kill the worker; back off and keep going.
+      workerStats.lastError = e instanceof Error ? e.message : String(e);
       console.error("[worker]", e instanceof Error ? e.message : e);
       await new Promise((r) => setTimeout(r, POLL_MS));
     }
