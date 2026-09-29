@@ -73,7 +73,13 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 4): Pro
       return await fn();
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e);
-      const retryable = /429|rate|quota|503|500|UNAVAILABLE|overloaded|timeout|fetch failed|Unexpected token|JSON|contract/i.test(msg);
+      // "Error fetching from https://generativelanguage.googleapis.com/…" is what the Google SDK
+      // says when the connection drops. It was NOT in this list — only "fetch failed" was — so a
+      // transient network blip threw straight through four available retries and killed the whole
+      // script stage. Observed 2026-09-29 mid-comparison; in production that is a failed episode
+      // and a refunded credit for a hiccup that a second attempt would have survived.
+      const retryable =
+        /429|rate|quota|503|500|UNAVAILABLE|overloaded|timeout|fetch failed|error fetching|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|network|Unexpected token|JSON|contract/i.test(msg);
       if (!retryable || i >= tries) throw e;
       await new Promise((r) => setTimeout(r, 8000 * i));
     }
