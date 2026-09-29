@@ -78,7 +78,13 @@ async function withRetry<T>(label: string, fn: () => Promise<T>, tries = 4): Pro
       // transient network blip threw straight through four available retries and killed the whole
       // script stage. Observed 2026-09-29 mid-comparison; in production that is a failed episode
       // and a refunded credit for a hiccup that a second attempt would have survived.
+      // Walls first. A spend cap, a depleted balance or a revoked key will refuse the next three
+      // attempts exactly as it refused this one, so retrying only spends 90 seconds of backoff
+      // before failing anyway — and the SDK wraps these in the SAME "Error fetching from …" text
+      // as a genuine network drop, so the wall has to be recognised before the transport match.
+      const wall = /spending cap|exceeded its monthly|prepayment credits|credits are depleted|\b402\b|API key|PERMISSION_DENIED|\b40[13]\b/i.test(msg);
       const retryable =
+        !wall &&
         /429|rate|quota|503|500|UNAVAILABLE|overloaded|timeout|fetch failed|error fetching|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|network|Unexpected token|JSON|contract/i.test(msg);
       if (!retryable || i >= tries) throw e;
       await new Promise((r) => setTimeout(r, 8000 * i));
