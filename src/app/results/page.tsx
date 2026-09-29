@@ -7,6 +7,7 @@ import "@/renderer/sheet.css";
 import { useEffect, useMemo, useState, useRef } from "react";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
+import { TopicRail } from "./TopicRail";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
 import { defaultFigureIds } from "@/components/sheet/Figures";
 import type { FreeAction } from "@/lib/edit-router";
@@ -87,6 +88,8 @@ export default function ResultsPage() {
   // Phones: the dock's options would cover ~40% of the screen, so they fold behind one button.
   const [dockOpen, setDockOpen] = useState(false);
   const [trayOpen, setTrayOpen] = useState(false);
+  /** The per-topic rail (#20). Same tray idiom as Diagrams: one open at a time. */
+  const [railOpen, setRailOpen] = useState(false);
   // null = not known yet. The sheet is NOT drawn until it is: free and Pro lay the pages out
   // differently (Pro = one continuous flow), so drawing first as free made every Pro account
   // watch the sheet re-lay itself out a few seconds in.
@@ -677,6 +680,14 @@ export default function ResultsPage() {
 
       {/* ── the dock ────────────────────────────────────────────────── */}
       <div className="print:hidden pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-overlay)] flex flex-col items-center gap-2.5 px-5 pb-[22px]">
+        {railOpen && content && content.topics.length > 0 && (
+          <TopicRail
+            content={content}
+            modules={viewOf(effectiveCtx).modules ?? {}}
+            onChange={(next) => setView((v) => ({ ...v, modules: Object.keys(next).length ? next : undefined }))}
+            onClose={() => setRailOpen(false)}
+          />
+        )}
         {trayOpen && content?.figures && content.figures.length > 0 && (
           <div className="pointer-events-auto w-full max-w-[720px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
             <div className="flex items-center justify-between">
@@ -901,6 +912,7 @@ export default function ResultsPage() {
               aria-expanded={trayOpen}
               onClick={() => {
                 setTrayOpen((v) => !v);
+                setRailOpen(false);
                 setEditorOpen(false);
                 setUpsellOpen(false);
               }}
@@ -909,6 +921,24 @@ export default function ResultsPage() {
               Diagrams
               <span className="rounded-full bg-white/15 px-1.5 py-px font-mono text-[10.5px]">
                 {(viewOf(effectiveCtx).figures ?? defaultFigureIds(content)).length}/{content.figures.length}
+              </span>
+            </button>
+          )}
+          {content && content.topics.length > 0 && (
+            <button
+              type="button"
+              aria-expanded={railOpen}
+              onClick={() => {
+                setRailOpen((v) => !v);
+                setTrayOpen(false);
+                setEditorOpen(false);
+                setUpsellOpen(false);
+              }}
+              className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
+            >
+              Topics
+              <span className="rounded-full bg-white/15 px-1.5 py-px font-mono text-[10.5px]">
+                {content.topics.filter((t) => !(viewOf(effectiveCtx).modules ?? {})[t.name]?.off).length}/{content.topics.length}
               </span>
             </button>
           )}

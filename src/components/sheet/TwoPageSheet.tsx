@@ -12,6 +12,7 @@ import type {
 } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
+import { applyModules, trimmedIds } from "./modules";
 import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
@@ -78,7 +79,7 @@ export interface TwoPageSheetProps {
 type Groups = Record<Section, Scored[]>[];
 
 export function TwoPageSheet({
-  content: raw,
+  content: rawIn,
   ctx = EMPTY_CTX,
   cols5 = false,
   debug = false,
@@ -87,6 +88,16 @@ export function TwoPageSheet({
   onFit,
 }: TwoPageSheetProps) {
   const view = useMemo(() => viewOf(ctx), [ctx]);
+  /**
+   * The student's per-topic controls (#20), applied at the prop boundary so that EVERY downstream
+   * read — the pages, the topic headings, the counts, the colour key — sees the same sheet. Wiring
+   * it only into the composition path was the first attempt and it left unticked topics still
+   * printing their heading, because half the component reads `content` directly.
+   *
+   * Structural only here (unticked topics, section mix). "Less" needs scores, so it is applied to
+   * the composed pool below.
+   */
+  const raw = useMemo(() => applyModules(rawIn, view.modules), [rawIn, view.modules]);
   // `base` keeps the original citations: course order and the chapter labels read them.
   const base = useMemo(() => filterForDensity(raw, "max"), [raw]);
   const sourceKey = useMemo(() => buildSourceKey(base, ctx.files), [base, ctx.files]);
@@ -108,8 +119,18 @@ export function TwoPageSheet({
   // how much fits, by measurement.
   const allItems = useMemo(() => {
     const r = compose(content, "max", ctx, 1e9, cols5);
-    return [...r.placed, ...r.bench, ...r.overflow];
-  }, [content, ctx, cols5]);
+    const all = [...r.placed, ...r.bench, ...r.overflow];
+    if (!view.modules) return all;
+    // "Less": drop this topic's lowest-scored lines, never a line the student wrote.
+    const byId = new Map(all.map((it) => [it.id, it]));
+    const cut = trimmedIds(
+      all,
+      view.modules,
+      (id: string) => (byId.get(id)?.item as { topic?: string } | undefined)?.topic,
+      (id: string) => byId.get(id)?.item,
+    );
+    return cut.size ? all.filter((it) => !cut.has(it.id)) : all;
+  }, [content, ctx, cols5, view.modules]);
 
   // Topic-major grouping over the ENTIRE pool (both pages share it; each
   // page renders only its own subset so texture stays identical).

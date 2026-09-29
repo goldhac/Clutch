@@ -5,6 +5,7 @@ import type { SheetContent } from "@/contract/sheet-content";
 import type { Concept, Formula, Question, SheetTable, Trap } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
+import { applyModules, trimmedIds } from "./modules";
 import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
@@ -98,10 +99,41 @@ export function FittedSheet({
 
   // Compose once (pure/deterministic). The estimated budget just needs to
   // land near the page — the measure pass corrects the rest.
-  const { placed, bench } = useMemo(
-    () => compose(content, density, ctx, defaultBudget(density, cols5), cols5),
-    [content, density, ctx, cols5],
+  /**
+   * The student's per-topic controls (#20). Two halves, applied where each can work:
+   *
+   *   structural — unticked topics and section mix are a pure content filter, so they run BEFORE
+   *   composition and an unticked topic behaves exactly as though it had never existed;
+   *   trim — "less" means "the lowest-ranked lines of this topic", which only means something
+   *   AFTER scoring, so it runs on the composed result.
+   *
+   * A trimmed id is removed from placed AND bench. Dropping it from placed alone would let the
+   * gap-fill pass quietly reveal it again, and "less" would look broken.
+   */
+  const shownContent = useMemo(() => applyModules(content, view.modules), [content, view.modules]);
+
+  const composed = useMemo(
+    () => compose(shownContent, density, ctx, defaultBudget(density, cols5), cols5),
+    [shownContent, density, ctx, cols5],
   );
+
+  const { placed, bench } = useMemo(() => {
+    if (!view.modules) return composed;
+    const all = [...composed.placed, ...composed.bench];
+    const byId = new Map(all.map((it) => [it.id, it]));
+    const cut = trimmedIds(
+      all,
+      view.modules,
+      (id: string) => (byId.get(id)?.item as { topic?: string } | undefined)?.topic,
+      (id: string) => byId.get(id)?.item,
+    );
+    if (!cut.size) return composed;
+    return {
+      ...composed,
+      placed: composed.placed.filter((it) => !cut.has(it.id)),
+      bench: composed.bench.filter((it) => !cut.has(it.id)),
+    };
+  }, [composed, view.modules]);
 
   // TOPIC-MAJOR grouping (the proven layout): the sheet reads as colored
   // topic blocks, each holding that topic's formulas → tables → concepts →
@@ -109,7 +141,7 @@ export function FittedSheet({
   // continuous generation, not "formula page then leftovers page".
   // Bench items start hidden; the fit pass reveals them into slack.
   const topicGroups = useMemo(() => {
-    const n = Math.max(1, content.topics.length);
+    const n = Math.max(1, shownContent.topics.length);
     const groups: Record<Section, Scored[]>[] = Array.from({ length: n }, () => ({
       formulas: [], concepts: [], traps: [], questions: [], topics: [], tables: [],
     }));
@@ -122,7 +154,7 @@ export function FittedSheet({
     for (const g of groups)
       for (const s of DISPLAY_ORDER) g[s].sort((a, b) => b.score - a.score);
     return groups;
-  }, [placed, bench, content.topics.length, topicAssign]);
+  }, [placed, bench, shownContent.topics.length, topicAssign]);
 
   const benchIds = useMemo(() => new Set(bench.map((b) => b.id)), [bench]);
   const figures = useMemo(() => selectedFigures(content, view.figures), [content, view.figures]);
