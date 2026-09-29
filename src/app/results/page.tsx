@@ -414,6 +414,9 @@ export default function ResultsPage() {
       stopped = true;
       clearInterval(watchdog);
     };
+    // Only canAutoFill may restart the watchdog: the writers are re-made every render, and
+    // listing them would tear this down and stand it back up on every keystroke.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canAutoFill]);
 
   if (error) {
@@ -502,17 +505,30 @@ export default function ResultsPage() {
     setEditorOpen(false);
   }
 
-  function setView(update: (current: ViewOptions) => ViewOptions) {
+  /**
+   * The one way the stash changes.
+   *
+   * It persists for the visit AND marks the sheet dirty, which is what the dock's "Saved · 2m ago"
+   * and the autosave both read. Only `replaceContent` used to do the second half, so view options
+   * — unticked topics, source style, order — lived in sessionStorage alone: a sheet reopened from
+   * My Sheets came back with every topic put back and no sign anything had been lost.
+   */
+  function updateStash(patch: (prev: Stash) => Stash) {
     setStash((prev) => {
       if (!prev) return prev;
-      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), view: update(viewOf(prev.ctx ?? EMPTY_CTX)) } };
+      const next = patch(prev);
+      setDirty(true);
       try {
         sessionStorage.setItem("clutch:last", JSON.stringify(next));
       } catch {
-        /* private mode / quota: the toggle still applies for this visit */
+        /* private mode / quota: the change still applies for this visit */
       }
       return next;
     });
+  }
+
+  function setView(update: (current: ViewOptions) => ViewOptions) {
+    updateStash((prev) => ({ ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), view: update(viewOf(prev.ctx ?? EMPTY_CTX)) } }));
   }
 
   /**
@@ -520,32 +536,14 @@ export default function ResultsPage() {
    * traps on for True/False). The WORDING of the questions only changes through an edit or a re-make.
    */
   function setFormat(examFormat: NonNullable<ScoreCtx["examFormat"]>) {
-    setStash((prev) => {
-      if (!prev) return prev;
-      const examType = examFormat === "problems" ? "problem-solving" : examFormat === "mixed" ? "mixed" : "conceptual";
-      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), examFormat, examType } };
-      try {
-        sessionStorage.setItem("clutch:last", JSON.stringify(next));
-      } catch {
-        /* still applies for this visit */
-      }
-      return next;
-    });
+    const examType = examFormat === "problems" ? "problem-solving" : examFormat === "mixed" ? "mixed" : "conceptual";
+    updateStash((prev) => ({ ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), examFormat, examType } }));
     setCtxPatch({});
     setActivePreset(null);
   }
 
   function setOrder(order: "course" | "priority") {
-    setStash((prev) => {
-      if (!prev) return prev;
-      const next: Stash = { ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), order } };
-      try {
-        sessionStorage.setItem("clutch:last", JSON.stringify(next));
-      } catch {
-        /* private mode / quota: still applies for this visit */
-      }
-      return next;
-    });
+    updateStash((prev) => ({ ...prev, ctx: { ...(prev.ctx ?? EMPTY_CTX), order } }));
   }
 
   /** Display changes the chat routed locally: free, instant, no model call. */
@@ -642,17 +640,7 @@ export default function ResultsPage() {
   }
 
   function replaceContent(nextContent: unknown) {
-    setStash((prev) => {
-      if (!prev) return prev;
-      const next: Stash = { ...prev, content: nextContent };
-      setDirty(true);
-      try {
-        sessionStorage.setItem("clutch:last", JSON.stringify(next));
-      } catch {
-        /* quota: the edit still applies for this visit */
-      }
-      return next;
-    });
+    updateStash((prev) => ({ ...prev, content: nextContent }));
   }
 
   function acceptEdit(nextContent: SheetContent) {
