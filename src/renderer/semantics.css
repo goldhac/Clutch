@@ -116,6 +116,17 @@
   font-size: 0.88em;
 }
 
+/* ── Topic preview (#20): hovering a row in the topic rail shows what would leave ────────────
+ * Screen only — this must never reach the printed sheet. The matching rule itself is injected
+ * by the results page with the topic name in it, because CSS cannot compare one element's
+ * attribute against an ancestor's. All this does is set the resting state and the transition.
+ */
+@media screen {
+  .preview-on .topic-group {
+    transition: opacity 140ms var(--ease-out, ease-out);
+  }
+}
+
 /* ── The student's own line (#20): `you` where a citation would be. Deliberately NOT `.src`,
       because turning sources off must never hide which lines are theirs. ── */
 .sheet .src-mine {

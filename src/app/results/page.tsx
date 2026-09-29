@@ -96,6 +96,11 @@ export default function ResultsPage() {
   const [railOpen, setRailOpen] = useState(false);
   /** The line the student clicked to edit (#20): its value-based key, not its position. */
   const [editing, setEditing] = useState<{ key: string; a: string; b: string; labels: [string, string]; wasVerified: boolean } | null>(null);
+  /**
+   * The topic the student is pointing at in the rail (#20). Ephemeral: it is NOT view state and
+   * must never reach the stash — it is a preview of what unticking would remove.
+   */
+  const [previewTopic, setPreviewTopic] = useState<string | null>(null);
   const [versionsOpen, setVersionsOpen] = useState(false);
   const [versions, setVersions] = useState<SheetVersion[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
@@ -761,7 +766,20 @@ export default function ResultsPage() {
                   handler per leaf: the sheet renders hundreds of them, and the fit pass toggles
                   their visibility constantly. Keyboard users reach the same editor from the topic
                   rail, so this is an accelerator and not the only route. */}
-              <div className="animate-[cl-rise_400ms_var(--ease-pop)]" onClick={onSheetClick}>
+              <div
+                className={`animate-[cl-rise_400ms_var(--ease-pop)]${previewTopic ? " preview-on" : ""}`}
+                onClick={onSheetClick}
+              >
+                {/*
+                  Dim every topic EXCEPT the one being pointed at. Injected rather than expressed
+                  in the stylesheet because CSS cannot compare a group's `data-topic` against a
+                  value held on an ancestor, and the alternative — threading a prop through
+                  TwoPageSheet into SheetPage into each group, or toggling classes imperatively
+                  while the fit pass is also toggling display — is worse for a hover effect.
+                */}
+                {previewTopic && (
+                  <style>{`@media screen{.preview-on .topic-group:not([data-topic="${previewTopic.replace(/["\\]/g, "\\$&")}"]){opacity:.25}}`}</style>
+                )}
                 {density === "max" ? (
                   <TwoPageSheet content={content} ctx={effectiveCtx} lockBack={!pro} onFit={(f) => { setBackFill(f.backFill); fitLinesRef.current = f.front + f.back; }} />
                 ) : (
@@ -834,7 +852,11 @@ export default function ResultsPage() {
               replaceContent(after);
               rememberVersion(before, after);
             }}
-            onClose={() => setRailOpen(false)}
+            onPreview={setPreviewTopic}
+            onClose={() => {
+              setRailOpen(false);
+              setPreviewTopic(null);
+            }}
           />
         )}
         {trayOpen && content?.figures && content.figures.length > 0 && (

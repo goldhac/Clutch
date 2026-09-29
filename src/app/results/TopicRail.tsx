@@ -38,6 +38,11 @@ export interface TopicRailProps {
   onChange: (next: ModuleState) => void;
   /** Apply a change to the sheet's content — adding the student's own block (#20). */
   onContent: (patch: (content: SheetContent) => SheetContent) => void;
+  /**
+   * Point at a topic to see it on the sheet. Fires on hover AND on keyboard focus — a preview a
+   * mouse can reach and a keyboard cannot is half a feature.
+   */
+  onPreview: (topic: string | null) => void;
   onClose: () => void;
 }
 
@@ -63,7 +68,7 @@ function linesByTopic(content: SheetContent): Map<string, Record<ModuleSection, 
   return out;
 }
 
-export function TopicRail({ content, modules, onChange, onContent, onClose }: TopicRailProps) {
+export function TopicRail({ content, modules, onChange, onContent, onPreview, onClose }: TopicRailProps) {
   /** Which topic's add form is open — `""` for the loose-note one. */
   const [adding, setAdding] = useState<string | null>(null);
   const counts = useMemo(() => linesByTopic(content), [content]);
@@ -113,7 +118,18 @@ export function TopicRail({ content, modules, onChange, onContent, onClose }: To
           const mix = mod.sections ?? [...MODULE_SECTIONS];
 
           return (
-            <li key={t.name} className={`rounded-[10px] bg-white/[0.04] px-3 py-2.5 ${on ? "" : "opacity-55"}`}>
+            <li
+              key={t.name}
+              // Preview only what is actually on the sheet: dimming everything to show a topic
+              // that is already removed says nothing.
+              onMouseEnter={() => on && onPreview(t.name)}
+              onMouseLeave={() => onPreview(null)}
+              onFocusCapture={() => on && onPreview(t.name)}
+              onBlurCapture={(e) => {
+                if (!e.currentTarget.contains(e.relatedTarget as Node | null)) onPreview(null);
+              }}
+              className={`rounded-[10px] bg-white/[0.04] px-3 py-2.5 ${on ? "" : "opacity-55"}`}
+            >
               <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <label className="tap flex min-w-0 flex-1 cursor-pointer items-center gap-2.5">
                   <input
