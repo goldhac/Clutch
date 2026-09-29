@@ -49,6 +49,12 @@ import { assignTopics } from "./topics-color";
 
 const DISPLAY_ORDER: Section[] = ["formulas", "tables", "concepts", "traps", "questions"];
 
+/** A line the student wrote or edited (#20). The fitter may never trim it. */
+const isPinned = (it: { item?: unknown }): boolean => {
+  const src = it.item as { mine?: true } | undefined;
+  return src?.mine === true;
+};
+
 export interface FittedSheetProps {
   content: SheetContent;
   density: Density;
@@ -152,9 +158,11 @@ export function FittedSheet({
       const all = nodes();
       const byId = new Map<string, HTMLElement>();
       const scoreOf = new Map<string, number>();
+      const pinned = new Set<string>();
       for (const el of all) {
         byId.set(el.dataset.fitId!, el);
         scoreOf.set(el.dataset.fitId!, Number(el.dataset.score));
+        if (el.dataset.pinned === "1") pinned.add(el.dataset.fitId!);
       }
 
       // Start from the composed baseline: placed visible, bench hidden.
@@ -181,6 +189,12 @@ export function FittedSheet({
         let victim: string | null = null;
         let low = Infinity;
         for (const id of visible) {
+          // A line the student wrote is never the victim (#20). They put it there deliberately —
+          // usually because a professor said it would be on the exam — and silently ranking it
+          // away is the one failure this feature cannot afford. If ONLY pinned lines are left and
+          // the page still clips, no victim is found and the loop stops: the sheet overflows
+          // visibly, which is honest, rather than deleting what they wrote to hide it.
+          if (pinned.has(id)) continue;
           const sc = scoreOf.get(id) ?? 0;
           if (sc < low) { low = sc; victim = id; }
         }
@@ -387,6 +401,7 @@ function FitLeaf({
     <Tag
       data-fit-id={it.id}
       data-score={it.score}
+      {...(isPinned(it) ? { "data-pinned": "1" } : {})}
       className={`fit-leaf${className ? ` ${className}` : ""}`}
       style={hidden ? { display: "none" } : undefined}
     >

@@ -25,6 +25,7 @@ import type {
   Trap,
 } from "@/contract/sheet-content";
 import type { Density } from "./Sheet";
+import type { ModuleState } from "./modules";
 
 /* ──────────────────────────────────────────────────────────────────────
  * Public types
@@ -60,6 +61,13 @@ export interface ViewOptions {
   answers: boolean;
   /** Ids of the diagrams placed on the sheet (issue #15). Undefined = our one-figure default. */
   figures?: string[];
+  /**
+   * Per-topic controls (#20): unticked topics, section mix, and how far "less" has been pushed.
+   *
+   * View state, not content — which is exactly what keeps it free and instant. Nothing here
+   * changes what the engine wrote; it changes what is shown, and the fitter refills the rest.
+   */
+  modules?: ModuleState;
 }
 
 export const DEFAULT_VIEW: ViewOptions = { traps: false, sources: "off", tags: false, answers: true };
