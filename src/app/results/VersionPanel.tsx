@@ -1,71 +1,111 @@
 "use client";
 
 /**
- * VersionPanel — what the sheet used to be (#20).
+ * VersionPanel — what the sheet used to be (editing-flow handoff §7).
  *
  * Exists for one reason: a student's own lines cannot be regenerated. Everything else on the sheet
  * can be rebuilt from the same pack, so losing it costs a wait; losing what they typed at 2am costs
  * the thing itself.
  *
- * Plain on purpose; the visual pass is Gold's.
+ * The tray is reachable whether or not the sheet is saved, which is the fix for the audit's "version
+ * history is invisible until a sheet is saved, with no explanation of why". The behaviour was
+ * correct and the silence was not: an unsaved sheet has nowhere to keep versions, so the tray says
+ * that and offers the one button that changes it.
+ *
+ * The list leads with where the student is now, so restoring reads as moving along a line they can
+ * see both ends of rather than as leaving the present.
  */
+import { Tray } from "@/components/ui";
 import { ago, type SheetVersion } from "@/lib/sheet-versions";
 
 export interface VersionPanelProps {
   versions: SheetVersion[];
   loading: boolean;
+  /** False before the sheet reaches the library — there is nowhere to keep versions yet. */
+  saved: boolean;
+  saving?: boolean;
+  onSaveToLibrary: () => void;
   onRestore: (v: SheetVersion) => void;
   onClose: () => void;
 }
 
-export function VersionPanel({ versions, loading, onRestore, onClose }: VersionPanelProps) {
+export function VersionPanel({
+  versions,
+  loading,
+  saved,
+  saving,
+  onSaveToLibrary,
+  onRestore,
+  onClose,
+}: VersionPanelProps) {
   return (
-    <div className="tray pointer-events-auto w-full max-w-[720px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
-      <div className="flex items-center justify-between">
-        <span className="text-[13px] font-semibold text-white">
-          Earlier versions
-          {versions.length > 0 && (
-            <span className="ml-2 font-mono text-[11px] font-normal text-[var(--on-band-muted)]">
-              {versions.length}
-            </span>
-          )}
-        </span>
-        <button
-          type="button"
-          onClick={onClose}
-          className="font-mono text-[11px] text-[var(--on-band-muted)] hover:text-[var(--on-band)]"
-        >
-          close
-        </button>
-      </div>
-      <p className="mt-1 text-[12px] leading-[1.5] text-[var(--on-band-muted)]">
-        The last 20 saves of this sheet. Restoring is itself a change, so you can always come back.
-      </p>
-
-      {loading ? (
-        <p className="mt-3 font-mono text-[11.5px] text-[var(--on-band-muted)]">loading…</p>
-      ) : versions.length === 0 ? (
-        <p className="mt-3 text-[12.5px] leading-[1.5] text-[var(--on-band-muted)]">
-          Nothing yet. Versions start once you change something &mdash; save this sheet to your
-          library first, so there is somewhere to keep them.
-        </p>
+    <Tray
+      title="Earlier versions"
+      count={saved && versions.length > 0 ? `${versions.length} save${versions.length === 1 ? "" : "s"}` : undefined}
+      description={
+        saved
+          ? "Every change saves. Restoring is a change too, so you can always come back."
+          : undefined
+      }
+      width={380}
+      onClose={onClose}
+      footer={saved ? "last 20 saves · your lines are kept in every one" : "dock reads: ● Not saved"}
+    >
+      {!saved ? (
+        <div className="flex flex-col items-start gap-2.5 px-[10px] pb-2 pt-1">
+          <p className="text-[12.5px] leading-[1.5] text-[var(--on-band-muted)]">
+            This sheet isn&rsquo;t in your library yet, so there&rsquo;s nowhere to keep versions. Save
+            it and every change after that is kept.
+          </p>
+          <p className="font-mono text-[11px] text-[#6b6b76]">
+            Until then, undo still works for this session.
+          </p>
+          <button
+            type="button"
+            disabled={saving}
+            onClick={onSaveToLibrary}
+            className="ctl ctl-primary tap inline-flex h-8 items-center rounded-[8px] px-3 text-[12px] font-semibold"
+          >
+            {saving ? "Saving…" : "Save to library"}
+          </button>
+        </div>
+      ) : loading ? (
+        <p className="px-[10px] py-2 font-mono text-[11.5px] text-[var(--on-band-muted)]">loading&hellip;</p>
       ) : (
-        <ul className="mt-3 flex max-h-[42vh] flex-col gap-1.5 overflow-y-auto pr-1">
-          {versions.map((v) => (
-            <li key={v.id} className="flex items-center gap-3 rounded-[10px] bg-white/[0.04] px-3 py-2">
-              <span className="min-w-0 flex-1 truncate text-[13px] text-white">{v.label ?? "edited"}</span>
-              <span className="shrink-0 font-mono text-[11px] text-[var(--on-band-muted)]">{ago(v.createdAt)}</span>
-              <button
-                type="button"
-                onClick={() => onRestore(v)}
-                className="tap shrink-0 rounded-[7px] bg-white/10 px-2.5 py-1 text-[11.5px] font-semibold text-white hover:bg-white/20"
+        <>
+          {/* Where they are now, as a row rather than a heading: restoring is a move along this
+              list, and a list whose present is missing reads like leaving rather than moving. */}
+          <div className="flex h-10 items-center gap-2.5 rounded-[10px] bg-[rgba(92,201,141,.08)] px-2.5">
+            <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-full bg-[#5cc98d]" />
+            <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--on-band)]">On the sheet now</span>
+            <span className="shrink-0 font-mono text-[10.5px] text-[#5cc98d]">current</span>
+          </div>
+
+          {versions.length === 0 ? (
+            <p className="px-[10px] py-2 text-[12.5px] leading-[1.5] text-[var(--on-band-muted)]">
+              Nothing earlier yet. The first save lands here as soon as you change something.
+            </p>
+          ) : (
+            versions.map((v) => (
+              <div
+                key={v.id}
+                className="flex h-10 items-center gap-2.5 rounded-[10px] px-2.5 transition-colors duration-[140ms] hover:bg-white/[0.05]"
               >
-                restore
-              </button>
-            </li>
-          ))}
-        </ul>
+                <span aria-hidden className="h-[7px] w-[7px] shrink-0 rounded-full border-[1.3px] border-[#6b6b76]" />
+                <span className="min-w-0 flex-1 truncate text-[13px] text-[var(--on-band)]">{v.label ?? "edited"}</span>
+                <span className="shrink-0 font-mono text-[11px] text-[var(--on-band-muted)]">{ago(v.createdAt)}</span>
+                <button
+                  type="button"
+                  onClick={() => onRestore(v)}
+                  className="ctl ctl-neutral tap inline-flex h-[26px] w-14 shrink-0 items-center justify-center rounded-[7px] text-[11.5px] font-semibold"
+                >
+                  Restore
+                </button>
+              </div>
+            ))
+          )}
+        </>
       )}
-    </div>
+    </Tray>
   );
 }

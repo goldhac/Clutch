@@ -33,7 +33,7 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
   const [b, setB] = useState("");
 
   const labels: Record<Shape, [string, string]> = {
-    note: ["Your note", ""],
+    note: ["Your note, e.g. \u201Che said this WILL be on the final\u201D", ""],
     concept: ["Term", "What it means"],
     question: ["Question", "Answer"],
     // Plain text rather than a grid editor: a student comparing two things types two columns and
@@ -107,7 +107,7 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
   }
 
   return (
-    <div className="tray mt-2 rounded-[10px] bg-white/[0.06] p-3">
+    <div className="tray mb-0.5 ml-[28px] mt-2.5 rounded-[10px] bg-[#15151a] p-3 shadow-[inset_0_0_0_1px_var(--band-line)]">
       <div className="flex flex-wrap items-center gap-1.5">
         {(["note", "concept", "question", "table"] as Shape[]).map((s) => (
           <button
@@ -116,8 +116,8 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
             aria-pressed={shape === s}
             onClick={() => setShape(s)}
             className={
-              "tap rounded-[6px] px-2 py-[3px] font-mono text-[10.5px] uppercase tracking-[0.05em] " +
-              (shape === s ? "bg-white/20 text-white" : "text-[var(--on-band-muted)] hover:text-white")
+              "ctl tap inline-flex h-[22px] items-center rounded-[6px] px-[7px] font-mono text-[10.5px] uppercase tracking-[0.04em] " +
+              (shape === s ? "bg-white/[0.14] text-white" : "text-[#6b6b76] hover:text-[#9a9aa6]")
             }
           >
             {s === "concept" ? "definition" : s}
@@ -137,7 +137,7 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
           onChange={(e) => setA(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter" && ready && shape === "note") submit(); }}
           placeholder={labelA}
-          className="w-full rounded-[7px] bg-black/30 px-2.5 py-1.5 text-[13px] text-white placeholder:text-white/35 focus:outline-none focus:ring-1 focus:ring-[var(--signal-500)]"
+          className="ctl-input h-[34px] w-full rounded-[8px] px-2.5 text-[13px]"
         />
       </label>
 
@@ -151,7 +151,7 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
               maxLength={800}
               onChange={(e) => setB(e.target.value)}
               placeholder={labelB}
-              className="w-full resize-y rounded-[7px] bg-black/30 px-2.5 py-1.5 font-mono text-[12px] text-white placeholder:text-white/35 focus:outline-none focus:ring-1 focus:ring-[var(--signal-500)]"
+              className={`ctl-input w-full resize-y rounded-[8px] px-2.5 py-1.5 font-mono text-[12px]${tableParse && "error" in tableParse && b.trim() ? " is-invalid" : ""}`}
             />
           ) : (
             <input
@@ -160,7 +160,7 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
               onChange={(e) => setB(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter" && ready) submit(); }}
               placeholder={labelB}
-              className="w-full rounded-[7px] bg-black/30 px-2.5 py-1.5 text-[13px] text-white placeholder:text-white/35 focus:outline-none focus:ring-1 focus:ring-[var(--signal-500)]"
+              className="ctl-input h-[34px] w-full rounded-[8px] px-2.5 text-[13px]"
             />
           )}
         </label>
@@ -174,19 +174,20 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
           type="button"
           disabled={!ready}
           onClick={submit}
-          className="tap rounded-[7px] bg-white/15 px-3 py-1 text-[12px] font-semibold text-white hover:bg-white/25 disabled:opacity-35"
+          className="ctl ctl-primary tap inline-flex h-8 items-center rounded-[8px] px-3 text-[12px] font-semibold"
         >
           Add to sheet
         </button>
         <button
           type="button"
           onClick={onClose}
-          className="tap rounded-[7px] px-2 py-1 text-[12px] font-semibold text-[var(--on-band-muted)] hover:text-white"
+          className="ctl tap inline-flex h-8 items-center rounded-[8px] px-2 text-[12px] font-semibold text-[var(--on-band-muted)] hover:text-white"
         >
           Cancel
         </button>
-        <span className="ml-auto font-mono text-[10.5px] text-[var(--on-band-muted)]">
-          marked <span className="text-white">you</span> · never trimmed
+        <span className="ml-auto flex items-center gap-1.5 font-mono text-[10.5px] text-[var(--on-band-muted)]">
+          <span aria-hidden className="inline-block h-[7px] w-[7px] rounded-full border-[1.3px] border-[#b3b0f4]" />
+          reads <span className="text-[#b3b0f4]">you</span> · never trimmed
         </span>
       </div>
     </div>

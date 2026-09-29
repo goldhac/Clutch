@@ -198,3 +198,21 @@ export function applyEdit<T extends { concepts: unknown[]; questions: unknown[];
   copy[ix] = edited;
   return { ...content, [section]: copy };
 }
+
+/**
+ * Take a line off the sheet entirely.
+ *
+ * Only ever reached for a line the student wrote — Clutch's own lines come off by unticking their
+ * topic or trimming it, both of which are reversible with one click. Deleting is not, so the UI puts
+ * a modal in front of it and this function stays dumb: match by key, or change nothing.
+ */
+export function removeLine<T extends { concepts: unknown[]; questions: unknown[]; formulas: unknown[] }>(
+  content: T,
+  key: string,
+): T {
+  const section = key.split("|")[0] as EditableSection;
+  const list = content[section] as unknown[] | undefined;
+  if (!Array.isArray(list)) return content;
+  const next = list.filter((it) => editKey(it, section) !== key);
+  return next.length === list.length ? content : { ...content, [section]: next };
+}

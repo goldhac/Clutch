@@ -11,7 +11,7 @@ import { TopicRail } from "./TopicRail";
 import { EditLine } from "./EditLine";
 import { VersionPanel } from "./VersionPanel";
 import { describeChange, listVersions, saveVersion, VERSION_DEBOUNCE_MS, type SheetVersion } from "@/lib/sheet-versions";
-import { applyEdit, editFields, editKey } from "@/components/sheet/modules";
+import { applyEdit, editFields, editKey, removeLine } from "@/components/sheet/modules";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
 import { defaultFigureIds } from "@/components/sheet/Figures";
 import type { FreeAction } from "@/lib/edit-router";
@@ -95,7 +95,7 @@ export default function ResultsPage() {
   /** The per-topic rail (#20). Same tray idiom as Diagrams: one open at a time. */
   const [railOpen, setRailOpen] = useState(false);
   /** The line the student clicked to edit (#20): its value-based key, not its position. */
-  const [editing, setEditing] = useState<{ key: string; a: string; b: string; labels: [string, string]; wasVerified: boolean } | null>(null);
+  const [editing, setEditing] = useState<{ key: string; a: string; b: string; labels: [string, string]; wasVerified: boolean; src?: string; mine?: boolean; topic?: string; topicIndex?: number } | null>(null);
   /**
    * The topic the student is pointing at in the rail (#20). Ephemeral: it is NOT view state and
    * must never reach the stash — it is a preview of what unticking would remove.
@@ -517,12 +517,18 @@ export default function ResultsPage() {
     const fields = editFields(item, section);
     if (!fields) return;
     e.preventDefault();
+    const meta = (item ?? {}) as { verified?: boolean; src?: string; mine?: boolean; topic?: string };
+    const ix = meta.topic ? content.topics.findIndex((t) => t.name === meta.topic) : -1;
     setEditing({
       key,
       a: fields.a,
       b: fields.b,
       labels: fields.labels,
-      wasVerified: (item as { verified?: boolean } | undefined)?.verified === true,
+      wasVerified: meta.verified === true,
+      src: meta.src,
+      mine: meta.mine === true,
+      topic: meta.topic,
+      topicIndex: ix < 0 ? undefined : ix,
     });
     setRailOpen(false);
     setTrayOpen(false);
@@ -809,6 +815,9 @@ export default function ResultsPage() {
           <VersionPanel
             versions={versions}
             loading={versionsLoading}
+            saved={!!savedId}
+            saving={saving}
+            onSaveToLibrary={() => void saveToLibrary().then(() => void openVersions())}
             onClose={() => setVersionsOpen(false)}
             onRestore={(v) => {
               // Restoring is itself a change, so it goes through the same paths — they can undo it
@@ -827,7 +836,20 @@ export default function ResultsPage() {
             labels={editing.labels}
             initial={{ a: editing.a, b: editing.b }}
             wasVerified={editing.wasVerified}
+            src={editing.src}
+            mine={editing.mine}
+            topic={editing.topic}
+            topicIndex={editing.topicIndex}
             onCancel={() => setEditing(null)}
+            onRemove={() => {
+              const before = content;
+              const after = removeLine(content as never, editing.key);
+              setUndoStack((u) => [...u.slice(-9), before]);
+              replaceContent(after);
+              rememberVersion(before, after);
+              setEditing(null);
+              toast("Your line is off the sheet · undo to bring it back", "check");
+            }}
             onSave={(next) => {
               const before = content;
               const after = applyEdit(content as never, editing.key, next);
@@ -1115,16 +1137,16 @@ export default function ResultsPage() {
               </span>
             </button>
           )}
-          {savedId && (
-            <button
-              type="button"
-              aria-expanded={versionsOpen}
-              onClick={() => (versionsOpen ? setVersionsOpen(false) : void openVersions())}
-              className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
-            >
-              History
-            </button>
-          )}
+          {/* Not gated on savedId: an unsaved sheet has nowhere to keep versions, and the tray is
+              where that gets SAID. Hiding the button left the behaviour correct and unexplained. */}
+          <button
+            type="button"
+            aria-expanded={versionsOpen}
+            onClick={() => (versionsOpen ? setVersionsOpen(false) : void openVersions())}
+            className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
+          >
+            History
+          </button>
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
           <button
             type="button"

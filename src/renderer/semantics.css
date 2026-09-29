@@ -474,6 +474,21 @@
 .sheet .tk-9 { --tk: var(--topic-gold); }
 .sheet .tk-none { --tk: var(--color-primary-indigo); }
 
+/* The same palette, outside the sheet. The topic rail colours its ticks and hover bars with the
+ * topic's own colour so a row and its block on the page are obviously the same thing — but the
+ * rules above are scoped to `.sheet`, so `--tk` did not resolve anywhere else. Lower specificity
+ * than the scoped set, so the sheet keeps winning inside itself. */
+:where(.tk-0) { --tk: var(--topic-indigo); }
+:where(.tk-1) { --tk: var(--topic-teal); }
+:where(.tk-2) { --tk: var(--topic-maroon); }
+:where(.tk-3) { --tk: var(--topic-green); }
+:where(.tk-4) { --tk: var(--topic-purple); }
+:where(.tk-5) { --tk: var(--topic-orange); }
+:where(.tk-6) { --tk: var(--topic-blue); }
+:where(.tk-7) { --tk: var(--topic-pink); }
+:where(.tk-8) { --tk: var(--topic-olive); }
+:where(.tk-9) { --tk: var(--topic-gold); }
+
 /* Formula block: CONTINUOUS flow like the proven sheet — no box border,
  * just the topic-colored left rule + tinted bold title. */
 .sheet .formula-block {
