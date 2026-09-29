@@ -685,6 +685,13 @@ export default function ResultsPage() {
             content={content}
             modules={viewOf(effectiveCtx).modules ?? {}}
             onChange={(next) => setView((v) => ({ ...v, modules: Object.keys(next).length ? next : undefined }))}
+            onContent={(patch) => {
+              // The student's own block (#20). Undoable like any other content change, and
+              // persisted the same way, because what they typed is the one part of the sheet we
+              // cannot rebuild.
+              setUndoStack((u) => [...u.slice(-9), content]);
+              replaceContent(patch(content));
+            }}
             onClose={() => setRailOpen(false)}
           />
         )}

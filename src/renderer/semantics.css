@@ -116,6 +116,26 @@
   font-size: 0.88em;
 }
 
+/* ── The student's own line (#20): `you` where a citation would be. Deliberately NOT `.src`,
+      because turning sources off must never hide which lines are theirs. ── */
+.sheet .src-mine {
+  color: var(--signal-600, #4b45c6);
+  font-style: normal;
+  font-size: 0.82em;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+/* ── A student's own note block (#20). Quietly distinct from a generated line: it is theirs,
+      and the sheet should not pass it off as something we checked. ── */
+.sheet .note-block {
+  border-left: 2pt solid var(--signal-500, #5b55d6);
+  padding-left: 4pt;
+  margin: 2pt 0;
+  break-inside: avoid;
+}
+.sheet .note-block .note-text { font-size: 0.94em; }
+
 /* ── View options (issue #13): the student may switch these off. The class sits on
       .sheet itself (single page) or on the .two-page wrapper around both sheets. ── */
 .view-no-src .sheet .src,

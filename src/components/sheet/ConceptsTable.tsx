@@ -37,7 +37,7 @@ export function ConceptsTable({ concepts }: ConceptsTableProps) {
               </td>
               <td className="meta">
                 <ConfDot conf={c.conf} />
-                <Citation src={c.src} />
+                <Citation src={c.src} mine={c.mine} />
               </td>
             </tr>
           ))}

@@ -13,8 +13,9 @@
  * Plain on purpose: the visual pass is Gold's (2026-09-29). Structure, states and accessibility are
  * finished; the styling is the dock's existing tray idiom and nothing more.
  */
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import type { SheetContent } from "@/contract/sheet-content";
+import { AddBlock } from "./AddBlock";
 import {
   MODULE_SECTIONS,
   MIN_TOPIC_LINES,
@@ -35,6 +36,8 @@ export interface TopicRailProps {
   content: SheetContent;
   modules: ModuleState;
   onChange: (next: ModuleState) => void;
+  /** Apply a change to the sheet's content — adding the student's own block (#20). */
+  onContent: (patch: (content: SheetContent) => SheetContent) => void;
   onClose: () => void;
 }
 
@@ -60,7 +63,9 @@ function linesByTopic(content: SheetContent): Map<string, Record<ModuleSection, 
   return out;
 }
 
-export function TopicRail({ content, modules, onChange, onClose }: TopicRailProps) {
+export function TopicRail({ content, modules, onChange, onContent, onClose }: TopicRailProps) {
+  /** Which topic's add form is open — `""` for the loose-note one. */
+  const [adding, setAdding] = useState<string | null>(null);
   const counts = useMemo(() => linesByTopic(content), [content]);
   const noteCount = (content.notes ?? []).length;
   const looseNotes = (content.notes ?? []).filter((n) => !n.topic).length;
@@ -136,6 +141,15 @@ export function TopicRail({ content, modules, onChange, onClose }: TopicRailProp
                   >
                     +
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => setAdding(adding === t.name ? null : t.name)}
+                    aria-expanded={adding === t.name}
+                    title={`Add your own line to ${t.name}`}
+                    className="tap rounded-[7px] bg-white/10 px-2 py-1 text-[11.5px] font-semibold text-white hover:bg-white/20"
+                  >
+                    add
+                  </button>
                   {room > 0 ? (
                     <button
                       type="button"
@@ -188,24 +202,47 @@ export function TopicRail({ content, modules, onChange, onClose }: TopicRailProp
                   );
                 })}
               </div>
+
+              {adding === t.name && (
+                <AddBlock
+                  topic={t.name}
+                  onAdd={(patch) => {
+                    onContent(patch);
+                    // FR-14: a line added to a hidden topic must not vanish. Re-tick it.
+                    if (!on) set(t.name, { off: undefined });
+                  }}
+                  onClose={() => setAdding(null)}
+                />
+              )}
             </li>
           );
         })}
 
-        {noteCount > 0 && (
-          <li className="rounded-[10px] bg-white/[0.04] px-3 py-2.5">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[13px] font-semibold text-white">Your notes</span>
-              <span className="shrink-0 font-mono text-[11px] text-[var(--on-band-muted)]">
+        <li className="rounded-[10px] bg-white/[0.04] px-3 py-2.5">
+          <div className="flex items-center justify-between gap-3">
+            <span className="text-[13px] font-semibold text-white">Your notes</span>
+            <span className="flex shrink-0 items-center gap-2">
+              <span className="font-mono text-[11px] text-[var(--on-band-muted)]">
                 {noteCount} {noteCount === 1 ? "note" : "notes"}
                 {looseNotes ? ` · ${looseNotes} loose` : ""}
               </span>
-            </div>
-            <p className="mt-1 text-[11.5px] leading-[1.45] text-[var(--on-band-muted)]">
-              Yours, so they stay put &mdash; the sheet never trims them to make room.
-            </p>
-          </li>
-        )}
+              <button
+                type="button"
+                onClick={() => setAdding(adding === "" ? null : "")}
+                aria-expanded={adding === ""}
+                className="tap rounded-[7px] bg-white/10 px-2 py-1 text-[11.5px] font-semibold text-white hover:bg-white/20"
+              >
+                add
+              </button>
+            </span>
+          </div>
+          <p className="mt-1 text-[11.5px] leading-[1.45] text-[var(--on-band-muted)]">
+            Yours, so they stay put &mdash; the sheet never trims them to make room.
+          </p>
+          {adding === "" && (
+            <AddBlock onAdd={(patch) => onContent(patch)} onClose={() => setAdding(null)} />
+          )}
+        </li>
       </ul>
 
       {Object.keys(modules).length > 0 && (

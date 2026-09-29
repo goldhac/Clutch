@@ -35,7 +35,7 @@ export function QuestionBox({ question: q, bare = false }: QuestionBoxProps) {
         <span className="ans-arrow">→</span> <InlineText text={q.a} />
       </span>{" "}
       <ConfDot conf={q.conf} />
-      <Citation src={q.src} />
+      <Citation src={q.src} mine={q.mine} />
     </>
   );
   if (bare) return inner;

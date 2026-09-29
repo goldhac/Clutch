@@ -47,11 +47,11 @@ export function FormulaBlock({ formula: f }: FormulaBlockProps) {
       {f.ex ? (
         <div className="row ex-line">
           <span className="lbl">Q</span> <InlineText text={f.ex} />{" "}
-          <Citation src={f.src} />
+          <Citation src={f.src} mine={f.mine} />
         </div>
       ) : (
         <div className="row ex-line">
-          <Citation src={f.src} />
+          <Citation src={f.src} mine={f.mine} />
         </div>
       )}
     </div>

@@ -9,10 +9,12 @@ import type {
   SheetFigure,
   SheetTable,
   Trap,
+  SheetNote,
 } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
 import { applyModules, trimmedIds } from "./modules";
+import { NoteBlock } from "./NoteBlock";
 import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
@@ -485,6 +487,17 @@ function SheetPage({
     DISPLAY_ORDER.some((s) => g[s].some((it) => visible.has(it.id)));
   const colsClass = `cols${cols5 ? " cols-5" : ""}`;
 
+  /**
+   * A topic's own notes (#20). A loose note — one the student wrote that belongs to no chapter —
+   * rides with the first topic rather than being dropped: it is theirs, and silently not printing
+   * something they typed is the worst thing this feature could do.
+   */
+  const notesFor = (name: string | undefined) => {
+    const all = content.notes ?? [];
+    const first = content.topics[0]?.name;
+    return all.filter((n) => (n.topic ? n.topic === name : name === first));
+  };
+
   return (
     <div className="sheet density-max" data-page={pageNo}>
       <header className="sheet-head">
@@ -571,6 +584,14 @@ function SheetPage({
                   ))}
                 </ul>
               )}
+              {/*
+                The student's own notes for this topic (#20). Last in the group, and deliberately
+                OUTSIDE the fit machinery: a note has no score, is never trimmed, and is not a
+                FitLeaf — the fitter cannot take what it cannot see.
+              */}
+              {notesFor(topicName).map((note: SheetNote) => (
+                <NoteBlock key={note.id} note={note} />
+              ))}
             </section>
           );
         })}
