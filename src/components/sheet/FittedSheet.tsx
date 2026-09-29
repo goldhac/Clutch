@@ -3,14 +3,15 @@
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { SheetContent } from "@/contract/sheet-content";
 import type { Concept, Formula, Question, SheetTable, Trap } from "@/contract/sheet-content";
-import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
-import { applyModules, editKey, trimmedIds } from "./modules";
+import { applyModules, trimmedIds } from "./modules";
 import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
+import { ConceptRow } from "./ConceptsTable";
+import { FitLeaf } from "./FitLeaf";
 import { FormulaBlock } from "./FormulaBlock";
 import { CompareTableBody } from "./CompareTable";
 import { TrapCallout } from "./TrapCallout";
@@ -50,16 +51,6 @@ import { assignTopics } from "./topics-color";
  */
 
 const DISPLAY_ORDER: Section[] = ["formulas", "tables", "concepts", "traps", "questions"];
-
-/** A line the student wrote or edited (#20). The fitter may never trim it. */
-/** Identity for click-to-edit (#20): what the line SAYS, not where it sits. */
-const editKeyOf = (it: { item?: unknown; section?: string }): string | undefined =>
-  editKey(it.item, it.section ?? "");
-
-const isPinned = (it: { item?: unknown }): boolean => {
-  const src = it.item as { mine?: true } | undefined;
-  return src?.mine === true;
-};
 
 export interface FittedSheetProps {
   content: SheetContent;
@@ -420,33 +411,6 @@ export function FittedSheet({
 
 /** One measurable, hideable leaf. break-inside:avoid keeps a block whole
  * (so clipping lands between blocks, never through one). */
-function FitLeaf({
-  it,
-  hidden,
-  as = "div",
-  className,
-  children,
-}: {
-  it: Scored;
-  hidden: boolean;
-  as?: "div" | "li";
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const Tag = as;
-  return (
-    <Tag
-      data-fit-id={it.id}
-      data-score={it.score}
-      {...(isPinned(it) ? { "data-pinned": "1" } : {})}
-      {...(editKeyOf(it) ? { "data-edit-key": editKeyOf(it) } : {})}
-      className={`fit-leaf${className ? ` ${className}` : ""}`}
-      style={hidden ? { display: "none" } : undefined}
-    >
-      {children}
-    </Tag>
-  );
-}
 
 function renderItem(section: Section, it: Scored) {
   switch (section) {
@@ -466,24 +430,4 @@ function renderItem(section: Section, it: Scored) {
 /** A single concept as a row-block (term | def | meta) — replaces the
  * monolithic table so each concept is independently trimmable/fillable
  * while looking like the memorize-cold rows. */
-function ConceptRow({ concept: c }: { concept: Concept }) {
-  return (
-    <div className="concept-row">
-      <div className="term">
-        <VerifiedStar verified={c.verified} />
-        <strong><InlineText text={c.term} /></strong>
-      </div>
-      <div className="def">
-        <InlineText text={c.def} />
-        {c.ex && (
-          <span className="cex"> Example: <InlineText text={c.ex} /></span>
-        )}
-      </div>
-      <div className="meta">
-        <ConfDot conf={c.conf} />
-        <Citation src={c.src} mine={c.mine} />
-      </div>
-    </div>
-  );
-}
 

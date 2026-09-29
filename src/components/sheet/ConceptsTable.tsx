@@ -46,3 +46,36 @@ export function ConceptsTable({ concepts }: ConceptsTableProps) {
     </section>
   );
 }
+
+/**
+ * ConceptRow — the same concept as a row-block rather than a table row.
+ *
+ * Not a variant of ConceptsTable: that renders a <table>, this renders a div the fitter can
+ * measure and move on its own. The sheet views use THIS one; the table is the standalone
+ * presentation.
+ *
+ * It lives here because it lived twice — copied into FittedSheet and TwoPageSheet — and the copies
+ * cost three real bugs in one day (2026-09-29): the `you` marker on an edited line rendered from
+ * neither copy, and before that the same duplication hid the table marker and hid the fitter's
+ * pinning rule from the default view. A component rendered in two places belongs in one.
+ */
+export function ConceptRow({ concept: c }: { concept: Concept }) {
+  return (
+    <div className="concept-row">
+      <div className="term">
+        <VerifiedStar verified={c.verified} />
+        <strong><InlineText text={c.term} /></strong>
+      </div>
+      <div className="def">
+        <InlineText text={c.def} />
+        {c.ex && (
+          <span className="cex"> Example: <InlineText text={c.ex} /></span>
+        )}
+      </div>
+      <div className="meta">
+        <ConfDot conf={c.conf} />
+        <Citation src={c.src} mine={c.mine} />
+      </div>
+    </div>
+  );
+}

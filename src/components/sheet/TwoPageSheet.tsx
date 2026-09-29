@@ -11,15 +11,16 @@ import type {
   Trap,
   SheetNote,
 } from "@/contract/sheet-content";
-import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
-import { applyModules, editKey, trimmedIds } from "./modules";
+import { applyModules, trimmedIds } from "./modules";
 import { NoteBlock } from "./NoteBlock";
 import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
+import { ConceptRow } from "./ConceptsTable";
+import { FitLeaf } from "./FitLeaf";
 import { FormulaBlock } from "./FormulaBlock";
 import { CompareTableBody } from "./CompareTable";
 import { TrapCallout } from "./TrapCallout";
@@ -624,42 +625,7 @@ function ColsShell({ continuous, className, children }: { continuous: boolean; c
   );
 }
 
-/** A line the student wrote or edited (#20). The fitter may never trim it. */
-/** Identity for click-to-edit (#20): what the line SAYS, not where it sits. */
-const editKeyOf = (it: { item?: unknown; section?: string }): string | undefined =>
-  editKey(it.item, it.section ?? "");
 
-const isPinned = (it: { item?: unknown }): boolean =>
-  (it.item as { mine?: true } | undefined)?.mine === true;
-
-function FitLeaf({
-  it,
-  hidden,
-  as = "div",
-  className,
-  children,
-}: {
-  it: Scored;
-  hidden: boolean;
-  as?: "div" | "li";
-  className?: string;
-  children: React.ReactNode;
-}) {
-  const Tag = as;
-  return (
-    <Tag
-      data-fit-id={it.id}
-      data-score={it.score}
-      {...(isPinned(it) ? { "data-pinned": "1" } : {})}
-      {...(editKeyOf(it) ? { "data-edit-key": editKeyOf(it) } : {})}
-      data-est={it.estHeight}
-      className={`fit-leaf${className ? ` ${className}` : ""}`}
-      style={hidden ? { display: "none" } : undefined}
-    >
-      {children}
-    </Tag>
-  );
-}
 
 function renderItem(section: Section, it: Scored) {
   switch (section) {
@@ -674,24 +640,4 @@ function renderItem(section: Section, it: Scored) {
   }
 }
 
-function ConceptRow({ concept: c }: { concept: Concept }) {
-  return (
-    <div className="concept-row">
-      <div className="term">
-        <VerifiedStar verified={c.verified} />
-        <strong><InlineText text={c.term} /></strong>
-      </div>
-      <div className="def">
-        <InlineText text={c.def} />
-        {c.ex && (
-          <span className="cex"> Example: <InlineText text={c.ex} /></span>
-        )}
-      </div>
-      <div className="meta">
-        <ConfDot conf={c.conf} />
-        <Citation src={c.src} mine={c.mine} />
-      </div>
-    </div>
-  );
-}
 
