@@ -107,7 +107,7 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
   }
 
   return (
-    <div className="mt-2 rounded-[10px] bg-white/[0.06] p-3">
+    <div className="tray mt-2 rounded-[10px] bg-white/[0.06] p-3">
       <div className="flex flex-wrap items-center gap-1.5">
         {(["note", "concept", "question", "table"] as Shape[]).map((s) => (
           <button

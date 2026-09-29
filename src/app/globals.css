@@ -140,3 +140,15 @@ body {
     height: 44px;
   }
 }
+
+/* ── Dock trays (#20) ─────────────────────────────────────────────────
+ * The topic rail, the add form, the line editor and version history are
+ * hand-built panels rather than <Button> primitives, so they inherited no
+ * focus ring — 16 controls a keyboard user could reach and not see.
+ * One rule covers every control in a tray, on the dark band they all sit on.
+ */
+.tray :is(button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--signal-500);
+  outline-offset: 2px;
+  border-radius: 6px;
+}

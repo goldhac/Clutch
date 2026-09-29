@@ -42,7 +42,7 @@ export function EditLine({ labels, initial, wasVerified, onSave, onCancel }: Edi
         if (e.key === "Escape") onCancel();
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && ready) onSave({ a, b });
       }}
-      className="pointer-events-auto w-full max-w-[720px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]"
+      className="tray pointer-events-auto w-full max-w-[720px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]"
     >
       <div className="flex items-center justify-between">
         <span className="text-[13px] font-semibold text-white">Edit this line</span>

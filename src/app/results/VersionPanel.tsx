@@ -20,7 +20,7 @@ export interface VersionPanelProps {
 
 export function VersionPanel({ versions, loading, onRestore, onClose }: VersionPanelProps) {
   return (
-    <div className="pointer-events-auto w-full max-w-[720px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
+    <div className="tray pointer-events-auto w-full max-w-[720px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] bg-[var(--band-2)] p-4 shadow-[0_20px_50px_rgba(17,17,20,.4)]">
       <div className="flex items-center justify-between">
         <span className="text-[13px] font-semibold text-white">
           Earlier versions
