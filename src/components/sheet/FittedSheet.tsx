@@ -481,7 +481,7 @@ function ConceptRow({ concept: c }: { concept: Concept }) {
       </div>
       <div className="meta">
         <ConfDot conf={c.conf} />
-        <Citation src={c.src} />
+        <Citation src={c.src} mine={c.mine} />
       </div>
     </div>
   );
