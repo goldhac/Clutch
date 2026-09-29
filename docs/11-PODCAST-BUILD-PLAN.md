@@ -89,15 +89,42 @@ exact lines* understandable. Condense stage is basically pre-done.
 Audio billing: 25 tok/s × $6/M (3.5 Flash TTS — re-verify on ai.google.dev, single-source
 number flagged in 08 §4).
 
+> **⚠️ MEASURED 2026-09-29 — the estimates below were wrong, and the margin does not hold.**
+>
+> One real 6-minute topic episode, end to end in production, billed from `podcast_costs`:
+>
+> | stage | measured | | estimated |
+> |---|---|---|---|
+> | outline | $0.0363 | | — |
+> | script | $0.1730 | | |
+> | claims | $0.0009 | | |
+> | **text subtotal** | **$0.2102** | vs | ~$0.02–0.03 |
+> | voicing | $0.1266 (11,640 audio tok, 2 discarded takes) | vs | $0.054 |
+> | **TOTAL** | **$0.3369** | vs | **~$0.08–0.10** |
+>
+> 6m 05s of audio from 6,333 characters — **$0.0554 per finished minute**.
+>
+> The TTS estimate was 2.3× low. **The script estimate was ~8× low**, and it is the dominant
+> cost, not the audio — which is the opposite of the assumption this table was built on. Gemini
+> Pro bills output at $10/1M, and a script is mostly output.
+>
+> What that does to the plan below: **Pro at $4.99 with 15 credits is ~$5.05 of COGS at full
+> utilization** — a negative margin, not 70%. Either credits buy fewer episodes, the script stage
+> moves to a cheaper model, or the price moves. This needs deciding before Stripe, not after.
+>
+> Two caveats before over-fitting to one run: it is a single episode, and it was on the *shortest*
+> format we make. Longer episodes should be measured too before repricing — `npx tsx
+> scripts/test-episode-live.ts --spend` is the repeatable way.
+
 | Format | Audio | TTS | Script LLM | **All-in** | Credits |
 |---|---|---|---|---|---|
-| Crash course 20 min | 30k tok | $0.18 | ~$0.05–0.08 | **~$0.25** | 3 |
-| Crash course 30 min (cap) | 45k tok | $0.27 | ~$0.08 | **~$0.35** | 3 |
-| Topic episode 6 min | 9k tok | $0.054 | ~$0.02–0.03 | **~$0.08–0.10** | 1 |
+| Crash course 20 min | 30k tok | $0.18 | ~$0.05–0.08 | ~~**~$0.25**~~ unmeasured | 3 |
+| Crash course 30 min (cap) | 45k tok | $0.27 | ~$0.08 | ~~**~$0.35**~~ unmeasured | 3 |
+| Topic episode 6 min | 11.6k tok | **$0.1266** | **$0.2102** | **$0.3369 measured** | 1 |
 
-Full bundle (crash course + 6 topic episodes) ≈ **$0.75–0.95 per sheet** ≈ 9 credits.
-Pro $4.99 with ~15 credits/mo ≈ **$1.30–1.60 max COGS ⇒ ~70% gross margin** at full
-utilization; typical users generate one bundle ⇒ ~80%+.
+~~Full bundle (crash course + 6 topic episodes) ≈ $0.75–0.95 per sheet ≈ 9 credits.
+Pro $4.99 with ~15 credits/mo ≈ $1.30–1.60 max COGS ⇒ ~70% gross margin.~~
+**Superseded by the measurement above — six topic episodes alone are ~$2.02.**
 
 ---
 
