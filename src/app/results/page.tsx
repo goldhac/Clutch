@@ -11,7 +11,7 @@ import { TopicRail } from "./TopicRail";
 import { EditLine } from "./EditLine";
 import { VersionPanel } from "./VersionPanel";
 import { ViewTray } from "./ViewTray";
-import { describeChange, listVersions, saveVersion, VERSION_DEBOUNCE_MS, type SheetVersion } from "@/lib/sheet-versions";
+import { ago, describeChange, listVersions, saveVersion, VERSION_DEBOUNCE_MS, type SheetVersion } from "@/lib/sheet-versions";
 import { applyEdit, editFields, editKey, removeLine } from "@/components/sheet/modules";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
 import { defaultFigureIds } from "@/components/sheet/Figures";
@@ -44,13 +44,47 @@ interface Stash {
 }
 
 
-const FREE_PRESETS: { label: string; patch: Partial<ScoreCtx> }[] = [
-  { label: "More formulas", patch: { priority: "formulas" } },
-  { label: "More concepts", patch: { priority: "concepts" } },
-  { label: "Problem-heavy", patch: { examType: "problem-solving" } },
-  { label: "Concept-heavy", patch: { examType: "conceptual" } },
-  { label: "Reset mix", patch: { priority: "balanced", examType: "mixed" } },
-];
+/**
+ * One dock button, so the eight of them are one control rather than eight guesses.
+ *
+ * `open` is the tether's opener half: while its tray is up the button goes white-on-ink, which is
+ * what ties the panel hanging above it to the thing that summoned it.
+ */
+function DockButton({
+  open,
+  onClick,
+  hideOnPhone = true,
+  phoneOpen = false,
+  children,
+  ...rest
+}: {
+  open?: boolean;
+  onClick: () => void;
+  /** False for the ones that survive on a phone: Topics, Edit, Export. */
+  hideOnPhone?: boolean;
+  /** The phone's "More" is open, so the folded controls are showing. */
+  phoneOpen?: boolean;
+  children: React.ReactNode;
+} & React.ComponentProps<"button">) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      {...rest}
+      className={
+        (hideOnPhone && !phoneOpen ? "hidden sm:inline-flex " : "inline-flex ") +
+        "ctl tap h-9 shrink-0 items-center gap-1.5 rounded-[9px] px-3 text-[13px] font-semibold " +
+        (open ? "bg-white text-[var(--band)]" : "text-white hover:shadow-[inset_0_0_0_1px_#3a3a45]")
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
+const DockDivider = () => (
+  <span aria-hidden className="mx-1 hidden h-6 w-px bg-[var(--band-line)] sm:block" />
+);
 
 const DENSITY_OPTS = [
   { value: "max" as const, label: "MAX" },
@@ -75,7 +109,9 @@ export default function ResultsPage() {
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportModal, setExportModal] = useState(false);
   const [ctxPatch, setCtxPatch] = useState<Partial<ScoreCtx>>({});
-  const [activePreset, setActivePreset] = useState<string | null>(null);
+  // Still set by the chat router ("problem-heavy"); nothing displays it since the dock dropped
+  // the preset pills for the rail's per-topic section mix.
+  const [, setActivePreset] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   // Measured by the sheet itself: how much of the back page is used (null until the first fit).
   const [backFill, setBackFill] = useState<number | null>(null);
@@ -163,6 +199,10 @@ export default function ResultsPage() {
   const [savedId, setSavedId] = useState<string | null>(null);
   // Content changed since the last save (edits, fills): Save becomes "Save changes" and updates the row.
   const [dirty, setDirty] = useState(false);
+  /** When the row last took a write, for the dock's "Saved · 2m ago". */
+  const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
+  /** Re-reads that relative time once a minute; nothing else in the page ticks. */
+  const [tick, setTick] = useState(() => Date.now());
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -199,6 +239,7 @@ export default function ResultsPage() {
       const parsed = JSON.parse(raw) as Stash;
       setStash(parsed);
       if (parsed.sheetId) setSavedId(parsed.sheetId);
+      if (parsed.savedAt) setLastSavedAt(parsed.savedAt);
       if (parsed.density) setDensity(parsed.density);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -231,6 +272,25 @@ export default function ResultsPage() {
   const fitLinesRef = useRef(0);
   const stashRef = useRef(stash);
   stashRef.current = stash;
+  useEffect(() => {
+    const t = setInterval(() => setTick(Date.now()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
+  /**
+   * Keep an already-saved sheet saved.
+   *
+   * The dock reads "Saved · 2m ago", and a label that says so while the row is stale would be a
+   * lie. This only ever writes a row the student already asked us to keep — the FIRST save stays
+   * explicit, and undo plus the last 20 versions are both still there if a write was not wanted.
+   */
+  useEffect(() => {
+    if (!savedId || !dirty || saving) return;
+    const t = setTimeout(() => void saveToLibrary(), 2500);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [savedId, dirty, saving, content]);
+
   const savedIdRef = useRef(savedId);
   savedIdRef.current = savedId;
   // The decision is made from LIVE values on a one-second watchdog, not from a React dependency
@@ -323,7 +383,7 @@ export default function ResultsPage() {
           if (!id) return;
           // A sheet from My Sheets stays filled: the row is updated, never copied.
           void supabaseBrowser().from("sheets").update({ content: c as Record<string, unknown> }).eq("id", id)
-            .then(({ error: e }) => { if (!e) setDirty(false); });
+            .then(({ error: e }) => { if (!e) { setDirty(false); setLastSavedAt(new Date().toISOString()); } });
         };
         setUndoStack((u) => [...u.slice(-9), before]);
         replaceContent(next);
@@ -431,6 +491,15 @@ export default function ResultsPage() {
   /** Display options are free and instant; saved with the sheet so a reload and the PDF match. */
   function toggleView(key: "traps" | "tags" | "answers") {
     setView((current) => ({ ...current, [key]: !current[key] }));
+  }
+
+  /** The dock stacks its trays in one column, so exactly one may be open. */
+  function closeTrays() {
+    setRailOpen(false);
+    setTrayOpen(false);
+    setViewOpen(false);
+    setVersionsOpen(false);
+    setEditorOpen(false);
   }
 
   function setView(update: (current: ViewOptions) => ViewOptions) {
@@ -644,7 +713,7 @@ export default function ResultsPage() {
           .eq("id", savedId);
         if (updErr) throw updErr;
         setDirty(false);
-        toast("Changes saved");
+        setLastSavedAt(new Date().toISOString());
         return;
       }
       const { data, error: insErr } = await supabase
@@ -662,6 +731,7 @@ export default function ResultsPage() {
       if (insErr) throw insErr;
       setSavedId(data.id);
       setDirty(false);
+      setLastSavedAt(new Date().toISOString());
       toast("Saved to My Sheets");
     } catch (e) {
       setSaveError(e instanceof Error ? e.message : String(e));
@@ -669,6 +739,8 @@ export default function ResultsPage() {
       setSaving(false);
     }
   }
+
+  const changedTopics = Object.keys(viewOf(effectiveCtx).modules ?? {}).length;
 
   return (
     <div
@@ -699,28 +771,11 @@ export default function ResultsPage() {
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void saveToLibrary()}
-              disabled={saving || (!!savedId && !dirty)}
-              className="tap hidden h-[34px] items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-3.5 text-[13px] font-semibold text-[var(--ink-900)] transition-[background-color] duration-[160ms] hover:bg-[var(--ink-50)] disabled:opacity-60 sm:inline-flex"
-            >
-              {saving ? "Saving…" : savedId ? (dirty ? "Save changes" : "Saved ✓") : "Save"}
-            </button>
-            <LinkButton href="/generate" variant="secondary" size="sm" className="tap hidden !h-[34px] sm:inline-flex">
+            {/* Save state and Export both live in the dock now (§3): the sheet's own controls
+                belong with the sheet, not split across two bars. */}
+            <LinkButton href="/generate" variant="secondary" size="sm" className="tap !h-[34px]">
               Make another
             </LinkButton>
-            <button
-              type="button"
-              onClick={onExportClick}
-              disabled={exporting}
-              className="tap inline-flex h-[34px] items-center gap-1.5 rounded-[var(--r-md)] bg-[var(--band)] px-3.5 text-[13px] font-semibold text-white transition-[background-color,transform] duration-[160ms] ease-[var(--ease-out)] hover:bg-[var(--band-2)] active:scale-[0.98] disabled:opacity-60"
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
-              </svg>
-              {exporting ? "Rendering…" : maxLocked ? "Export" : "Export PDF"}
-            </button>
           </div>
         </div>
 
@@ -996,154 +1051,145 @@ export default function ResultsPage() {
           </ModalOptions>
         </Modal>
 
-        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-3 rounded-[14px] bg-[var(--band)] px-3 py-[9px] shadow-[0_18px_44px_rgba(17,17,20,.34),0_2px_6px_rgba(17,17,20,.2)]">
-          <span className="flex shrink-0 items-center rounded-[9px] bg-white/[0.08] p-[3px]">
+        <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-1.5 rounded-[14px] bg-[var(--band)] p-[7px] shadow-[0_20px_44px_rgba(17,17,20,.28)]">
+          {/* Density — the one control that changes how much is on the page, so it leads. */}
+          <span className="flex shrink-0 items-center rounded-[10px] bg-[var(--band-2)] p-[3px]">
             {DENSITY_OPTS.map((d) => (
               <button
                 key={d.value}
                 type="button"
+                aria-pressed={density === d.value}
                 onClick={() => setDensity(d.value)}
                 className={
-                  "tap rounded-[6px] px-3 py-[5px] text-[12.5px] font-semibold transition-[background-color,color] duration-[160ms] " +
-                  (density === d.value
-                    ? "bg-white text-[var(--band)]"
-                    : "text-[var(--on-band-muted)] hover:text-[var(--on-band)]")
+                  "ctl tap inline-flex h-[30px] items-center rounded-[7px] px-3 text-[13px] font-semibold " +
+                  (density === d.value ? "bg-white text-[var(--band)]" : "text-[#cbcbd4] hover:text-white")
                 }
               >
                 {d.label}
               </button>
             ))}
           </span>
-          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
+
+          <DockDivider />
+
+          {content && content.topics.length > 0 && (
+            <DockButton
+              open={railOpen}
+              hideOnPhone={false}
+              onClick={() => { const next = !railOpen; closeTrays(); setRailOpen(next); }}
+              aria-expanded={railOpen}
+            >
+              Topics
+              {/* Absent at rest: a badge that always reads 6/6 until you touch something carries
+                  no information. It appears only once there is something to report. */}
+              {changedTopics > 0 && (
+                <span className="rounded-full bg-[var(--signal-500)] px-1.5 py-px font-mono text-[11px] text-white">
+                  {changedTopics} changed
+                </span>
+              )}
+            </DockButton>
+          )}
+
+          <DockButton
+            open={viewOpen}
+            phoneOpen={dockOpen}
+            onClick={() => { const next = !viewOpen; closeTrays(); setViewOpen(next); }}
+            aria-expanded={viewOpen}
+          >
+            View
+            <span aria-hidden className="font-mono text-[10px] opacity-70">&#9662;</span>
+          </DockButton>
+
+          {/* Answers is a switch, not a tray row: it is the one display control a student flips
+              constantly while revising, so it stays one click away. */}
+          <button
+            type="button"
+            role="switch"
+            aria-checked={viewOf(effectiveCtx).answers}
+            onClick={() => toggleView("answers")}
+            className={
+              (dockOpen ? "inline-flex" : "hidden") +
+              " ctl tap h-9 shrink-0 items-center gap-2 rounded-[9px] px-3 text-[13px] font-semibold text-white hover:shadow-[inset_0_0_0_1px_#3a3a45] sm:inline-flex"
+            }
+          >
+            Answers
+            <span
+              aria-hidden
+              className={
+                "relative h-4 w-7 rounded-full transition-colors duration-[160ms] ease-[var(--ease-out)] " +
+                (viewOf(effectiveCtx).answers ? "bg-[var(--signal-500)]" : "bg-[#3a3a45]")
+              }
+            >
+              <span
+                className="absolute top-[2px] h-3 w-3 rounded-full bg-white transition-[left] duration-[160ms] ease-[var(--ease-out)]"
+                style={{ left: viewOf(effectiveCtx).answers ? 14 : 2 }}
+              />
+            </span>
+          </button>
+
+          <DockDivider />
+
+          <DockButton
+            open={editorOpen}
+            hideOnPhone={false}
+            onClick={() => {
+              // Everyone gets the chat: show/hide/reorder are free. Pro gates content edits inside it.
+              const next = !editorOpen;
+              closeTrays();
+              setEditorOpen(next);
+              setUpsellOpen(false);
+            }}
+          >
+            <span
+              aria-hidden
+              className={"h-[7px] w-[7px] rounded-full " + (editorOpen ? "bg-[var(--signal-500)]" : "bg-[var(--signal-300)]")}
+            />
+            Edit with Clutch
+          </DockButton>
+
+          <DockDivider />
+
+          {/* The save state IS the opener for version history. Before the sheet is in the library
+              it reads "Not saved" in amber — and the tray it opens is where that gets explained. */}
+          <DockButton
+            open={versionsOpen}
+            phoneOpen={dockOpen}
+            onClick={() => { if (versionsOpen) return setVersionsOpen(false); closeTrays(); void openVersions(); }}
+            aria-expanded={versionsOpen}
+          >
+            <span
+              aria-hidden
+              className={"h-1.5 w-1.5 rounded-full " + (savedId ? "bg-[#5cc98d]" : "bg-[#e0a24d]")}
+            />
+            <span className="font-mono text-[11.5px] font-normal">
+              {saving ? "Saving…" : savedId ? `Saved${lastSavedAt ? ` · ${ago(lastSavedAt, tick)}` : ""}` : "Not saved"}
+            </span>
+          </DockButton>
+
+          <button
+            type="button"
+            onClick={onExportClick}
+            disabled={exporting}
+            className="ctl ctl-primary tap inline-flex h-9 shrink-0 items-center gap-1.5 rounded-[9px] px-3 text-[13px] font-semibold disabled:opacity-60"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <path d="M12 3v12m0 0 4-4m-4 4-4-4M4 19h16" />
+            </svg>
+            {exporting ? "Exporting…" : "Export PDF"}
+          </button>
+
+          {/* Phone: Density, Topics, Edit and Export stay; everything else folds behind More. */}
           <button
             type="button"
             aria-expanded={dockOpen}
             onClick={() => setDockOpen((v) => !v)}
-            className="tap inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:hidden"
+            className="ctl tap inline-flex h-9 shrink-0 items-center rounded-[9px] px-3 text-[13px] font-semibold text-white hover:shadow-[inset_0_0_0_1px_#3a3a45] sm:hidden"
           >
-            {dockOpen ? "Hide options" : "Options"}
-          </button>
-          <span className={(dockOpen ? "flex" : "hidden") + " flex-wrap items-center justify-center gap-1.5 sm:flex"}>
-            {FREE_PRESETS.map((p) => (
-              <button
-                key={p.label}
-                type="button"
-                onClick={() => applyPreset(p.label, p.patch)}
-                className={
-                  "tap rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-[160ms] " +
-                  (activePreset === p.label
-                    ? "border-white bg-white text-[var(--band)]"
-                    : "border-[var(--band-line)] text-[var(--on-band-muted)] hover:border-[var(--ink-500)] hover:text-[var(--on-band)]")
-                }
-              >
-                {p.label}
-              </button>
-            ))}
-          </span>
-          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
-          <label className={(dockOpen ? "flex" : "hidden") + " shrink-0 items-center gap-1.5 sm:flex"}>
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Format</span>
-            <select
-              id="dock-exam-format"
-              value={effectiveCtx.examFormat ?? "mixed"}
-              onChange={(e) => {
-                setFormat(e.target.value as NonNullable<ScoreCtx["examFormat"]>);
-                toast("Sheet re-weighted for that format. Ask Edit with Clutch to reword the questions too.");
-              }}
-              className="tap rounded-[8px] bg-white/[0.08] px-2 py-[5px] text-[12px] font-semibold text-white focus:outline-none focus:ring-1 focus:ring-white/40"
-            >
-              <option className="text-black" value="mixed">Mixed</option>
-              <option className="text-black" value="multiple-choice">Multiple choice</option>
-              <option className="text-black" value="true-false">True / False</option>
-              <option className="text-black" value="short-answer">Short answer</option>
-              <option className="text-black" value="problems">Problems</option>
-            </select>
-          </label>
-          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
-          {/* §9 — Order, Sources, Traps, Question tags and Diagrams were five loose controls with
-              five mono labels. They are one kind of thing (display, free, prints as shown), so
-              they are now one button. Answers stays out here: it is the one display control a
-              student flips constantly while revising. */}
-          <button
-            type="button"
-            aria-expanded={viewOpen}
-            onClick={() => {
-              setViewOpen((v) => !v);
-              setRailOpen(false);
-              setTrayOpen(false);
-              setVersionsOpen(false);
-            }}
-            className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
-          >
-            View
-            <span aria-hidden className="font-mono text-[10px] opacity-70">&#9662;</span>
-          </button>
-          <button
-            type="button"
-            aria-pressed={viewOf(effectiveCtx).answers}
-            onClick={() => toggleView("answers")}
-            className={
-              (dockOpen ? "inline-flex" : "hidden") +
-              " tap shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-[160ms] sm:inline-flex " +
-              (viewOf(effectiveCtx).answers
-                ? "border-white bg-white text-[var(--band)]"
-                : "border-[var(--band-line)] text-[var(--on-band-muted)] hover:border-[var(--ink-500)] hover:text-[var(--on-band)]")
-            }
-          >
-            Answers
-          </button>
-          {content && content.topics.length > 0 && (
-            <button
-              type="button"
-              aria-expanded={railOpen}
-              onClick={() => {
-                setRailOpen((v) => !v);
-                setTrayOpen(false);
-                setViewOpen(false);
-                setVersionsOpen(false);
-                setEditorOpen(false);
-                setUpsellOpen(false);
-              }}
-              className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
-            >
-              Topics
-              <span className="rounded-full bg-white/15 px-1.5 py-px font-mono text-[10.5px]">
-                {content.topics.filter((t) => !(viewOf(effectiveCtx).modules ?? {})[t.name]?.off).length}/{content.topics.length}
-              </span>
-            </button>
-          )}
-          {/* Not gated on savedId: an unsaved sheet has nowhere to keep versions, and the tray is
-              where that gets SAID. Hiding the button left the behaviour correct and unexplained. */}
-          <button
-            type="button"
-            aria-expanded={versionsOpen}
-            onClick={() => (versionsOpen ? setVersionsOpen(false) : void openVersions())}
-            className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
-          >
-            History
-          </button>
-          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
-          <button
-            type="button"
-            onClick={() => {
-              // Everyone gets the chat: show/hide/reorder are free. Pro gates content edits inside it.
-              setEditorOpen((v) => !v);
-              setUpsellOpen(false);
-              setTrayOpen(false);
-              setViewOpen(false);
-              setRailOpen(false);
-              setVersionsOpen(false);
-            }}
-            className="tap inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-              <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
-            Edit with Clutch
+            {dockOpen ? "Less" : "More"}
           </button>
         </div>
         <div className="pointer-events-none font-mono text-[11px] text-[var(--ink-500)]">
-          order, show and presets are free &amp; instant · content edits come as a preview you accept or reject
+          topics, view and editing by hand are free &amp; instant · rewrites come back as a preview you accept or reject
         </div>
       </div>
 
