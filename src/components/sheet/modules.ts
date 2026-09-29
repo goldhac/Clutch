@@ -120,3 +120,81 @@ export function trimmedIds<T extends { id: string; score: number }>(
 export function trimRoom(lineCount: number, alreadyTrimmed = 0): number {
   return Math.max(0, lineCount - alreadyTrimmed - MIN_TOPIC_LINES);
 }
+
+/* ──────────────────────────────────────────────────────────────────────
+ * Editing a line in place (#20)
+ * ────────────────────────────────────────────────────────────────────── */
+
+/** The sections whose lines a student may edit. Tables and traps have their own shapes. */
+export type EditableSection = "concepts" | "questions" | "formulas";
+
+/**
+ * A line's identity, derived from what it SAYS rather than where it sits.
+ *
+ * `data-fit-id` is `"{section}:{index}"`, and that index points into the array the fitter was
+ * composed from — which is the sheet AFTER unticked topics, section mix and density filtering have
+ * all rearranged it. Editing by that index would reliably change the wrong line.
+ *
+ * So identity is the item's own primary text, normalised. It survives every filter between the
+ * stored sheet and the rendered one, and it fails SAFE: if nothing matches, the edit is refused
+ * rather than applied to a neighbour.
+ */
+export function editKey(item: unknown, section: string): string | undefined {
+  if (!item || typeof item !== "object") return undefined;
+  const o = item as Record<string, unknown>;
+  const primary =
+    section === "concepts" ? o.term :
+    section === "questions" ? o.q :
+    section === "formulas" ? o.name :
+    undefined;
+  if (typeof primary !== "string" || !primary.trim()) return undefined;
+  return `${section}|${primary.trim().slice(0, 120).toLowerCase()}`;
+}
+
+/** The two fields a student edits, per section — the claim and its support. */
+export function editFields(item: unknown, section: string): { a: string; b: string; labels: [string, string] } | null {
+  const o = (item ?? {}) as Record<string, unknown>;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  if (section === "concepts") return { a: str(o.term), b: str(o.def), labels: ["Term", "What it means"] };
+  if (section === "questions") return { a: str(o.q), b: str(o.a), labels: ["Question", "Answer"] };
+  if (section === "formulas") return { a: str(o.name), b: str(o.formula), labels: ["Name", "Formula"] };
+  return null;
+}
+
+/**
+ * Write an edit back into the sheet.
+ *
+ * The edited line becomes the student's: it reads `you`, it is pinned, and it loses the verified
+ * star — we checked the sentence that used to be there, not this one. `src` is deliberately KEPT
+ * as a provenance trail of where the line started; `mine` is what the renderer and fitter read.
+ *
+ * Returns the content unchanged when nothing matches, so a stale key can never edit a neighbour.
+ */
+export function applyEdit<T extends { concepts: unknown[]; questions: unknown[]; formulas: unknown[] }>(
+  content: T,
+  key: string,
+  next: { a: string; b: string },
+): T {
+  const section = key.split("|")[0] as EditableSection;
+  const list = content[section] as unknown[] | undefined;
+  if (!Array.isArray(list)) return content;
+
+  const ix = list.findIndex((it) => editKey(it, section) === key);
+  if (ix < 0) return content;
+
+  const old = list[ix] as Record<string, unknown>;
+  const fields =
+    section === "concepts" ? { term: next.a, def: next.b } :
+    section === "questions" ? { q: next.a, a: next.b } :
+    { name: next.a, formula: next.b };
+
+  const edited: Record<string, unknown> = { ...old, ...fields, mine: true as const };
+  // The star said "Clutch checked this against your files". It no longer applies to these words.
+  delete edited.verified;
+  // "high" was earned by evidence for the old wording; drop it rather than carry it over.
+  if (edited.conf === "high") edited.conf = "med";
+
+  const copy = [...list];
+  copy[ix] = edited;
+  return { ...content, [section]: copy };
+}

@@ -5,13 +5,14 @@ import type { SheetContent } from "@/contract/sheet-content";
 import type { Concept, Formula, Question, SheetTable, Trap } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
-import { applyModules, trimmedIds } from "./modules";
+import { applyModules, editKey, trimmedIds } from "./modules";
 import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
 import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 import { FormulaBlock } from "./FormulaBlock";
+import { CompareTableBody } from "./CompareTable";
 import { TrapCallout } from "./TrapCallout";
 import { QuestionBox } from "./QuestionBox";
 import type { Density } from "./Sheet";
@@ -51,6 +52,10 @@ import { assignTopics } from "./topics-color";
 const DISPLAY_ORDER: Section[] = ["formulas", "tables", "concepts", "traps", "questions"];
 
 /** A line the student wrote or edited (#20). The fitter may never trim it. */
+/** Identity for click-to-edit (#20): what the line SAYS, not where it sits. */
+const editKeyOf = (it: { item?: unknown; section?: string }): string | undefined =>
+  editKey(it.item, it.section ?? "");
+
 const isPinned = (it: { item?: unknown }): boolean => {
   const src = it.item as { mine?: true } | undefined;
   return src?.mine === true;
@@ -434,6 +439,7 @@ function FitLeaf({
       data-fit-id={it.id}
       data-score={it.score}
       {...(isPinned(it) ? { "data-pinned": "1" } : {})}
+      {...(editKeyOf(it) ? { "data-edit-key": editKeyOf(it) } : {})}
       className={`fit-leaf${className ? ` ${className}` : ""}`}
       style={hidden ? { display: "none" } : undefined}
     >
@@ -447,7 +453,7 @@ function renderItem(section: Section, it: Scored) {
     case "formulas":
       return <FormulaBlock formula={it.item as Formula} />;
     case "tables":
-      return <CompareTableInner table={it.item as SheetTable} />;
+      return <CompareTableBody table={it.item as SheetTable} />;
     case "concepts":
       return <ConceptRow concept={it.item as Concept} />;
     case "traps":
@@ -481,25 +487,3 @@ function ConceptRow({ concept: c }: { concept: Concept }) {
   );
 }
 
-/** CompareTable body without its own <section>/no-break wrapper (the
- * FitLeaf owns break behavior now). */
-function CompareTableInner({ table: t }: { table: SheetTable }) {
-  return (
-    <div className="compare-table">
-      <h3><InlineText text={t.title} /></h3>
-      <table>
-        <thead>
-          <tr>{t.cols.map((c, i) => <th key={i}><InlineText text={c} /></th>)}</tr>
-        </thead>
-        <tbody>
-          {t.rows.map((row, ri) => (
-            <tr key={ri}>{row.map((cell, ci) => <td key={ci}><InlineText text={cell} /></td>)}</tr>
-          ))}
-        </tbody>
-      </table>
-      {/* Ownership changes the WRAPPER, not just the marker: `.src-line` is hidden wholesale
-          when sources are off, which would hide a `you` nested inside it (#20). */}
-      <div className={t.mine ? "src-line-mine" : "src-line"}><Citation src={t.src} mine={t.mine} /></div>
-    </div>
-  );
-}

@@ -8,7 +8,7 @@
  * would be on the exam is the single failure this feature cannot afford.
  */
 import assert from "node:assert/strict";
-import { applyModules, trimmedIds, trimRoom, MIN_TOPIC_LINES } from "@/components/sheet/modules";
+import { applyEdit, applyModules, editKey, trimmedIds, trimRoom, MIN_TOPIC_LINES } from "@/components/sheet/modules";
 import type { SheetContent } from "@/contract/sheet-content";
 
 let n = 0;
@@ -143,6 +143,67 @@ ok("the student's own lines still count toward the floor", () => {
   const out = trimmedIds(items, { A: { trim: 3 } }, topics, (id) => (id === "mine" ? { mine: true } : {}));
   assert.equal(out.size, 1, "the floor ignored the student's line");
   assert.ok(!out.has("mine"));
+});
+
+// ── editing a line in place ──────────────────────────────────────────────────────────────────
+const editable = () => ({
+  concepts: [
+    { term: "Softmax", def: "Turns scores into a distribution.", src: "Slide 3", conf: "med" },
+    { term: "Star line", def: "Checked against a past exam.", src: "Past exam 2024 Q5", conf: "high", verified: true },
+  ],
+  questions: [{ q: "Why scale?", a: "Gradient stability.", src: "Slide 4", conf: "med" }],
+  formulas: [] as unknown[],
+});
+
+ok("identity comes from what the line says, not where it sits", () => {
+  assert.equal(editKey({ term: "Softmax" }, "concepts"), "concepts|softmax");
+  assert.equal(editKey({ q: "Why scale?" }, "questions"), "questions|why scale?");
+  // Case and padding must not change identity — the same line typed differently is the same line.
+  assert.equal(editKey({ term: "  SOFTMAX  " }, "concepts"), "concepts|softmax");
+  assert.equal(editKey({ term: "" }, "concepts"), undefined);
+  assert.equal(editKey(null, "concepts"), undefined);
+});
+
+ok("an edit rewrites the right line and marks it the student's", () => {
+  const out = applyEdit(editable(), "concepts|softmax", { a: "Softmax", b: "MY OWN WORDS." });
+  const c = out.concepts[0] as Record<string, unknown>;
+  assert.equal(c.def, "MY OWN WORDS.");
+  assert.equal(c.mine, true);
+  assert.equal(c.src, "Slide 3", "the provenance trail was thrown away");
+  // The untouched line is untouched.
+  assert.equal((out.concepts[1] as Record<string, unknown>).mine, undefined);
+});
+
+ok("editing a verified line takes its star away", () => {
+  // The star said Clutch checked THIS sentence. It no longer applies to these words.
+  const out = applyEdit(editable(), "concepts|star line", { a: "Star line", b: "I rewrote it." });
+  const c = out.concepts[1] as Record<string, unknown>;
+  assert.equal(c.verified, undefined, "an edited line kept the verified star");
+  assert.equal(c.conf, "med", "an edited line kept high confidence it no longer earns");
+  assert.equal(c.mine, true);
+});
+
+ok("a question edit writes q and a, not term and def", () => {
+  const out = applyEdit(editable(), "questions|why scale?", { a: "Why divide by sqrt(d_k)?", b: "To keep gradients stable." });
+  const q = out.questions[0] as Record<string, unknown>;
+  assert.equal(q.q, "Why divide by sqrt(d_k)?");
+  assert.equal(q.a, "To keep gradients stable.");
+  assert.equal(q.mine, true);
+});
+
+ok("a key that matches nothing changes nothing", () => {
+  // Fails safe: a stale key must never edit a neighbouring line.
+  const before = editable();
+  const after = applyEdit(before, "concepts|gone", { a: "x", b: "y" });
+  assert.deepEqual(after.concepts, before.concepts);
+  assert.deepEqual(applyEdit(before, "tables|anything", { a: "x", b: "y" }).concepts, before.concepts);
+});
+
+ok("an edited line can be found again by its NEW text", () => {
+  const out = applyEdit(editable(), "concepts|softmax", { a: "Softmax (mine)", b: "Rewritten." });
+  assert.equal(editKey(out.concepts[0], "concepts"), "concepts|softmax (mine)");
+  // And the old key no longer matches, so a second edit with it is refused rather than misapplied.
+  assert.deepEqual(applyEdit(out, "concepts|softmax", { a: "z", b: "z" }).concepts, out.concepts);
 });
 
 console.log(`${n} checks passed`);

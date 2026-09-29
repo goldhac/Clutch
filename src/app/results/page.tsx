@@ -8,6 +8,8 @@ import { useEffect, useMemo, useState, useRef } from "react";
 import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-content";
 import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
 import { TopicRail } from "./TopicRail";
+import { EditLine } from "./EditLine";
+import { applyEdit, editFields, editKey } from "@/components/sheet/modules";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
 import { defaultFigureIds } from "@/components/sheet/Figures";
 import type { FreeAction } from "@/lib/edit-router";
@@ -90,6 +92,8 @@ export default function ResultsPage() {
   const [trayOpen, setTrayOpen] = useState(false);
   /** The per-topic rail (#20). Same tray idiom as Diagrams: one open at a time. */
   const [railOpen, setRailOpen] = useState(false);
+  /** The line the student clicked to edit (#20): its value-based key, not its position. */
+  const [editing, setEditing] = useState<{ key: string; a: string; b: string; labels: [string, string]; wasVerified: boolean } | null>(null);
   // null = not known yet. The sheet is NOT drawn until it is: free and Pro lay the pages out
   // differently (Pro = one continuous flow), so drawing first as free made every Pro account
   // watch the sheet re-lay itself out a few seconds in.
@@ -461,6 +465,33 @@ export default function ResultsPage() {
     }
   }
 
+  /**
+   * Turn a click on the sheet into an edit. The line is identified by what it SAYS
+   * (`data-edit-key`), not by its position: `data-fit-id` indexes the composed sheet, which the
+   * view options and module controls have already rearranged.
+   */
+  function onSheetClick(e: React.MouseEvent) {
+    if (!content) return;
+    const el = (e.target as HTMLElement).closest<HTMLElement>("[data-edit-key]");
+    const key = el?.dataset.editKey;
+    if (!key) return;
+    const section = key.split("|")[0] as "concepts" | "questions" | "formulas";
+    const list = (content as unknown as Record<string, unknown[]>)[section];
+    const item = Array.isArray(list) ? list.find((x) => editKey(x, section) === key) : undefined;
+    const fields = editFields(item, section);
+    if (!fields) return;
+    e.preventDefault();
+    setEditing({
+      key,
+      a: fields.a,
+      b: fields.b,
+      labels: fields.labels,
+      wasVerified: (item as { verified?: boolean } | undefined)?.verified === true,
+    });
+    setRailOpen(false);
+    setTrayOpen(false);
+  }
+
   function replaceContent(nextContent: unknown) {
     setStash((prev) => {
       if (!prev) return prev;
@@ -656,7 +687,11 @@ export default function ResultsPage() {
            * viewport width and the wide row lives inside it. */}
           <div className="w-full max-w-full overflow-x-auto">
             <div className="flex min-w-max justify-center">
-              <div className="animate-[cl-rise_400ms_var(--ease-pop)]">
+              {/* Click a line to edit it (#20). One listener on the container rather than a
+                  handler per leaf: the sheet renders hundreds of them, and the fit pass toggles
+                  their visibility constantly. Keyboard users reach the same editor from the topic
+                  rail, so this is an accelerator and not the only route. */}
+              <div className="animate-[cl-rise_400ms_var(--ease-pop)]" onClick={onSheetClick}>
                 {density === "max" ? (
                   <TwoPageSheet content={content} ctx={effectiveCtx} lockBack={!pro} onFit={(f) => { setBackFill(f.backFill); fitLinesRef.current = f.front + f.back; }} />
                 ) : (
@@ -680,6 +715,20 @@ export default function ResultsPage() {
 
       {/* ── the dock ────────────────────────────────────────────────── */}
       <div className="print:hidden pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-overlay)] flex flex-col items-center gap-2.5 px-5 pb-[22px]">
+        {editing && (
+          <EditLine
+            labels={editing.labels}
+            initial={{ a: editing.a, b: editing.b }}
+            wasVerified={editing.wasVerified}
+            onCancel={() => setEditing(null)}
+            onSave={(next) => {
+              setUndoStack((u) => [...u.slice(-9), content]);
+              replaceContent(applyEdit(content as never, editing.key, next));
+              setEditing(null);
+              toast("Your version saved · the line is yours now", "check");
+            }}
+          />
+        )}
         {railOpen && content && content.topics.length > 0 && (
           <TopicRail
             content={content}

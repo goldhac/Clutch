@@ -5,14 +5,18 @@ import { Citation, InlineText } from "@/components/trust";
  * CompareTable — proven pattern for "when to use X vs Y" content
  * (OutSpec §4 pattern 2). Wrapped in .no-break so a formula-adjacent
  * table doesn't get orphaned at a column boundary.
+ *
+ * The markup itself lives in CompareTableBody, which the fitted sheet
+ * views render directly — they must NOT get the .no-break wrapper,
+ * because their FitLeaf already owns break behavior.
  */
 export interface CompareTableProps {
   table: SheetTable;
 }
 
-export function CompareTable({ table: t }: CompareTableProps) {
+export function CompareTableBody({ table: t }: CompareTableProps) {
   return (
-    <section className="compare-table no-break">
+    <div className="compare-table">
       <h3>
         <InlineText text={t.title} />
       </h3>
@@ -46,6 +50,14 @@ export function CompareTable({ table: t }: CompareTableProps) {
       <div className={t.mine ? "src-line-mine" : "src-line"}>
         <Citation src={t.src} mine={t.mine} />
       </div>
+    </div>
+  );
+}
+
+export function CompareTable({ table }: CompareTableProps) {
+  return (
+    <section className="no-break">
+      <CompareTableBody table={table} />
     </section>
   );
 }

@@ -13,7 +13,7 @@ import type {
 } from "@/contract/sheet-content";
 import { Citation, ConfDot, InlineText, VerifiedStar } from "@/components/trust";
 import { applyView, filterForDensity } from "./tiers";
-import { applyModules, trimmedIds } from "./modules";
+import { applyModules, editKey, trimmedIds } from "./modules";
 import { NoteBlock } from "./NoteBlock";
 import { augmentTopicSources, courseOrder, topicSpans } from "./course-order";
 import { FigureLeaf, figureFitId, figureTopicIndex, selectedFigures } from "./Figures";
@@ -21,6 +21,7 @@ import { buildSourceKey, sourceKeyLine } from "./source-key";
 import { ExamFormatStrip } from "./ExamFormatStrip";
 import { VerifiedPatternsBlock } from "./VerifiedPatternsBlock";
 import { FormulaBlock } from "./FormulaBlock";
+import { CompareTableBody } from "./CompareTable";
 import { TrapCallout } from "./TrapCallout";
 import { QuestionBox } from "./QuestionBox";
 import {
@@ -197,9 +198,11 @@ export function TwoPageSheet({
       const leaves = Array.from(cols.querySelectorAll<HTMLElement>("[data-fit-id]"));
       const byId = new Map<string, HTMLElement>();
       const scoreOf = new Map<string, number>();
+      const pinned = new Set<string>();
       for (const el of leaves) {
         byId.set(el.dataset.fitId!, el);
         scoreOf.set(el.dataset.fitId!, Number(el.dataset.score));
+        if (el.dataset.pinned === "1") pinned.add(el.dataset.fitId!);
       }
       const visible = new Set<string>();
       for (const el of leaves) {
@@ -237,6 +240,10 @@ export function TwoPageSheet({
         let victim: string | null = null;
         let low = Infinity;
         for (const id of visible) {
+          // Never the student's own line (#20). This loop is the one that actually runs on the
+          // default two-page view — the same guard was added to FittedSheet first, and only to
+          // FittedSheet, which meant the promise held on the view almost nobody sees.
+          if (pinned.has(id)) continue;
           const sc = scoreOf.get(id) ?? 0;
           if (sc < low) { low = sc; victim = id; }
         }
@@ -617,6 +624,14 @@ function ColsShell({ continuous, className, children }: { continuous: boolean; c
   );
 }
 
+/** A line the student wrote or edited (#20). The fitter may never trim it. */
+/** Identity for click-to-edit (#20): what the line SAYS, not where it sits. */
+const editKeyOf = (it: { item?: unknown; section?: string }): string | undefined =>
+  editKey(it.item, it.section ?? "");
+
+const isPinned = (it: { item?: unknown }): boolean =>
+  (it.item as { mine?: true } | undefined)?.mine === true;
+
 function FitLeaf({
   it,
   hidden,
@@ -635,6 +650,8 @@ function FitLeaf({
     <Tag
       data-fit-id={it.id}
       data-score={it.score}
+      {...(isPinned(it) ? { "data-pinned": "1" } : {})}
+      {...(editKeyOf(it) ? { "data-edit-key": editKeyOf(it) } : {})}
       data-est={it.estHeight}
       className={`fit-leaf${className ? ` ${className}` : ""}`}
       style={hidden ? { display: "none" } : undefined}
@@ -649,7 +666,7 @@ function renderItem(section: Section, it: Scored) {
     case "formulas":
       return <FormulaBlock formula={it.item as Formula} />;
     case "tables":
-      return <CompareTableInner table={it.item as SheetTable} />;
+      return <CompareTableBody table={it.item as SheetTable} />;
     case "concepts":
       return <ConceptRow concept={it.item as Concept} />;
     default:
@@ -678,23 +695,3 @@ function ConceptRow({ concept: c }: { concept: Concept }) {
   );
 }
 
-function CompareTableInner({ table: t }: { table: SheetTable }) {
-  return (
-    <div className="compare-table">
-      <h3><InlineText text={t.title} /></h3>
-      <table>
-        <thead>
-          <tr>{t.cols.map((c, i) => <th key={i}><InlineText text={c} /></th>)}</tr>
-        </thead>
-        <tbody>
-          {t.rows.map((row, ri) => (
-            <tr key={ri}>{row.map((cell, ci) => <td key={ci}><InlineText text={cell} /></td>)}</tr>
-          ))}
-        </tbody>
-      </table>
-      {/* Ownership changes the WRAPPER, not just the marker: `.src-line` is hidden wholesale
-          when sources are off, which would hide a `you` nested inside it (#20). */}
-      <div className={t.mine ? "src-line-mine" : "src-line"}><Citation src={t.src} mine={t.mine} /></div>
-    </div>
-  );
-}
