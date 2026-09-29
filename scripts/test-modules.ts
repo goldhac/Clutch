@@ -9,6 +9,7 @@
  */
 import assert from "node:assert/strict";
 import { applyEdit, applyModules, editKey, trimmedIds, trimRoom, MIN_TOPIC_LINES } from "@/components/sheet/modules";
+import { ago, describeChange } from "@/lib/sheet-versions";
 import type { SheetContent } from "@/contract/sheet-content";
 
 let n = 0;
@@ -204,6 +205,35 @@ ok("an edited line can be found again by its NEW text", () => {
   assert.equal(editKey(out.concepts[0], "concepts"), "concepts|softmax (mine)");
   // And the old key no longer matches, so a second edit with it is refused rather than misapplied.
   assert.deepEqual(applyEdit(out, "concepts|softmax", { a: "z", b: "z" }).concepts, out.concepts);
+});
+
+// ── version history (#20 step 5) ─────────────────────────────────────────────────────────────
+ok("a version is described by what actually changed, not 'edited'", () => {
+  const base = { concepts: [{ term: "a" }], questions: [], formulas: [], tables: [], traps: [], notes: [] };
+  assert.equal(describeChange(base, { ...base, notes: [{ id: "n" }] }), "added a note");
+  assert.equal(describeChange(base, { ...base, concepts: [{ term: "a" }, { term: "b", mine: true }] }), "added your own line");
+  assert.equal(describeChange(base, { ...base, concepts: [{ term: "a" }, { term: "b" }] }), "added lines");
+  assert.equal(describeChange({ ...base, concepts: [{ term: "a" }, { term: "b" }] }, base), "removed lines");
+  // Same shape, different words — the only thing left is an edit.
+  assert.equal(describeChange(base, { ...base, concepts: [{ term: "z" }] }), "edited a line");
+});
+
+ok("a student's own line is recognised over a plain addition", () => {
+  // Both grew by one; the one that is THEIRS is the more useful thing to say.
+  const base = { concepts: [], questions: [], formulas: [], tables: [], traps: [], notes: [] };
+  assert.equal(describeChange(base, { ...base, questions: [{ q: "x", mine: true }] }), "added your own line");
+});
+
+ok("history is labelled in time a student reads, not a timestamp", () => {
+  const now = Date.parse("2026-09-29T12:00:00Z");
+  const at = (ms: number) => new Date(now - ms).toISOString();
+  assert.equal(ago(at(5_000), now), "just now");
+  assert.equal(ago(at(4 * 60_000), now), "4 min ago");
+  assert.equal(ago(at(2 * 3_600_000), now), "2 hours ago");
+  assert.equal(ago(at(3_600_000), now), "1 hour ago");
+  assert.equal(ago(at(3 * 86_400_000), now), "3 days ago");
+  // A clock that has drifted forward must not produce "-2 min ago".
+  assert.equal(ago(at(-90_000), now), "just now");
 });
 
 console.log(`${n} checks passed`);

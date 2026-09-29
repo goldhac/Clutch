@@ -9,6 +9,8 @@ import { safeParseSheetContent, type SheetContent } from "@/contract/sheet-conte
 import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
 import { TopicRail } from "./TopicRail";
 import { EditLine } from "./EditLine";
+import { VersionPanel } from "./VersionPanel";
+import { describeChange, listVersions, saveVersion, VERSION_DEBOUNCE_MS, type SheetVersion } from "@/lib/sheet-versions";
 import { applyEdit, editFields, editKey } from "@/components/sheet/modules";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
 import { defaultFigureIds } from "@/components/sheet/Figures";
@@ -94,6 +96,19 @@ export default function ResultsPage() {
   const [railOpen, setRailOpen] = useState(false);
   /** The line the student clicked to edit (#20): its value-based key, not its position. */
   const [editing, setEditing] = useState<{ key: string; a: string; b: string; labels: [string, string]; wasVerified: boolean } | null>(null);
+  const [versionsOpen, setVersionsOpen] = useState(false);
+  const [versions, setVersions] = useState<SheetVersion[]>([]);
+  const [versionsLoading, setVersionsLoading] = useState(false);
+  /** The content as it was BEFORE the burst of edits currently being debounced. */
+  const pendingVersionRef = useRef<unknown>(null);
+  const versionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // A debounced version still owed when the page goes away is a version lost. Clearing the timer
+  // is not enough — but writing on unmount is unreliable too, so the honest fix is a SHORT debounce
+  // (4 s) and accepting that closing the tab mid-burst loses at most that burst's starting point.
+  // The edit itself is already saved; only the undo point would be missing.
+  useEffect(() => () => { if (versionTimerRef.current) clearTimeout(versionTimerRef.current); }, []);
+
   // null = not known yet. The sheet is NOT drawn until it is: free and Pro lay the pages out
   // differently (Pro = one continuous flow), so drawing first as free made every Pro account
   // watch the sheet re-lay itself out a few seconds in.
@@ -492,6 +507,45 @@ export default function ResultsPage() {
     setTrayOpen(false);
   }
 
+  /**
+   * Remember what the sheet was, once the student stops typing.
+   *
+   * Debounced because edits arrive in bursts — fix a word, fix another, add a note — and twenty
+   * slots filled by one minute's typing is a history that cannot reach anything worth restoring.
+   * The snapshot taken is the content from BEFORE the burst, which is the state they would want
+   * back, not the one they just left.
+   */
+  function rememberVersion(before: unknown, after: unknown) {
+    const id = savedIdRef.current;
+    // Nothing to attach history to until the sheet lives in the library.
+    if (!id) return;
+    if (pendingVersionRef.current === null) pendingVersionRef.current = before;
+    const label = describeChange(before, after);
+    if (versionTimerRef.current) clearTimeout(versionTimerRef.current);
+    versionTimerRef.current = setTimeout(() => {
+      const snapshot = pendingVersionRef.current;
+      pendingVersionRef.current = null;
+      if (snapshot === null || snapshot === undefined) return;
+      void (async () => {
+        const { data } = await supabaseBrowser().auth.getUser();
+        if (!data.user) return;
+        await saveVersion(supabaseBrowser(), id, data.user.id, snapshot, label);
+      })();
+    }, VERSION_DEBOUNCE_MS);
+  }
+
+  async function openVersions() {
+    setVersionsOpen(true);
+    setRailOpen(false);
+    setTrayOpen(false);
+    setEditing(null);
+    const id = savedIdRef.current;
+    if (!id) return setVersions([]);
+    setVersionsLoading(true);
+    setVersions(await listVersions(supabaseBrowser(), id));
+    setVersionsLoading(false);
+  }
+
   function replaceContent(nextContent: unknown) {
     setStash((prev) => {
       if (!prev) return prev;
@@ -715,6 +769,23 @@ export default function ResultsPage() {
 
       {/* ── the dock ────────────────────────────────────────────────── */}
       <div className="print:hidden pointer-events-none fixed inset-x-0 bottom-0 z-[var(--z-overlay)] flex flex-col items-center gap-2.5 px-5 pb-[22px]">
+        {versionsOpen && (
+          <VersionPanel
+            versions={versions}
+            loading={versionsLoading}
+            onClose={() => setVersionsOpen(false)}
+            onRestore={(v) => {
+              // Restoring is itself a change, so it goes through the same paths — they can undo it
+              // and it appears in history, which is what makes it safe to try.
+              const before = content;
+              setUndoStack((u) => [...u.slice(-9), before]);
+              replaceContent(v.content);
+              rememberVersion(before, v.content);
+              setVersionsOpen(false);
+              toast("Restored · undo if that wasn't it", "check");
+            }}
+          />
+        )}
         {editing && (
           <EditLine
             labels={editing.labels}
@@ -722,8 +793,11 @@ export default function ResultsPage() {
             wasVerified={editing.wasVerified}
             onCancel={() => setEditing(null)}
             onSave={(next) => {
-              setUndoStack((u) => [...u.slice(-9), content]);
-              replaceContent(applyEdit(content as never, editing.key, next));
+              const before = content;
+              const after = applyEdit(content as never, editing.key, next);
+              setUndoStack((u) => [...u.slice(-9), before]);
+              replaceContent(after);
+              rememberVersion(before, after);
               setEditing(null);
               toast("Your version saved · the line is yours now", "check");
             }}
@@ -738,8 +812,11 @@ export default function ResultsPage() {
               // The student's own block (#20). Undoable like any other content change, and
               // persisted the same way, because what they typed is the one part of the sheet we
               // cannot rebuild.
-              setUndoStack((u) => [...u.slice(-9), content]);
-              replaceContent(patch(content));
+              const before = content;
+              const after = patch(content);
+              setUndoStack((u) => [...u.slice(-9), before]);
+              replaceContent(after);
+              rememberVersion(before, after);
             }}
             onClose={() => setRailOpen(false)}
           />
@@ -996,6 +1073,16 @@ export default function ResultsPage() {
               <span className="rounded-full bg-white/15 px-1.5 py-px font-mono text-[10.5px]">
                 {content.topics.filter((t) => !(viewOf(effectiveCtx).modules ?? {})[t.name]?.off).length}/{content.topics.length}
               </span>
+            </button>
+          )}
+          {savedId && (
+            <button
+              type="button"
+              aria-expanded={versionsOpen}
+              onClick={() => (versionsOpen ? setVersionsOpen(false) : void openVersions())}
+              className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
+            >
+              History
             </button>
           )}
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
