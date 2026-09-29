@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#e7e7ea;font-family:Geist,-apple-system,sans-serif;color:#111114;-webkit-font-smoothing:antialiased}
+a{color:#4a46c9;text-decoration:underline;text-underline-offset:2px}a:hover{color:#3a34b8}
+@keyframes cl-rise{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes cl-pop{from{opacity:0;transform:translateY(10px) scale(.985)}to{opacity:1;transform:none}}
+@keyframes cl-fade{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+input,textarea,button{font-family:inherit}
+</style>
+</helmet>
+
+<div style="padding:72px 80px 120px;display:flex;flex-direction:column;gap:56px;align-items:flex-start">
+
+<div style="max-width:880px;display:flex;flex-direction:column;gap:12px">
+  <div style="font-family:'Geist Mono',monospace;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#6b6b76">Clutch · Editing flow redesign · from docs/16-UX-AUDIT.md</div>
+  <h1 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:48px;line-height:1.05;letter-spacing:-.02em">Editing the sheet, trays and modals</h1>
+  <p style="margin:0;font-size:16px;line-height:1.6;color:#4a4a53;text-wrap:pretty">One working prototype of the results page (P), followed by the system boards it is built from: the <span style="color:#4a46c9;font-weight:600">you</span> marker (A), the tray and modal primitives (B), interaction states (C), dock information architecture (D), modals (E) and tray edge states (F). Tokens are unchanged from <span style="font-family:'Geist Mono',monospace;font-size:14px">tokens.css</span>.</p>
+</div>
+
+<div id="P" style="display:flex;flex-direction:column;gap:14px">
+  <div style="display:flex;align-items:center;gap:10px">
+    <span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;background:#111114;color:#fff;padding:3px 8px;border-radius:6px">P</span>
+    <span style="font-size:15px;font-weight:600">Results — interactive</span>
+    <span style="font-size:14px;color:#6b6b76">Open Topics and point at a row · click any line on the sheet · try Edit with Clutch, View, and the save state</span>
+  </div>
+
+  <div data-screen-label="Prototype" style="position:relative;width:1440px;height:960px;background:#f5f5f3;border-radius:16px;overflow:hidden;box-shadow:0 24px 60px rgba(17,17,20,.14),0 8px 16px rgba(17,17,20,.06)">
+
+    <div style="height:56px;display:flex;align-items:center;gap:14px;padding:0 24px;background:#fbfbfa;border-bottom:1px solid #e6e6ea">
+      <img src="public/brand/clutch-icon.svg" alt="" style="width:22px;height:22px"/>
+      <span style="font-size:15px;font-weight:600;letter-spacing:-.01em">Clutch</span>
+      <span style="color:#b8b8bf">/</span>
+      <span style="font-size:14px;color:#2c2c33">Intro Statistics — Exam Reference Sheet</span>
+      <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:12px;color:#6b6b76">STAT 200 · 4 files</span>
+      <span style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px;background:#ecebfb;color:#3a34b8">PRO</span>
+    </div>
+
+    <div style="position:absolute;top:80px;left:50%;transform:translateX(-50%);width:1140px">
+      <div style="background:#fff;border-radius:3px;padding:18px 22px 20px;box-shadow:0 24px 60px rgba(17,17,20,.12),0 8px 16px rgba(17,17,20,.05);color:#1c1c21">
+        <div style="display:flex;align-items:flex-end;gap:16px;padding-bottom:6px;border-bottom:1.5px solid #111114">
+          <div style="font-family:Newsreader,Georgia,serif;font-weight:600;font-size:23px;letter-spacing:-.01em;line-height:1.05">Intro Statistics — Exam Reference Sheet</div>
+          <div style="margin-left:auto;display:flex;align-items:center;gap:12px;font-family:'Geist Mono',monospace;font-size:9px;color:#6b6b76">
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;background:#197d4a"></span>checked against your files</span>
+            <span style="display:flex;align-items:center;gap:4px"><span style="width:6px;height:6px;border-radius:50%;box-sizing:border-box;border:1.3px solid #4a46c9"></span><span style="color:#4a46c9;font-weight:600">you</span> wrote it</span>
+            <span>{{ densityLabel }} · A4 · FRONT</span>
+          </div>
+        </div>
+        <div style="column-count:4;column-gap:14px;margin-top:8px;font-size:10px;line-height:1.34">
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+            <div style="break-inside:avoid;margin:0 0 7px;padding:2px;border-radius:3px;opacity:{{ g.opacity }};box-shadow:{{ g.shadow }};transition:opacity 160ms cubic-bezier(.16,1,.3,1),box-shadow 160ms cubic-bezier(.16,1,.3,1)">
+              <div style="background:{{ g.c }};color:#fff;font-size:8.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;padding:1.5px 5px;border-radius:2px;display:flex;justify-content:space-between;gap:6px;margin-bottom:2px">
+                <span>{{ g.name }}</span><span style="font-family:'Geist Mono',monospace;font-weight:500;letter-spacing:0;text-transform:none;opacity:.85">{{ g.span }}</span>
+              </div>
+              <sc-for list="{{ g.lines }}" as="l" hint-placeholder-count="4">
+                <div onClick="{{ l.onClick }}" onMouseEnter="{{ l.onEnter }}" onMouseLeave="{{ l.onLeave }}" style="position:relative;padding:1.5px 3px;margin:0 0 1px;border-radius:2px;cursor:text;background:{{ l.bg }};box-shadow:{{ l.ring }};transition:background-color 120ms,box-shadow 120ms">
+                  <sc-if value="{{ l.isNote }}" hint-placeholder-val="{{ false }}">
+                    <div style="border-left:1.5px dashed #5b57e0;padding-left:4px">{{ l.def }} <span style="color:#4a46c9;font-size:.82em;font-weight:600;letter-spacing:.02em">you</span></div>
+                  </sc-if>
+                  <sc-if value="{{ l.isTrap }}" hint-placeholder-val="{{ false }}">
+                    <div style="background:#fff1d8;border-left:1px solid #b35c00;padding:1.5px 4px;border-radius:2px"><span style="color:#b35c00;font-weight:800;font-size:.85em;letter-spacing:.04em">⚠ TRAP </span>{{ l.def }} <span style="color:{{ l.srcColor }};font-style:{{ l.srcStyle }};font-weight:{{ l.srcWeight }};font-size:{{ l.srcSize }}">{{ l.srcText }}</span></div>
+                  </sc-if>
+                  <sc-if value="{{ l.isLine }}" hint-placeholder-val="{{ true }}">
+                    <div>
+                      <span style="display:inline-block;width:6px;height:6px;border-radius:50%;box-sizing:border-box;margin-right:3px;vertical-align:1px;background:{{ l.dotBg }};border:{{ l.dotBorder }}"></span><sc-if value="{{ l.star }}" hint-placeholder-val="{{ false }}"><span style="color:#a08200;font-weight:700;margin-right:2px">★</span></sc-if><span style="color:{{ g.c }};font-weight:600">{{ l.term }}</span><span style="color:#909099">{{ l.sep }}</span>{{ l.def }}<sc-if value="{{ l.showAns }}" hint-placeholder-val="{{ false }}"><span style="color:#1f7d3a;font-weight:700"> → {{ l.ans }}</span></sc-if> <span style="color:{{ l.srcColor }};font-style:{{ l.srcStyle }};font-weight:{{ l.srcWeight }};font-size:{{ l.srcSize }};letter-spacing:{{ l.srcTrack }}">{{ l.srcText }}</span>
+                    </div>
+                  </sc-if>
+                  <sc-if value="{{ l.showTag }}" hint-placeholder-val="{{ false }}">
+                    <span style="position:absolute;top:-9px;right:2px;background:#4a46c9;color:#fff;font-family:'Geist Mono',monospace;font-size:8px;font-weight:600;letter-spacing:.04em;padding:1px 5px;border-radius:3px;pointer-events:none;z-index:2">{{ l.tagText }}</span>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <sc-if value="{{ showCoach }}" hint-placeholder-val="{{ true }}">
+        <div style="margin-top:12px;display:flex;justify-content:flex-end;align-items:center;gap:8px;font-size:13px;color:#4a4a53">
+          <span style="width:8px;height:8px;border-radius:50%;box-sizing:border-box;border:1.5px solid #4a46c9"></span>
+          <span>Click any line to rewrite it. It becomes <span style="color:#4a46c9;font-weight:600">you</span>, and the sheet never trims it.</span>
+          <button onClick="{{ dismissCoach }}" style="border:0;background:transparent;color:#6b6b76;font-size:13px;text-decoration:underline;text-underline-offset:2px;cursor:pointer;padding:4px" style-hover="color:#111114">Got it</button>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:7px;background:#111114;border-radius:14px;box-shadow:0 20px 44px rgba(17,17,20,.28);color:#fff;z-index:20">
+      <div style="display:flex;gap:2px;padding:3px;background:#26262f;border-radius:10px">
+        <sc-for list="{{ densSegs }}" as="d" hint-placeholder-count="3">
+          <button onClick="{{ d.onClick }}" style="height:30px;padding:0 12px;border:0;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;background:{{ d.bg }};color:{{ d.fg }};transition:background-color 120ms" style-active="transform:scale(.97)">{{ d.label }}</button>
+        </sc-for>
+      </div>
+      <div style="width:1px;height:24px;background:#2c2c33;margin:0 4px"></div>
+
+      <div style="position:relative">
+        <button onClick="{{ openTopics }}" aria-expanded="{{ topicsOpen }}" style="height:36px;padding:0 12px;border:0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;background:{{ topicsBtnBg }};color:{{ topicsBtnFg }};transition:background-color 120ms" style-hover="box-shadow:inset 0 0 0 1px #3a3a45" style-active="transform:scale(.97)">
+          Topics
+          <sc-if value="{{ hasChanges }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Geist Mono',monospace;font-size:11px;font-weight:500;padding:1px 6px;border-radius:999px;background:#5b57e0;color:#fff">{{ changesLabel }}</span></sc-if>
+        </button>
+        <sc-if value="{{ topicsOpen }}" hint-placeholder-val="{{ false }}">
+          <div role="dialog" aria-label="Topics on this sheet" style="position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(-50%);width:580px;background:#1c1c21;border-radius:14px;box-shadow:0 24px 60px rgba(17,17,20,.45),0 0 0 1px #2c2c33;text-align:left;animation:cl-rise 220ms cubic-bezier(.2,.7,.3,1)">
+            <div style="display:flex;align-items:center;gap:10px;padding:14px 12px 4px 18px">
+              <span style="font-size:14px;font-weight:600">Topics on this sheet</span>
+              <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">{{ topicsSummary }}</span>
+              <button onClick="{{ closeTray }}" aria-label="Close" style="margin-left:auto;width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#9a9aa6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.08);color:#fff"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+            </div>
+            <p style="margin:0;padding:0 18px 10px;font-size:12.5px;line-height:1.5;color:#9a9aa6">Point at a topic to find it on the sheet. Remove one and its space goes to the rest.</p>
+            <div style="display:flex;flex-direction:column;gap:2px;padding:0 8px 8px;max-height:470px;overflow-y:auto">
+              <sc-for list="{{ railRows }}" as="r" hint-placeholder-count="5">
+                <div onMouseEnter="{{ r.onEnter }}" onMouseLeave="{{ r.onLeave }}" style="position:relative;padding:9px 10px 9px 14px;border-radius:10px;background:{{ r.rowBg }};opacity:{{ r.opacity }};transition:background-color 140ms">
+                  <span style="position:absolute;left:3px;top:10px;bottom:10px;width:3px;border-radius:2px;background:{{ r.bar }};transition:background-color 140ms"></span>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <button onClick="{{ r.onToggle }}" aria-pressed="{{ r.on }}" aria-label="{{ r.toggleLabel }}" style="width:18px;height:18px;flex:none;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;padding:0;background:{{ r.checkBg }};border:1.5px solid {{ r.checkBorder }}" style-active="transform:scale(.92)">{{ r.mark }}</button>
+                    <span style="flex:1;min-width:0;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-decoration:{{ r.deco }}">{{ r.name }}</span>
+                    <sc-if value="{{ r.hasYou }}" hint-placeholder-val="{{ false }}"><span style="display:flex;align-items:center;gap:4px;font-family:'Geist Mono',monospace;font-size:11px;color:#b3b0f4"><span style="width:6px;height:6px;border-radius:50%;box-sizing:border-box;border:1.3px solid #b3b0f4"></span>{{ r.youLabel }}</span></sc-if>
+                    <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6;min-width:62px;text-align:right">{{ r.countLabel }}</span>
+                    <div role="group" aria-label="How much of this topic" style="display:flex;align-items:center;gap:4px">
+                      <sc-if value="{{ r.atFloor }}" hint-placeholder-val="{{ false }}">
+                        <button onClick="{{ r.onRemove }}" disabled="{{ r.off }}" title="Only 3 lines left — remove the topic instead" style="height:28px;padding:0 9px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:transparent;color:#f08a75;border:1px solid rgba(240,138,117,.35)" style-hover="background:rgba(240,138,117,.10)" style-active="transform:scale(.97)">Remove</button>
+                      </sc-if>
+                      <sc-if value="{{ r.canLess }}" hint-placeholder-val="{{ true }}">
+                        <button onClick="{{ r.onLess }}" disabled="{{ r.off }}" aria-label="Trim the weakest line" title="Trim the weakest line" style="width:28px;height:28px;border:0;border-radius:7px;font-size:15px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.08);color:#fff" style-hover="background:rgba(255,255,255,.14)" style-active="transform:scale(.94)">−</button>
+                      </sc-if>
+                      <button onClick="{{ r.onMore }}" disabled="{{ r.noMore }}" aria-label="Put a line back" title="Put a line back" style="width:28px;height:28px;border:0;border-radius:7px;font-size:15px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.08);color:#fff;opacity:{{ r.moreOpacity }}" style-hover="background:rgba(255,255,255,.14)" style-active="transform:scale(.94)">+</button>
+                      <div style="width:1px;height:18px;background:#3a3a45;margin:0 3px"></div>
+                      <button onClick="{{ r.onAdd }}" aria-expanded="{{ r.adding }}" style="height:28px;padding:0 10px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:rgba(91,87,224,.22);color:#d4d2fb;border:1px solid rgba(138,134,232,.4)" style-hover="background:rgba(91,87,224,.34)" style-active="transform:scale(.97)">Add yours</button>
+                    </div>
+                  </div>
+                  <div style="display:flex;flex-wrap:wrap;gap:4px;margin:7px 0 0 28px">
+                    <sc-for list="{{ r.chips }}" as="c" hint-placeholder-count="3">
+                      <button onClick="{{ c.onClick }}" aria-pressed="{{ c.on }}" disabled="{{ r.off }}" style="height:22px;padding:0 7px;border:0;border-radius:6px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:{{ c.bg }};color:{{ c.fg }};text-decoration:{{ c.deco }}" style-hover="color:#fff">{{ c.label }}</button>
+                    </sc-for>
+                  </div>
+                  <sc-if value="{{ r.adding }}" hint-placeholder-val="{{ false }}">
+                    <div style="margin:10px 0 2px 28px;padding:12px;border-radius:10px;background:#15151a;box-shadow:inset 0 0 0 1px #2c2c33">
+                      <div style="display:flex;align-items:center;gap:4px">
+                        <sc-for list="{{ addShapes }}" as="s" hint-placeholder-count="3">
+                          <button onClick="{{ s.onClick }}" aria-pressed="{{ s.on }}" style="height:24px;padding:0 8px;border:0;border-radius:6px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.04em;text-transform:uppercase;cursor:pointer;background:{{ s.bg }};color:{{ s.fg }}" style-hover="color:#fff">{{ s.label }}</button>
+                        </sc-for>
+                        <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6">into {{ r.name }}</span>
+                      </div>
+                      <input value="{{ addA }}" onChange="{{ onAddA }}" onKeyDown="{{ onAddKey }}" placeholder="{{ addLabelA }}" autoFocus="{{ true }}" style="margin-top:8px;width:100%;box-sizing:border-box;height:34px;padding:0 10px;border-radius:8px;border:1px solid #2c2c33;background:#0f0f13;color:#fff;font-size:13px;outline:none" style-focus="border-color:#8a86e8;box-shadow:0 0 0 3px rgba(91,87,224,.25)"/>
+                      <sc-if value="{{ addHasB }}" hint-placeholder-val="{{ false }}">
+                        <input value="{{ addB }}" onChange="{{ onAddB }}" onKeyDown="{{ onAddKey }}" placeholder="{{ addLabelB }}" style="margin-top:6px;width:100%;box-sizing:border-box;height:34px;padding:0 10px;border-radius:8px;border:1px solid #2c2c33;background:#0f0f13;color:#fff;font-size:13px;outline:none" style-focus="border-color:#8a86e8;box-shadow:0 0 0 3px rgba(91,87,224,.25)"/>
+                      </sc-if>
+                      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+                        <button onClick="{{ submitAdd }}" disabled="{{ addBlocked }}" style="height:30px;padding:0 12px;border:0;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;background:#fff;color:#111114;opacity:{{ addOpacity }}" style-active="transform:scale(.97)">Add to sheet</button>
+                        <button onClick="{{ cancelAdd }}" style="height:30px;padding:0 10px;border:0;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#9a9aa6" style-hover="color:#fff">Cancel</button>
+                        <span style="margin-left:auto;display:flex;align-items:center;gap:5px;font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6"><span style="width:6px;height:6px;border-radius:50%;box-sizing:border-box;border:1.3px solid #b3b0f4"></span>reads <span style="color:#b3b0f4;font-weight:600">you</span> · never trimmed</span>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:12px;padding:11px 18px;border-top:1px solid #2c2c33;font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">
+              <span>free · instant · nothing rebuilds your sheet</span>
+              <sc-if value="{{ hasChanges }}" hint-placeholder-val="{{ false }}">
+                <button onClick="{{ resetMods }}" style="margin-left:auto;border:0;background:transparent;color:#cbcbd4;font-family:Geist,sans-serif;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;text-underline-offset:2px;text-decoration-color:rgba(255,255,255,.3);padding:4px" style-hover="color:#fff">Put everything back</button>
+              </sc-if>
+            </div>
+            <span style="position:absolute;bottom:-6px;left:50%;width:12px;height:12px;margin-left:-6px;background:#1c1c21;transform:rotate(45deg);box-shadow:1px 1px 0 #2c2c33"></span>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="position:relative">
+        <button onClick="{{ openView }}" aria-expanded="{{ viewOpen }}" style="height:36px;padding:0 12px;border:0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:6px;background:{{ viewBtnBg }};color:{{ viewBtnFg }}" style-hover="box-shadow:inset 0 0 0 1px #3a3a45" style-active="transform:scale(.97)">View <svg width="9" height="9" viewBox="0 0 10 10" fill="none"><path d="M2 6.5L5 3.5L8 6.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+        <sc-if value="{{ viewOpen }}" hint-placeholder-val="{{ false }}">
+          <div role="dialog" aria-label="View" style="position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(-50%);width:320px;background:#1c1c21;border-radius:14px;box-shadow:0 24px 60px rgba(17,17,20,.45),0 0 0 1px #2c2c33;text-align:left;animation:cl-rise 220ms cubic-bezier(.2,.7,.3,1)">
+            <div style="display:flex;align-items:center;padding:14px 12px 8px 18px">
+              <span style="font-size:14px;font-weight:600">View</span>
+              <button onClick="{{ closeTray }}" aria-label="Close" style="margin-left:auto;width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#9a9aa6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.08);color:#fff"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:14px;padding:4px 18px 16px">
+              <sc-for list="{{ viewRows }}" as="v" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:6px">
+                  <span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#9a9aa6">{{ v.label }}</span>
+                  <div style="display:flex;gap:2px;padding:3px;background:#26262f;border-radius:9px">
+                    <sc-for list="{{ v.opts }}" as="o" hint-placeholder-count="2">
+                      <button onClick="{{ o.onClick }}" style="flex:1;height:28px;border:0;border-radius:6px;font-size:12.5px;font-weight:600;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}" style-active="transform:scale(.97)">{{ o.label }}</button>
+                    </sc-for>
+                  </div>
+                  <span style="font-size:11.5px;line-height:1.45;color:#9a9aa6">{{ v.note }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:11px 18px;border-top:1px solid #2c2c33;font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">display only · free · prints as shown</div>
+            <span style="position:absolute;bottom:-6px;left:50%;width:12px;height:12px;margin-left:-6px;background:#1c1c21;transform:rotate(45deg);box-shadow:1px 1px 0 #2c2c33"></span>
+          </div>
+        </sc-if>
+      </div>
+
+      <button onClick="{{ toggleAnswers }}" aria-pressed="{{ answers }}" style="height:36px;padding:0 12px;border:0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:8px;background:transparent;color:#fff" style-hover="box-shadow:inset 0 0 0 1px #3a3a45" style-active="transform:scale(.97)">
+        Answers
+        <span style="width:28px;height:16px;border-radius:999px;position:relative;background:{{ ansTrack }};transition:background-color 140ms"><span style="position:absolute;top:2px;left:{{ ansKnob }};width:12px;height:12px;border-radius:50%;background:#fff;transition:left 160ms cubic-bezier(.16,1,.3,1)"></span></span>
+      </button>
+
+      <div style="width:1px;height:24px;background:#2c2c33;margin:0 4px"></div>
+
+      <div style="position:relative">
+        <button onClick="{{ openChat }}" aria-expanded="{{ chatOpen }}" style="height:36px;padding:0 12px;border:0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;background:{{ chatBtnBg }};color:{{ chatBtnFg }}" style-hover="box-shadow:inset 0 0 0 1px #3a3a45" style-active="transform:scale(.97)"><span style="width:7px;height:7px;border-radius:50%;background:#8a86e8"></span>Edit with Clutch</button>
+        <sc-if value="{{ chatOpen }}" hint-placeholder-val="{{ false }}">
+          <div role="dialog" aria-label="Edit with Clutch" style="position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(-50%);width:500px;background:#1c1c21;border-radius:14px;box-shadow:0 24px 60px rgba(17,17,20,.45),0 0 0 1px #2c2c33;text-align:left;animation:cl-rise 220ms cubic-bezier(.2,.7,.3,1);display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;gap:10px;padding:14px 12px 8px 18px">
+              <span style="font-size:14px;font-weight:600">Edit with Clutch</span>
+              <button onClick="{{ undoLast }}" disabled="{{ noUndo }}" style="margin-left:auto;border:0;background:transparent;font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6;cursor:pointer;opacity:{{ undoOpacity }}" style-hover="color:#fff">undo last edit</button>
+              <button onClick="{{ closeTray }}" aria-label="Close" style="width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#9a9aa6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.08);color:#fff"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+            </div>
+            <div aria-live="polite" style="display:flex;flex-direction:column;gap:10px;padding:0 18px 10px;max-height:380px;overflow-y:auto">
+              <sc-for list="{{ chatMsgs }}" as="m" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;align-items:{{ m.align }};gap:6px">
+                  <div style="max-width:90%;padding:8px 12px;border-radius:12px;font-size:13px;line-height:1.5;background:{{ m.bg }};color:{{ m.fg }}">{{ m.text }}</div>
+                  <sc-if value="{{ m.hasProposal }}" hint-placeholder-val="{{ false }}">
+                    <div style="width:92%;border-radius:12px;box-shadow:inset 0 0 0 1px #2c2c33;overflow:hidden">
+                      <div style="padding:10px 12px 4px;font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#9a9aa6">Proposed · 1 reworded</div>
+                      <div style="padding:4px 12px 10px;display:flex;flex-direction:column;gap:5px;font-size:12.5px;line-height:1.45">
+                        <div style="display:flex;gap:8px"><span style="font-family:'Geist Mono',monospace;font-weight:700;color:#f08a75;width:10px">−</span><span style="color:#9a9aa6;text-decoration:line-through">p-value: P(data this extreme | H₀), not P(H₀)</span></div>
+                        <div style="display:flex;gap:8px"><span style="font-family:'Geist Mono',monospace;font-weight:700;color:#5cc98d;width:10px">+</span><span style="color:#fff">p-value: chance of data at least this extreme if H₀ is true; not the chance H₀ is true</span></div>
+                        <div style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;margin-left:18px">keeps citation L11 s8 · stays ours</div>
+                      </div>
+                      <div style="display:flex;align-items:center;gap:8px;padding:10px 12px;background:#17171c;border-top:1px solid #2c2c33">
+                        <sc-if value="{{ m.pending }}" hint-placeholder-val="{{ true }}">
+                          <div style="display:flex;align-items:center;gap:8px;width:100%">
+                            <button onClick="{{ m.onAccept }}" style="height:30px;padding:0 12px;border:0;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;background:#fff;color:#111114" style-active="transform:scale(.97)">Accept</button>
+                            <button onClick="{{ m.onReject }}" style="height:30px;padding:0 12px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#fff;border:1px solid #3a3a45" style-hover="border-color:#6b6b76" style-active="transform:scale(.97)">Reject</button>
+                            <span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:10.5px;color:#dbb45e">1 Pro edit on accept</span>
+                          </div>
+                        </sc-if>
+                        <sc-if value="{{ m.decided }}" hint-placeholder-val="{{ false }}">
+                          <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">{{ m.status }}</span>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:6px;padding:4px 18px 10px;flex-wrap:wrap">
+              <sc-for list="{{ chatChips }}" as="c" hint-placeholder-count="4">
+                <button onClick="{{ c.onClick }}" style="height:28px;padding:0 10px;border-radius:999px;border:1px solid {{ c.border }};background:transparent;color:#cbcbd4;font-size:12px;font-weight:500;cursor:pointer;display:flex;align-items:center;gap:6px" style-hover="color:#fff;border-color:#6b6b76" style-active="transform:scale(.97)">{{ c.label }}<span style="font-family:'Geist Mono',monospace;font-size:10px;color:{{ c.tagColor }}">{{ c.tag }}</span></button>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:8px;padding:10px 12px;border-top:1px solid #2c2c33">
+              <input value="{{ chatText }}" onChange="{{ onChatText }}" onKeyDown="{{ onChatKey }}" placeholder="e.g. remove everything about Bayes" aria-label="What should change on the sheet?" style="flex:1;height:38px;padding:0 12px;border-radius:9px;border:1px solid transparent;background:rgba(255,255,255,.07);color:#fff;font-size:13.5px;outline:none" style-focus="border-color:#8a86e8;box-shadow:0 0 0 3px rgba(91,87,224,.25)"/>
+              <button onClick="{{ sendChat }}" style="height:38px;padding:0 14px;border:0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#111114" style-active="transform:scale(.97)">Send</button>
+            </div>
+            <div style="padding:9px 18px;border-top:1px solid #2c2c33;font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">show · hide · reorder are free  ·  rewrites come back as a preview</div>
+            <span style="position:absolute;bottom:-6px;left:50%;width:12px;height:12px;margin-left:-6px;background:#1c1c21;transform:rotate(45deg);box-shadow:1px 1px 0 #2c2c33"></span>
+          </div>
+        </sc-if>
+      </div>
+
+      <div style="width:1px;height:24px;background:#2c2c33;margin:0 4px"></div>
+
+      <div style="position:relative">
+        <button onClick="{{ openHistory }}" aria-expanded="{{ historyOpen }}" style="height:36px;padding:0 12px;border:0;border-radius:9px;font-size:12.5px;cursor:pointer;display:flex;align-items:center;gap:7px;background:{{ histBtnBg }};color:{{ histBtnFg }}" style-hover="box-shadow:inset 0 0 0 1px #3a3a45" style-active="transform:scale(.97)"><span style="width:6px;height:6px;border-radius:50%;background:#5cc98d"></span><span style="font-family:'Geist Mono',monospace;font-size:11.5px">{{ savedLabel }}</span></button>
+        <sc-if value="{{ historyOpen }}" hint-placeholder-val="{{ false }}">
+          <div role="dialog" aria-label="Earlier versions" style="position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(-50%);width:380px;background:#1c1c21;border-radius:14px;box-shadow:0 24px 60px rgba(17,17,20,.45),0 0 0 1px #2c2c33;text-align:left;animation:cl-rise 220ms cubic-bezier(.2,.7,.3,1)">
+            <div style="display:flex;align-items:center;gap:10px;padding:14px 12px 4px 18px">
+              <span style="font-size:14px;font-weight:600">Earlier versions</span>
+              <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">{{ versionCount }}</span>
+              <button onClick="{{ closeTray }}" aria-label="Close" style="margin-left:auto;width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#9a9aa6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.08);color:#fff"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+            </div>
+            <p style="margin:0;padding:0 18px 10px;font-size:12.5px;line-height:1.5;color:#9a9aa6">Every change saves. Restoring is a change too, so you can always come back.</p>
+            <div style="display:flex;flex-direction:column;gap:2px;padding:0 8px 8px;max-height:300px;overflow-y:auto">
+              <sc-for list="{{ versionRows }}" as="v" hint-placeholder-count="2">
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:{{ v.bg }}" style-hover="background:rgba(255,255,255,.05)">
+                  <span style="width:7px;height:7px;flex:none;border-radius:50%;box-sizing:border-box;background:{{ v.dot }};border:1.5px solid {{ v.dotBorder }}"></span>
+                  <span style="flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ v.label }}</span>
+                  <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">{{ v.time }}</span>
+                  <sc-if value="{{ v.current }}" hint-placeholder-val="{{ false }}"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#5cc98d;width:56px;text-align:center">current</span></sc-if>
+                  <sc-if value="{{ v.restorable }}" hint-placeholder-val="{{ true }}"><button onClick="{{ v.onRestore }}" style="width:56px;height:26px;border:0;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.08);color:#fff" style-hover="background:rgba(255,255,255,.14)" style-active="transform:scale(.96)">Restore</button></sc-if>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding:11px 18px;border-top:1px solid #2c2c33;font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">last 20 saves · your lines are kept in every one</div>
+            <span style="position:absolute;bottom:-6px;left:50%;width:12px;height:12px;margin-left:-6px;background:#1c1c21;transform:rotate(45deg);box-shadow:1px 1px 0 #2c2c33"></span>
+          </div>
+        </sc-if>
+      </div>
+
+      <button style="height:36px;padding:0 14px;border:0;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#111114;display:flex;align-items:center;gap:7px" style-hover="background:#f0f0f2" style-active="transform:scale(.97)"><svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1v7M3 5l3 3 3-3M1.5 10.5h9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path></svg>Export PDF</button>
+
+      <sc-if value="{{ editOpen }}" hint-placeholder-val="{{ false }}">
+        <div role="dialog" aria-label="Edit this line" onKeyDown="{{ onEditKey }}" style="position:absolute;bottom:calc(100% + 16px);left:50%;transform:translateX(-50%);width:600px;background:#1c1c21;border-radius:14px;box-shadow:0 24px 60px rgba(17,17,20,.45),0 0 0 1px #2c2c33;text-align:left;animation:cl-rise 220ms cubic-bezier(.2,.7,.3,1)">
+          <div style="display:flex;align-items:center;gap:10px;padding:14px 12px 10px 18px">
+            <span style="width:9px;height:9px;border-radius:2px;background:{{ edit.c }}"></span>
+            <span style="font-size:14px;font-weight:600">{{ edit.title }}</span>
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">{{ edit.topic }}</span>
+            <button onClick="{{ closeEdit }}" aria-label="Close" style="margin-left:auto;width:28px;height:28px;border:0;border-radius:7px;background:transparent;color:#9a9aa6;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(255,255,255,.08);color:#fff"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:0 18px 14px">
+            <sc-if value="{{ edit.hasA }}" hint-placeholder-val="{{ true }}">
+              <label style="display:flex;flex-direction:column;gap:5px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#9a9aa6">{{ edit.labelA }}</span>
+                <input value="{{ editA }}" onChange="{{ onEditA }}" autoFocus="{{ true }}" style="height:36px;padding:0 10px;border-radius:8px;border:1px solid #2c2c33;background:#0f0f13;color:#fff;font-size:13.5px;outline:none" style-focus="border-color:#8a86e8;box-shadow:0 0 0 3px rgba(91,87,224,.25)"/></label>
+            </sc-if>
+            <label style="display:flex;flex-direction:column;gap:5px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#9a9aa6">{{ edit.labelB }}</span>
+              <textarea value="{{ editB }}" onChange="{{ onEditB }}" rows="2" style="padding:8px 10px;border-radius:8px;border:1px solid #2c2c33;background:#0f0f13;color:#fff;font-size:13.5px;line-height:1.45;outline:none;resize:vertical" style-focus="border-color:#8a86e8;box-shadow:0 0 0 3px rgba(91,87,224,.25)"></textarea></label>
+            <sc-if value="{{ edit.showTrust }}" hint-placeholder-val="{{ true }}">
+              <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 20px minmax(0,1fr);row-gap:6px;column-gap:10px;align-items:center;padding:10px 12px;border-radius:10px;background:#15151a;box-shadow:inset 0 0 0 1px #2c2c33;font-size:12px">
+                <span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b76">When you save</span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b76">Now</span><span></span><span style="font-family:'Geist Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:#6b6b76">After</span>
+                <span style="color:#9a9aa6">Citation</span><span style="font-family:'Geist Mono',monospace;font-size:11.5px;color:#cbcbd4">{{ edit.src }}</span><span style="color:#6b6b76">→</span><span style="display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:50%;box-sizing:border-box;border:1.3px solid #b3b0f4"></span><span style="color:#b3b0f4;font-weight:600">you</span></span>
+                <span style="color:#9a9aa6">Verified</span><span style="color:#dbb45e">{{ edit.starNow }}</span><span style="color:#6b6b76">→</span><span style="color:#9a9aa6">{{ edit.starAfter }}</span>
+                <span style="color:#9a9aa6">Trimming</span><span style="color:#cbcbd4">by rank</span><span style="color:#6b6b76">→</span><span style="color:#fff">pinned, never trimmed</span>
+              </div>
+            </sc-if>
+            <sc-if value="{{ edit.isMine }}" hint-placeholder-val="{{ false }}">
+              <p style="margin:0;display:flex;align-items:center;gap:6px;font-size:12px;color:#9a9aa6"><span style="width:6px;height:6px;border-radius:50%;box-sizing:border-box;border:1.3px solid #b3b0f4"></span>Already yours. {{ edit.origNote }}</p>
+            </sc-if>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;padding:11px 12px 11px 18px;border-top:1px solid #2c2c33">
+            <button onClick="{{ saveEdit }}" disabled="{{ editBlocked }}" style="height:32px;padding:0 14px;border:0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:#111114;opacity:{{ editOpacity }}" style-active="transform:scale(.97)">{{ edit.saveLabel }}</button>
+            <button onClick="{{ closeEdit }}" style="height:32px;padding:0 10px;border:0;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;background:transparent;color:#9a9aa6" style-hover="color:#fff">Cancel</button>
+            <span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6b6b76">⌘↵ save · esc cancel</span>
+            <sc-if value="{{ edit.isMine }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ askRemove }}" style="margin-left:auto;height:32px;padding:0 12px;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;background:transparent;color:#f08a75;border:1px solid rgba(240,138,117,.35)" style-hover="background:rgba(240,138,117,.10)" style-active="transform:scale(.97)">Remove my line</button>
+            </sc-if>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+      <div role="status" style="position:absolute;right:24px;bottom:96px;display:flex;align-items:center;gap:14px;padding:11px 12px 11px 16px;border-radius:12px;background:#1c1c21;color:#fff;font-size:13px;box-shadow:0 14px 34px rgba(17,17,20,.22);animation:cl-pop 200ms cubic-bezier(.2,.7,.3,1);z-index:30">
+        <span>{{ toastText }}</span>
+        <button onClick="{{ undoToast }}" style="height:28px;padding:0 10px;border:0;border-radius:7px;font-size:12.5px;font-weight:600;cursor:pointer;background:rgba(255,255,255,.1);color:#fff" style-hover="background:rgba(255,255,255,.16)">Undo</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ removeOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeModal }}" style="position:absolute;inset:0;background:rgba(17,17,20,.55);backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;z-index:50;animation:cl-fade 160ms ease">
+        <div role="alertdialog" aria-label="Remove your line?" onClick="{{ stop }}" style="width:460px;background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 30px 70px rgba(17,17,20,.40);animation:cl-pop 200ms cubic-bezier(.2,.7,.3,1)">
+          <div style="padding:28px 30px 26px">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="width:7px;height:7px;border-radius:50%;background:#b4341f"></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b6b76">Delete · your line</span>
+              <button onClick="{{ closeModal }}" aria-label="Close" style="margin-left:auto;width:28px;height:28px;border:0;border-radius:6px;background:transparent;color:#6b6b76;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#f2f2f3;color:#111114"><svg width="11" height="11" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></button></div>
+            <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:27px;line-height:1.12;letter-spacing:-.02em">Remove your line?</h2>
+            <div style="margin-top:14px;padding:10px 12px;border-radius:8px;background:#f5f4fe;font-size:13px;line-height:1.5;color:#2c2c33"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;box-sizing:border-box;border:1.3px solid #4a46c9;margin-right:5px;vertical-align:1px"></span>{{ removeText }} <span style="color:#4a46c9;font-weight:600;font-size:.88em">you</span></div>
+            <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#4a4a53;text-wrap:pretty">Clutch can rebuild everything else on this sheet from your files. It can't rebuild this.</p>
+            <div style="display:flex;gap:10px;margin-top:20px">
+              <button onClick="{{ confirmRemove }}" style="height:40px;padding:0 16px;border:0;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;background:#c0392b;color:#fff" style-hover="background:#a93226" style-active="transform:scale(.98)">Remove line</button>
+              <button onClick="{{ closeModal }}" style="height:40px;padding:0 16px;border-radius:9px;font-size:14px;font-weight:600;cursor:pointer;background:#fff;color:#111114;border:1px solid #d8d8de" style-hover="background:#f7f7f8" style-active="transform:scale(.98)">Keep it</button>
+            </div>
+          </div>
+          <div style="padding:13px 30px;border-top:1px solid #e6e6ea;background:#fdece4;color:#8a4a2f;font-family:'Geist Mono',monospace;font-size:11px">kept in version history · its space refills from your files, free</div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(2,700px);gap:40px">
+
+  <div id="A" data-screen-label="A · you marker" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;background:#111114;color:#fff;padding:3px 8px;border-radius:6px">A</span><span style="font-size:15px;font-weight:600">The <span style="color:#4a46c9">you</span> marker</span><span style="font-size:14px;color:#6b6b76">audit 2.1 · item 1</span></div>
+    <div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 2px rgba(17,17,20,.08);display:flex;flex-direction:column;gap:22px">
+      <div style="display:flex;flex-direction:column;gap:2px;font-size:16px;line-height:1.45;color:#1c1c21;padding:14px 16px;border:1px solid #e6e6ea;border-radius:8px">
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f0f0f2"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6b6b76">ours</span><div><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#197d4a;margin-right:5px;vertical-align:1px"></span><span style="color:#a08200;font-weight:700">★ </span><span style="color:#0d8b8b;font-weight:600">Confidence interval</span><span style="color:#909099"> — </span>x̄ ± t*(s/√n) <span style="color:#5a5f6b;font-style:italic;font-size:.88em">L08 s23 · Final Q3</span></div></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f0f0f2"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6b6b76">yours, added</span><div><span style="display:inline-block;width:9px;height:9px;border-radius:50%;box-sizing:border-box;border:1.6px solid #4a46c9;margin-right:5px;vertical-align:1px"></span><span style="color:#8b1a1a;font-weight:600">One-tailed test</span><span style="color:#909099"> — </span>use when Hₐ has a direction <span style="color:#4a46c9;font-weight:600;font-size:.82em;letter-spacing:.02em">you</span></div></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f0f0f2"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6b6b76">yours, edited</span><div><span style="display:inline-block;width:9px;height:9px;border-radius:50%;box-sizing:border-box;border:1.6px solid #4a46c9;margin-right:5px;vertical-align:1px"></span><span style="color:#8b1a1a;font-weight:600">p-value</span><span style="color:#909099"> — </span>not the chance H₀ is true <span style="color:#4a46c9;font-weight:600;font-size:.82em;letter-spacing:.02em">you</span> <span style="font-family:'Geist Mono',monospace;font-size:.7em;color:#909099">screen only: was L11 s8</span></div></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:6px 0;border-bottom:1px solid #f0f0f2"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6b6b76">your note</span><div style="border-left:2px dashed #5b57e0;padding-left:8px">Prof: CLT proof is NOT on the final <span style="color:#4a46c9;font-weight:600;font-size:.82em;letter-spacing:.02em">you</span></div></div>
+        <div style="display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;align-items:baseline;padding:6px 0"><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6b6b76">sources off</span><div style="display:flex;flex-direction:column;gap:2px"><div><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:#197d4a;margin-right:5px;vertical-align:1px"></span><span style="color:#0d8b8b;font-weight:600">Margin of error</span><span style="color:#909099"> — </span>half the width</div><div><span style="display:inline-block;width:9px;height:9px;border-radius:50%;box-sizing:border-box;border:1.6px solid #4a46c9;margin-right:5px;vertical-align:1px"></span><span style="color:#8b1a1a;font-weight:600">One-tailed test</span><span style="color:#909099"> — </span>use when Hₐ has a direction <span style="color:#4a46c9;font-weight:600;font-size:.82em;letter-spacing:.02em">you</span></div></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 24px;font-size:13.5px;line-height:1.55;color:#4a4a53">
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">Two ends of the line, one meaning</div>Filled dot means we checked it against your files. A hollow ring in the same slot means you wrote it. Both print in one pass with no fill, so the difference survives a greyscale printer.</div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px"><span style="color:#4a46c9">you</span> is unchanged</div>Signal-600, 0.82em, weight 600, in the citation slot. 6.98:1 on the sheet. Its own class, so Sources: Off never hides it.</div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">Notes get a dashed rule</div>A solid 2pt indigo rule read as a <span style="font-family:'Geist Mono',monospace;font-size:12px">tk-0</span> formula block. Solid rules belong to topic colour; dashed means yours.</div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">Provenance on screen only</div>An edited line keeps its old citation as a trail. It shows on hover in the app and never prints.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="B" data-screen-label="B · Tray vs modal" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;background:#111114;color:#fff;padding:3px 8px;border-radius:6px">B</span><span style="font-size:15px;font-weight:600">Tray and modal primitives</span><span style="font-size:14px;color:#6b6b76">audit 2.2 · item 4</span></div>
+    <div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 2px rgba(17,17,20,.08);display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:28px">
+      <div style="display:flex;flex-direction:column;gap:18px">
+        <div style="position:relative;background:#1c1c21;border-radius:14px;color:#fff;box-shadow:0 0 0 1px #2c2c33">
+          <div style="display:flex;align-items:center;gap:8px;padding:12px 10px 4px 16px"><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#1c1c21;background:#8a86e8;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center">1</span><span style="font-size:13.5px;font-weight:600">Tray title</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">count</span><span style="margin-left:auto;width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:#9a9aa6"><svg width="10" height="10" viewBox="0 0 12 12" fill="none"><path d="M1 1l10 10M11 1L1 11" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"></path></svg></span></div>
+          <div style="padding:8px 8px 10px;display:flex;flex-direction:column;gap:3px"><div style="display:flex;align-items:center;gap:8px;padding:0 8px;height:36px;border-radius:10px;background:rgba(255,255,255,.05)"><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#1c1c21;background:#8a86e8;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center">2</span><span style="font-size:12.5px;color:#cbcbd4">Rows · radius 10 · 2px gap</span></div><div style="height:36px;border-radius:10px;background:rgba(255,255,255,.03)"></div></div>
+          <div style="display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid #2c2c33;font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6"><span style="font-size:10px;color:#1c1c21;background:#8a86e8;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center">3</span>what this costs, in mono</div>
+          <span style="position:absolute;bottom:-6px;left:50%;width:12px;height:12px;margin-left:-6px;background:#1c1c21;transform:rotate(45deg)"></span>
+        </div>
+        <div style="display:flex;justify-content:center;gap:6px;padding:6px;background:#111114;border-radius:12px;width:max-content;margin:0 auto"><span style="height:30px;padding:0 10px;border-radius:8px;color:#fff;font-size:12.5px;font-weight:600;display:flex;align-items:center">View</span><span style="height:30px;padding:0 10px;border-radius:8px;background:#fff;color:#111114;font-size:12.5px;font-weight:600;display:flex;align-items:center;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:10px;color:#fff;background:#4a46c9;border-radius:50%;width:16px;height:16px;display:flex;align-items:center;justify-content:center">4</span>Opener</span><span style="height:30px;padding:0 10px;border-radius:8px;color:#fff;font-size:12.5px;font-weight:600;display:flex;align-items:center">Answers</span></div>
+        <ol style="margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px;font-size:13px;line-height:1.5;color:#4a4a53">
+          <li>Header: 14/600 title, mono count, 28px close. One close affordance for every tray.</li>
+          <li>Body: 18px side padding, rows at radius 10, scroll inside the tray.</li>
+          <li>Consequence strip: mono 11, states the cost (usually "free").</li>
+          <li>Tether: a notch points at the opener, and the opener turns white while its tray is open.</li>
+        </ol>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;font-size:13px;line-height:1.55;color:#4a4a53">
+        <div style="display:grid;grid-template-columns:90px minmax(0,1fr) minmax(0,1fr);gap:0;border:1px solid #e6e6ea;border-radius:10px;overflow:hidden;font-size:12.5px">
+          <span style="padding:8px 10px;background:#f7f7f8"></span><span style="padding:8px 10px;background:#f7f7f8;font-weight:600;color:#111114">Tray</span><span style="padding:8px 10px;background:#f7f7f8;font-weight:600;color:#111114">Modal</span>
+          <span style="padding:8px 10px;border-top:1px solid #e6e6ea;color:#6b6b76">For</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Free, reversible work</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Money, deletion, failure</span>
+          <span style="padding:8px 10px;border-top:1px solid #e6e6ea;color:#6b6b76">Sheet</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Stays live, previews react</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Behind a scrim</span>
+          <span style="padding:8px 10px;border-top:1px solid #e6e6ea;color:#6b6b76">Surface</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">band-2, dark in both themes</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">surface, inverts with theme</span>
+          <span style="padding:8px 10px;border-top:1px solid #e6e6ea;color:#6b6b76">Anchor</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Its opener, via the notch</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Centred</span>
+          <span style="padding:8px 10px;border-top:1px solid #e6e6ea;color:#6b6b76">Motion</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">cl-rise 220ms</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">cl-pop 200ms + cl-fade</span>
+          <span style="padding:8px 10px;border-top:1px solid #e6e6ea;color:#6b6b76">Dismiss</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Esc, close, the opener</span><span style="padding:8px 10px;border-top:1px solid #e6e6ea">Esc, scrim, named secondary</span>
+        </div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">One tray open at a time</div>Opening another closes the first. The line editor has no dock opener, so it sits centred over the dock and the line it edits is ringed on the sheet.</div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">On phones</div>A tray becomes a bottom sheet, full width, with a grab handle and 44pt targets. The notch drops. Editing stays desktop-first per PRD decision 8.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="C" data-screen-label="C · Interaction states" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;background:#111114;color:#fff;padding:3px 8px;border-radius:6px">C</span><span style="font-size:15px;font-weight:600">Interaction states</span><span style="font-size:14px;color:#6b6b76">audit 2.3–2.5 · items 5, 6</span></div>
+    <div style="background:#111114;border-radius:14px;padding:28px;color:#fff;display:flex;flex-direction:column;gap:22px">
+      <div style="display:grid;grid-template-columns:96px repeat(5,minmax(0,1fr));gap:10px;align-items:center;font-size:12px">
+        <span></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">rest</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">hover</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">focus</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">press</span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">disabled</span>
+        <span style="color:#9a9aa6">Neutral</span>
+        <span style="height:28px;border-radius:7px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;font-weight:600">−</span>
+        <span style="height:28px;border-radius:7px;background:rgba(255,255,255,.14);display:flex;align-items:center;justify-content:center;font-weight:600">−</span>
+        <span style="height:28px;border-radius:7px;background:rgba(255,255,255,.08);box-shadow:0 0 0 2px #111114,0 0 0 4px #8a86e8;display:flex;align-items:center;justify-content:center;font-weight:600">−</span>
+        <span style="height:28px;border-radius:7px;background:rgba(255,255,255,.14);transform:scale(.94);display:flex;align-items:center;justify-content:center;font-weight:600">−</span>
+        <span style="height:28px;border-radius:7px;background:rgba(255,255,255,.08);opacity:.3;display:flex;align-items:center;justify-content:center;font-weight:600">−</span>
+        <span style="color:#9a9aa6">Additive</span>
+        <span style="height:28px;border-radius:7px;background:rgba(91,87,224,.22);border:1px solid rgba(138,134,232,.4);color:#d4d2fb;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box">Add yours</span>
+        <span style="height:28px;border-radius:7px;background:rgba(91,87,224,.34);border:1px solid rgba(138,134,232,.4);color:#d4d2fb;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box;box-shadow:0 0 14px rgba(91,87,224,.35)">Add yours</span>
+        <span style="height:28px;border-radius:7px;background:rgba(91,87,224,.22);border:1px solid rgba(138,134,232,.4);color:#d4d2fb;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box;box-shadow:0 0 0 2px #111114,0 0 0 4px #8a86e8">Add yours</span>
+        <span style="height:28px;border-radius:7px;background:rgba(91,87,224,.34);border:1px solid rgba(138,134,232,.4);color:#d4d2fb;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box;transform:scale(.97)">Add yours</span>
+        <span style="height:28px;border-radius:7px;background:rgba(91,87,224,.22);border:1px solid rgba(138,134,232,.4);color:#d4d2fb;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box;opacity:.3">Add yours</span>
+        <span style="color:#9a9aa6">Removes</span>
+        <span style="height:28px;border-radius:7px;border:1px solid rgba(240,138,117,.35);color:#f08a75;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box">Remove</span>
+        <span style="height:28px;border-radius:7px;border:1px solid rgba(240,138,117,.35);background:rgba(240,138,117,.10);color:#f08a75;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box">Remove</span>
+        <span style="height:28px;border-radius:7px;border:1px solid rgba(240,138,117,.35);color:#f08a75;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box;box-shadow:0 0 0 2px #111114,0 0 0 4px #8a86e8">Remove</span>
+        <span style="height:28px;border-radius:7px;border:1px solid rgba(240,138,117,.35);background:rgba(240,138,117,.10);color:#f08a75;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box;transform:scale(.97)">Remove</span>
+        <span style="height:28px;border-radius:7px;border:1px solid rgba(240,138,117,.35);color:#f08a75;display:flex;align-items:center;justify-content:center;font-weight:600;box-sizing:border-box;opacity:.3">Remove</span>
+        <span style="color:#9a9aa6">Primary</span>
+        <span style="height:28px;border-radius:7px;background:#fff;color:#111114;display:flex;align-items:center;justify-content:center;font-weight:600">Save</span>
+        <span style="height:28px;border-radius:7px;background:#f0f0f2;color:#111114;display:flex;align-items:center;justify-content:center;font-weight:600">Save</span>
+        <span style="height:28px;border-radius:7px;background:#fff;color:#111114;box-shadow:0 0 0 2px #111114,0 0 0 4px #8a86e8;display:flex;align-items:center;justify-content:center;font-weight:600">Save</span>
+        <span style="height:28px;border-radius:7px;background:#f0f0f2;color:#111114;transform:scale(.97);display:flex;align-items:center;justify-content:center;font-weight:600">Save</span>
+        <span style="height:28px;border-radius:7px;background:#fff;color:#111114;opacity:.35;display:flex;align-items:center;justify-content:center;font-weight:600">Save</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">Sheet line · rest</span><div style="background:#fff;color:#1c1c21;border-radius:4px;padding:10px;font-size:11px;line-height:1.35"><div style="padding:2px 4px"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#197d4a;margin-right:3px"></span><span style="color:#0d8b8b;font-weight:600">Margin of error</span> — half the width <span style="color:#5a5f6b;font-style:italic;font-size:.88em">L08 s24</span></div></div></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">hover · screen only</span><div style="background:#fff;color:#1c1c21;border-radius:4px;padding:10px;font-size:11px;line-height:1.35"><div style="position:relative;padding:2px 4px;border-radius:2px;background:#f5f4fe;box-shadow:0 0 0 1px #d6d4f7"><span style="position:absolute;top:-10px;right:3px;background:#4a46c9;color:#fff;font-family:'Geist Mono',monospace;font-size:8px;font-weight:600;padding:1px 5px;border-radius:3px">edit</span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#197d4a;margin-right:3px"></span><span style="color:#0d8b8b;font-weight:600">Margin of error</span> — half the width <span style="color:#5a5f6b;font-style:italic;font-size:.88em">L08 s24</span></div></div></div>
+        <div style="display:flex;flex-direction:column;gap:6px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6;text-transform:uppercase;letter-spacing:.06em">editing</span><div style="background:#fff;color:#1c1c21;border-radius:4px;padding:10px;font-size:11px;line-height:1.35"><div style="position:relative;padding:2px 4px;border-radius:2px;background:#ecebfb;box-shadow:0 0 0 1.5px #5b57e0,0 0 12px rgba(91,87,224,.3)"><span style="position:absolute;top:-10px;right:3px;background:#4a46c9;color:#fff;font-family:'Geist Mono',monospace;font-size:8px;font-weight:600;padding:1px 5px;border-radius:3px">editing</span><span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:#197d4a;margin-right:3px"></span><span style="color:#0d8b8b;font-weight:600">Margin of error</span> — half the width <span style="color:#5a5f6b;font-style:italic;font-size:.88em">L08 s24</span></div></div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;font-size:13px;line-height:1.55;color:#cbcbd4">
+        <div><div style="font-weight:600;color:#fff;margin-bottom:3px">Focus is one ring everywhere</div>2px gap, 2px signal-300. Same on band and on paper. Replaces the one-rule floor on <span style="font-family:'Geist Mono',monospace;font-size:12px">.tray</span>.</div>
+        <div><div style="font-weight:600;color:#fff;margin-bottom:3px">Press is a scale</div>0.97 on text buttons, 0.94 on square steppers, 120ms. Trays now answer a press.</div>
+        <div><div style="font-weight:600;color:#fff;margin-bottom:3px">Glow means yours or previewed</div>Signal glow on Add yours and on the line being edited. Topic-colour ring on the previewed topic. Never on Clutch's lines at rest, never in print.</div>
+        <div><div style="font-weight:600;color:#fff;margin-bottom:3px">Editable without clutter</div>Text cursor plus a signal wash and an "edit" tab on hover, all under <span style="font-family:'Geist Mono',monospace;font-size:12px">@media screen</span>. A one-time hint under the sheet names it once.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="D" data-screen-label="D · Dock IA" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;background:#111114;color:#fff;padding:3px 8px;border-radius:6px">D</span><span style="font-size:15px;font-weight:600">Dock: 21 controls to 7</span><span style="font-size:14px;color:#6b6b76">audit 2.1, 2.7 · item 3</span></div>
+    <div style="background:#fff;border-radius:14px;padding:28px;box-shadow:0 1px 2px rgba(17,17,20,.08);display:flex;flex-direction:column;gap:20px">
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;font-size:13px;line-height:1.5">
+        <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#197d4a">Stays in the dock · 7</span>
+          <div style="display:flex;flex-direction:column;gap:4px;color:#2c2c33"><span>Density (MAX · Balanced · Essentials)</span><span>Topics <span style="color:#6b6b76">— badge only when changed</span></span><span>View <span style="color:#6b6b76">— popover</span></span><span>Answers <span style="color:#6b6b76">— switch</span></span><span>Edit with Clutch</span><span>Saved · time <span style="color:#6b6b76">— opens history</span></span><span>Export PDF</span></div></div>
+        <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#8f6908">Moves into View · 5</span>
+          <div style="display:flex;flex-direction:column;gap:4px;color:#2c2c33"><span>Order: Course · Priority</span><span>Sources: Off · Compact · Full</span><span>Traps</span><span>Question tags</span><span>Diagrams <span style="color:#6b6b76">— opens its tray</span></span></div></div>
+        <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Geist Mono',monospace;font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:#b4341f">Leaves the dock · 6</span>
+          <div style="display:flex;flex-direction:column;gap:4px;color:#2c2c33"><span>4 mix presets <span style="color:#6b6b76">— per-topic section mix in the rail</span></span><span>Reset mix <span style="color:#6b6b76">— Put everything back</span></span><span>Format select <span style="color:#6b6b76">— set once on Generate</span></span></div></div>
+      </div>
+      <div style="height:1px;background:#e6e6ea"></div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 24px;font-size:13px;line-height:1.55;color:#4a4a53">
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">Counts that carry information</div>The Topics badge was always 5/5. Now it is absent at rest and reads "2 changed" once something is.</div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">History explains itself</div>The save state is the opener. Before the first save it reads "Not saved" and the tray says why versions need the library.</div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">Add and trim no longer look alike</div>Add yours is signal-tinted and set apart by a divider. − and + are neutral steppers. At the floor, − becomes an outlined Remove.</div>
+        <div><div style="font-weight:600;color:#111114;margin-bottom:3px">Phone</div>Density, Topics and Export stay visible. Everything else sits in a More sheet, instead of folding the whole dock behind Options.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="E" data-screen-label="E · Modals" style="grid-column:1 / -1;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;background:#111114;color:#fff;padding:3px 8px;border-radius:6px">E</span><span style="font-size:15px;font-weight:600">Modals in the editing flow</span><span style="font-size:14px;color:#6b6b76">only money, deletion, failure · Modal.tsx spec</span></div>
+    <div style="background:#d9d9de;border-radius:14px;padding:36px;display:grid;grid-template-columns:repeat(3,460px);gap:28px;align-items:start">
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 30px 70px rgba(17,17,20,.25)">
+        <div style="padding:28px 30px 26px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="width:7px;height:7px;border-radius:50%;background:#b4341f"></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b6b76">Delete · your line</span></div>
+          <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:27px;line-height:1.12;letter-spacing:-.02em">Remove your line?</h2>
+          <div style="margin-top:14px;padding:10px 12px;border-radius:8px;background:#f5f4fe;font-size:13px;line-height:1.5;color:#2c2c33"><span style="display:inline-block;width:6px;height:6px;border-radius:50%;box-sizing:border-box;border:1.3px solid #4a46c9;margin-right:5px;vertical-align:1px"></span>One-tailed test — use when Hₐ has a direction <span style="color:#4a46c9;font-weight:600;font-size:.88em">you</span></div>
+          <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#4a4a53">Clutch can rebuild everything else on this sheet from your files. It can't rebuild this.</p>
+          <div style="display:flex;gap:10px;margin-top:20px"><span style="height:40px;padding:0 16px;border-radius:9px;background:#c0392b;color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center">Remove line</span><span style="height:40px;padding:0 16px;border-radius:9px;border:1px solid #d8d8de;font-size:14px;font-weight:600;display:flex;align-items:center;box-sizing:border-box">Keep it</span></div></div>
+        <div style="padding:13px 30px;border-top:1px solid #e6e6ea;background:#fdece4;color:#8a4a2f;font-family:'Geist Mono',monospace;font-size:11px">kept in version history · its space refills from your files, free</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 30px 70px rgba(17,17,20,.25)">
+        <div style="padding:28px 30px 26px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="width:7px;height:7px;border-radius:50%;background:#5b57e0"></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b6b76">Pro edit · rewrites lines</span></div>
+          <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:27px;line-height:1.12;letter-spacing:-.02em">Shorter definitions is a Pro edit</h2>
+          <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#4a4a53">It changes the words on your sheet, so Clutch checks each new line against your files first. You see every change before it lands.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px"><div style="padding:14px 16px;border-radius:10px;background:#111114;color:#fff;display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;font-weight:600">Go Pro</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#b8b8bf">unlocks rewrites</span></div><div style="padding:14px 16px;border-radius:10px;border:1px solid #d8d8de;display:flex;flex-direction:column;gap:4px"><span style="font-size:14px;font-weight:600">Stay free</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#6b6b76">edit lines by hand</span></div></div></div>
+        <div style="padding:13px 30px;border-top:1px solid #e6e6ea;background:#f4f9f6;color:#197d4a;font-family:'Geist Mono',monospace;font-size:11px">topics, adding, editing by hand stay free</div>
+      </div>
+      <div style="background:#fff;border-radius:14px;overflow:hidden;box-shadow:0 30px 70px rgba(17,17,20,.25)">
+        <div style="padding:28px 30px 26px"><div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><span style="width:7px;height:7px;border-radius:50%;background:#8f6908"></span><span style="font-family:'Geist Mono',monospace;font-size:10.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#6b6b76">Edit failed · nothing changed</span></div>
+          <h2 style="margin:0;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:27px;line-height:1.12;letter-spacing:-.02em">That edit didn't come back</h2>
+          <p style="margin:12px 0 0;font-size:14px;line-height:1.6;color:#4a4a53">The model timed out before it finished. Your sheet is exactly as it was, and no edit was used.</p>
+          <div style="display:flex;gap:10px;margin-top:20px"><span style="height:40px;padding:0 16px;border-radius:9px;background:#111114;color:#fff;font-size:14px;font-weight:600;display:flex;align-items:center">Try again</span><span style="height:40px;padding:0 16px;border-radius:9px;border:1px solid #d8d8de;font-size:14px;font-weight:600;display:flex;align-items:center;box-sizing:border-box">Close</span></div></div>
+        <div style="padding:13px 30px;border-top:1px solid #e6e6ea;background:#f7f7f8;color:#6b6b76;font-family:'Geist Mono',monospace;font-size:11px">not charged · your request is kept in the box</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="F" data-screen-label="F · Tray edge states" style="grid-column:1 / -1;display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:12px;font-weight:600;background:#111114;color:#fff;padding:3px 8px;border-radius:6px">F</span><span style="font-size:15px;font-weight:600">Tray edge states</span><span style="font-size:14px;color:#6b6b76">history before save · table validation · rail floor</span></div>
+    <div style="background:#26262f;border-radius:14px;padding:36px;display:grid;grid-template-columns:380px 520px 460px;gap:28px;align-items:start;color:#fff">
+      <div style="background:#1c1c21;border-radius:14px;box-shadow:0 0 0 1px #2c2c33">
+        <div style="display:flex;align-items:center;padding:14px 18px 4px"><span style="font-size:14px;font-weight:600">Earlier versions</span></div>
+        <div style="padding:10px 18px 18px;display:flex;flex-direction:column;gap:10px">
+          <p style="margin:0;font-size:13px;line-height:1.55;color:#cbcbd4">This sheet isn't in your library yet, so there's nowhere to keep versions. Save it and every change after that is kept.</p>
+          <p style="margin:0;font-size:12.5px;line-height:1.5;color:#9a9aa6">Until then, undo still works for this session.</p>
+          <span style="align-self:flex-start;height:32px;padding:0 14px;border-radius:8px;background:#fff;color:#111114;font-size:13px;font-weight:600;display:flex;align-items:center">Save to library</span>
+        </div>
+        <div style="padding:11px 18px;border-top:1px solid #2c2c33;font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">dock reads: <span style="color:#dbb45e">● Not saved</span></div>
+      </div>
+      <div style="background:#15151a;border-radius:10px;padding:12px;box-shadow:inset 0 0 0 1px #2c2c33">
+        <div style="display:flex;align-items:center;gap:4px"><span style="height:24px;padding:0 8px;border-radius:6px;font-family:'Geist Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#9a9aa6;display:flex;align-items:center">note</span><span style="height:24px;padding:0 8px;border-radius:6px;font-family:'Geist Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#9a9aa6;display:flex;align-items:center">definition</span><span style="height:24px;padding:0 8px;border-radius:6px;font-family:'Geist Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:#9a9aa6;display:flex;align-items:center">question</span><span style="height:24px;padding:0 8px;border-radius:6px;font-family:'Geist Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;background:rgba(255,255,255,.14);color:#fff;display:flex;align-items:center">table</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6">into Confidence intervals</span></div>
+        <div style="margin-top:8px;height:34px;padding:0 10px;border-radius:8px;border:1px solid #2c2c33;background:#0f0f13;font-family:'Geist Mono',monospace;font-size:12px;display:flex;align-items:center">Test | When to use | Stat</div>
+        <div style="margin-top:6px;padding:8px 10px;border-radius:8px;border:1px solid #e0a24d;background:#0f0f13;font-family:'Geist Mono',monospace;font-size:12px;line-height:1.6;box-shadow:0 0 0 3px rgba(224,162,77,.18)">z | σ known | z = (x̄−μ)/(σ/√n)<br>t | σ unknown</div>
+        <div style="margin-top:6px;display:flex;align-items:center;gap:6px;font-size:12px;color:#e0a24d"><span style="font-family:'Geist Mono',monospace">Row 2</span> has 2 cells; the header has 3</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:10px"><span style="height:30px;padding:0 12px;border-radius:8px;background:#fff;color:#111114;font-size:12.5px;font-weight:600;display:flex;align-items:center;opacity:.35">Add to sheet</span><span style="font-size:12.5px;font-weight:600;color:#9a9aa6;padding:0 10px">Cancel</span><span style="margin-left:auto;font-family:'Geist Mono',monospace;font-size:10.5px;color:#9a9aa6">reads <span style="color:#b3b0f4;font-weight:600">you</span> · never trimmed</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:2px;background:#1c1c21;border-radius:14px;padding:8px;box-shadow:0 0 0 1px #2c2c33">
+        <div style="position:relative;padding:9px 10px 9px 14px;border-radius:10px;background:rgba(255,255,255,.06)"><span style="position:absolute;left:3px;top:10px;bottom:10px;width:3px;border-radius:2px;background:#6a3d9a"></span>
+          <div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;background:#6a3d9a;border:1.5px solid #6a3d9a;box-sizing:border-box;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">✓</span><span style="flex:1;font-size:13.5px;font-weight:600">Probability</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">3 lines</span><span style="height:28px;padding:0 9px;border-radius:7px;color:#f08a75;border:1px solid rgba(240,138,117,.35);font-size:12px;font-weight:600;display:flex;align-items:center">Remove</span><span style="width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;opacity:.3">+</span></div>
+          <div style="margin:6px 0 0 28px;font-size:11.5px;color:#9a9aa6">At the floor of 3 lines, − becomes Remove.</div></div>
+        <div style="position:relative;padding:9px 10px 9px 14px;border-radius:10px;opacity:.55"><div style="display:flex;align-items:center;gap:10px"><span style="width:18px;height:18px;border-radius:5px;border:1.5px solid #4a4a53;box-sizing:border-box"></span><span style="flex:1;font-size:13.5px;font-weight:600;text-decoration:line-through">Regression</span><span style="font-family:'Geist Mono',monospace;font-size:11px;color:#9a9aa6">off</span></div>
+          <div style="margin:6px 0 0 28px;font-size:11.5px;color:#9a9aa6">Off. Adding a line of your own ticks it back on.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;previewMode&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;lift + dim&quot;,&quot;lift only&quot;,&quot;dim only (current)&quot;],&quot;default&quot;:&quot;lift + dim&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Rail preview&quot;},&quot;dimOpacity&quot;:{&quot;editor&quot;:&quot;range&quot;,&quot;min&quot;:0.1,&quot;max&quot;:0.7,&quot;step&quot;:0.05,&quot;default&quot;:0.3,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Rail preview&quot;},&quot;showHint&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Editable-line affordance&quot;}}">
+const TOPICS=[
+ {name:'Sampling & CLT',c:'#3b3593',span:'Ch 6'},
+ {name:'Confidence intervals',c:'#0d8b8b',span:'Ch 8'},
+ {name:'Hypothesis testing',c:'#8b1a1a',span:'Ch 10–11'},
+ {name:'Regression',c:'#1f7d3a',span:'Ch 13'},
+ {name:'Probability',c:'#6a3d9a',span:'Ch 14'}];
+const KIND={def:'Definitions',formula:'Formulas',trap:'Traps',q:'Questions'};
+const CONF={high:'#197d4a',med:'#8f6908',low:'#b4341f'};
+let _id=0;
+const L=(t,kind,term,def,src,conf,star,mine,orig)=>({id:'l'+(_id++),t,kind,term,def,src,conf,star:!!star,mine:!!mine,orig});
+const INIT=[
+L(0,'def','Central Limit Theorem','x̄ ~ Normal for large n, whatever the population','L06 s15','high',1),
+L(0,'formula','Sampling distribution','SE = σ/√n; CLT holds from n ≥ 30','L06 s11','high',1),
+L(0,'def','Standard error','spread of x̄ across repeated samples','L06 s12','med'),
+L(0,'def','Law of large numbers','x̄ → μ as n grows','L06 s9','med'),
+L(0,'note','','Prof: CLT proof is NOT on the final, only the conditions','you','med',0,1),
+L(1,'formula','Confidence interval','x̄ ± t*(s/√n), z if σ known','L08 s23 · Final Q3','high',1),
+L(1,'def','z vs t','σ known → z; unknown → t, df = n−1','Guide p.4 · Q2','high',1),
+L(1,'trap','','A 95% CI does not mean a 95% chance μ is inside it','L08 s25','high'),
+L(1,'def','Margin of error','half the width of the interval','L08 s24','med'),
+L(1,'def','Width vs n','quadruple n to halve the width','L08 s27','low'),
+L(2,'def','Hypothesis test','H₀/Hₐ, pick α, reject if p < α','L10 s6 · Q5','high',1),
+L(2,'def','p-value','P(data this extreme | H₀), not P(H₀)','L11 s8','high'),
+L(2,'formula','Type I / II error','α = false positive; β = false negative; power = 1−β','L11 s12','high'),
+L(2,'q','p = 0.03 at α = 0.05?','Reject H₀','Final ’21 Q6','high',1),
+L(2,'def','One-tailed test','use when Hₐ has a direction; halve the two-tailed p','you','med',0,1,'L10 s12'),
+L(2,'def','Test statistic','t = (x̄ − μ₀)/(s/√n)','L10 s9','med'),
+L(3,'formula','Regression slope','b = r(s_y/s_x)','L13 s4','high'),
+L(3,'def','r²','share of variance in y explained by x','L13 s9','med'),
+L(3,'def','Residual','e = y − ŷ','L13 s6','med'),
+L(3,'q','r = 0.8, what is r²?','0.64','L13 s10','med'),
+L(4,'formula','Bayes rule','P(A|B) = P(B|A)P(A)/P(B)','L14 s3','low'),
+L(4,'def','Independence','P(A∩B) = P(A)P(B)','L14 s1','high'),
+L(4,'def','Complement','P(Aᶜ) = 1 − P(A)','L14 s1','med'),
+L(4,'def','Mutually exclusive','P(A∩B) = 0','L14 s2','med')];
+const PVAL_NEW='chance of data at least this extreme if H₀ is true; not the chance H₀ is true';
+
+class Component extends DCLogic {
+  state={lines:INIT,mods:{},hoverTopic:null,hoverLine:null,tray:null,editing:null,editA:'',editB:'',adding:null,addShape:'note',addA:'',addB:'',dens:'max',order:'course',sources:'full',traps:true,answers:true,modal:null,toast:null,coach:true,
+    versions:[{label:'Generated from 4 files',time:'2h ago',snap:INIT}],
+    chat:[{role:'clutch',text:'Tell me what to change. Showing, hiding and reordering are free. Rewording, adding or removing lines comes back as a preview you accept or reject.'},{role:'you',text:'make the p-value definition clearer'},{role:'clutch',text:'Here is a rewording that keeps its citation.',proposal:'pending'}],
+    chatText:''};
+  componentDidMount(){
+    this._k=e=>{
+      if(e.key==='Escape'){ if(this.state.modal) this.setState({modal:null}); else this.setState({tray:null,editing:null,adding:null}); }
+    };
+    window.addEventListener('keydown',this._k);
+  }
+  componentWillUnmount(){ window.removeEventListener('keydown',this._k); clearTimeout(this._tt); }
+  toastMsg(text,undo){ clearTimeout(this._tt); this.setState({toast:{text,undo}}); this._tt=setTimeout(()=>this.setState({toast:null}),6000); }
+  commit(lines,label,toast){
+    const prev=this.state.lines;
+    this.setState(s=>({lines,versions:[{label,time:'just now',snap:lines},...s.versions].slice(0,20)}));
+    if(toast) this.toastMsg(toast,prev);
+  }
+  setMod(t,patch){
+    this.setState(s=>{ const m={...(s.mods[t]||{}),...patch}; const mods={...s.mods,[t]:m};
+      if(!m.off&&!m.trim&&!(m.hide&&m.hide.length)) delete mods[t]; return {mods}; });
+  }
+  pool(t){
+    const s=this.state, m=s.mods[t]||{};
+    const densOk=l=>s.dens==='max'||(s.dens==='bal'?l.conf!=='low':l.conf==='high');
+    return s.lines.filter(l=>l.t===t).filter(l=>l.mine||(!(m.hide||[]).includes(l.kind)&&!(l.kind==='trap'&&!s.traps)&&densOk(l)));
+  }
+  visible(t){
+    const m=this.state.mods[t]||{}; if(m.off) return [];
+    const p=this.pool(t), ours=p.filter(l=>!l.mine), trim=m.trim||0;
+    const drop=new Set(trim?ours.slice(ours.length-trim).map(l=>l.id):[]);
+    return p.filter(l=>!drop.has(l.id));
+  }
+  openTray(name){ this.setState(s=>({tray:s.tray===name?null:name,editing:null,adding:null,hoverTopic:null})); }
+  startEdit(l){
+    this.setState({editing:l.id,tray:null,adding:null,hoverTopic:null,editA:l.kind==='note'?'':l.term,editB:l.def,coach:false});
+  }
+  renderVals(){
+    const s=this.state, p=this.props;
+    const mode=p.previewMode??'lift + dim', dimTo=p.dimOpacity??0.3;
+    const order=s.order==='course'?[0,1,2,3,4]:[2,1,0,3,4];
+    const editLine=s.lines.find(l=>l.id===s.editing);
+    const srcFor=l=>{
+      if(l.mine) return {srcText:'you',srcColor:'#4a46c9',srcStyle:'normal',srcWeight:600,srcSize:'.82em',srcTrack:'.02em'};
+      const txt=s.sources==='off'?'':s.sources==='compact'?l.src.split(' ')[0]:l.src;
+      return {srcText:txt,srcColor:'#5a5f6b',srcStyle:'italic',srcWeight:400,srcSize:'.88em',srcTrack:'0'};
+    };
+    const groups=order.filter(t=>!(s.mods[t]||{}).off).map(t=>{
+      const T=TOPICS[t], hov=s.hoverTopic;
+      const lit=hov===t, dim=hov!=null&&hov!==t;
+      return {name:T.name,c:T.c,span:T.span,
+        opacity:dim&&mode!=='lift only'?dimTo:1,
+        shadow:lit&&mode!=='dim only (current)'?`0 0 0 1.5px ${T.c}, 0 0 0 6px ${T.c}22, 0 6px 18px ${T.c}26`:'0 0 0 0 transparent',
+        lines:this.visible(t).map(l=>{
+          const isEd=s.editing===l.id, isHov=s.hoverLine===l.id;
+          return {...l,...srcFor(l),
+            isNote:l.kind==='note',isTrap:l.kind==='trap',isLine:l.kind!=='note'&&l.kind!=='trap',
+            sep:l.kind==='q'?'':' — ',term:l.kind==='q'?'Q '+l.term:l.term,def:l.kind==='q'?'':l.def,ans:l.def,showAns:l.kind==='q'&&s.answers,
+            star:l.star&&!l.mine,
+            dotBg:l.mine?'transparent':CONF[l.conf],dotBorder:l.mine?'1.3px solid #4a46c9':'0 solid transparent',
+            bg:isEd?'#ecebfb':isHov?(l.mine?'#ecebfb':'#f5f4fe'):'transparent',
+            ring:isEd?'0 0 0 1.5px #5b57e0, 0 0 12px rgba(91,87,224,.3)':isHov?'0 0 0 1px #d6d4f7':'0 0 0 0 transparent',
+            showTag:isEd||isHov,tagText:isEd?'editing':(l.mine?'edit yours':'edit'),
+            onClick:()=>this.startEdit(l),
+            onEnter:()=>this.setState({hoverLine:l.id}),
+            onLeave:()=>this.setState(st=>st.hoverLine===l.id?{hoverLine:null}:null)};
+        })};
+    });
+
+    const railRows=[0,1,2,3,4].map(t=>{
+      const T=TOPICS[t], m=s.mods[t]||{}, on=!m.off;
+      const all=s.lines.filter(l=>l.t===t);
+      const pool=this.pool(t), oursPool=pool.filter(l=>!l.mine).length, trim=m.trim||0;
+      const shownOurs=oursPool-trim, you=all.filter(l=>l.mine).length;
+      const hov=s.hoverTopic===t, atFloor=on&&shownOurs<=3;
+      const kinds=['def','formula','trap','q'].filter(k=>all.some(l=>l.kind===k&&!l.mine));
+      return {name:T.name,on,off:!on,mark:on?'✓':'',checkBg:on?T.c:'transparent',checkBorder:on?T.c:'#4a4a53',
+        toggleLabel:(on?'Remove ':'Put back ')+T.name,deco:on?'none':'line-through',
+        countLabel:on?(trim?`${shownOurs} of ${oursPool}`:`${oursPool} lines`):'off',
+        hasYou:you>0,youLabel:`${you} you`,
+        atFloor,canLess:on&&!atFloor,noMore:!on||trim===0,moreOpacity:(!on||trim===0)?.3:1,
+        rowBg:hov?'rgba(255,255,255,.07)':'transparent',bar:hov?T.c:'transparent',opacity:on?1:.55,
+        adding:s.adding===t,
+        chips:kinds.map(k=>{ const hidden=(m.hide||[]).includes(k); const n=all.filter(l=>l.kind===k&&!l.mine).length;
+          return {label:`${KIND[k]} ${n}`,on:!hidden,bg:hidden?'transparent':'rgba(255,255,255,.1)',fg:hidden?'#6b6b76':'#e2e2e8',deco:hidden?'line-through':'none',
+            onClick:()=>this.setMod(t,{hide:hidden?(m.hide||[]).filter(x=>x!==k):[...(m.hide||[]),k]})}; }),
+        onEnter:()=>on&&this.setState({hoverTopic:t}),
+        onLeave:()=>this.setState({hoverTopic:null}),
+        onToggle:()=>{ this.setMod(t,{off:on?true:undefined}); if(on) this.setState({hoverTopic:null}); },
+        onRemove:()=>{ this.setMod(t,{off:true}); this.setState({hoverTopic:null}); },
+        onLess:()=>this.setMod(t,{trim:trim+1}),
+        onMore:()=>this.setMod(t,{trim:trim-1||undefined}),
+        onAdd:()=>this.setState(st=>({adding:st.adding===t?null:t,addA:'',addB:''}))};
+    });
+    const changes=Object.keys(s.mods).length;
+    const shownTopics=TOPICS.filter((_,t)=>!(s.mods[t]||{}).off).length;
+
+    const shapes=['note','definition','question'];
+    const addHasB=s.addShape!=='note';
+    const addReady=s.addA.trim()&&(!addHasB||s.addB.trim());
+    const submitAdd=()=>{
+      if(!addReady||s.adding==null) return;
+      const t=s.adding, kind=s.addShape==='note'?'note':s.addShape==='question'?'q':'def';
+      const nl=L(t,kind,kind==='note'?'':s.addA.trim(),kind==='note'?s.addA.trim():s.addB.trim(),'you','med',0,1);
+      const ls=[...s.lines]; let idx=-1; ls.forEach((l,i)=>{if(l.t===t) idx=i;}); ls.splice(idx+1,0,nl);
+      if((s.mods[t]||{}).off) this.setMod(t,{off:undefined});
+      this.setState({adding:null,addA:'',addB:''});
+      this.commit(ls,`Added a ${s.addShape} to ${TOPICS[t].name}`,`Added to ${TOPICS[t].name} · reads “you”`);
+    };
+
+    let edit={};
+    if(editLine){
+      const T=TOPICS[editLine.t], isQ=editLine.kind==='q', isNote=editLine.kind==='note';
+      edit={c:T.c,topic:T.name,title:editLine.mine?'Edit your line':'Rewrite this line',
+        hasA:!isNote,labelA:isQ?'Question':'Term',labelB:isNote?'Your note':isQ?'Answer':'What it means',
+        showTrust:!editLine.mine,isMine:editLine.mine,src:editLine.src,
+        starNow:editLine.star?'★ verified':'not starred',starAfter:editLine.star?'comes off':'—',
+        origNote:editLine.orig?`Rewritten from ${editLine.orig}.`:'Pinned, never trimmed.',
+        saveLabel:editLine.mine?'Save':'Save as mine'};
+    }
+    const editChanged=editLine&&((editLine.kind==='note'?false:s.editA!==editLine.term)||s.editB!==editLine.def);
+    const editReady=editChanged&&s.editB.trim()&&(editLine.kind==='note'||s.editA.trim());
+    const saveEdit=()=>{
+      if(!editReady) return;
+      const wasStar=editLine.star&&!editLine.mine;
+      const ls=s.lines.map(l=>l.id!==editLine.id?l:{...l,term:l.kind==='note'?'':s.editA.trim(),def:s.editB.trim(),mine:true,star:false,orig:l.mine?l.orig:l.src,src:'you'});
+      this.setState({editing:null});
+      this.commit(ls,`Edited “${editLine.term||'note'}”`,wasStar?'Saved as yours · verified star removed':'Saved as yours · pinned');
+    };
+
+    const chatMsgs=s.chat.map((m,i)=>({text:m.text,align:m.role==='you'?'flex-end':'flex-start',
+      bg:m.role==='you'?'#fff':'rgba(255,255,255,.07)',fg:m.role==='you'?'#111114':'#e2e2e8',
+      hasProposal:!!m.proposal,pending:m.proposal==='pending',decided:!!m.proposal&&m.proposal!=='pending',
+      status:m.proposal==='accepted'?'accepted ✓ · undo is at the top':'rejected · sheet unchanged',
+      onAccept:()=>{ const ls=s.lines.map(l=>l.term==='p-value'&&!l.mine?{...l,def:PVAL_NEW}:l);
+        this.setState(st=>({chat:st.chat.map((x,j)=>j===i?{...x,proposal:'accepted'}:x),hoverLine:null}));
+        this.commit(ls,'Clutch reworded “p-value”','Reworded p-value · citation kept'); },
+      onReject:()=>this.setState(st=>({chat:st.chat.map((x,j)=>j===i?{...x,proposal:'rejected'}:x)}))}));
+    const reply=(you,text,fx)=>this.setState(st=>({chatText:'',chat:[...st.chat,{role:'you',text:you},{role:'clutch',text}],...(fx||{})}));
+    const chatChips=[
+      {label:'Hide traps',tag:'free',fn:()=>reply('hide the traps','Traps are off. Free and instant; turn them back on from View.',{traps:false})},
+      {label:'Compact sources',tag:'free',fn:()=>reply('compact sources','Sources are compact. Your own lines still read “you”.',{sources:'compact'})},
+      {label:'Priority order',tag:'free',fn:()=>reply('put it in priority order','Topics now run by how likely they are to come up.',{order:'priority'})},
+      {label:'Shorter definitions',tag:'Pro',fn:()=>reply('make the definitions shorter','That rewrites lines, so it comes back as a preview first. Accepting uses 1 Pro edit.')}
+    ].map(c=>({...c,onClick:c.fn,border:c.tag==='Pro'?'rgba(219,180,94,.4)':'#3a3a45',tagColor:c.tag==='Pro'?'#dbb45e':'#6b6b76'}));
+    const sendChat=()=>{ const t=s.chatText.trim(); if(!t) return; reply(t,'That changes the words on your sheet, so I will send it back as a preview you accept or reject.'); };
+
+    const versionRows=s.versions.map((v,i)=>({label:v.label,time:v.time,current:i===0,restorable:i!==0,
+      bg:i===0?'rgba(92,201,141,.08)':'transparent',dot:i===0?'#5cc98d':'transparent',dotBorder:i===0?'#5cc98d':'#6b6b76',
+      onRestore:()=>{ this.setState({tray:null}); this.commit(v.snap,`Restored “${v.label}”`,`Restored “${v.label}”`); }}));
+
+    const seg=(cur,val,label,fn)=>({label,bg:cur===val?'#fff':'transparent',fg:cur===val?'#111114':'#cbcbd4',onClick:fn});
+    const viewRows=[
+      {label:'Order',note:'Priority puts the topics most likely to come up first.',opts:[seg(s.order,'course','Course',()=>this.setState({order:'course'})),seg(s.order,'priority','Priority',()=>this.setState({order:'priority'}))]},
+      {label:'Sources',note:'Your own lines read “you” in every mode, including Off.',opts:[seg(s.sources,'off','Off',()=>this.setState({sources:'off'})),seg(s.sources,'compact','Compact',()=>this.setState({sources:'compact'})),seg(s.sources,'full','Full',()=>this.setState({sources:'full'}))]},
+      {label:'Traps',note:'Across every topic. Per-topic mixes live in Topics.',opts:[seg(s.traps,true,'Show',()=>this.setState({traps:true})),seg(s.traps,false,'Hide',()=>this.setState({traps:false}))]}];
+
+    const trayBtn=open=>({bg:open?'#fff':'transparent',fg:open?'#111114':'#fff'});
+    const tb=trayBtn(s.tray==='topics'),vb=trayBtn(s.tray==='view'),cb=trayBtn(s.tray==='chat'),hb=trayBtn(s.tray==='history');
+    const removeLine=s.lines.find(l=>l.id===s.modal);
+    const lastVer=s.versions[0];
+
+    return {
+      groups,railRows,densityLabel:{max:'MAX',bal:'BALANCED',ess:'ESSENTIALS'}[s.dens],
+      densSegs:[['max','MAX'],['bal','Balanced'],['ess','Essentials']].map(([v,lb])=>seg(s.dens,v,lb,()=>this.setState({dens:v}))),
+      showCoach:s.coach&&(p.showHint??true),dismissCoach:()=>this.setState({coach:false}),
+      topicsOpen:s.tray==='topics',viewOpen:s.tray==='view',chatOpen:s.tray==='chat',historyOpen:s.tray==='history',editOpen:!!editLine,
+      topicsBtnBg:tb.bg,topicsBtnFg:tb.fg,viewBtnBg:vb.bg,viewBtnFg:vb.fg,chatBtnBg:cb.bg,chatBtnFg:cb.fg,histBtnBg:hb.bg,histBtnFg:hb.fg,
+      openTopics:()=>this.openTray('topics'),openView:()=>this.openTray('view'),openChat:()=>this.openTray('chat'),openHistory:()=>this.openTray('history'),
+      closeTray:()=>this.setState({tray:null,adding:null,hoverTopic:null}),
+      hasChanges:changes>0,changesLabel:`${changes} changed`,topicsSummary:`${shownTopics} of ${TOPICS.length} on`,
+      resetMods:()=>this.setState({mods:{}}),
+      addShapes:shapes.map(sh=>({label:sh,on:s.addShape===sh,bg:s.addShape===sh?'rgba(255,255,255,.14)':'transparent',fg:s.addShape===sh?'#fff':'#9a9aa6',onClick:()=>this.setState({addShape:sh})})),
+      addA:s.addA,addB:s.addB,addHasB,
+      addLabelA:{note:'Your note, e.g. “he said this WILL be on the final”',definition:'Term',question:'Question'}[s.addShape],
+      addLabelB:{definition:'What it means',question:'Answer'}[s.addShape]||'',
+      onAddA:e=>this.setState({addA:e.target.value}),onAddB:e=>this.setState({addB:e.target.value}),
+      onAddKey:e=>{ if(e.key==='Enter') submitAdd(); },
+      submitAdd,addBlocked:!addReady,addOpacity:addReady?1:.35,cancelAdd:()=>this.setState({adding:null}),
+      answers:s.answers,toggleAnswers:()=>this.setState(st=>({answers:!st.answers})),ansTrack:s.answers?'#5b57e0':'#3a3a45',ansKnob:s.answers?'14px':'2px',
+      chatMsgs,chatChips,chatText:s.chatText,onChatText:e=>this.setState({chatText:e.target.value.slice(0,500)}),
+      onChatKey:e=>{ if(e.key==='Enter'){ e.preventDefault(); sendChat(); } },sendChat,
+      noUndo:s.versions.length<2,undoOpacity:s.versions.length<2?.4:1,
+      undoLast:()=>{ if(s.versions.length<2) return; this.commit(s.versions[1].snap,'Undid last edit','Undid last edit'); },
+      savedLabel:`Saved · ${lastVer.time}`,versionRows,versionCount:String(s.versions.length),
+      viewRows,
+      edit,editA:s.editA,editB:s.editB,onEditA:e=>this.setState({editA:e.target.value}),onEditB:e=>this.setState({editB:e.target.value}),
+      onEditKey:e=>{ if(e.key==='Enter'&&(e.metaKey||e.ctrlKey)) saveEdit(); },
+      saveEdit,editBlocked:!editReady,editOpacity:editReady?1:.35,closeEdit:()=>this.setState({editing:null}),
+      askRemove:()=>this.setState({modal:s.editing}),
+      removeOpen:!!removeLine,removeText:removeLine?(removeLine.term?removeLine.term+' — '+removeLine.def:removeLine.def):'',
+      closeModal:()=>this.setState({modal:null}),stop:e=>e.stopPropagation(),
+      confirmRemove:()=>{ const id=s.modal; this.setState({modal:null,editing:null}); this.commit(s.lines.filter(l=>l.id!==id),'Removed one of your lines','Removed your line · kept in history'); },
+      hasToast:!!s.toast,toastText:s.toast?s.toast.text:'',
+      undoToast:()=>{ const u=s.toast&&s.toast.undo; if(!u) return; this.setState({toast:null}); this.commit(u,'Undid last change'); }
+    };
+  }
+}
+</script>
+</body>
+</html>
