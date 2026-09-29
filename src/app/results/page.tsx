@@ -833,6 +833,10 @@ export default function ResultsPage() {
         )}
         {editing && (
           <EditLine
+            /* Remount per line. Clicking a second line while the editor is open replaces `editing`
+               without unmounting, and useState(initial) only runs on mount — so the fields would
+               keep the previous line's text and saving would write it to the new line's key. */
+            key={editing.key}
             labels={editing.labels}
             initial={{ a: editing.a, b: editing.b }}
             wasVerified={editing.wasVerified}
