@@ -366,7 +366,7 @@ export default function ResultsPage() {
   if (error) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-[var(--paper)] px-6 text-center">
-        <Wordmark href="/" />
+        <Wordmark href="/generate" />
         <h1 className="mt-8 font-serif text-[34px] tracking-[-0.025em] text-[var(--ink-900)]">
           Nothing to show yet
         </h1>
@@ -676,7 +676,9 @@ export default function ResultsPage() {
       {/* ── toolbar ─────────────────────────────────────────────────── */}
       <header className="print:hidden sticky top-0 z-[var(--z-sticky)] border-b border-[var(--border-input)] bg-[var(--paper-glass)] backdrop-blur-[10px]">
         <div className="mx-auto flex h-[58px] max-w-[1320px] items-center gap-3.5 px-4 sm:px-7">
-          <Wordmark size="sm" />
+          {/* /generate, not "/": the marketing page is not auth-aware, so landing a signed-in
+              student there looks exactly like being signed out (Gold, twice). */}
+          <Wordmark size="sm" href="/generate" />
           <span aria-hidden className="hidden text-[var(--ink-300)] sm:inline">/</span>
           <span className="hidden min-w-0 truncate text-[14px] font-medium text-[var(--ink-800)] sm:inline">
             {content.title}
