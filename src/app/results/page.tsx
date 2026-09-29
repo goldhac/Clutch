@@ -525,6 +525,10 @@ export default function ResultsPage() {
     });
     setRailOpen(false);
     setTrayOpen(false);
+    setViewOpen(false);
+    // The dock stacks its trays in one column: with the chat open too, the editor is pushed off
+    // the top of the screen. One at a time.
+    setEditorOpen(false);
   }
 
   /**
@@ -558,6 +562,8 @@ export default function ResultsPage() {
     setVersionsOpen(true);
     setRailOpen(false);
     setTrayOpen(false);
+    setViewOpen(false);
+    setEditorOpen(false);
     setEditing(null);
     const id = savedIdRef.current;
     if (!id) return setVersions([]);
@@ -1093,6 +1099,8 @@ export default function ResultsPage() {
               onClick={() => {
                 setRailOpen((v) => !v);
                 setTrayOpen(false);
+                setViewOpen(false);
+                setVersionsOpen(false);
                 setEditorOpen(false);
                 setUpsellOpen(false);
               }}
@@ -1122,6 +1130,9 @@ export default function ResultsPage() {
               setEditorOpen((v) => !v);
               setUpsellOpen(false);
               setTrayOpen(false);
+              setViewOpen(false);
+              setRailOpen(false);
+              setVersionsOpen(false);
             }}
             className="tap inline-flex shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10"
           >
