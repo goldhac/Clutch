@@ -8,6 +8,7 @@
 
 @import "tailwindcss";
 @import "../renderer/tokens.css";
+@import "../renderer/controls.css";
 
 @theme inline {
   /* Colors → bg-*, text-*, border-* utilities */
@@ -141,14 +142,8 @@ body {
   }
 }
 
-/* ── Dock trays (#20) ─────────────────────────────────────────────────
- * The topic rail, the add form, the line editor and version history are
- * hand-built panels rather than <Button> primitives, so they inherited no
- * focus ring — 16 controls a keyboard user could reach and not see.
- * One rule covers every control in a tray, on the dark band they all sit on.
+/* The `.tray :is(...)` focus floor that lived here is gone: controls.css now carries the real
+ * ring as part of the interaction system (editing-flow handoff §11). Anything still relying on
+ * the floor would have had no ring before it either, so nothing regresses — but a control that
+ * wants the ring must now say `.ctl`.
  */
-.tray :is(button, input, select, textarea):focus-visible {
-  outline: 2px solid var(--signal-500);
-  outline-offset: 2px;
-  border-radius: 6px;
-}

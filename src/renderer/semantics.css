@@ -116,6 +116,39 @@
   font-size: 0.88em;
 }
 
+/* ── Every line is editable, and nothing said so (editing-flow handoff §2) ──────────────────
+ * Editing was discoverable by misclick or not at all. Screen only: none of this reaches paper.
+ *
+ * Background and box-shadow ONLY — no padding or margin. The fitter measures these elements to
+ * decide what fits on two pages, so a hover that changed their box would move the sheet under the
+ * pointer and could push a line off the page.
+ */
+@media screen {
+  .sheet .fit-leaf,
+  .sheet .note-block {
+    cursor: text;
+    border-radius: 2px;
+    transition: background-color 120ms var(--ease-out), box-shadow 120ms var(--ease-out);
+  }
+  .sheet .fit-leaf:hover {
+    background: var(--signal-50);
+    box-shadow: 0 0 0 1px #d6d4f7;
+  }
+  /* A line already theirs gets the warmer tint — it is not being taken over, it is being revisited. */
+  .sheet .fit-leaf:has(.src-mine):hover,
+  .sheet .note-block:hover {
+    background: var(--signal-100);
+    box-shadow: 0 0 0 1px #d6d4f7;
+  }
+  /* The line open in the editor. The editor tray is centred and has no notch, so this ring is
+     what ties the two ends together. */
+  .sheet .fit-leaf.is-editing,
+  .sheet .note-block.is-editing {
+    background: var(--signal-100);
+    box-shadow: 0 0 0 1.5px var(--signal-500), 0 0 12px rgba(91, 87, 224, 0.3);
+  }
+}
+
 /* ── Topic preview (#20): hovering a row in the topic rail shows what would leave ────────────
  * Screen only — this must never reach the printed sheet. The matching rule itself is injected
  * by the results page with the topic name in it, because CSS cannot compare one element's
@@ -140,7 +173,10 @@
 /* ── A student's own note block (#20). Quietly distinct from a generated line: it is theirs,
       and the sheet should not pass it off as something we checked. ── */
 .sheet .note-block {
-  border-left: 2pt solid var(--signal-500, #5b55d6);
+  /* DASHED, deliberately. A solid indigo rule is indistinguishable from a tk-0 topic block, so
+     a student's own note read as just another coloured section. Solid = topic colour; dashed =
+     yours. (editing-flow handoff §1) */
+  border-left: 1.5pt dashed var(--signal-500, #5b55d6);
   padding-left: 4pt;
   margin: 2pt 0;
   break-inside: avoid;

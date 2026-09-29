@@ -36,7 +36,7 @@ export function ConceptsTable({ concepts }: ConceptsTableProps) {
                 <InlineText text={c.def} />
               </td>
               <td className="meta">
-                <ConfDot conf={c.conf} />
+                <ConfDot conf={c.conf} mine={c.mine} />
                 <Citation src={c.src} mine={c.mine} />
               </td>
             </tr>
@@ -73,7 +73,7 @@ export function ConceptRow({ concept: c }: { concept: Concept }) {
         )}
       </div>
       <div className="meta">
-        <ConfDot conf={c.conf} />
+        <ConfDot conf={c.conf} mine={c.mine} />
         <Citation src={c.src} mine={c.mine} />
       </div>
     </div>

@@ -26,7 +26,7 @@ export function FormulaBlock({ formula: f }: FormulaBlockProps) {
         <strong>
           <InlineText text={f.name} />
         </strong>
-        <ConfDot conf={f.conf} />
+        <ConfDot conf={f.conf} mine={f.mine} />
       </div>
       {isMultiline ? (
         <pre className="formula">{f.formula}</pre>

@@ -1,0 +1,131 @@
+/* controls.css — the interaction state system (editing-flow handoff §11).
+ *
+ * Every control in a tray, the dock, or on the sheet draws its rest / hover / focus / press /
+ * disabled states from here, so they are one system rather than sixteen hand-rolled guesses.
+ *
+ * It replaces the `.tray :is(button,input,select,textarea):focus-visible` floor rule added on
+ * 2026-09-29, which existed only because the new panels had NO focus ring at all. That was a
+ * floor; this is the design.
+ *
+ * Two rules the handoff is explicit about, and they are the reason this file exists at all:
+ *
+ *   The focus ring is always TWO rings — a gap in the surface colour, then the signal. On a dark
+ *   band a single ring disappears into the panel; on paper it disappears into the page. The gap is
+ *   what makes one ring readable on both, so every surface must declare `--ring-gap`.
+ *
+ *   Glow belongs only to what is the student's OWN or what is being previewed. Not to Clutch's own
+ *   lines at rest, and never in print. A glow that means "this is yours" stops meaning anything
+ *   the moment it also means "this is a button".
+ */
+
+/* ── The ring ────────────────────────────────────────────────────────────────────────────────
+ * `--ring-gap` defaults to the dark band because that is where most controls live. Any lighter
+ * surface re-declares it; the sheet itself uses --surface, because it stays white in both themes.
+ */
+:root {
+  --ring-gap: var(--band-2);
+}
+.sheet,
+.on-paper {
+  --ring-gap: var(--surface);
+}
+
+.ctl:focus-visible,
+.ctl-input:focus-visible {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--ring-gap),
+    0 0 0 4px var(--signal-300);
+}
+
+/* ── Shared control behaviour ────────────────────────────────────────────────────────────────
+ * Colour moves a little slower than the press, so a button feels like it answered the click
+ * before it finished changing colour.
+ */
+.ctl {
+  transition:
+    background-color 140ms var(--ease-out),
+    border-color 140ms var(--ease-out),
+    color 140ms var(--ease-out),
+    box-shadow 140ms var(--ease-out),
+    transform 120ms var(--ease-out);
+}
+.ctl:disabled,
+.ctl[aria-disabled="true"] {
+  opacity: 0.3;
+  pointer-events: none;
+}
+/* Square icon buttons take the deeper press: on a 28×28 target .97 is invisible. */
+.ctl:active:not(:disabled) { transform: scale(0.97); }
+.ctl-square:active:not(:disabled) { transform: scale(0.94); }
+
+/* ── Neutral — the default control on a band ─────────────────────────────────────────────── */
+.ctl-neutral {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--on-band);
+  border: 0;
+}
+.ctl-neutral:hover:not(:disabled) { background: rgba(255, 255, 255, 0.14); }
+
+/* ── Additive — "Add yours". The one button that puts the student's words on the sheet, so it
+ *    is the one button that carries the signal colour and (on hover) the glow. ────────────── */
+.ctl-additive {
+  background: rgba(91, 87, 224, 0.22);
+  border: 1px solid rgba(138, 134, 232, 0.4);
+  color: #d4d2fb;
+}
+.ctl-additive:hover:not(:disabled) {
+  background: rgba(91, 87, 224, 0.34);
+  box-shadow: 0 0 14px rgba(91, 87, 224, 0.35);
+}
+.ctl-additive:focus-visible {
+  box-shadow:
+    0 0 0 2px var(--ring-gap),
+    0 0 0 4px var(--signal-300),
+    0 0 14px rgba(91, 87, 224, 0.35);
+}
+
+/* ── Destructive ghost — removing a topic, deleting a line the student wrote. Outlined rather
+ *    than filled: it should read as available, not as the obvious next move. ──────────────── */
+.ctl-destructive {
+  background: transparent;
+  border: 1px solid rgba(240, 138, 117, 0.35);
+  color: #f08a75;
+}
+.ctl-destructive:hover:not(:disabled) { background: rgba(240, 138, 117, 0.1); }
+
+/* ── Primary on a band — white on ink. One per tray at most. ──────────────────────────────── */
+.ctl-primary {
+  background: #ffffff;
+  color: var(--band);
+  border: 0;
+}
+.ctl-primary:hover:not(:disabled) { background: #f0f0f2; }
+.ctl-primary:disabled { opacity: 0.35; }
+
+/* ── Inputs on a band ────────────────────────────────────────────────────────────────────── */
+.ctl-input {
+  background: #0f0f13;
+  border: 1px solid var(--band-line);
+  color: var(--on-band);
+  transition:
+    border-color 140ms var(--ease-out),
+    box-shadow 140ms var(--ease-out);
+}
+.ctl-input::placeholder { color: rgba(255, 255, 255, 0.35); }
+.ctl-input:focus {
+  outline: none;
+  border-color: var(--signal-300);
+  box-shadow: 0 0 0 3px rgba(91, 87, 224, 0.25);
+}
+/* A field the student is being asked to fix — a table row whose width does not match its header. */
+.ctl-input.is-invalid {
+  border-color: #e0a24d;
+  box-shadow: 0 0 0 3px rgba(224, 162, 77, 0.18);
+}
+
+/* Nothing here belongs on paper. */
+@media print {
+  .ctl,
+  .ctl-input { box-shadow: none !important; transform: none !important; }
+}

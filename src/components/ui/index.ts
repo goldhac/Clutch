@@ -13,6 +13,7 @@ export { Card, type CardProps } from "./Card";
 export { SegmentedControl, type SegmentedControlProps, type SegmentOption } from "./SegmentedControl";
 export { CreditsPill, type CreditsPillProps } from "./CreditsPill";
 export { Skeleton, type SkeletonProps } from "./Skeleton";
+export { Tray, type TrayProps } from "./Tray";
 export { Modal, ModalOptions, OptionTile, ModalActions, type ModalProps, type ModalTone, type FooterTint, type OptionTileProps } from "./Modal";
 export { Toaster, toast, type ToastMark } from "./Toast";
 export { ConfDot, ConfPill, VerifiedStar, SourceLine, tierOf, type ConfTier } from "./Trust";
