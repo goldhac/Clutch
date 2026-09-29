@@ -251,8 +251,24 @@ export default function ResultsPage() {
     backFillRef.current = backFill;
     settledAt.current = Date.now(); // the layout just changed; let it settle before spending a call
   }
+  /**
+   * Has the student taken the sheet into their own hands? (#20)
+   *
+   * Any module control — an unticked topic, a trimmed one, a changed section mix — means the gaps
+   * on this sheet are DELIBERATE. Found on live 2026-09-29: unticking a topic dropped the back
+   * page under the auto-fill threshold, and the watchdog immediately spent a model call writing
+   * new lines to fill the space the student had just chosen to empty. It undid their edit and
+   * charged them for it.
+   *
+   * The fitter still refills from the bench, which is free and instant and is what "its space goes
+   * to the rest" means. What stands down is the paid call.
+   */
+  // Read from the stash rather than effectiveCtx, which is built further down: this runs in the
+  // auto-fill watchdog, above the render.
+  const curating = Object.keys(stash?.ctx?.view?.modules ?? {}).length > 0;
+
   const canAutoFill =
-    density === "max" && !editorOpen && !!stash &&
+    density === "max" && !editorOpen && !curating && !!stash &&
     (profileTier === "pro" || (process.env.NODE_ENV !== "production" && stash?.tier === "pro"));
   useEffect(() => {
     if (!canAutoFill) return;
