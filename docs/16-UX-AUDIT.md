@@ -13,7 +13,7 @@ This document covers what v2 could not: **three surfaces shipped after it was wr
 | Surface | Status in v2 | Status now |
 |---|---|---|
 | Home, Generate, Results, Library, Sheet, Sign In, Pricing, FAQ, Modals, Edge States | designed | shipped, largely faithful |
-| **Topic rail + module controls** | did not exist | shipped, **undesigned** |
+| **Topic rail + module controls** | did not exist | shipped, **undesigned** (incl. a working hover preview, see 2.4) |
 | **Add / edit / version trays** | did not exist | shipped, **undesigned** |
 | **`/audio`** | did not exist | shipped, feature shelved — design later |
 
@@ -83,11 +83,22 @@ This is where the requested polish belongs.
 
 **`prefers-reduced-motion` is already honoured in `tokens.css`** — anything added must respect it.
 
-### 2.4 The rail does not show what it is about to do
+### 2.4 The rail preview exists, and needs a visual treatment
 
-Hovering a topic row in the rail does nothing to the sheet. A student unticking "Machine Translation" from a 146-item sheet cannot see what leaves until it has left.
+**Built and shipped 2026-09-29 — do not design this from scratch, restyle it.**
 
-The PRD anticipated this — *"hovering a row highlights that topic on the sheet"* — and it was not built. It is the single highest-value interaction in the feature and it is missing.
+Pointing at a topic row in the rail dims every *other* topic on the sheet to `opacity: .25`, with a 140ms transition. It fires on hover **and on keyboard focus**, and clears on leave. Verified live on a 135-item sheet: 10 topic groups, 8 dimmed, and the one lit topic stays lit across *both* pages, because the match is on `data-topic` rather than position.
+
+What is there is the crudest possible version of the idea: a uniform opacity knock-back on everything else. It works, and it is not designed.
+
+Questions for the design pass:
+
+- Is dimming the rest the right move, or should the topic itself be **lifted** — a glow, a border, a colour lift on the topic banner? The sheet already colour-codes topics (`tk-0..9`), which is an obvious hook.
+- `.25` was chosen by eye. Does the rest of the sheet need to stay *readable* while previewing, or is unreadable correct because the point is to isolate?
+- Should unticking then animate the removal, or is the preview enough?
+- The preview currently does nothing on the **rail** side — the hovered row itself gets no treatment beyond its normal hover. A two-ended connection (row and topic) would read better than a one-ended one.
+
+Constraints: the rule is scoped to `@media screen` so a print taken mid-hover cannot dim the sheet, and `prefers-reduced-motion` already applies to the transition. Both must survive.
 
 ### 2.5 Editing is discoverable only by accident
 
@@ -115,7 +126,7 @@ Patched today by pointing the in-app logo at `/generate`. **The real fix is an a
 In the order I would do it:
 
 1. **The `you` marker and the student-owned line.** The trust anchor. Include the note block (currently a 2pt indigo left rule) and the student-owned table.
-2. **The topic rail.** Row rhythm, the tick, the `add` / `less` / section-mix cluster, the floor state where "less" becomes "remove", and the hover→sheet highlight from 2.4.
+2. **The topic rail.** Row rhythm, the tick, the `add` / `less` / section-mix cluster, the floor state where "less" becomes "remove", and a proper treatment for the hover→sheet preview that already works (2.4).
 3. **Dock information architecture.** Which of the 21 controls stay in the dock, which move, which disappear.
 4. **A `Tray` primitive.** Header, close, padding, entrance, the tether to its opener, phone behaviour.
 5. **Interaction states as a system.** Hover / focus / press / disabled, including where glow belongs and where it does not.
