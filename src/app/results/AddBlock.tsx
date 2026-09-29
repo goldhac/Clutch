@@ -16,7 +16,7 @@
 import { useState } from "react";
 import type { SheetContent, SheetNote } from "@/contract/sheet-content";
 
-type Shape = "note" | "concept" | "question";
+type Shape = "note" | "concept" | "question" | "table";
 
 export interface AddBlockProps {
   /** The topic this is being added to, or undefined for a loose note. */
@@ -36,9 +36,35 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
     note: ["Your note", ""],
     concept: ["Term", "What it means"],
     question: ["Question", "Answer"],
+    // Plain text rather than a grid editor: a student comparing two things types two columns and
+    // a few rows far faster than they click cells, and it degrades to a textarea on any screen.
+    table: ["Title, then columns: Test | When to use", "One row per line, cells split by |"],
   };
   const [labelA, labelB] = labels[shape];
-  const ready = shape === "note" ? a.trim().length > 0 : a.trim().length > 0 && b.trim().length > 0;
+
+  /**
+   * A table has a shape the contract enforces: at least two columns, at least one row, and every
+   * row exactly as wide as the header. Checked HERE so a student sees what is wrong while they are
+   * typing, instead of building something the sheet would refuse after the fact.
+   */
+  const tableParse = (() => {
+    if (shape !== "table") return null;
+    const cols = a.split("|").map((x) => x.trim());
+    const rows = b.split("\n").map((line) => line.split("|").map((x) => x.trim())).filter((r) => r.some(Boolean));
+    if (cols.length < 2) return { error: "Two columns at least — separate them with |" };
+    if (cols.slice(1).some((c) => !c)) return { error: "Only the first column header may be blank" };
+    if (!rows.length) return { error: "Add at least one row" };
+    const bad = rows.findIndex((r) => r.length !== cols.length);
+    if (bad >= 0) return { error: `Row ${bad + 1} has ${rows[bad].length} cells; the header has ${cols.length}` };
+    return { cols, rows };
+  })();
+
+  const ready =
+    shape === "note"
+      ? a.trim().length > 0
+      : shape === "table"
+        ? !!tableParse && !("error" in tableParse)
+        : a.trim().length > 0 && b.trim().length > 0;
 
   function submit() {
     if (!ready) return;
@@ -60,6 +86,15 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
       // `src: "you"` is the honest citation and also what keeps conf out of "high": the contract's
       // trust rule only allows high on exam-grade or multi-source citations.
       const shared = { src: "you", conf: "med" as const, mine: true as const, ...(topic ? { topic } : {}) };
+      if (shape === "table" && tableParse && !("error" in tableParse)) {
+        return {
+          ...content,
+          tables: [
+            ...(content.tables ?? []),
+            { title: tableParse.cols[0] || "Comparison", cols: tableParse.cols, rows: tableParse.rows, src: "you", mine: true as const, ...(topic ? { topic } : {}) },
+          ],
+        };
+      }
       if (shape === "concept") {
         return { ...content, concepts: [...content.concepts, { term: text, def: second, ...shared }] };
       }
@@ -74,7 +109,7 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
   return (
     <div className="mt-2 rounded-[10px] bg-white/[0.06] p-3">
       <div className="flex flex-wrap items-center gap-1.5">
-        {(["note", "concept", "question"] as Shape[]).map((s) => (
+        {(["note", "concept", "question", "table"] as Shape[]).map((s) => (
           <button
             key={s}
             type="button"
@@ -109,15 +144,29 @@ export function AddBlock({ topic, onAdd, onClose }: AddBlockProps) {
       {labelB && (
         <label className="mt-1.5 block">
           <span className="sr-only">{labelB}</span>
-          <input
-            value={b}
-            maxLength={280}
-            onChange={(e) => setB(e.target.value)}
-            onKeyDown={(e) => { if (e.key === "Enter" && ready) submit(); }}
-            placeholder={labelB}
-            className="w-full rounded-[7px] bg-black/30 px-2.5 py-1.5 text-[13px] text-white placeholder:text-white/35 focus:outline-none focus:ring-1 focus:ring-[var(--signal-500)]"
-          />
+          {shape === "table" ? (
+            <textarea
+              value={b}
+              rows={3}
+              maxLength={800}
+              onChange={(e) => setB(e.target.value)}
+              placeholder={labelB}
+              className="w-full resize-y rounded-[7px] bg-black/30 px-2.5 py-1.5 font-mono text-[12px] text-white placeholder:text-white/35 focus:outline-none focus:ring-1 focus:ring-[var(--signal-500)]"
+            />
+          ) : (
+            <input
+              value={b}
+              maxLength={280}
+              onChange={(e) => setB(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter" && ready) submit(); }}
+              placeholder={labelB}
+              className="w-full rounded-[7px] bg-black/30 px-2.5 py-1.5 text-[13px] text-white placeholder:text-white/35 focus:outline-none focus:ring-1 focus:ring-[var(--signal-500)]"
+            />
+          )}
         </label>
+      )}
+      {tableParse && "error" in tableParse && a.trim() && (
+        <p className="mt-1 text-[11.5px] text-[var(--warn,#c8862a)]">{tableParse.error}</p>
       )}
 
       <div className="mt-2 flex items-center gap-2">

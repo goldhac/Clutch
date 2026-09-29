@@ -79,6 +79,22 @@ function studentLineClaimingHighConf(): unknown {
   return bad;
 }
 
+/** A comparison table the student built — the thing they most often make for themselves. */
+function withStudentTable(): unknown {
+  const good = clone(sampleContent) as Record<string, unknown> & { tables?: unknown[] };
+  good.tables = [
+    ...(good.tables ?? []),
+    {
+      title: "t-test vs z-test",
+      cols: ["Test", "When to use"],
+      rows: [["t-test", "sigma unknown, small n"], ["z-test", "sigma known"]],
+      src: "you",
+      mine: true,
+    },
+  ];
+  return good;
+}
+
 function withNotes(): unknown {
   const good = clone(sampleContent) as Record<string, unknown>;
   good.notes = [
@@ -161,6 +177,7 @@ const cases: Case[] = [
   // ── #20: the student's own blocks ───────────────────────────────────
   { kind: "pass", name: "a sheet with a student's own line parses", input: withStudentLine() },
   { kind: "pass", name: "a sheet with student notes parses", input: withNotes() },
+  { kind: "pass", name: "a comparison table the student built parses", input: withStudentTable() },
   {
     kind: "fail",
     name: "a student's own line may NOT carry the verified star",

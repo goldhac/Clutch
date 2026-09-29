@@ -213,6 +213,16 @@ export const TableSchema = z
     src: z.string().min(1),
     /** Owning topic — exact topics[].name (see rankedItem.topic). */
     topic: z.string().min(1).optional(),
+    /**
+     * The student wrote or edited this table (#20). Same meaning as `mine` on a ranked item:
+     * reads `you`, pinned against the fitter, never ours to vouch for.
+     *
+     * A table needs no star rule because it has no `conf` or `verified` to begin with — the trust
+     * layer never applied here. It was left out of the first pass only because the citation change
+     * failed to compile, which is a description of the code, not a reason: a comparison table is
+     * one of the things students most often build for themselves.
+     */
+    mine: z.literal(true).optional(),
   })
   .strict()
   .superRefine((data, ctx) => {

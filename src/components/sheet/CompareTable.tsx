@@ -38,8 +38,13 @@ export function CompareTable({ table: t }: CompareTableProps) {
           ))}
         </tbody>
       </table>
-      <div className="src-line">
-        <Citation src={t.src} />
+      {/*
+        The wrapper class changes with ownership, not just the marker inside it. `.src-line` is
+        hidden wholesale when the student turns sources off, which would take a `you` nested inside
+        it along for the ride — the table would silently stop saying it was theirs (#20).
+      */}
+      <div className={t.mine ? "src-line-mine" : "src-line"}>
+        <Citation src={t.src} mine={t.mine} />
       </div>
     </section>
   );

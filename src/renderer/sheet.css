@@ -235,7 +235,8 @@
 .sheet .compare-table h3 {
   margin: 0 0 0.3pt;
 }
-.sheet .compare-table .src-line {
+.sheet .compare-table .src-line,
+.sheet .compare-table .src-line-mine {
   text-align: right;
   margin-top: 0.3pt;
 }

@@ -692,7 +692,9 @@ function CompareTableInner({ table: t }: { table: SheetTable }) {
           ))}
         </tbody>
       </table>
-      <div className="src-line"><Citation src={t.src} /></div>
+      {/* Ownership changes the WRAPPER, not just the marker: `.src-line` is hidden wholesale
+          when sources are off, which would hide a `you` nested inside it (#20). */}
+      <div className={t.mine ? "src-line-mine" : "src-line"}><Citation src={t.src} mine={t.mine} /></div>
     </div>
   );
 }
