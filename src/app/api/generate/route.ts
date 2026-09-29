@@ -181,8 +181,10 @@ export async function POST(req: NextRequest) {
       priority,
       courseContext: { code: courseCode, professor },
     });
-    console.log(
-      `[/api/generate] 200 in ${((Date.now() - started) / 1000).toFixed(0)}s · retried=${result.meta.retried} · ` +
+    // stderr, deliberately: Railway delivers this container's stdout late or not at all, so a
+    // success logged to stdout is a success we cannot see afterwards (#10).
+    console.error(
+      `[/api/generate] 200 ok in ${((Date.now() - started) / 1000).toFixed(0)}s · retried=${result.meta.retried} · ` +
         `warnings=${result.warnings.length} · figures=${packFigures.reduce((n, f) => n + f.figures.length, 0)} · cached-reads=${cacheHits}/${uploads.length} · ${packSummary}`,
     );
     // Diagrams ride along with the sheet; the student chooses which to place (issue #15).
