@@ -73,6 +73,16 @@ export interface LLMResponse {
   usage: LLMUsage;
   /** Which model actually answered (provider may downgrade on quota). */
   model: string;
+  /**
+   * Why the model stopped. "MAX_TOKENS" means the output was CUT, not finished — the JSON will be
+   * invalid through no fault of the prompt, and the right response is to salvage what arrived
+   * rather than to retry the same call and be cut in the same place.
+   *
+   * Discarded until 2026-09-29, which made a truncation indistinguishable from the model writing
+   * nonsense: both surfaced as "Not valid JSON" plus the first 200 characters — which, for a
+   * truncation, is the part that was perfectly fine.
+   */
+  finishReason?: string;
 }
 
 export interface LLMClient {

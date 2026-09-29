@@ -30,6 +30,7 @@ import {
   type EnginePromptInput,
 } from "./prompt";
 import { normalizeDraft } from "./normalize";
+import { salvageTruncatedJson } from "./salvage-json";
 import { sanitizeForTrust, type PackFileMeta } from "./sanitize";
 
 export class EngineError extends Error {
@@ -315,11 +316,44 @@ export function tryParseJsonAndValidate(raw: string, maxDrop = 0): ParseResult {
   try {
     parsed = JSON.parse(cleaned);
   } catch (e) {
-    return {
-      ok: false,
-      error: `Not valid JSON: ${e instanceof Error ? e.message : String(e)}. ` +
-        `First 200 chars: ${cleaned.slice(0, 200)}`,
-    };
+    /**
+     * Before giving up: was this merely CUT OFF? A sheet is one large JSON object, so a model that
+     * runs out of output room stops mid-token and `JSON.parse` rejects everything — including the
+     * 90% that was read, ranked and written correctly. The student waited ~185 s for it.
+     *
+     * `salvageTruncatedJson` only ever truncates to the last whole element and closes what was left
+     * open; it never invents a value and never repairs malformed output. Whatever it returns still
+     * has to pass every rule below, exactly like a normal draft — and the item-level salvage
+     * further down still applies on top of it.
+     *
+     * There is deliberately NO size floor. The first attempt compared the salvaged text against
+     * the text we RECEIVED, which is circular — the received text is itself the truncation, so the
+     * ratio says nothing about how much the model meant to write. And the honest answer is that we
+     * cannot know: a retry costs another ~90 s and, if the cut was an output-ceiling hit, lands in
+     * the same place. A short but valid sheet is better than that, because the fill pass
+     * (deepen.ts) then tops it up to the 160-line target from the same pack. Whatever survives
+     * still has to pass every rule below; a stub that cannot is reported and retried as before.
+     */
+    const rescued = salvageTruncatedJson(cleaned);
+    if (rescued.text) {
+      try {
+        parsed = JSON.parse(rescued.text);
+        console.warn(
+          `[engine] output was cut off; salvaged the sheet by discarding the incomplete tail ` +
+            `(${rescued.discarded} of ${cleaned.length} chars)`,
+        );
+      } catch {
+        // Unreachable in practice — salvage only returns text it already parsed.
+      }
+    }
+    if (parsed === undefined) {
+      const cut = rescued.text ? " (cut too early to salvage)" : "";
+      return {
+        ok: false,
+        error: `Not valid JSON${cut}: ${e instanceof Error ? e.message : String(e)}. ` +
+          `Last 200 chars: ${cleaned.slice(-200)}`,
+      };
+    }
   }
 
   // Deterministic clean-up of the slips the model makes most (see normalize.ts).

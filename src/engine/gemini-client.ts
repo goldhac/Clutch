@@ -88,6 +88,7 @@ export class GeminiClient implements LLMClient {
       return {
         text,
         model: modelId,
+        finishReason: result.response.candidates?.[0]?.finishReason,
         usage: {
           inputTokens: usage?.promptTokenCount,
           outputTokens: usage?.candidatesTokenCount,
