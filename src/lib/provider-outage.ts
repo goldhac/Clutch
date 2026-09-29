@@ -15,6 +15,34 @@
  */
 const CAPACITY = /spending cap|exceeded its monthly|quota|RESOURCE_EXHAUSTED|\b429\b|\b402\b|Too Many Requests|prepayment credits|credits are depleted|billing/i;
 
+/**
+ * The provider is up but overloaded — `503 This model is currently experiencing high demand`.
+ *
+ * Distinct from a capacity WALL on purpose. A spend cap means come back tomorrow; a spike means
+ * come back in five minutes, and telling a student the wrong one of those is the difference
+ * between a short wait and giving up on the product. Seen in production 2026-09-29, where it
+ * surfaced as a generic 500 blaming us.
+ */
+const BUSY = /\b503\b|UNAVAILABLE|high demand|overloaded|Service Unavailable/i;
+
+export function isProviderBusyError(err: unknown): boolean {
+  const text = err instanceof Error ? `${err.message} ${String((err as { cause?: unknown }).cause ?? "")}` : String(err);
+  // A wall that happens to mention 503 is still a wall.
+  return !isProviderCapacityError(err) && BUSY.test(text);
+}
+
+/** 503 + Retry-After, and wording that says the true thing: wait a few minutes, not a day. */
+export function busyResponse(route: string, err: unknown, what = "sheets"): Response {
+  const detail = err instanceof Error ? err.message : String(err);
+  console.warn(`[${route}] provider busy (transient): ${detail.slice(0, 200)}`);
+  return new Response(
+    `Our AI provider is busy right now, so we couldn't finish building your ${what.replace(/s$/, "")}. ` +
+      `This one usually clears in a few minutes — your files are still here, so please try again shortly. ` +
+      `Nothing was saved and no credit was used.`,
+    { status: 503, headers: { "Content-Type": "text/plain; charset=utf-8", "Retry-After": "300" } },
+  );
+}
+
 export function isProviderCapacityError(err: unknown): boolean {
   const text = err instanceof Error ? `${err.message} ${String((err as { cause?: unknown }).cause ?? "")}` : String(err);
   return CAPACITY.test(text);

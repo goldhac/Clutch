@@ -17,7 +17,7 @@ import { type NextRequest } from "next/server";
 import { ingestDocument } from "@/parse/ingest";
 import { cacheKey, readCache, writeCache } from "@/parse/ingest-cache";
 import { supabaseServer } from "@/lib/supabase/server";
-import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
+import { busyResponse, capacityResponse, isProviderBusyError, isProviderCapacityError } from "@/lib/provider-outage";
 import { creditsFor, splitTopics, type SourceFile } from "@/engine/topic-split";
 import { offerableTopics } from "@/lib/audio-selection";
 import type { FileTag } from "@/engine/prompt";
@@ -118,6 +118,7 @@ export async function POST(req: NextRequest) {
     if (result.status === "rejected") {
       const reason = result.reason as Error;
       if (isProviderCapacityError(reason)) return capacityResponse("/api/audio/analyze", reason, "episodes");
+      if (isProviderBusyError(reason)) return busyResponse("/api/audio/analyze", reason, "episodes");
       return bad(`failed to read "${uploads[ix].file.name}": ${reason.message}`);
     }
     warnings.push(...result.value.warnings);

@@ -3,6 +3,8 @@
  * exam sheet. Deterministic, no model calls:  npx tsx scripts/test-deepen-guards.ts
  */
 import assert from "node:assert/strict";
+import { isProviderBusyError, isProviderCapacityError } from "@/lib/provider-outage";
+import { isTransientProviderError } from "@/engine/gemini-client";
 import { groundingProblem, numberProblem, paraphrases, stems } from "@/engine/deepen";
 
 const PACK = `
@@ -74,6 +76,29 @@ ok("a short sheet only blames the files when the files are the limit", () => {
   // Full sheets never warn either way.
   assert.equal(blames(false, false), false);
   assert.equal(blames(false, true), false);
+});
+
+// ── provider failures: a wall, a spike, and a real bug are three different things ────────────
+// Production, 2026-09-29: Gemini answered one call with 503 "high demand" and the student got a
+// 500 blaming us, after a single attempt. All three arrive wrapped in the same "Error fetching
+// from ..." text, so the ONLY thing separating them is this classification.
+ok("a spike, a wall and a bug are told apart", () => {
+  const e = (m: string) => new Error(m);
+  const spike = e("[GoogleGenerativeAI Error]: Error fetching from https://x: [503 Service Unavailable] This model is currently experiencing high demand.");
+  const wall = e("[GoogleGenerativeAI Error]: Error fetching from https://x: [429 Too Many Requests] Your project has exceeded its monthly spending cap.");
+  const bug = e("Cannot read properties of undefined (reading 'topics')");
+
+  assert.equal(isProviderCapacityError(wall), true);
+  assert.equal(isProviderBusyError(wall), false, "a wall must not be offered as 'try again shortly'");
+  assert.equal(isProviderBusyError(spike), true);
+  assert.equal(isProviderCapacityError(spike), false, "a spike must not be sold as an outage");
+  assert.equal(isProviderBusyError(bug), false);
+  assert.equal(isProviderCapacityError(bug), false);
+
+  // And what gets retried: a spike yes, a wall never, a bug never.
+  assert.equal(isTransientProviderError(spike), true);
+  assert.equal(isTransientProviderError(wall), false, "retrying a spend cap only burns the backoff");
+  assert.equal(isTransientProviderError(bug), false);
 });
 
 console.log(`\n${n} checks passed`);

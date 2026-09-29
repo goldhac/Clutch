@@ -26,7 +26,7 @@ import { supabaseServer } from "@/lib/supabase/server";
 import type { CroppedFigure } from "@/parse/figures";
 import { attachFigures } from "@/engine/attach-figures";
 import { detectExamFormat } from "@/engine/detect-format";
-import { capacityResponse, isProviderCapacityError } from "@/lib/provider-outage";
+import { busyResponse, capacityResponse, isProviderBusyError, isProviderCapacityError } from "@/lib/provider-outage";
 import { repairForFormat } from "@/engine/format-repair";
 import {
   EXAM_FORMATS,
@@ -271,6 +271,9 @@ export async function POST(req: NextRequest) {
       );
     }
     if (isProviderCapacityError(e)) return capacityResponse("/api/generate", e);
+    // A spike is not an outage and not our bug: say so, and say how long. Reached only after the
+    // client has already retried four times with backoff.
+    if (isProviderBusyError(e)) return busyResponse("/api/generate", e);
     console.error(`[/api/generate] 500 after ${secs}s · ${packSummary}`, e);
     return new Response(
       "Something went wrong on our side while building your sheet. Your files are still here, so please try again.",

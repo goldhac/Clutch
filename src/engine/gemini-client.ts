@@ -30,6 +30,33 @@ export interface GeminiOptions {
   defaultModel?: string;
 }
 
+
+/**
+ * A provider hiccup is not a failed generation (2026-09-29).
+ *
+ * Production returned 500 "something went wrong on our side" after 37 s because Gemini answered
+ * one call with `503 This model is currently experiencing high demand`. The sheet engine retried
+ * only on SCHEMA failure, so a transient spike cost a student their whole sheet and blamed us for
+ * it. Retrying here means every caller — generate, deepen, edit, format repair — gets the same
+ * protection without each one remembering to ask for it.
+ *
+ * Walls are excluded deliberately. A spend cap or a depleted balance refuses the next attempt
+ * exactly as it refused this one, so retrying only spends the backoff before failing anyway — and
+ * the provider wraps both in the same "Error fetching from …" text, so the wall must be recognised
+ * FIRST.
+ */
+const WALL = /spending cap|exceeded its monthly|prepayment credits|credits are depleted|\b402\b|API key|PERMISSION_DENIED|\b40[13]\b/i;
+const TRANSIENT = /\b503\b|\b500\b|UNAVAILABLE|high demand|overloaded|deadline|timeout|ECONNRESET|ETIMEDOUT|EAI_AGAIN|socket hang up|fetch failed|error fetching/i;
+
+export const isTransientProviderError = (err: unknown): boolean => {
+  const m = err instanceof Error ? `${err.message} ${String((err as { cause?: unknown }).cause ?? "")}` : String(err);
+  return !WALL.test(m) && TRANSIENT.test(m);
+};
+
+/** 4 tries, widening backoff. A spike usually clears in seconds; a student waits rather than loses. */
+const TRIES = 4;
+const BACKOFF_MS = 4_000;
+
 export class GeminiClient implements LLMClient {
   readonly providerName = "gemini";
   readonly defaultModel: string;
@@ -68,6 +95,8 @@ export class GeminiClient implements LLMClient {
       },
     });
 
+    let lastErr: unknown;
+    for (let attempt = 1; attempt <= TRIES; attempt++) {
     try {
       // Multimodal when images are supplied (vision ingest); plain text
       // otherwise. Gemini takes an array of parts.
@@ -96,12 +125,23 @@ export class GeminiClient implements LLMClient {
         },
       };
     } catch (err) {
+      lastErr = err;
+      if (attempt < TRIES && isTransientProviderError(err)) {
+        console.warn(
+          `[gemini] ${modelId} attempt ${attempt}/${TRIES} hit a transient provider error; ` +
+            `retrying in ${(BACKOFF_MS * attempt) / 1000}s: ${(err instanceof Error ? err.message : String(err)).slice(0, 140)}`,
+        );
+        await new Promise((r) => setTimeout(r, BACKOFF_MS * attempt));
+        continue;
+      }
       throw new LLMError(
         `Gemini (${modelId}) call failed: ${err instanceof Error ? err.message : String(err)}`,
         "gemini",
         err,
       );
     }
+    }
+    throw new LLMError(`Gemini (${modelId}) call failed: ${String(lastErr)}`, "gemini", lastErr);
   }
 }
 
