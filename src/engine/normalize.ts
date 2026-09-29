@@ -50,11 +50,13 @@ export interface NormalizeReport {
   trapKeysRemoved: number;
   /** Sections the model left out because the course has none (e.g. no formulas in a healthcare course). */
   sectionsFilled: number;
+  /** `mine` / `notes` removed from a draft — the student's authorship is never the model's to claim (#20). */
+  authorshipStripped: number;
 }
 
 /** Mutates `draft` in place. Safe on anything: non-objects and odd shapes are left alone. */
 export function normalizeDraft(draft: unknown): NormalizeReport {
-  const report: NormalizeReport = { confRespelled: 0, confDowngraded: 0, kindsFilled: 0, trapKeysRemoved: 0, sectionsFilled: 0 };
+  const report: NormalizeReport = { confRespelled: 0, confDowngraded: 0, kindsFilled: 0, trapKeysRemoved: 0, sectionsFilled: 0, authorshipStripped: 0 };
   if (!draft || typeof draft !== "object") return report;
   const root = draft as Record<string, unknown>;
 
@@ -62,6 +64,9 @@ export function normalizeDraft(draft: unknown): NormalizeReport {
   // list. Seen on production 2026-09-17: a healthcare pack paid a whole 80 s retry for it.
   // Only on a whole sheet (it has topics) — never topics or questions, whose absence means a
   // truncated draft, which should still fail.
+  // Same rule at the top level: the student's own notes are never something a draft may bring.
+  if (root.notes !== undefined) { delete root.notes; report.authorshipStripped++; }
+
   if (Array.isArray(root.topics)) {
     for (const key of ["formulas", "concepts", "traps"]) {
       if (root[key] === undefined || root[key] === null) { root[key] = []; report.sectionsFilled++; }
@@ -74,6 +79,17 @@ export function normalizeDraft(draft: unknown): NormalizeReport {
     for (const item of arr) {
       if (!item || typeof item !== "object") continue;
       const it = item as Record<string, unknown>;
+
+      /**
+       * `mine` and `notes` are the STUDENT's, and only ever set in the browser (#20). A draft
+       * arriving with either is the model claiming to have written something the student wrote —
+       * which would put an untrimmable, uncheckable line on the sheet wearing their name.
+       *
+       * Stripped here rather than rejected: the model is not being malicious, it is copying a
+       * shape it saw, and failing a whole sheet over a stray key is the mistake this file exists
+       * to stop making. The contract still refuses anything that gets past this.
+       */
+      if ("mine" in it) { delete it.mine; report.authorshipStripped++; }
 
       if (typeof it.conf === "string") {
         const mapped = CONF_SYNONYMS[it.conf.trim().toLowerCase()];

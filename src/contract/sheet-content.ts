@@ -70,6 +70,18 @@ function rankedItem<S extends z.ZodRawShape>(extra: S) {
        * but the engine prompt requires it.
        */
       topic: z.string().min(1).optional(),
+      /**
+       * The student wrote this, or edited it (#20). The line is theirs: the citation slot renders
+       * `you` whatever `src` still holds, the fitter may never trim it, and it can never carry the
+       * verified star.
+       *
+       * `src` is deliberately kept rather than blanked. An edited line keeps the citation it came
+       * from as a provenance trail — useful to the student, and to us when something looks wrong —
+       * while `mine` is what the renderer and the fitter actually read. Never set by the model:
+       * the engine prompt does not mention it, and a draft arriving with `mine` set would be a
+       * model claiming to be the student.
+       */
+      mine: z.literal(true).optional(),
     })
     .strict();
 
@@ -79,6 +91,26 @@ function rankedItem<S extends z.ZodRawShape>(extra: S) {
     const src = data.src as string;
     const conf = data.conf as Conf;
     const verified = data.verified as boolean | undefined;
+    const mine = data.mine as true | undefined;
+
+    /**
+     * A line the student wrote cannot be one we verified. The star means "we checked this against
+     * your files"; on their own words it would be a false claim, and the whole two-kinds-of-line
+     * model rests on it never appearing there.
+     *
+     * conf="high" needs no separate rule: a student line's src is not exam-grade and carries no
+     * ";", so `isHighConfAllowed` already refuses it below.
+     */
+    if (mine && verified === true) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          `A student's own line cannot be verified=true — the star means Clutch checked it ` +
+          `against their files, and we did not write this one.`,
+        path: ["verified"],
+      });
+    }
+
     if (conf === "high" && !isHighConfAllowed(src, verified)) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -260,6 +292,27 @@ export const FigureSchema = z
   .strict();
 export type SheetFigure = z.infer<typeof FigureSchema>;
 
+/**
+ * A student's own note (#20) — the thing that fits none of the item shapes: a mnemonic, something
+ * the professor said out loud, the one step they always get wrong.
+ *
+ * Not a ranked item on purpose. It has no `src`, no `conf` and no `verified`, because there is
+ * nothing to cite and nothing for us to check — it is theirs, it is pinned, and it renders as its
+ * own block rather than impersonating a definition.
+ */
+export const NoteSchema = z
+  .object({
+    /** Stable across edits and reorders, so version history can follow one note. */
+    id: z.string().min(1),
+    /** The topic it belongs to, or absent for the "Your notes" group. */
+    topic: z.string().min(1).optional(),
+    /** Short by design: a sheet is dense, and a note that needs a paragraph belongs in their notes app. */
+    text: z.string().min(1).max(400),
+    createdAt: z.string().min(1),
+  })
+  .strict();
+export type SheetNote = z.infer<typeof NoteSchema>;
+
 export const SheetContentSchema = z
   .object({
     title: z
@@ -279,6 +332,8 @@ export const SheetContentSchema = z
     traps: z.array(TrapSchema),
     questions: z.array(QuestionSchema),
     figures: z.array(FigureSchema).max(12).optional(),
+    /** The student's own free-text blocks (#20). Optional: every sheet saved before this existed. */
+    notes: z.array(NoteSchema).max(40).optional(),
   })
   .strict();
 

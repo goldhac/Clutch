@@ -32,6 +32,81 @@ function clone<T>(o: T): T {
   return JSON.parse(JSON.stringify(o));
 }
 
+/* ── Student-block builders (#20) ────────────────────────────────────── */
+
+/** A line the student wrote: marked `mine`, citation kept as a provenance trail. */
+function withStudentLine(): unknown {
+  const good = clone(sampleContent);
+  // Built explicitly, not cloned: concepts[0] is a verified line, and spreading it would carry
+  // verified=true into a student block — which the contract correctly refuses.
+  good.concepts.push({
+    term: "Prof's rule of thumb",
+    def: "If n is under 30 he wants the t-test, every time.",
+    topic: good.topics[0].name,
+    src: "you",
+    conf: "med",
+    mine: true,
+  } as (typeof good.concepts)[number]);
+  return good;
+}
+
+/** The rule the whole two-kinds-of-line model rests on. */
+function studentLineWearingTheStar(): unknown {
+  const bad = clone(sampleContent);
+  bad.concepts.push({
+    term: "Mine, but claiming we checked it",
+    def: "Something I typed from memory at 2am.",
+    topic: bad.topics[0].name,
+    src: "Past exam 2024 Q5",
+    conf: "med",
+    mine: true,
+    verified: true,
+  } as (typeof bad.concepts)[number]);
+  return bad;
+}
+
+/** A student line cannot reach "high" either — its src is not exam-grade. */
+function studentLineClaimingHighConf(): unknown {
+  const bad = clone(sampleContent);
+  bad.concepts.push({
+    term: "Mine, claiming high confidence",
+    def: "No exam evidence behind this.",
+    topic: bad.topics[0].name,
+    src: "you",
+    conf: "high",
+    mine: true,
+  } as (typeof bad.concepts)[number]);
+  return bad;
+}
+
+function withNotes(): unknown {
+  const good = clone(sampleContent) as Record<string, unknown>;
+  good.notes = [
+    { id: "n1", topic: (clone(sampleContent).topics[0] as { name: string }).name, text: "He said this WILL be on the final.", createdAt: "2026-09-29T10:00:00Z" },
+    { id: "n2", text: "Mnemonic: Please Excuse My Dear Aunt Sally.", createdAt: "2026-09-29T10:01:00Z" },
+  ];
+  return good;
+}
+
+function noteWithoutText(): unknown {
+  const bad = clone(sampleContent) as Record<string, unknown>;
+  bad.notes = [{ id: "n1", text: "", createdAt: "2026-09-29T10:00:00Z" }];
+  return bad;
+}
+
+function noteWithJunkKey(): unknown {
+  const bad = clone(sampleContent) as Record<string, unknown>;
+  bad.notes = [{ id: "n1", text: "fine", createdAt: "2026-09-29T10:00:00Z", verified: true }];
+  return bad;
+}
+
+/** `mine` is the student's word, never the model's. false would be the model asserting authorship. */
+function mineSetToFalse(): unknown {
+  const bad = clone(sampleContent);
+  bad.concepts[0] = { ...clone(bad.concepts[0]), mine: false } as never;
+  return bad;
+}
+
 /* ── Bad-sample builders (each mutates a clone of the good sample) ─── */
 
 function fakeHighConfNoExamSrc(): unknown {
@@ -83,6 +158,39 @@ function mismatchedTableRowLength(): unknown {
 
 const cases: Case[] = [
   { kind: "pass", name: "realistic intro-stats sample parses cleanly", input: sampleContent },
+  // ── #20: the student's own blocks ───────────────────────────────────
+  { kind: "pass", name: "a sheet with a student's own line parses", input: withStudentLine() },
+  { kind: "pass", name: "a sheet with student notes parses", input: withNotes() },
+  {
+    kind: "fail",
+    name: "a student's own line may NOT carry the verified star",
+    input: studentLineWearingTheStar(),
+    expect: /cannot be verified=true/i,
+  },
+  {
+    kind: "fail",
+    name: "a student's own line may not claim high confidence",
+    input: studentLineClaimingHighConf(),
+    expect: /trust rule/i,
+  },
+  {
+    kind: "fail",
+    name: "mine=false is rejected — authorship is asserted, never denied",
+    input: mineSetToFalse(),
+    expect: /expected true/i,
+  },
+  {
+    kind: "fail",
+    name: "a note with no text is rejected",
+    input: noteWithoutText(),
+    expect: /at least 1 character/i,
+  },
+  {
+    kind: "fail",
+    name: "a note cannot smuggle in a trust field",
+    input: noteWithJunkKey(),
+    expect: /unrecognized|verified/i,
+  },
   {
     kind: "fail",
     name: "REJECTS fake high confidence (single-source, no-exam, no verified)",
