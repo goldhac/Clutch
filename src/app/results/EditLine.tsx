@@ -197,24 +197,36 @@ export function EditLine({
         </div>
       </div>
 
-      {/* A modal, not a tray: this is the one action here that cannot be rebuilt from the pack. */}
+      {/* A modal, not a tray (§10.1). The interruption rules say a modal is for money, for a
+          deletion that cannot be rebuilt, or for failure — and this is the only delete in the
+          product that qualifies, because the pack cannot write this line again. */}
       <Modal
         open={confirmRemove}
         onClose={() => setConfirmRemove(false)}
         tone="destructive"
-        eyebrow="REMOVE · YOUR LINE"
-        title="Take your line off the sheet?"
-        footer={{ tint: "bad", text: "this one is yours — Clutch cannot write it again" }}
+        eyebrow="DELETE · YOUR LINE"
+        title="Remove your line?"
+        footer={{ tint: "warn", text: "kept in version history · its space refills from your files, free" }}
       >
-        <p className="text-[14px] leading-[1.55] text-[var(--ink-700)]">
-          Everything else on this sheet can be rebuilt from your files. This line cannot, because you
-          wrote it. Undo brings it back for this session.
+        {/* The line itself, dressed exactly as it is on the sheet — they should be deciding about
+            the words they wrote, not about the word "line". */}
+        <div className="rounded-[10px] bg-[var(--signal-50)] px-3 py-2.5">
+          <span aria-hidden className="mr-1.5 inline-block h-[7px] w-[7px] rounded-full border-[1.3px] border-[var(--signal-600)] align-middle" />
+          <span className="text-[13.5px] leading-[1.5] text-[var(--ink-900)]">{a}</span>
+          <span className="ml-1.5 font-semibold text-[var(--signal-600)]" style={{ fontSize: "0.82em" }}>you</span>
+        </div>
+        <p className="mt-3 text-[14px] leading-[1.55] text-[var(--ink-700)]">
+          Clutch can rebuild everything else on this sheet from your files. It can&rsquo;t rebuild this.
         </p>
         <ModalActions>
+          <button
+            type="button"
+            onClick={() => { setConfirmRemove(false); onRemove?.(); }}
+            className="tap inline-flex h-[38px] items-center rounded-[9px] bg-[var(--danger)] px-4 text-[13px] font-semibold text-white transition-[background-color,transform] duration-[160ms] hover:bg-[#a93226] active:scale-[0.98]"
+          >
+            Remove line
+          </button>
           <Button variant="secondary" size="sm" onClick={() => setConfirmRemove(false)}>Keep it</Button>
-          <Button variant="primary" size="sm" onClick={() => { setConfirmRemove(false); onRemove?.(); }}>
-            Remove it
-          </Button>
         </ModalActions>
       </Modal>
     </>

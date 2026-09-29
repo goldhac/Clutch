@@ -33,6 +33,16 @@ export interface TrayProps {
    * after.
    */
   footer?: ReactNode;
+  /**
+   * A control that belongs beside the close button rather than in the body — the chat's "undo
+   * last edit", which has to stay reachable while the thread scrolls.
+   */
+  headerAction?: ReactNode;
+  /**
+   * Pinned under the scrolling body, above the footer. The chat's chips and composer live here:
+   * they must not scroll away with the thread, and they are not consequence copy.
+   */
+  below?: ReactNode;
   width?: number;
   /** `opener` hangs it above the button that opened it; `center` is for trays with no opener. */
   anchor?: "opener" | "center";
@@ -45,6 +55,8 @@ export function Tray({
   count,
   description,
   footer,
+  headerAction,
+  below,
   width = 520,
   anchor = "opener",
   onClose,
@@ -108,6 +120,7 @@ export function Tray({
             )}
           </div>
         </div>
+        {headerAction}
         <button
           type="button"
           data-tray-close
@@ -127,7 +140,9 @@ export function Tray({
         </p>
       )}
 
-      <div className="flex max-h-[52vh] flex-col gap-0.5 overflow-y-auto px-2 pb-2">{children}</div>
+      <div className="flex max-h-[52vh] min-h-0 flex-col gap-0.5 overflow-y-auto px-2 pb-2">{children}</div>
+
+      {below}
 
       {footer && (
         <div className="border-t border-[var(--band-line)] px-[18px] py-[11px] font-mono text-[11px] text-[var(--on-band-muted)]">

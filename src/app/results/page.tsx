@@ -10,6 +10,7 @@ import { FittedSheet, TwoPageSheet, type Density } from "@/components/sheet";
 import { TopicRail } from "./TopicRail";
 import { EditLine } from "./EditLine";
 import { VersionPanel } from "./VersionPanel";
+import { ViewTray } from "./ViewTray";
 import { describeChange, listVersions, saveVersion, VERSION_DEBOUNCE_MS, type SheetVersion } from "@/lib/sheet-versions";
 import { applyEdit, editFields, editKey, removeLine } from "@/components/sheet/modules";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
@@ -42,16 +43,6 @@ interface Stash {
   sheetId?: string;
 }
 
-const VIEW_TOGGLES: { key: "traps" | "tags" | "answers"; label: string }[] = [
-  { key: "traps", label: "Traps" },
-  { key: "tags", label: "Question tags" },
-  { key: "answers", label: "Answers" },
-];
-const SOURCE_STYLES: { value: ViewOptions["sources"]; label: string }[] = [
-  { value: "off", label: "Off" },
-  { value: "compact", label: "Compact" },
-  { value: "full", label: "Full" },
-];
 
 const FREE_PRESETS: { label: string; patch: Partial<ScoreCtx> }[] = [
   { label: "More formulas", patch: { priority: "formulas" } },
@@ -102,6 +93,8 @@ export default function ResultsPage() {
    */
   const [previewTopic, setPreviewTopic] = useState<string | null>(null);
   const [versionsOpen, setVersionsOpen] = useState(false);
+  /** The display controls (§9), one tray instead of five loose dock groups. */
+  const [viewOpen, setViewOpen] = useState(false);
   const [versions, setVersions] = useState<SheetVersion[]>([]);
   const [versionsLoading, setVersionsLoading] = useState(false);
   /** The content as it was BEFORE the burst of edits currently being debounced. */
@@ -852,7 +845,7 @@ export default function ResultsPage() {
               replaceContent(after);
               rememberVersion(before, after);
               setEditing(null);
-              toast("Your line is off the sheet · undo to bring it back", "check");
+              toast("Removed your line · kept in history", "check");
             }}
             onSave={(next) => {
               const before = content;
@@ -863,6 +856,25 @@ export default function ResultsPage() {
               setEditing(null);
               toast("Your version saved · the line is yours now", "check");
             }}
+          />
+        )}
+        {viewOpen && (
+          <ViewTray
+            order={effectiveCtx.order ?? "course"}
+            view={viewOf(effectiveCtx)}
+            figures={
+              content?.figures && content.figures.length > 0
+                ? {
+                    on: (viewOf(effectiveCtx).figures ?? defaultFigureIds(content)).length,
+                    total: content.figures.length,
+                    onOpen: () => { setViewOpen(false); setTrayOpen(true); },
+                  }
+                : undefined
+            }
+            onOrder={setOrder}
+            onToggle={toggleView}
+            onSources={(sources) => setView((current) => ({ ...current, sources }))}
+            onClose={() => setViewOpen(false)}
           />
         )}
         {railOpen && content && content.topics.length > 0 && (
@@ -948,34 +960,35 @@ export default function ResultsPage() {
           />
         )}
 
-        {upsellOpen && !pro && (
-          <div className="pointer-events-auto w-full max-w-[520px] animate-[cl-rise_220ms_var(--ease-pop)] rounded-[14px] border border-[var(--border-input)] bg-white p-5 shadow-[0_20px_50px_rgba(17,17,20,.24)]">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <div className="text-[14px] font-semibold text-[var(--ink-900)]">
-                  Custom edits come with the unlock
-                </div>
-                <p className="mt-1.5 max-w-[44ch] text-[13px] leading-[1.6] text-[var(--ink-600)]" style={{ textWrap: "pretty" }}>
-                  The preset mixes below are free and instant. Rewriting the sheet in your own
-                  words re-runs the engine on your pool — that is part of unlocking this sheet.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setUpsellOpen(false)}
-                className="shrink-0 font-mono text-[11px] text-[var(--ink-500)] hover:text-[var(--ink-900)]"
-              >
-                close
-              </button>
-            </div>
-            <a
-              href="/pricing"
-              className="mt-3.5 inline-flex h-[38px] items-center rounded-[9px] bg-[var(--band)] px-4 text-[13px] font-semibold text-white transition-transform duration-[160ms] active:scale-[0.98]"
-            >
-              Unlock this sheet · $4.99
-            </a>
-          </div>
-        )}
+        {/* §10.2 — a modal, because this is the one place in the editing flow that asks for
+            money. The free path is named in the second tile and in the footer: the rules forbid
+            hiding it. */}
+        <Modal
+          open={upsellOpen && !pro}
+          onClose={() => setUpsellOpen(false)}
+          tone="decision"
+          eyebrow="PRO EDIT · REWRITES LINES"
+          title="That one rewrites your sheet"
+          footer={{ tint: "good", text: "topics, adding, and editing by hand stay free" }}
+        >
+          <p className="text-[14px] leading-[1.6] text-[var(--ink-700)]">
+            It changes the words on your sheet, so Clutch checks each new line against your files
+            first. You see every change before it lands.
+          </p>
+          <ModalOptions>
+            <OptionTile
+              primary
+              label="Unlock this sheet · $4.99"
+              sub="unlocks rewrites"
+              onClick={() => { window.location.href = "/pricing"; }}
+            />
+            <OptionTile
+              label="Stay free"
+              sub="edit lines by hand"
+              onClick={() => setUpsellOpen(false)}
+            />
+          </ModalOptions>
+        </Modal>
 
         <div className="pointer-events-auto flex max-w-full flex-wrap items-center justify-center gap-3 rounded-[14px] bg-[var(--band)] px-3 py-[9px] shadow-[0_18px_44px_rgba(17,17,20,.34),0_2px_6px_rgba(17,17,20,.2)]">
           <span className="flex shrink-0 items-center rounded-[9px] bg-white/[0.08] p-[3px]">
@@ -1041,88 +1054,38 @@ export default function ResultsPage() {
             </select>
           </label>
           <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
-          <span className={(dockOpen ? "flex" : "hidden") + " shrink-0 items-center gap-1.5 sm:flex"} role="group" aria-label="Topic order">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Order</span>
-            <span className="flex items-center rounded-[9px] bg-white/[0.08] p-[3px]">
-              {(["course", "priority"] as const).map((o) => (
-                <button
-                  key={o}
-                  type="button"
-                  aria-pressed={(effectiveCtx.order ?? "course") === o}
-                  onClick={() => setOrder(o)}
-                  className={
-                    "tap rounded-[6px] px-2.5 py-[4px] text-[12px] font-semibold transition-[background-color,color] duration-[160ms] " +
-                    ((effectiveCtx.order ?? "course") === o
-                      ? "bg-white text-[var(--band)]"
-                      : "text-[var(--on-band-muted)] hover:text-[var(--on-band)]")
-                  }
-                >
-                  {o === "course" ? "Course" : "Priority"}
-                </button>
-              ))}
-            </span>
-          </span>
-          <span aria-hidden className="hidden h-[26px] w-px bg-[var(--ink-700)] sm:block" />
-          <span className={(dockOpen ? "flex" : "hidden") + " flex-wrap items-center justify-center gap-1.5 sm:flex"} role="group" aria-label="Show on the sheet">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Show</span>
-            {VIEW_TOGGLES.map((t) => {
-              const on = viewOf(effectiveCtx)[t.key];
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  aria-pressed={on}
-                  onClick={() => toggleView(t.key)}
-                  className={
-                    "tap rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-[160ms] " +
-                    (on
-                      ? "border-white bg-white text-[var(--band)]"
-                      : "border-[var(--band-line)] text-[var(--on-band-muted)] hover:border-[var(--ink-500)] hover:text-[var(--on-band)]")
-                  }
-                >
-                  {t.label}
-                </button>
-              );
-            })}
-            <span className="ml-1 font-mono text-[10.5px] uppercase tracking-[0.08em] text-[var(--on-band-muted)]">Sources</span>
-            <span className="flex items-center rounded-[9px] bg-white/[0.08] p-[3px]" role="group" aria-label="Source style">
-              {SOURCE_STYLES.map((o) => {
-                const on = viewOf(effectiveCtx).sources === o.value;
-                return (
-                  <button
-                    key={o.value}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => setView((current) => ({ ...current, sources: o.value }))}
-                    className={
-                      "tap rounded-[6px] px-2.5 py-[4px] text-[12px] font-semibold transition-[background-color,color] duration-[160ms] " +
-                      (on ? "bg-white text-[var(--band)]" : "text-[var(--on-band-muted)] hover:text-[var(--on-band)]")
-                    }
-                  >
-                    {o.label}
-                  </button>
-                );
-              })}
-            </span>
-          </span>
-          {content?.figures && content.figures.length > 0 && (
-            <button
-              type="button"
-              aria-expanded={trayOpen}
-              onClick={() => {
-                setTrayOpen((v) => !v);
-                setRailOpen(false);
-                setEditorOpen(false);
-                setUpsellOpen(false);
-              }}
-              className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
-            >
-              Diagrams
-              <span className="rounded-full bg-white/15 px-1.5 py-px font-mono text-[10.5px]">
-                {(viewOf(effectiveCtx).figures ?? defaultFigureIds(content)).length}/{content.figures.length}
-              </span>
-            </button>
-          )}
+          {/* §9 — Order, Sources, Traps, Question tags and Diagrams were five loose controls with
+              five mono labels. They are one kind of thing (display, free, prints as shown), so
+              they are now one button. Answers stays out here: it is the one display control a
+              student flips constantly while revising. */}
+          <button
+            type="button"
+            aria-expanded={viewOpen}
+            onClick={() => {
+              setViewOpen((v) => !v);
+              setRailOpen(false);
+              setTrayOpen(false);
+              setVersionsOpen(false);
+            }}
+            className={(dockOpen ? "inline-flex" : "hidden") + " tap shrink-0 items-center gap-1.5 rounded-[9px] px-3 py-[7px] text-[12.5px] font-semibold text-white transition-colors duration-[160ms] hover:bg-white/10 sm:inline-flex"}
+          >
+            View
+            <span aria-hidden className="font-mono text-[10px] opacity-70">&#9662;</span>
+          </button>
+          <button
+            type="button"
+            aria-pressed={viewOf(effectiveCtx).answers}
+            onClick={() => toggleView("answers")}
+            className={
+              (dockOpen ? "inline-flex" : "hidden") +
+              " tap shrink-0 items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-medium transition-[background-color,color,border-color] duration-[160ms] sm:inline-flex " +
+              (viewOf(effectiveCtx).answers
+                ? "border-white bg-white text-[var(--band)]"
+                : "border-[var(--band-line)] text-[var(--on-band-muted)] hover:border-[var(--ink-500)] hover:text-[var(--on-band)]")
+            }
+          >
+            Answers
+          </button>
           {content && content.topics.length > 0 && (
             <button
               type="button"
