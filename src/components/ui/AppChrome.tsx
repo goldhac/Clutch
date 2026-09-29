@@ -88,7 +88,15 @@ export function AppChrome({
       <Toaster />
       <header className="sticky top-0 z-[var(--z-sticky)] border-b border-[var(--ink-150)] bg-[var(--paper-glass)] backdrop-blur-[10px]">
         <div className="mx-auto flex h-[60px] max-w-[1180px] items-center gap-4 px-5 sm:px-8">
-          <Wordmark />
+          {/*
+            Inside the app the logo goes to the APP home, not the marketing site.
+            Reported as "clicking the logo logs me out" (Gold, 2026-09-29) — it doesn't: the
+            session is intact, but `/` renders MarketingNav, which is not auth-aware and always
+            shows "Sign in / Get started". Landing a signed-in student there is indistinguishable
+            from being signed out. Every app does this the same way: the mark returns you to your
+            work, not to the pitch.
+          */}
+          <Wordmark href="/generate" />
 
           <nav
             aria-label="Primary"
