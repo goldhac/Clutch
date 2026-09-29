@@ -217,7 +217,20 @@ export async function POST(req: NextRequest) {
             `(${deep.practice ?? 0} practice) · ${deep.unverified ?? 0} refused by the claims check · ` +
             `${deep.seconds.toFixed(0)}s of ${(remaining / 1000).toFixed(0)}s${deep.short ? " · still short" : ""}`,
         );
-        if (deep.short) {
+        /**
+         * Blame the FILES only when the files are actually the limit.
+         *
+         * `short` only means the fill did not reach its 160-line target — which also happens when
+         * the time budget ran out, or the claims check refused what was proposed. Measured on a
+         * real 4-lecture NLP pack (2026-09-29): 80,038 characters, a source cap of 634 lines —
+         * four times the target — and the sheet still arrived at 150. The student was told "these
+         * files are short… add more material". Nothing was short except the last ten lines.
+         *
+         * When the pack genuinely cannot fill two pages the message is true and worth saying. When
+         * it can, silence is right: the sheet is nearly full, and /results already offers to top up
+         * the back page when it is under 80% used.
+         */
+        if (deep.short && deep.cappedBySource) {
           const howFull = deep.after < 90 ? "about one page" : "the front and part of the back";
           fillWarnings.push(
             `These files are short, so the sheet fills ${howFull}. We print what your files say, ` +

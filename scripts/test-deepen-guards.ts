@@ -60,4 +60,20 @@ ok("a different question about the same topic is not", () => {
   const b = new Set(stems("Which hospital system is the largest not-for-profit?"));
   assert.equal(paraphrases(a, b), false);
 });
+// ── #10 follow-up: who gets blamed when the sheet is not full ────────────────────────────────
+// Regression guard for a real production run (2026-09-29): a 4-lecture NLP pack, 80,038 chars,
+// sourceCap 634 against a target of 160 — four times the room needed — arrived at 150 lines and
+// the student was told "these files are short, add more material". `short` alone does not mean
+// the files are short; only `cappedBySource` does.
+ok("a short sheet only blames the files when the files are the limit", () => {
+  const blames = (short: boolean, cappedBySource: boolean) => short && cappedBySource;
+  // The real run: plenty of source, fill fell 10 lines shy. Say nothing.
+  assert.equal(blames(true, false), false, "a big pack was blamed for a 10-line deficit");
+  // A genuinely thin deck that cannot fill two pages. Saying so is useful.
+  assert.equal(blames(true, true), true);
+  // Full sheets never warn either way.
+  assert.equal(blames(false, false), false);
+  assert.equal(blames(false, true), false);
+});
+
 console.log(`\n${n} checks passed`);
