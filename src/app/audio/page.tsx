@@ -19,6 +19,7 @@ import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { AppChrome, Button } from "@/components/ui";
 import { TopicList, type UITopic } from "./TopicList";
+import { AUDIO_ON } from "@/lib/audio-flag";
 
 type FileTag = "slides" | "review" | "past_exam" | "homework" | "notes" | "formula_sheet";
 
@@ -64,7 +65,43 @@ const MIN_MINUTES = 5;
 const MAX_MINUTES = 24;
 const MAX_PER_REQUEST = 12;
 
+/**
+ * Parked (2026-09-30). The whole screen below still works — it is switched off at the flag, not
+ * dismantled — but with audio off there is nothing behind it to record an episode, so it says so
+ * rather than taking a pack it will do nothing with.
+ */
+function AudioParked() {
+  return (
+    <AppChrome active="generate" credits={2} avatar="AD">
+      <div className="mx-auto max-w-[560px] px-6 py-24 text-center">
+        <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink-500)]">
+          not yet
+        </div>
+        <h1 className="mt-4 font-serif text-[clamp(2rem,4vw,2.75rem)] leading-[1.05] tracking-[-0.02em] text-[var(--ink-900)]">
+          Listening comes later
+        </h1>
+        <p className="mx-auto mt-4 max-w-[46ch] text-[15px] leading-[1.6] text-[var(--ink-600)]">
+          Two hosts talking through your own lectures is built and it works &mdash; it just costs
+          more to make than it should, so it is waiting until that is fixed. Nothing here can be
+          queued and nothing can be charged.
+        </p>
+        <Link
+          href="/generate"
+          className="tap mt-7 inline-flex h-[42px] items-center rounded-[var(--r-md)] bg-[var(--band)] px-5 text-[14px] font-semibold text-white transition-transform duration-[160ms] active:scale-[0.98]"
+        >
+          Make a sheet instead
+        </Link>
+      </div>
+    </AppChrome>
+  );
+}
+
 export default function AudioPage() {
+  if (!AUDIO_ON) return <AudioParked />;
+  return <AudioBuilder />;
+}
+
+function AudioBuilder() {
   const [files, setFiles] = useState<{ file: File; tag: FileTag }[]>([]);
   const [dragging, setDragging] = useState(false);
   const [preparing, setPreparing] = useState(false);

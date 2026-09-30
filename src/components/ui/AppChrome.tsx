@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Wordmark } from "./Wordmark";
 import { CreditsPill } from "./CreditsPill";
 import { Toaster } from "./Toast";
+import { AUDIO_ON } from "@/lib/audio-flag";
 
 /**
  * AppChrome — the authenticated app top bar per the v2 handoff:
@@ -54,7 +55,9 @@ const ICONS: Record<TabKey, ReactNode> = {
 
 const TABS: { key: TabKey; label: string; href: string }[] = [
   { key: "generate", label: "Generate", href: "/generate" },
-  { key: "audio", label: "Listen", href: "/audio" },
+  // Present only when audio is switched on (src/lib/audio-flag.ts). A tab to a feature that cannot
+  // record anything is worse than no tab: it sells a thing that will not arrive.
+  ...(AUDIO_ON ? [{ key: "audio" as const, label: "Listen", href: "/audio" }] : []),
   { key: "library", label: "My Sheets", href: "/library" },
 ];
 

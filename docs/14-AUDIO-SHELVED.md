@@ -1,4 +1,4 @@
-# Clutch Audio — shelved 2026-09-29
+# Clutch Audio — shelved 2026-09-29, parked behind a flag 2026-09-30
 
 **Decision: stop work on audio and ship the sheet.** Not because it doesn't work — it does, end to
 end, in production — but because it costs **$0.3369 per episode against a $0.15 target**, the fix
@@ -98,27 +98,49 @@ experience (12.9–35.4 min per episode) as the real design problem, and leaves 
 
 ---
 
-## 5. What was turned off, and how to turn it back on
+## 5. What is off, and how to turn it back on
 
-The Railway **`worker`** service was paused on shelving. It was healthy and costing nothing in model
-spend — it only polls — but an idle service is idle compute, and nothing is queued.
+**Parked properly on 2026-09-30.** Before that the shelf was a decision rather than a state: the
+worker was down, but `/audio` and both API routes were still deployed, still live, and the nav
+carried a **Listen** tab to them on every signed-in page. A Pro student could have queued an
+episode that nothing was going to record. Only one account is Pro, so nothing was lost — but the
+exposure was real and would have grown the moment anyone else was upgraded.
+
+One flag now closes every door:
+
+| | off (today) | on |
+|---|---|---|
+| Nav **Listen** tab | absent | present |
+| `/audio` | "Listening comes later" + a link to `/generate` | the builder |
+| `POST /api/audio/analyze` | **503**, nothing read | works |
+| `POST /api/audio/generate` | **503**, nothing queued, nothing charged | works |
+| Railway `worker` service | no deployment | polling |
+
+The guard lives in `src/lib/audio-flag.ts` and is read in four places. It is deliberately checked in
+the **routes** as well as the UI: a hidden tab in front of a live endpoint is not a shelved feature,
+it is an undocumented one — and `/api/audio/generate` is where credits are spent.
+
+Nothing was deleted. The engine, the queue, the worker, the topic split, the pack slicing and the
+`/audio` builder are all still in the tree and still pass their checks.
+
+### To turn it back on
 
 ```bash
-# bring it back
-cd ~/Code/Clutch
+# 1. the app
+railway variables --service cramsheet --set NEXT_PUBLIC_CLUTCH_AUDIO=on
+cd ~/Code/Clutch && railway up --detach --service cramsheet     # NEXT_PUBLIC_ is baked at build
+
+# 2. the worker
 railway up --detach --service worker
 railway logs --service worker                                          # expect "polling for episodes"
-railway ssh --service worker "wget -qO- http://127.0.0.1:8080/healthz" # polls should climb, lastError null
+railway ssh --service worker "wget -qO- http://127.0.0.1:8080/healthz" # polls climb, lastError null
 ```
 
-Nothing else was disabled. `/audio` and both API routes are still deployed and live — a Pro student
-could still queue an episode, and with the worker paused it would sit in `queued` forever.
+Locally, `NEXT_PUBLIC_CLUTCH_AUDIO=on` in `.env.local`.
 
-> **If audio stays shelved for long, consider gating `/audio` behind a flag** so nothing can be
-> queued that nothing will record. Currently only `gold.nwobu@gmail.com` is Pro, so exposure is
-> effectively zero — but that changes the moment anyone else is upgraded.
-
----
+**Do not turn it on before the cost question in §3 is answered.** At $0.3369 an episode against
+Pro's $4.99/15 credits, every episode sold loses money. The first experiment to run is the revision
+loop, not the model swap.
 
 ## 6. Non-obvious things learned, worth not relearning
 

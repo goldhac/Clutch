@@ -19,6 +19,7 @@
  * Nothing here runs the pipeline. It queues, and the worker claims (queue.ts).
  */
 import { type NextRequest } from "next/server";
+import { AUDIO_ON, AUDIO_OFF_RESPONSE } from "@/lib/audio-flag";
 import { supabaseServer } from "@/lib/supabase/server";
 import { enqueueEpisode } from "@/worker/queue";
 import type { Topic } from "@/engine/topic-split";
@@ -38,6 +39,11 @@ const MAX_EPISODES_PER_REQUEST = 12;
 const PRIORITIES = new Set(["T1", "T2", "T3"]);
 
 export async function POST(req: NextRequest) {
+  // Audio is parked (docs/14-AUDIO-SHELVED.md). The guard is here and not only in the UI, because
+  // this route is reachable without it — and with the worker down an accepted job would sit in
+  // `queued` for ever while the student waited for something nothing was going to record.
+  if (!AUDIO_ON) return Response.json(AUDIO_OFF_RESPONSE, { status: 503 });
+
   const supabase = await supabaseServer().catch(() => null);
   if (!supabase) return bad("Sign in to make episodes.", 401);
   const { data: userRes } = await supabase.auth.getUser();
