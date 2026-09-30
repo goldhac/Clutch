@@ -291,7 +291,7 @@ export default function GeneratePage() {
                     PDF, PPTX, TXT or MD · up to 40 files · past exams count most
                   </div>
                 </div>
-                <span className="ml-auto hidden h-[38px] shrink-0 items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-white px-4 text-[14px] font-semibold text-[var(--ink-900)] sm:inline-flex">
+                <span className="ml-auto hidden h-[38px] shrink-0 items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-4 text-[14px] font-semibold text-[var(--ink-900)] sm:inline-flex">
                   Browse
                 </span>
               </div>

@@ -52,6 +52,7 @@ interface Stash {
  */
 function DockButton({
   open,
+  quiet,
   onClick,
   hideOnPhone = true,
   phoneOpen = false,
@@ -59,6 +60,10 @@ function DockButton({
   ...rest
 }: {
   open?: boolean;
+  /** A readout rather than a label: it marks "open" with a ring, not by turning white. Export PDF
+   *  is the one permanent white button in the dock, and two white pills side by side read as two
+   *  primaries. */
+  quiet?: boolean;
   onClick: () => void;
   /** False for the ones that survive on a phone: Topics, Edit, Export. */
   hideOnPhone?: boolean;
@@ -74,7 +79,11 @@ function DockButton({
       className={
         (hideOnPhone && !phoneOpen ? "hidden sm:inline-flex " : "inline-flex ") +
         "ctl tap h-9 shrink-0 items-center gap-1.5 rounded-[9px] px-3 text-[13px] font-semibold " +
-        (open ? "bg-white text-[var(--band)]" : "text-white hover:shadow-[inset_0_0_0_1px_#3a3a45]")
+        (open
+          ? quiet
+            ? "text-white shadow-[inset_0_0_0_1px_#55555f] bg-white/[0.06]"
+            : "bg-white text-[var(--band)]"
+          : "text-white hover:shadow-[inset_0_0_0_1px_#3a3a45]")
       }
     >
       {children}
@@ -382,7 +391,9 @@ export default function ResultsPage() {
           const id = savedIdRef.current;
           if (!id) return;
           // A sheet from My Sheets stays filled: the row is updated, never copied.
-          void supabaseBrowser().from("sheets").update({ content: c as Record<string, unknown> }).eq("id", id)
+          void supabaseBrowser().from("sheets")
+            .update({ content: c as Record<string, unknown>, updated_at: new Date().toISOString() })
+            .eq("id", id)
             .then(({ error: e }) => { if (!e) { setDirty(false); setLastSavedAt(new Date().toISOString()); } });
         };
         setUndoStack((u) => [...u.slice(-9), before]);
@@ -700,7 +711,13 @@ export default function ResultsPage() {
       if (savedId) {
         const { error: updErr } = await supabase
           .from("sheets")
-          .update({ title: content.title, content: content as unknown as Record<string, unknown>, ctx: effectiveCtx as unknown as Record<string, unknown> })
+          .update({
+            title: content.title,
+            content: content as unknown as Record<string, unknown>,
+            ctx: effectiveCtx as unknown as Record<string, unknown>,
+            // No trigger maintains this, and the dock now says "Saved · 2m ago" out loud.
+            updated_at: new Date().toISOString(),
+          })
           .eq("id", savedId);
         if (updErr) throw updErr;
         setDirty(false);
@@ -1143,6 +1160,7 @@ export default function ResultsPage() {
           {/* The save state IS the opener for version history. Before the sheet is in the library
               it reads "Not saved" in amber — and the tray it opens is where that gets explained. */}
           <DockButton
+            quiet
             open={versionsOpen}
             phoneOpen={dockOpen}
             onClick={() => { if (versionsOpen) return setVersionsOpen(false); closeTrays(); void openVersions(); }}
@@ -1178,9 +1196,6 @@ export default function ResultsPage() {
           >
             {dockOpen ? "Less" : "More"}
           </button>
-        </div>
-        <div className="pointer-events-none font-mono text-[11px] text-[var(--ink-500)]">
-          topics, view and editing by hand are free &amp; instant · rewrites come back as a preview you accept or reject
         </div>
       </div>
 

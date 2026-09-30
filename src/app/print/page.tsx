@@ -75,7 +75,7 @@ export default async function PrintPage({
               </a>
               <a
                 href="/library"
-                className="inline-flex h-10 items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-white px-4 text-[14px] font-semibold text-[var(--ink-900)]"
+                className="inline-flex h-10 items-center rounded-[var(--r-md)] border border-[var(--border-input)] bg-[var(--surface)] px-4 text-[14px] font-semibold text-[var(--ink-900)]"
               >
                 My Sheets
               </a>

@@ -23,6 +23,8 @@ interface SheetRow {
   content: unknown;
   ctx: unknown;
   created_at: string;
+  /** Last write. "Saved" means this, not when the sheet was first made. */
+  updated_at: string;
 }
 
 type Sort = "recent" | "az";
@@ -106,8 +108,8 @@ export default function LibraryPage() {
         setEmail(data.user.email ?? null);
         const { data: sheets, error: qErr } = await supabase
           .from("sheets")
-          .select("id, title, content, ctx, created_at")
-          .order("created_at", { ascending: false });
+          .select("id, title, content, ctx, created_at, updated_at")
+          .order("updated_at", { ascending: false });
         if (qErr) setError(qErr.message);
         else setRows(sheets ?? []);
       })
@@ -133,7 +135,7 @@ export default function LibraryPage() {
         ctx: row.ctx ?? undefined,
         warnings: [],
         density: "max",
-        savedAt: row.created_at,
+        savedAt: row.updated_at ?? row.created_at,
         // Results updates THIS row (auto-fill, Save) instead of inserting a copy.
         sheetId: row.id,
       }),
@@ -208,7 +210,7 @@ export default function LibraryPage() {
     .sort((a, b) =>
       sort === "az"
         ? a.title.localeCompare(b.title)
-        : b.created_at.localeCompare(a.created_at),
+        : (b.updated_at ?? b.created_at).localeCompare(a.updated_at ?? a.created_at),
     );
 
   const countLine =
@@ -378,7 +380,7 @@ export default function LibraryPage() {
                 ))
               : filtered.map((row) => {
                   const items = itemCount(row.content);
-                  const made = new Date(row.created_at).toLocaleDateString(undefined, {
+                  const made = new Date(row.updated_at ?? row.created_at).toLocaleDateString(undefined, {
                     month: "short",
                     day: "numeric",
                   });
