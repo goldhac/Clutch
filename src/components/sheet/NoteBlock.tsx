@@ -9,10 +9,13 @@
  */
 import type { SheetNote } from "@/contract/sheet-content";
 import { Citation } from "@/components/trust";
+import { editKey } from "./modules";
 
 export function NoteBlock({ note }: { note: SheetNote }) {
   return (
-    <div className="note-block">
+    // Editable in place like any other line — by its own id, which is stable across edits, so a
+    // note the student rewrites twice is still the same note to version history.
+    <div className="note-block" data-edit-key={editKey(note, "notes")}>
       <span className="note-text">{note.text}</span> <Citation src="you" mine />
     </div>
   );

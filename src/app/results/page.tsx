@@ -571,13 +571,16 @@ export default function ResultsPage() {
     const el = (e.target as HTMLElement).closest<HTMLElement>("[data-edit-key]");
     const key = el?.dataset.editKey;
     if (!key) return;
-    const section = key.split("|")[0] as "concepts" | "questions" | "formulas";
+    const section = key.split("|")[0] as "concepts" | "questions" | "formulas" | "notes";
     const list = (content as unknown as Record<string, unknown[]>)[section];
     const item = Array.isArray(list) ? list.find((x) => editKey(x, section) === key) : undefined;
     const fields = editFields(item, section);
     if (!fields) return;
     e.preventDefault();
     const meta = (item ?? {}) as { verified?: boolean; src?: string; mine?: boolean; topic?: string };
+    // A note has no `mine` field to read — NoteSchema is strict and never needed one, because a
+    // note only ever comes from the student in the first place.
+    const isMine = section === "notes" || meta.mine === true;
     const ix = meta.topic ? content.topics.findIndex((t) => t.name === meta.topic) : -1;
     setEditing({
       key,
@@ -586,7 +589,7 @@ export default function ResultsPage() {
       labels: fields.labels,
       wasVerified: meta.verified === true,
       src: meta.src,
-      mine: meta.mine === true,
+      mine: isMine,
       topic: meta.topic,
       topicIndex: ix < 0 ? undefined : ix,
     });

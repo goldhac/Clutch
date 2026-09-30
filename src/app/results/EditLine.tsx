@@ -71,13 +71,20 @@ export function EditLine({
   const [b, setB] = useState(initial.b);
   const [confirmRemove, setConfirmRemove] = useState(false);
   const first = useRef<HTMLInputElement>(null);
+  const firstArea = useRef<HTMLTextAreaElement>(null);
 
   // Runs after the Tray's own "focus the first control", and selects — the student came here to
   // replace a phrase, not to append to it.
-  useEffect(() => { first.current?.focus(); first.current?.select(); }, []);
+  useEffect(() => {
+    const el = first.current ?? firstArea.current;
+    el?.focus();
+    el?.select();
+  }, []);
 
+  // A note is one field, and the editor is told so by an empty second label rather than by a flag.
+  const single = !labels[1];
   const changed = a !== initial.a || b !== initial.b;
-  const ready = a.trim().length > 0 && b.trim().length > 0 && changed;
+  const ready = a.trim().length > 0 && (single || b.trim().length > 0) && changed;
   const tk = topicIndex === undefined ? "" : topicColorClass(topicIndex);
 
   return (
@@ -115,31 +122,51 @@ export function EditLine({
         <div className="flex flex-col gap-2.5 px-[18px] pb-3.5">
           <label className="block">
             <span className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-[var(--on-band-muted)]">{labels[0]}</span>
-            <input
-              ref={first}
-              value={a}
-              maxLength={160}
-              onChange={(e) => setA(e.target.value)}
-              className="ctl-input mt-1 h-[34px] w-full rounded-[8px] px-2.5 text-[13px]"
-            />
+            {single ? (
+              <textarea
+                ref={firstArea}
+                value={a}
+                rows={3}
+                maxLength={400}
+                onChange={(e) => setA(e.target.value)}
+                className="ctl-input mt-1 w-full resize-y rounded-[8px] px-2.5 py-1.5 text-[13px]"
+              />
+            ) : (
+              <input
+                ref={first}
+                value={a}
+                maxLength={160}
+                onChange={(e) => setA(e.target.value)}
+                className="ctl-input mt-1 h-[34px] w-full rounded-[8px] px-2.5 text-[13px]"
+              />
+            )}
           </label>
 
-          <label className="block">
-            <span className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-[var(--on-band-muted)]">{labels[1]}</span>
-            <textarea
-              value={b}
-              rows={2}
-              maxLength={400}
-              onChange={(e) => setB(e.target.value)}
-              className="ctl-input mt-1 w-full resize-y rounded-[8px] px-2.5 py-1.5 text-[13px]"
-            />
-          </label>
+          {!single && (
+            <label className="block">
+              <span className="font-mono text-[10.5px] uppercase tracking-[0.05em] text-[var(--on-band-muted)]">{labels[1]}</span>
+              <textarea
+                value={b}
+                rows={2}
+                maxLength={400}
+                onChange={(e) => setB(e.target.value)}
+                className="ctl-input mt-1 w-full resize-y rounded-[8px] px-2.5 py-1.5 text-[13px]"
+              />
+            </label>
+          )}
 
           {mine ? (
             <p className="text-[12px] text-[var(--on-band-muted)]">
               <MineRing />
-              Already yours{src ? <> &middot; rewritten from <span className="font-mono">{src}</span></> : null}. It stays
-              pinned, and the sheet will never trim it.
+              {single
+                ? "Your own note. There is nothing to cite and nothing for us to check — it stays pinned, and the sheet will never trim it."
+                : null}
+              {!single && (
+                <>
+                  Already yours{src ? <> &middot; rewritten from <span className="font-mono">{src}</span></> : null}. It
+                  stays pinned, and the sheet will never trim it.
+                </>
+              )}
             </p>
           ) : (
             <div className="rounded-[10px] bg-[#15151a] px-3 py-2.5 shadow-[inset_0_0_0_1px_var(--band-line)]">

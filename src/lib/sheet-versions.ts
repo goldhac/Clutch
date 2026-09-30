@@ -95,6 +95,16 @@ export function describeChange(before: unknown, after: unknown): string {
     );
   };
   if (count(after, "notes") > count(before, "notes")) return "added a note";
+  if (count(after, "notes") < count(before, "notes")) return "removed a note";
+  // Same number of notes, different words in one of them: a note edit changes nothing else, so
+  // without this it fell through to the generic "edited a line".
+  {
+    const texts = (c: unknown) =>
+      (((c as Record<string, unknown> | undefined)?.notes as { text?: string }[] | undefined) ?? [])
+        .map((n) => n?.text ?? "")
+        .join("\u0000");
+    if (texts(after) !== texts(before)) return "edited your note";
+  }
   if (mine(after) > mine(before)) return "added your own line";
   const total = (c: unknown) =>
     ["concepts", "questions", "formulas", "tables", "traps"].reduce((n, k) => n + count(c, k), 0);

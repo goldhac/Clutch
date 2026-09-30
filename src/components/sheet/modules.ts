@@ -126,7 +126,7 @@ export function trimRoom(lineCount: number, alreadyTrimmed = 0): number {
  * ────────────────────────────────────────────────────────────────────── */
 
 /** The sections whose lines a student may edit. Tables and traps have their own shapes. */
-export type EditableSection = "concepts" | "questions" | "formulas";
+export type EditableSection = "concepts" | "questions" | "formulas" | "notes";
 
 /**
  * A line's identity, derived from what it SAYS rather than where it sits.
@@ -142,6 +142,12 @@ export type EditableSection = "concepts" | "questions" | "formulas";
 export function editKey(item: unknown, section: string): string | undefined {
   if (!item || typeof item !== "object") return undefined;
   const o = item as Record<string, unknown>;
+  // A note is the one thing on the sheet with a stable id of its own, so it uses it: identity by
+  // text would change the moment the student edited the text, and two notes reading "ask him" would
+  // be the same line.
+  if (section === "notes") {
+    return typeof o.id === "string" && o.id ? `notes|${o.id}` : undefined;
+  }
   const primary =
     section === "concepts" ? o.term :
     section === "questions" ? o.q :
@@ -155,6 +161,8 @@ export function editKey(item: unknown, section: string): string | undefined {
 export function editFields(item: unknown, section: string): { a: string; b: string; labels: [string, string] } | null {
   const o = (item ?? {}) as Record<string, unknown>;
   const str = (v: unknown) => (typeof v === "string" ? v : "");
+  // A note is one field. The empty second label is how the editor knows not to draw a second box.
+  if (section === "notes") return { a: str(o.text), b: "", labels: ["Your note", ""] };
   if (section === "concepts") return { a: str(o.term), b: str(o.def), labels: ["Term", "What it means"] };
   if (section === "questions") return { a: str(o.q), b: str(o.a), labels: ["Question", "Answer"] };
   if (section === "formulas") return { a: str(o.name), b: str(o.formula), labels: ["Name", "Formula"] };
@@ -176,11 +184,19 @@ export function applyEdit<T extends { concepts: unknown[]; questions: unknown[];
   next: { a: string; b: string },
 ): T {
   const section = key.split("|")[0] as EditableSection;
-  const list = content[section] as unknown[] | undefined;
+  const list = (content as Record<string, unknown>)[section] as unknown[] | undefined;
   if (!Array.isArray(list)) return content;
 
   const ix = list.findIndex((it) => editKey(it, section) === key);
   if (ix < 0) return content;
+
+  // A note was already theirs, and NoteSchema is strict — it has no `mine`, `src` or `verified` to
+  // move, because there was never anything to cite or to check. Only the words change.
+  if (section === "notes") {
+    const copy = [...list];
+    copy[ix] = { ...(list[ix] as Record<string, unknown>), text: next.a };
+    return { ...content, notes: copy };
+  }
 
   const old = list[ix] as Record<string, unknown>;
   const fields =
@@ -211,7 +227,7 @@ export function removeLine<T extends { concepts: unknown[]; questions: unknown[]
   key: string,
 ): T {
   const section = key.split("|")[0] as EditableSection;
-  const list = content[section] as unknown[] | undefined;
+  const list = (content as Record<string, unknown>)[section] as unknown[] | undefined;
   if (!Array.isArray(list)) return content;
   const next = list.filter((it) => editKey(it, section) !== key);
   return next.length === list.length ? content : { ...content, [section]: next };
