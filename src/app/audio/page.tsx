@@ -72,7 +72,7 @@ const MAX_PER_REQUEST = 12;
  */
 function AudioParked() {
   return (
-    <AppChrome active="generate" credits={2} avatar="AD">
+    <AppChrome active="generate">
       <div className="mx-auto max-w-[560px] px-6 py-24 text-center">
         <div className="font-mono text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--ink-500)]">
           not yet
@@ -258,7 +258,7 @@ function AudioBuilder() {
   const tooMany = chosen.length > MAX_PER_REQUEST;
 
   return (
-    <AppChrome active="audio" credits={2} avatar="AD">
+    <AppChrome active="audio">
       <div className="mx-auto max-w-[1180px] px-6 pb-24 pt-11 sm:px-8">
         <header className="flex flex-col justify-between gap-4 border-b border-[var(--ink-900)] pb-5 sm:flex-row sm:items-end sm:gap-10">
           <div>

@@ -210,7 +210,7 @@ export default function GeneratePage() {
         : `${exams} past exams in the pack. That is enough to verify claims against what this professor actually asks.`;
 
   return (
-    <AppChrome active="generate" credits={2} avatar="AD">
+    <AppChrome active="generate">
       {submitting && (
         <GeneratingOverlay fileCount={n} pastExamCount={exams} onCancel={cancelGeneration} />
       )}

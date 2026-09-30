@@ -219,7 +219,7 @@ export default function LibraryPage() {
       : `${rows.length} ${rows.length === 1 ? "sheet" : "sheets"} saved${email ? ` · ${email}` : ""}`;
 
   return (
-    <AppChrome active="library" credits={2} avatar={(email ?? "?").slice(0, 2).toUpperCase()}>
+    <AppChrome active="library">
       <div className="mx-auto max-w-[1180px] px-6 pb-24 pt-11 sm:px-8">
         {/* ── page head ─────────────────────────────────────────────── */}
         <header className="flex flex-wrap items-end justify-between gap-6 border-b border-[var(--ink-900)] pb-5">

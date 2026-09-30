@@ -1,4 +1,7 @@
-import type { ReactNode } from "react";
+"use client";
+
+import { useEffect, useState, type ReactNode } from "react";
+import { supabaseBrowser } from "@/lib/supabase/client";
 import Link from "next/link";
 import { Wordmark } from "./Wordmark";
 import { CreditsPill } from "./CreditsPill";
@@ -27,11 +30,23 @@ import { AUDIO_ON } from "@/lib/audio-flag";
  */
 export interface AppChromeProps {
   active?: "generate" | "audio" | "library";
-  credits?: number;
-  planLabel?: string;
-  /** initials for the avatar, e.g. "AD" */
-  avatar?: string;
   children: ReactNode;
+}
+
+/**
+ * Who is signed in, read once from `profiles`.
+ *
+ * The chrome reads this itself rather than taking it as props. Three pages passed `credits={2}`
+ * and two passed `avatar="AD"` — placeholders from the first build that nothing ever replaced, so
+ * every student saw someone else's initials and a credit count that was invented. A prop a caller
+ * can get wrong will eventually be wrong on every page at once; this cannot be passed at all.
+ *
+ * `undefined` means "not known yet" and renders nothing — a pill that flashes the wrong state for
+ * 200ms is the same bug, briefly.
+ */
+interface Account {
+  tier: "free" | "pro";
+  initials: string;
 }
 
 type TabKey = NonNullable<AppChromeProps["active"]>;
@@ -79,13 +94,32 @@ function TabIcon({ tab }: { tab: TabKey }) {
   );
 }
 
-export function AppChrome({
-  active,
-  credits = 0,
-  planLabel,
-  avatar = "You",
-  children,
-}: AppChromeProps) {
+export function AppChrome({ active, children }: AppChromeProps) {
+  const [account, setAccount] = useState<Account | undefined>();
+
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const supabase = supabaseBrowser();
+      const { data: userRes } = await supabase.auth.getUser();
+      const user = userRes.user;
+      if (!user || !live) return;
+      // maybeSingle: a profile row is created by trigger, but a missing one should dim the pill,
+      // not throw inside the chrome that every app page is wrapped in.
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("tier")
+        .eq("id", user.id)
+        .maybeSingle();
+      if (!live) return;
+      setAccount({
+        tier: profile?.tier === "pro" ? "pro" : "free",
+        initials: (user.email ?? "?").slice(0, 2).toUpperCase(),
+      });
+    })();
+    return () => { live = false; };
+  }, []);
+
   return (
     <div className="min-h-screen bg-[var(--paper)]">
       <Toaster />
@@ -126,12 +160,22 @@ export function AppChrome({
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            <CreditsPill credits={credits} planLabel={planLabel} />
+            {/* `profiles.credits` is 0 for every account and nothing writes it — the ledger is
+                #14. Until it exists, a count would be invented, and "0 credits" would wrongly tell
+                a free student they cannot make a sheet. Tier is what actually decides, so tier is
+                what this says. Swap to counts the day the ledger lands. */}
+            {account && (
+              <CreditsPill
+                credits={0}
+                planLabel={account.tier === "pro" ? "Unlocked" : "Free"}
+                planTone={account.tier === "pro" ? "ink" : "neutral"}
+              />
+            )}
             <span
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--signal-50)] text-[11px] font-semibold text-[var(--signal-700)]"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[var(--signal-50)] text-[11px] font-semibold text-[var(--signal-700)]"
               aria-hidden
             >
-              {avatar.slice(0, 2).toUpperCase()}
+              {account?.initials ?? ""}
             </span>
           </div>
         </div>
