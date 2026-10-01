@@ -11,6 +11,7 @@ import { TopicRail } from "./TopicRail";
 import { EditLine } from "./EditLine";
 import { VersionPanel } from "./VersionPanel";
 import { ViewTray } from "./ViewTray";
+import { creditBalance, sheetUnlock, unlockSheet } from "@/lib/credits";
 import { ago, describeChange, listVersions, saveVersion, VERSION_DEBOUNCE_MS, type SheetVersion } from "@/lib/sheet-versions";
 import { applyEdit, editFields, editKey, removeLine } from "@/components/sheet/modules";
 import { EMPTY_CTX, viewOf, type ScoreCtx, type ViewOptions } from "@/components/sheet/relevance";
@@ -204,6 +205,10 @@ export default function ResultsPage() {
   // Every accepted chat edit can be taken back (this visit).
   const [undoStack, setUndoStack] = useState<unknown[]>([]);
   const [upsellOpen, setUpsellOpen] = useState(false);
+  /** Unlocked for THIS sheet — a credit buys one sheet, not an account (#14). */
+  const [unlocked, setUnlocked] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
+  const [unlocking, setUnlocking] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savedId, setSavedId] = useState<string | null>(null);
   // Content changed since the last save (edits, fills): Save becomes "Save changes" and updates the row.
@@ -299,6 +304,22 @@ export default function ResultsPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [savedId, dirty, saving, content]);
+
+  // This sheet's unlock, and what is in hand to buy one with. Re-read when the sheet becomes
+  // saved, because an unsaved sheet has no id and so cannot be unlocked at all.
+  useEffect(() => {
+    let live = true;
+    void (async () => {
+      const [bal, via] = await Promise.all([
+        creditBalance(),
+        savedId ? sheetUnlock(savedId) : Promise.resolve(null),
+      ]);
+      if (!live) return;
+      setCredits(bal);
+      setUnlocked(!!via);
+    })();
+    return () => { live = false; };
+  }, [savedId]);
 
   const savedIdRef = useRef(savedId);
   savedIdRef.current = savedId;
@@ -462,7 +483,9 @@ export default function ResultsPage() {
   // treated as free here (caught running the live flow), and anyone could add it to the URL.
   const previewTier = process.env.NODE_ENV !== "production" ? stash.tier : undefined;
   const tier = profileTier === "pro" || previewTier === "pro" ? "pro" : "free";
-  const pro = tier === "pro";
+  // Either the account is open (Pro, Sprint Pass) or this sheet was bought. Cosmetic only —
+  // /api/pdf and /api/edit decide for themselves, and the back page is sealed server-side.
+  const pro = tier === "pro" || unlocked;
   const effectiveCtx: ScoreCtx = { ...(stash.ctx ?? EMPTY_CTX), ...ctxPatch };
   const warnings = stash.warnings ?? [];
   const showWarnings = warnings.length > 0 && !dismissed;
@@ -476,6 +499,8 @@ export default function ResultsPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          // Which sheet this is, so the server can honour a per-sheet unlock.
+          sheetId: savedIdRef.current ?? undefined,
           content,
           density,
           ctx: effectiveCtx,
@@ -637,6 +662,47 @@ export default function ResultsPage() {
         await saveVersion(supabaseBrowser(), id, data.user.id, snapshot, label);
       })();
     }, VERSION_DEBOUNCE_MS);
+  }
+
+  /**
+   * Spend a credit on this sheet.
+   *
+   * Saves first when the sheet is not in the library yet: a credit buys one sheet, and a sheet
+   * with no id is not yet a thing that can be bought. The database decides everything else — it
+   * charges nothing if the sheet is already open, and nothing if the account is Pro or holds a
+   * live pass, so a second click cannot cost a second credit.
+   */
+  async function spendCreditOnThisSheet() {
+    if (unlocking) return;
+    setUnlocking(true);
+    try {
+      if (!savedIdRef.current) await saveToLibrary();
+      const id = savedIdRef.current;
+      if (!id) return toast("Save the sheet first, then unlock it.");
+
+      const r = await unlockSheet(id);
+      if (!r.unlocked) {
+        if (r.error === "no_credits") {
+          setCredits(0);
+          return toast("No credits left — $4.99 unlocks this sheet.");
+        }
+        return toast("That didn't go through. Nothing was charged.");
+      }
+      setUnlocked(true);
+      setUpsellOpen(false);
+      setExportModal(false);
+      if (typeof r.balance === "number") setCredits(r.balance);
+      toast(
+        r.already
+          ? "This sheet was already unlocked"
+          : r.via === "credit"
+            ? `Unlocked · ${r.balance} credit${r.balance === 1 ? "" : "s"} left`
+            : "Unlocked",
+        "check",
+      );
+    } finally {
+      setUnlocking(false);
+    }
   }
 
   async function openVersions() {
@@ -1045,12 +1111,22 @@ export default function ResultsPage() {
             first. You see every change before it lands.
           </p>
           <ModalOptions>
-            <OptionTile
-              primary
-              label="Unlock this sheet · $4.99"
-              sub="unlocks rewrites"
-              onClick={() => { window.location.href = "/pricing"; }}
-            />
+            {credits && credits > 0 ? (
+              <OptionTile
+                primary
+                label={unlocking ? "Unlocking…" : "Use 1 credit"}
+                sub={`${credits} in hand · unlocks this sheet`}
+                disabled={unlocking}
+                onClick={() => void spendCreditOnThisSheet()}
+              />
+            ) : (
+              <OptionTile
+                primary
+                label="Unlock this sheet · $4.99"
+                sub="one credit · never expires"
+                onClick={() => { window.location.href = "/pricing"; }}
+              />
+            )}
             <OptionTile
               label="Stay free"
               sub="edit lines by hand"
@@ -1222,14 +1298,23 @@ export default function ResultsPage() {
               void runExport("front");
             }}
           />
-          <OptionTile
-            label="Both pages"
-            sub="needs the $4.99 unlock"
-            onClick={() => {
-              setExportModal(false);
-              window.location.href = "/pricing";
-            }}
-          />
+          {credits && credits > 0 ? (
+            <OptionTile
+              label={unlocking ? "Unlocking…" : "Both pages · use 1 credit"}
+              sub={`${credits} in hand · unlocks this sheet`}
+              disabled={unlocking}
+              onClick={() => void spendCreditOnThisSheet()}
+            />
+          ) : (
+            <OptionTile
+              label="Both pages"
+              sub="needs the $4.99 unlock"
+              onClick={() => {
+                setExportModal(false);
+                window.location.href = "/pricing";
+              }}
+            />
+          )}
         </ModalOptions>
       </Modal>
     </div>

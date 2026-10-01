@@ -2,6 +2,7 @@
 
 import { useEffect, useState, type ReactNode } from "react";
 import { supabaseBrowser } from "@/lib/supabase/client";
+import { creditBalance } from "@/lib/credits";
 import Link from "next/link";
 import { Wordmark } from "./Wordmark";
 import { CreditsPill } from "./CreditsPill";
@@ -46,6 +47,10 @@ export interface AppChromeProps {
  */
 interface Account {
   tier: "free" | "pro";
+  /** Sprint Pass expiry, when one is live. */
+  passUntil?: string | null;
+  /** Credits in hand — the sum of the ledger, never a stored counter. */
+  credits: number;
   initials: string;
 }
 
@@ -106,14 +111,15 @@ export function AppChrome({ active, children }: AppChromeProps) {
       if (!user || !live) return;
       // maybeSingle: a profile row is created by trigger, but a missing one should dim the pill,
       // not throw inside the chrome that every app page is wrapped in.
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("tier")
-        .eq("id", user.id)
-        .maybeSingle();
+      const [{ data: profile }, credits] = await Promise.all([
+        supabase.from("profiles").select("tier, pass_until").eq("id", user.id).maybeSingle(),
+        creditBalance(),
+      ]);
       if (!live) return;
       setAccount({
         tier: profile?.tier === "pro" ? "pro" : "free",
+        passUntil: profile?.pass_until ?? null,
+        credits,
         initials: (user.email ?? "?").slice(0, 2).toUpperCase(),
       });
     })();
@@ -160,15 +166,19 @@ export function AppChrome({ active, children }: AppChromeProps) {
           </nav>
 
           <div className="ml-auto flex items-center gap-3">
-            {/* `profiles.credits` is 0 for every account and nothing writes it — the ledger is
-                #14. Until it exists, a count would be invented, and "0 credits" would wrongly tell
-                a free student they cannot make a sheet. Tier is what actually decides, so tier is
-                what this says. Swap to counts the day the ledger lands. */}
+            {/* Now a real number: the sum of the ledger. A plan that makes the count irrelevant
+                says so instead — holding 2 credits under a live Sprint Pass is true and useless,
+                and a student reading "2 credits" would think that is what they may spend. */}
             {account && (
               <CreditsPill
-                credits={0}
-                planLabel={account.tier === "pro" ? "Unlocked" : "Free"}
-                planTone={account.tier === "pro" ? "ink" : "neutral"}
+                credits={account.credits}
+                planLabel={
+                  account.tier === "pro"
+                    ? "Unlocked"
+                    : account.passUntil && new Date(account.passUntil) > new Date()
+                      ? "Sprint Pass"
+                      : undefined
+                }
               />
             )}
             <span

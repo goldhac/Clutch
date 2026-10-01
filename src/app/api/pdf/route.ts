@@ -240,8 +240,22 @@ export async function POST(req: NextRequest) {
       const supabase = await supabaseServer();
       const { data: userRes } = await supabase.auth.getUser();
       if (userRes.user) {
-        const { data: profile } = await supabase.from("profiles").select("tier").eq("id", userRes.user.id).single();
-        entitledToBack = profile?.tier === "pro";
+        const { data: profile } = await supabase.from("profiles").select("tier, pass_until").eq("id", userRes.user.id).single();
+        // Account-wide first: Pro, or a live Sprint Pass.
+        entitledToBack =
+          profile?.tier === "pro" ||
+          (!!profile?.pass_until && new Date(profile.pass_until) > new Date());
+        // Then this sheet in particular. A credit buys ONE sheet, so the id has to be checked
+        // against the unlock table rather than trusted from the request — and RLS means the row
+        // only comes back if it is this student's sheet, so a borrowed id proves nothing.
+        if (!entitledToBack && typeof (b as { sheetId?: unknown }).sheetId === "string") {
+          const { data: unlock } = await supabase
+            .from("sheet_unlocks")
+            .select("via")
+            .eq("sheet_id", (b as { sheetId: string }).sheetId)
+            .maybeSingle();
+          entitledToBack = !!unlock;
+        }
       }
     } catch {
       entitledToBack = false;
