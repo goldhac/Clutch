@@ -1,0 +1,39 @@
+# Keep the Supabase project from pausing.
+#
+# Free-tier projects pause after ~7 days of inactivity. On 2026-10-12 cramsheet had been paused
+# since roughly Oct 7: auth and REST were unreachable, nobody could sign in or open a sheet, and
+# every page still returned 200 — so the site looked fine and only failed once someone tried to
+# use it.
+#
+# Twice a week beats that 7-day clock with room to spare (max gap: Thu -> Mon). The request is a
+# real PostgREST query, not a ping at the gateway: RLS denies anon on `sheets`, so it comes back
+# 200 with an empty array — it proves Postgres answered without reading anyone's data.
+#
+# A non-200 fails the job, so this doubles as a free outage alarm: GitHub emails on failure.
+name: Keep Supabase warm
+
+on:
+  schedule:
+    - cron: "17 7 * * 1,4" # Mon & Thu, 07:17 UTC
+  workflow_dispatch: # so it can be run by hand after an outage
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Query Postgres through PostgREST
+        env:
+          ANON: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          url="https://lwglwzriuhqrfprcnqpr.supabase.co/rest/v1/sheets?select=id&limit=1"
+          code=$(curl -sS -o /tmp/body -w '%{http_code}' --max-time 30 \
+            -H "apikey: $ANON" -H "Authorization: Bearer $ANON" "$url")
+          echo "HTTP $code"
+          if [ "$code" != "200" ]; then
+            echo "Supabase did not answer with 200 — the project may be paused or down."
+            head -c 400 /tmp/body || true
+            exit 1
+          fi
+          echo "Postgres answered; the pause clock is reset."

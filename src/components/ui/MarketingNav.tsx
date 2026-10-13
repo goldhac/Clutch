@@ -24,12 +24,33 @@ export function MarketingNav() {
   const [signedIn, setSignedIn] = useState<boolean | undefined>(undefined);
   useEffect(() => {
     let alive = true;
+    const settle = (v: boolean) => {
+      if (!alive) return;
+      alive = false;
+      setSignedIn(v);
+    };
+    /*
+     * The dangerous case is a HUNG request, not a failed one.
+     *
+     * A rejected read already fell back to signed-out. But on 2026-10-12 the Supabase project was
+     * paused, and the call neither resolved nor rejected — so `signedIn` stayed undefined, the nav
+     * kept rendering its reserved spacer, and the landing page showed no "Sign in" and no CTA at
+     * all. Every page still returned 200, so it looked healthy.
+     *
+     * Signed-out is the safe default: a signed-out visitor sees the right thing, and a signed-in
+     * one who taps "Sign in" is bounced straight back to their library. First answer wins, so a
+     * slow reply cannot swap the nav under someone mid-click.
+     */
+    const timer = setTimeout(() => settle(false), 2500);
     supabaseBrowser()
       .auth.getUser()
-      .then(({ data }) => { if (alive) setSignedIn(!!data.user); })
-      // A failed session read must not break the marketing page; fall back to signed-out.
-      .catch(() => { if (alive) setSignedIn(false); });
-    return () => { alive = false; };
+      .then(({ data }) => settle(!!data.user))
+      .catch(() => settle(false))
+      .finally(() => clearTimeout(timer));
+    return () => {
+      alive = false;
+      clearTimeout(timer);
+    };
   }, []);
 
   return (
